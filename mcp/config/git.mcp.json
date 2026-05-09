@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "git-ai-lab": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@mseep/git-mcp-server",
+        "/opt/ai-lab"
+      ]
+    }
+  }
+}
