@@ -1,0 +1,58 @@
+{
+  "default_node": "local_default",
+
+  "nodes": {
+    "local_default": {
+      "name": "Current LM Studio",
+      "host": "192.168.1.200",
+      "port": 1234,
+      "model": "google/gemma-4-e4b",
+      "role": "general",
+      "enabled": true,
+      "priority": 10
+    },
+
+    "rx7900xt": {
+      "name": "Gaming PC RX7900XT",
+      "host": "192.168.1.60",
+      "port": 1234,
+      "model": "google/gemma-4-e4b",
+      "role": "heavy",
+      "enabled": false,
+      "priority": 20
+    },
+
+    "rx9070xt": {
+      "name": "Gaming PC RX9070XT",
+      "host": "192.168.1.50",
+      "port": 1234,
+      "model": "google/gemma-4-e4b",
+      "role": "fast",
+      "enabled": false,
+      "priority": 15
+    }
+  },
+
+  "routing_rules": {
+    "heavy_keywords": [
+      "analyze",
+      "architecture",
+      "roadmap",
+      "generate",
+      "refactor",
+      "coding",
+      "debug",
+      "diagnose",
+      "long",
+      "complex"
+    ],
+    "fast_keywords": [
+      "quick",
+      "summary",
+      "summarize",
+      "status",
+      "simple",
+      "short"
+    ]
+  }
+}
