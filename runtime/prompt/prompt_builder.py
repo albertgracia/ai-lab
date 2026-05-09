@@ -1,6 +1,9 @@
 import sys
 import requests
 
+from runtime.memory.search_memory import search_memory
+
+
 QDRANT_URL = "http://localhost:6333"
 COLLECTION = "agent_knowledge"
 
@@ -57,6 +60,20 @@ def rank_bonus(path: str) -> float:
 
 
 def build_prompt(user_request: str, results):
+    memory_results = search_memory(user_request, limit=3)
+
+    memory_blocks = []
+    for memory in memory_results:
+        memory_blocks.append(
+            f"""### Memory: {memory["path"]}
+Score: {memory["score"]:.4f}
+
+{memory["content"][:1200]}
+"""
+        )
+
+    memory_context = "\n\n".join(memory_blocks)
+
     enriched = []
 
     for item in results:
@@ -65,13 +82,15 @@ def build_prompt(user_request: str, results):
         score = item.get("score", 0)
         adjusted_score = score + rank_bonus(path)
 
-        enriched.append({
-            "path": path,
-            "type": payload.get("type"),
-            "score": score,
-            "adjusted_score": adjusted_score,
-            "content": payload.get("content", ""),
-        })
+        enriched.append(
+            {
+                "path": path,
+                "type": payload.get("type"),
+                "score": score,
+                "adjusted_score": adjusted_score,
+                "content": payload.get("content", ""),
+            }
+        )
 
     enriched.sort(key=lambda x: x["adjusted_score"], reverse=True)
 
@@ -94,11 +113,15 @@ Adjusted Score: {item["adjusted_score"]:.4f}
 
 You are operating inside Albert's local AI Lab.
 
-You must use the provided agent knowledge, skills, workflows and rules as operational context.
+You must use the provided persistent memory, agent knowledge, skills, workflows and rules as operational context.
 
 ## User Request
 
 {user_request}
+
+## Retrieved Persistent Memory
+
+{memory_context}
 
 ## Retrieved Agent Context
 
@@ -109,10 +132,12 @@ You must use the provided agent knowledge, skills, workflows and rules as operat
 1. Identify the best agent role for this request.
 2. Identify relevant skills.
 3. Identify whether a workflow applies.
-4. Produce a careful technical answer.
-5. If commands are needed, prefer safe read-only commands first.
-6. Do not suggest destructive commands without explicit confirmation.
-7. Explain assumptions clearly.
+4. Use persistent memory to maintain continuity with previous architecture decisions.
+5. Produce a careful technical answer.
+6. If commands are needed, prefer safe read-only commands first.
+7. Do not suggest destructive commands without explicit confirmation.
+8. Explain assumptions clearly.
+9. Prioritize local-first, modular, safe and Git-tracked changes.
 
 ## Response
 """
