@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "filesystem-ai-lab": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/opt/ai-lab"
+      ]
+    }
+  }
+}
