@@ -1,0 +1,6 @@
+data/
+logs/
+*.log
+.env
+*.bak
+*.tmp
