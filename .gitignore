@@ -4,3 +4,8 @@ logs/
 .env
 *.bak
 *.tmp
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
