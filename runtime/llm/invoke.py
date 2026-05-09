@@ -5,9 +5,10 @@ import requests
 sys.path.append(str(Path(__file__).resolve().parents[2]))
 
 from runtime.prompt.prompt_builder import search, build_prompt
+from runtime.router.router import route
+
 
 LMSTUDIO_API = "http://192.168.1.200:1234/v1/chat/completions"
-
 MODEL = "google/gemma-3-12b"
 
 
@@ -28,36 +29,39 @@ def call_llm(prompt: str):
         "max_tokens": 1200,
     }
 
-    r = requests.post(
+    response = requests.post(
         LMSTUDIO_API,
         json=payload,
         timeout=300
     )
 
-    r.raise_for_status()
+    response.raise_for_status()
 
-    return r.json()["choices"][0]["message"]["content"]
+    return response.json()["choices"][0]["message"]["content"]
 
 
 def main():
     if len(sys.argv) < 2:
-        print('Usage: python3 invoke.py "request"')
+        print('Usage: python3 runtime/llm/invoke.py "request"')
         sys.exit(1)
 
     user_request = " ".join(sys.argv[1:])
 
-    print("\n[1] Semantic Search...")
+    routing = route(user_request)
+    print(f"[0] Selected Agent: {routing['agent']}")
+
+    print("[1] Semantic Search...")
     results = search(user_request)
 
     print("[2] Building Prompt...")
-    prompt = build_prompt(user_request, results)
+    base_prompt = build_prompt(user_request, results)
+    prompt = routing["agent_prompt"] + "\n\n" + base_prompt
 
     print("[3] Invoking LLM...\n")
-
-    response = call_llm(prompt)
+    answer = call_llm(prompt)
 
     print("=" * 80)
-    print(response)
+    print(answer)
     print("=" * 80)
 
 
