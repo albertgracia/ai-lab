@@ -8,7 +8,7 @@
         "Image": "traefik:latest",
         "Labels": "com.docker.compose.config-hash=d7f80995e9ced71424becf4213a10ec5c26e62b796f82096017078b8ae159629,com.docker.compose.container-number=1,com.docker.compose.depends_on=,com.docker.compose.image=sha256:eb328e2c806c53aafbbace6c451fa54d268961261a85452fcf0fb752a30c17be,com.docker.compose.oneoff=False,com.docker.compose.project.config_files=/opt/ai-lab/stacks/traefik/docker-compose.yml,com.docker.compose.project.working_dir=/opt/ai-lab/stacks/traefik,com.docker.compose.project=traefik,com.docker.compose.replace=traefik,com.docker.compose.service=traefik,com.docker.compose.version=5.1.3,org.opencontainers.image.description=A modern reverse-proxy,org.opencontainers.image.documentation=https://docs.traefik.io,org.opencontainers.image.source=https://github.com/traefik/traefik,org.opencontainers.image.title=Traefik,org.opencontainers.image.url=https://traefik.io,org.opencontainers.image.vendor=Traefik Labs,org.opencontainers.image.version=v3.7.0",
         "LocalVolumes": "0",
-        "Mounts": "/opt/ai-lab/da\u2026,/opt/ai-lab/da\u2026,/etc/localtime,/var/run/docke\u2026",
+        "Mounts": "/etc/localtime,/var/run/docke\u2026,/opt/ai-lab/da\u2026,/opt/ai-lab/da\u2026",
         "Names": "traefik",
         "Networks": "proxy",
         "Platform": {
@@ -16,10 +16,10 @@
           "os": "linux"
         },
         "Ports": "0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp",
-        "RunningFor": "3 hours ago",
+        "RunningFor": "4 hours ago",
         "Size": "16.4kB (virtual 190MB)",
         "State": "running",
-        "Status": "Up 3 hours"
+        "Status": "Up 4 hours"
       },
       {
         "Command": "\"./entrypoint.sh\"",
@@ -36,10 +36,10 @@
           "os": "linux"
         },
         "Ports": "0.0.0.0:6333-6334->6333-6334/tcp, [::]:6333-6334->6333-6334/tcp",
-        "RunningFor": "5 hours ago",
+        "RunningFor": "6 hours ago",
         "Size": "24.6kB (virtual 199MB)",
         "State": "running",
-        "Status": "Up 3 hours"
+        "Status": "Up 4 hours"
       },
       {
         "Command": "\"bash start.sh\"",
@@ -56,10 +56,10 @@
           "os": "linux"
         },
         "Ports": "0.0.0.0:3000->8080/tcp, [::]:3000->8080/tcp",
-        "RunningFor": "7 hours ago",
+        "RunningFor": "9 hours ago",
         "Size": "54.3MB (virtual 5.04GB)",
         "State": "running",
-        "Status": "Up 3 hours (healthy)"
+        "Status": "Up 4 hours (healthy)"
       },
       {
         "Command": "\"/bin/ollama serve\"",
@@ -76,10 +76,10 @@
           "os": "linux"
         },
         "Ports": "0.0.0.0:11434->11434/tcp, [::]:11434->11434/tcp",
-        "RunningFor": "7 hours ago",
+        "RunningFor": "9 hours ago",
         "Size": "16.4kB (virtual 6.56GB)",
         "State": "running",
-        "Status": "Up 3 hours"
+        "Status": "Up 4 hours"
       },
       {
         "Command": "\"/portainer\"",
@@ -96,10 +96,10 @@
           "os": "linux"
         },
         "Ports": "8000/tcp, 9443/tcp, 0.0.0.0:9000->9000/tcp, [::]:9000->9000/tcp",
-        "RunningFor": "7 hours ago",
+        "RunningFor": "9 hours ago",
         "Size": "16.4kB (virtual 182MB)",
         "State": "running",
-        "Status": "Up 3 hours"
+        "Status": "Up 4 hours"
       }
     ]
   },
@@ -144,5 +144,83 @@
         ]
       }
     ]
-  }
+  },
+  "gpu": [
+    {
+      "node": "Gaming PC RX9070XT",
+      "host": "192.168.1.50",
+      "gpu_usage": {
+        "max_gpu_usage_percent": 0.54,
+        "active_engines": [
+          {
+            "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_1176_luid_0x00000000_0x0001A897_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
+            "value": 0.025391
+          },
+          {
+            "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_5956_luid_0x00000000_0x0001A897_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
+            "value": 0.536325
+          }
+        ]
+      },
+      "vram": {
+        "vram_used_gib": 12.38,
+        "vram_total_gib": 16,
+        "vram_free_gib_estimated": 3.62,
+        "raw_samples": [
+          {
+            "path": "\\\\X870EAORUSPRO\\GPU Adapter Memory(luid_0x00000000_0x0001A897_phys_0)\\Dedicated Usage",
+            "value": 13292818432.0
+          },
+          {
+            "path": "\\\\X870EAORUSPRO\\GPU Adapter Memory(luid_0x00000000_0x0001DA24_phys_0)\\Dedicated Usage",
+            "value": 0.0
+          }
+        ]
+      }
+    },
+    {
+      "node": "Gaming PC RX7900XT",
+      "host": "192.168.1.60",
+      "gpu_usage": {
+        "max_gpu_usage_percent": 0.03,
+        "active_engines": [
+          {
+            "path": "\\\\X870AORUSELITE\\GPU Engine(pid_11056_luid_0x00000000_0x000165A5_phys_0_eng_9_engtype_3D)\\Utilization Percentage",
+            "value": 0.006907
+          },
+          {
+            "path": "\\\\X870AORUSELITE\\GPU Engine(pid_11056_luid_0x00000000_0x01F7A422_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
+            "value": 0.002772
+          },
+          {
+            "path": "\\\\X870AORUSELITE\\GPU Engine(pid_13784_luid_0x00000000_0x01F7A422_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
+            "value": 0.002238
+          },
+          {
+            "path": "\\\\X870AORUSELITE\\GPU Engine(pid_4208_luid_0x00000000_0x01F7A422_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
+            "value": 0.030347
+          },
+          {
+            "path": "\\\\X870AORUSELITE\\GPU Engine(pid_8752_luid_0x00000000_0x01F7A422_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
+            "value": 0.006171
+          }
+        ]
+      },
+      "vram": {
+        "vram_used_gib": 13.09,
+        "vram_total_gib": 20,
+        "vram_free_gib_estimated": 6.91,
+        "raw_samples": [
+          {
+            "path": "\\\\X870AORUSELITE\\GPU Adapter Memory(luid_0x00000000_0x000165A5_phys_0)\\Dedicated Usage",
+            "value": 0.0
+          },
+          {
+            "path": "\\\\X870AORUSELITE\\GPU Adapter Memory(luid_0x00000000_0x01F7A422_phys_0)\\Dedicated Usage",
+            "value": 14050713600.0
+          }
+        ]
+      }
+    }
+  ]
 }
