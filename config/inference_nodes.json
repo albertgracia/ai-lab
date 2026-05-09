@@ -16,9 +16,9 @@
       "name": "Gaming PC RX7900XT",
       "host": "192.168.1.60",
       "port": 1234,
-      "model": "google/gemma-4-e4b",
+      "model": "qwen2.5-coder-14b-instruct",
       "role": "heavy",
-      "enabled": false,
+      "enabled": true,
       "priority": 20
     },
 
@@ -26,9 +26,9 @@
       "name": "Gaming PC RX9070XT",
       "host": "192.168.1.50",
       "port": 1234,
-      "model": "google/gemma-4-e4b",
+      "model": "qwen3-14b-claude-sonnet-4.5-reasoning-distill",
       "role": "fast",
-      "enabled": false,
+      "enabled": true,
       "priority": 15
     }
   },

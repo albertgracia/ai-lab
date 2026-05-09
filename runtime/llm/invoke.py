@@ -1,22 +1,20 @@
 from pathlib import Path
 import sys
 import requests
-import json
 
 sys.path.append(str(Path(__file__).resolve().parents[2]))
 
 from runtime.prompt.prompt_builder import search, build_prompt
 from runtime.router.router import route
 from runtime.planner.tool_planner import execute_plan
+from runtime.llm.model_router import select_node
 
 
-LMSTUDIO_API = "http://192.168.1.200:1234/v1/chat/completions"
-MODEL = "google/gemma-4-e4b"
+def call_llm(prompt: str, node: dict):
+    api_url = f"http://{node['host']}:{node['port']}/v1/chat/completions"
 
-
-def call_llm(prompt: str):
     payload = {
-        "model": MODEL,
+        "model": node["model"],
         "messages": [
             {
                 "role": "system",
@@ -28,11 +26,11 @@ def call_llm(prompt: str):
             }
         ],
         "temperature": 0.3,
-        "max_tokens": 1400,
+        "max_tokens": 2500,
     }
 
     response = requests.post(
-        LMSTUDIO_API,
+        api_url,
         json=payload,
         timeout=300
     )
@@ -84,6 +82,10 @@ def main():
 
     user_request = " ".join(sys.argv[1:])
 
+    selected_node = select_node(user_request)
+    print(f"[N] Selected Inference Node: {selected_node['name']} ({selected_node['host']}:{selected_node['port']})")
+    print(f"[N] Selected Model: {selected_node['model']}")
+
     routing = route(user_request)
     print(f"[0] Selected Agent: {routing['agent']}")
 
@@ -114,7 +116,7 @@ Do not propose destructive changes without explicit confirmation.
 """
 
     print("[4] Invoking LLM...\n")
-    answer = call_llm(prompt)
+    answer = call_llm(prompt, selected_node)
 
     print("=" * 80)
     print(answer)
