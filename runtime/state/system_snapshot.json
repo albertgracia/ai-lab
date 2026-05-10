@@ -8,7 +8,7 @@
         "Image": "traefik:latest",
         "Labels": "com.docker.compose.config-hash=d7f80995e9ced71424becf4213a10ec5c26e62b796f82096017078b8ae159629,com.docker.compose.container-number=1,com.docker.compose.depends_on=,com.docker.compose.image=sha256:eb328e2c806c53aafbbace6c451fa54d268961261a85452fcf0fb752a30c17be,com.docker.compose.oneoff=False,com.docker.compose.project.config_files=/opt/ai-lab/stacks/traefik/docker-compose.yml,com.docker.compose.project.working_dir=/opt/ai-lab/stacks/traefik,com.docker.compose.project=traefik,com.docker.compose.replace=traefik,com.docker.compose.service=traefik,com.docker.compose.version=5.1.3,org.opencontainers.image.description=A modern reverse-proxy,org.opencontainers.image.documentation=https://docs.traefik.io,org.opencontainers.image.source=https://github.com/traefik/traefik,org.opencontainers.image.title=Traefik,org.opencontainers.image.url=https://traefik.io,org.opencontainers.image.vendor=Traefik Labs,org.opencontainers.image.version=v3.7.0",
         "LocalVolumes": "0",
-        "Mounts": "/opt/ai-lab/da\u2026,/opt/ai-lab/da\u2026,/etc/localtime,/var/run/docke\u2026",
+        "Mounts": "/etc/localtime,/var/run/docke\u2026,/opt/ai-lab/da\u2026,/opt/ai-lab/da\u2026",
         "Names": "traefik",
         "Networks": "proxy",
         "Platform": {
@@ -16,7 +16,7 @@
           "os": "linux"
         },
         "Ports": "0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp",
-        "RunningFor": "26 hours ago",
+        "RunningFor": "27 hours ago",
         "Size": "16.4kB (virtual 190MB)",
         "State": "running",
         "Status": "Up 8 hours"
@@ -36,7 +36,7 @@
           "os": "linux"
         },
         "Ports": "0.0.0.0:6333-6334->6333-6334/tcp, [::]:6333-6334->6333-6334/tcp",
-        "RunningFor": "28 hours ago",
+        "RunningFor": "29 hours ago",
         "Size": "24.6kB (virtual 199MB)",
         "State": "running",
         "Status": "Up 8 hours"
@@ -151,23 +151,31 @@
         "max_gpu_usage_percent": 0.52,
         "active_engines": [
           {
+            "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_1192_luid_0x00000000_0x0001A54E_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
+            "value": 0.027224
+          },
+          {
             "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_13740_luid_0x00000000_0x0001A54E_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
-            "value": 0.517742
+            "value": 0.515221
+          },
+          {
+            "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_17384_luid_0x00000000_0x0001A54E_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
+            "value": 0.02946
           },
           {
             "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_8948_luid_0x00000000_0x0001A54E_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
-            "value": 0.004462
+            "value": 0.001406
           }
         ]
       },
       "vram": {
-        "vram_used_gib": 2.6,
+        "vram_used_gib": 2.61,
         "vram_total_gib": 16,
-        "vram_free_gib_estimated": 13.4,
+        "vram_free_gib_estimated": 13.39,
         "raw_samples": [
           {
             "path": "\\\\X870EAORUSPRO\\GPU Adapter Memory(luid_0x00000000_0x0001A54E_phys_0)\\Dedicated Usage",
-            "value": 2792030208.0
+            "value": 2797535232.0
           },
           {
             "path": "\\\\X870EAORUSPRO\\GPU Adapter Memory(luid_0x00000000_0x0001D764_phys_0)\\Dedicated Usage",
@@ -184,15 +192,15 @@
         "active_engines": [
           {
             "path": "\\\\X870AORUSELITE\\GPU Engine(pid_19236_luid_0x00000000_0x01F7A422_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
-            "value": 0.019875
+            "value": 0.016108
           },
           {
             "path": "\\\\X870AORUSELITE\\GPU Engine(pid_8168_luid_0x00000000_0x01F7A422_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
-            "value": 0.008918
+            "value": 0.007033
           },
           {
             "path": "\\\\X870AORUSELITE\\GPU Engine(pid_9932_luid_0x00000000_0x01F7A422_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
-            "value": 0.007227
+            "value": 0.005625
           }
         ]
       },
