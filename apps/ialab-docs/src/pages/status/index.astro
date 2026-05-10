@@ -1,36 +1,102 @@
 ---
 import Layout from "../../layouts/Layout.astro";
+
+const response = await fetch("http://127.0.0.1:4321/api/status.json");
+const data = await response.json();
+
+const gpu = Array.isArray(data.gpu) ? data.gpu : [];
+const llm = Array.isArray(data.llm?.lmstudio_nodes) ? data.llm.lmstudio_nodes : [];
+const docker = Array.isArray(data.docker?.containers) ? data.docker.containers : [];
 ---
 
 <Layout title="Estado · AI-LAB">
 
 <h1 class="text-4xl font-bold text-cyan-400">
-  Estado del LAB
+  Estado Vivo del AI-LAB
 </h1>
 
-<div class="grid md:grid-cols-3 gap-6 mt-10">
+<p class="mt-4 text-zinc-400">
+  Snapshot operacional del laboratorio.
+</p>
 
-  <div class="border border-zinc-800 rounded-xl p-6 bg-zinc-900">
-    <h2 class="font-semibold">Router</h2>
-    <p class="text-zinc-400 mt-2">
-      AI-LAB Router API operativo
-    </p>
+<section class="mt-10">
+  <h2 class="text-2xl font-semibold mb-6">GPUs</h2>
+
+  <div class="grid md:grid-cols-2 gap-6">
+    {
+      gpu.map((node) => (
+        <div class="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+          <h3 class="text-xl font-semibold text-cyan-400">
+            {node.node}
+          </h3>
+
+          <div class="mt-4 space-y-2 text-zinc-300">
+            <p>Host: {node.host}</p>
+            <p>Uso GPU: {node.gpu_usage?.max_gpu_usage_percent ?? "N/D"}%</p>
+            <p>VRAM usada: {node.vram?.vram_used_gib ?? "N/D"} GiB</p>
+            <p>VRAM total: {node.vram?.vram_total_gib ?? "N/D"} GiB</p>
+            <p>VRAM libre: {node.vram?.vram_free_gib_estimated ?? "N/D"} GiB</p>
+          </div>
+        </div>
+      ))
+    }
   </div>
+</section>
 
-  <div class="border border-zinc-800 rounded-xl p-6 bg-zinc-900">
-    <h2 class="font-semibold">GPU Nodes</h2>
-    <p class="text-zinc-400 mt-2">
-      RX9070XT / RX7900XT
-    </p>
+<section class="mt-14">
+  <h2 class="text-2xl font-semibold mb-6">Modelos LLM</h2>
+
+  <div class="space-y-4">
+    {
+      llm.map((node) => (
+        <div class="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+          <h3 class="text-lg font-semibold text-cyan-400">
+            {node.node}
+          </h3>
+
+          <p class="text-zinc-400 mt-2">
+            Estado: {node.online ? "online" : "offline"}
+          </p>
+
+          <ul class="mt-4 list-disc list-inside text-zinc-300">
+            {
+              (node.models || []).map((model) => (
+                <li>{model}</li>
+              ))
+            }
+          </ul>
+        </div>
+      ))
+    }
   </div>
+</section>
 
-  <div class="border border-zinc-800 rounded-xl p-6 bg-zinc-900">
-    <h2 class="font-semibold">Docker Stack</h2>
-    <p class="text-zinc-400 mt-2">
-      Traefik, Qdrant, Open WebUI, Ollama, Portainer
-    </p>
+<section class="mt-14">
+  <h2 class="text-2xl font-semibold mb-6">Docker</h2>
+
+  <div class="grid md:grid-cols-2 gap-6">
+    {
+      docker.map((container) => (
+        <div class="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+          <h3 class="text-lg font-semibold text-cyan-400">
+            {container.Names}
+          </h3>
+
+          <p class="mt-2 text-zinc-400">
+            Estado: {container.State}
+          </p>
+
+          <p class="mt-2 text-zinc-500 text-sm">
+            Imagen: {container.Image}
+          </p>
+
+          <p class="mt-2 text-zinc-500 text-sm">
+            Puertos: {container.Ports}
+          </p>
+        </div>
+      ))
+    }
   </div>
-
-</div>
+</section>
 
 </Layout>
