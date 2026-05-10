@@ -9,3 +9,6 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+runtime/state/system_snapshot.json
+runtime/opencode/
+docs/system_snapshot.json
