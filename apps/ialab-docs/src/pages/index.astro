@@ -1,10 +1,155 @@
 ---
 import Layout from "../layouts/Layout.astro";
+
+const skills = [
+  "Linux / Windows Server",
+  "Docker & Compose",
+  "Traefik / Reverse Proxy",
+  "Redes LAN / DNS / SSH",
+  "Bash / Python",
+  "IA local / LLMs",
+  "GPUs remotas",
+  "Qdrant / RAG",
+  "Astro / documentación técnica",
+  "Automatización IT",
+];
+
+const highlights = [
+  {
+    title: "AI-LAB",
+    text: "Laboratorio local de IA distribuida con router OpenAI-compatible, GPUs remotas, OpenCode y dashboard vivo.",
+  },
+  {
+    title: "Infraestructura",
+    text: "Stack Docker con Traefik, Qdrant, Open WebUI, Ollama, Portainer y servicios internos documentados.",
+  },
+  {
+    title: "Operación",
+    text: "Runbooks, estado vivo del laboratorio, troubleshooting y documentación técnica versionada en Git.",
+  },
+];
 ---
 
-<Layout title="AI-LAB">
-  <section class="space-y-6">
-    <h1 class="text-5xl font-bold text-cyan-400">AI-LAB</h1>
-    <p class="text-xl text-zinc-300">Infraestructura cognitiva distribuida</p>
+<Layout title="Albert · AI-LAB">
+
+<section class="space-y-14">
+
+  <div class="rounded-3xl border border-cyan-500/30 bg-gradient-to-br from-zinc-900 to-zinc-950 p-10 shadow-2xl">
+    <p class="text-sm uppercase tracking-[0.3em] text-cyan-400">
+      Técnico de Sistemas · AI Infrastructure Builder
+    </p>
+
+    <h1 class="mt-6 max-w-5xl text-5xl font-black leading-tight text-white md:text-7xl">
+      Diseño, despliego y documento infraestructuras IT modernas.
+    </h1>
+
+    <p class="mt-6 max-w-3xl text-xl text-zinc-300">
+      Especializado en sistemas, redes, contenedores, automatización y plataformas locales de inteligencia artificial.
+    </p>
+
+    <div class="mt-8 flex flex-wrap gap-4">
+      <a href="/docs" class="rounded-xl bg-cyan-400 px-6 py-3 font-bold text-zinc-950 hover:bg-cyan-300">
+        Ver documentación
+      </a>
+
+      <a href="/status" class="rounded-xl border border-zinc-700 px-6 py-3 font-bold text-zinc-200 hover:border-cyan-400 hover:text-cyan-400">
+        Estado vivo del LAB
+      </a>
+
+      <a href="/services" class="rounded-xl border border-zinc-700 px-6 py-3 font-bold text-zinc-200 hover:border-cyan-400 hover:text-cyan-400">
+        Servicios internos
+      </a>
+    </div>
+  </div>
+
+  <div class="grid gap-6 md:grid-cols-3">
+    {
+      highlights.map((item) => (
+        <div class="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+          <h2 class="text-2xl font-bold text-cyan-400">{item.title}</h2>
+          <p class="mt-4 text-zinc-400">{item.text}</p>
+        </div>
+      ))
+    }
+  </div>
+
+  <section>
+    <h2 class="text-3xl font-bold text-white">
+      Stack técnico
+    </h2>
+
+    <div class="mt-6 flex flex-wrap gap-3">
+      {
+        skills.map((skill) => (
+          <span class="rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm text-zinc-300">
+            {skill}
+          </span>
+        ))
+      }
+    </div>
   </section>
+
+  <section class="rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
+    <h2 class="text-3xl font-bold text-cyan-400">
+      Proyecto destacado: AI-LAB
+    </h2>
+
+    <p class="mt-4 text-zinc-300">
+      AI-LAB es una plataforma local para experimentar con inferencia IA distribuida, documentación viva,
+      orquestación de modelos y operación de servicios internos.
+    </p>
+
+    <div class="mt-8 grid gap-4 md:grid-cols-2">
+      <div class="rounded-xl bg-zinc-950 p-5">
+        <p class="text-zinc-500">Nodo principal</p>
+        <p class="mt-2 text-xl font-semibold text-white">ubuntu-ialab · 192.168.1.30</p>
+      </div>
+
+      <div class="rounded-xl bg-zinc-950 p-5">
+        <p class="text-zinc-500">Nodos GPU</p>
+        <p class="mt-2 text-xl font-semibold text-white">RX9070XT · RX7900XT</p>
+      </div>
+
+      <div class="rounded-xl bg-zinc-950 p-5">
+        <p class="text-zinc-500">Router IA</p>
+        <p class="mt-2 text-xl font-semibold text-white">OpenAI-compatible API</p>
+      </div>
+
+      <div class="rounded-xl bg-zinc-950 p-5">
+        <p class="text-zinc-500">Portal</p>
+        <p class="mt-2 text-xl font-semibold text-white">Astro · Starlight · Mermaid</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
+    <h2 class="text-3xl font-bold text-white">
+      Perfil profesional
+    </h2>
+
+    <p class="mt-4 max-w-4xl text-zinc-300">
+      Técnico de Sistemas con enfoque práctico: diseño soluciones, las despliego, las documento y las dejo mantenibles.
+      Trabajo con infraestructura real, automatización, redes, contenedores y herramientas modernas de IA local.
+    </p>
+
+    <div class="mt-8 grid gap-6 md:grid-cols-3">
+      <div>
+        <p class="text-sm uppercase tracking-wide text-cyan-400">Sistemas</p>
+        <p class="mt-2 text-zinc-400">Linux, Windows, SSH, servicios, scripting y operación diaria.</p>
+      </div>
+
+      <div>
+        <p class="text-sm uppercase tracking-wide text-cyan-400">Infraestructura</p>
+        <p class="mt-2 text-zinc-400">Docker, Traefik, redes, almacenamiento, reverse proxy y dashboards.</p>
+      </div>
+
+      <div>
+        <p class="text-sm uppercase tracking-wide text-cyan-400">IA aplicada</p>
+        <p class="mt-2 text-zinc-400">LLMs locales, GPUs remotas, RAG, Qdrant, OpenCode y routing cognitivo.</p>
+      </div>
+    </div>
+  </section>
+
+</section>
+
 </Layout>

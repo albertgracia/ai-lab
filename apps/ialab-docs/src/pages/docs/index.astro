@@ -1,13 +1,23 @@
 ---
+import { getCollection } from "astro:content";
 import Layout from "../../layouts/Layout.astro";
+
+const docs = (await getCollection("docs"))
+  .sort((a, b) => a.data.order - b.data.order);
 ---
 
 <Layout title="Documentación · AI-LAB">
-  <h1 class="text-4xl font-bold text-cyan-400">
-    Documentación
-  </h1>
+  <div class="space-y-6">
+    <h1 class="text-4xl font-bold text-cyan-400">Documentación</h1>
+    <p class="text-zinc-400">Arquitectura, manuales y decisiones técnicas del AI-LAB.</p>
 
-  <p class="mt-4 text-zinc-400">
-    Arquitectura, manuales y documentación operacional del AI-LAB.
-  </p>
+    <div class="grid gap-6">
+      {docs.map((doc) => (
+        <a href={`/docs/${doc.id.replace(/\.md$/, "")}`} class="block rounded-xl border border-zinc-800 bg-zinc-900 p-6 hover:border-cyan-500 transition">
+          <h2 class="text-2xl font-semibold">{doc.data.title}</h2>
+          <p class="mt-2 text-zinc-400">{doc.data.summary}</p>
+        </a>
+      ))}
+    </div>
+  </div>
 </Layout>

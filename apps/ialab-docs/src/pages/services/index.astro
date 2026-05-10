@@ -1,0 +1,84 @@
+---
+import Layout from "../../layouts/Layout.astro";
+
+const services = [
+  {
+    name: "OpenCode",
+    url: "http://192.168.1.30:4096",
+    user: "opencode",
+    password: "ailab",
+    notes: "Interfaz agentic conectada al entorno AI-LAB.",
+  },
+  {
+    name: "Open WebUI",
+    url: "http://192.168.1.30:3000",
+    user: "pendiente documentar",
+    password: "pendiente documentar",
+    notes: "Frontend IA general.",
+  },
+  {
+    name: "Portainer",
+    url: "http://192.168.1.30:9000",
+    user: "pendiente documentar",
+    password: "pendiente documentar",
+    notes: "Gestión visual de contenedores Docker.",
+  },
+  {
+    name: "Qdrant",
+    url: "http://192.168.1.30:6333",
+    user: "no aplica / pendiente",
+    password: "no aplica / pendiente",
+    notes: "Base vectorial para RAG y grounding.",
+  },
+  {
+    name: "AI-LAB Router API",
+    url: "http://192.168.1.30:8008/health",
+    user: "no aplica",
+    password: "no aplica",
+    notes: "Router OpenAI-compatible del laboratorio.",
+  },
+];
+---
+
+<Layout title="Servicios · AI-LAB">
+  <div class="space-y-6">
+    <h1 class="text-4xl font-bold text-cyan-400">Servicios</h1>
+    <p class="text-zinc-400">
+      Accesos internos, usuarios y notas operativas del AI-LAB.
+    </p>
+
+    <div class="grid gap-6">
+      {services.map((service) => (
+        <div class="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+          <div class="flex items-start justify-between gap-6">
+            <div>
+              <h2 class="text-2xl font-semibold text-white">{service.name}</h2>
+              <p class="mt-2 text-zinc-400">{service.notes}</p>
+            </div>
+
+            <a href={service.url} target="_blank" class="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold text-zinc-950 hover:bg-cyan-400">
+              Abrir
+            </a>
+          </div>
+
+          <div class="mt-5 grid md:grid-cols-3 gap-4 text-sm">
+            <div>
+              <p class="text-zinc-500">URL</p>
+              <p class="break-all text-zinc-300">{service.url}</p>
+            </div>
+
+            <div>
+              <p class="text-zinc-500">Usuario</p>
+              <p class="text-zinc-300">{service.user}</p>
+            </div>
+
+            <div>
+              <p class="text-zinc-500">Contraseña</p>
+              <p class="text-zinc-300">{service.password}</p>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</Layout>
