@@ -8,7 +8,7 @@
         "Image": "traefik:latest",
         "Labels": "com.docker.compose.config-hash=d7f80995e9ced71424becf4213a10ec5c26e62b796f82096017078b8ae159629,com.docker.compose.container-number=1,com.docker.compose.depends_on=,com.docker.compose.image=sha256:eb328e2c806c53aafbbace6c451fa54d268961261a85452fcf0fb752a30c17be,com.docker.compose.oneoff=False,com.docker.compose.project.config_files=/opt/ai-lab/stacks/traefik/docker-compose.yml,com.docker.compose.project.working_dir=/opt/ai-lab/stacks/traefik,com.docker.compose.project=traefik,com.docker.compose.replace=traefik,com.docker.compose.service=traefik,com.docker.compose.version=5.1.3,org.opencontainers.image.description=A modern reverse-proxy,org.opencontainers.image.documentation=https://docs.traefik.io,org.opencontainers.image.source=https://github.com/traefik/traefik,org.opencontainers.image.title=Traefik,org.opencontainers.image.url=https://traefik.io,org.opencontainers.image.vendor=Traefik Labs,org.opencontainers.image.version=v3.7.0",
         "LocalVolumes": "0",
-        "Mounts": "/opt/ai-lab/da\u2026,/etc/localtime,/var/run/docke\u2026,/opt/ai-lab/da\u2026",
+        "Mounts": "/opt/ai-lab/da\u2026,/opt/ai-lab/da\u2026,/etc/localtime,/var/run/docke\u2026",
         "Names": "traefik",
         "Networks": "proxy",
         "Platform": {
@@ -16,10 +16,10 @@
           "os": "linux"
         },
         "Ports": "0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp",
-        "RunningFor": "24 hours ago",
+        "RunningFor": "26 hours ago",
         "Size": "16.4kB (virtual 190MB)",
         "State": "running",
-        "Status": "Up 6 hours"
+        "Status": "Up 8 hours"
       },
       {
         "Command": "\"./entrypoint.sh\"",
@@ -36,10 +36,10 @@
           "os": "linux"
         },
         "Ports": "0.0.0.0:6333-6334->6333-6334/tcp, [::]:6333-6334->6333-6334/tcp",
-        "RunningFor": "26 hours ago",
+        "RunningFor": "28 hours ago",
         "Size": "24.6kB (virtual 199MB)",
         "State": "running",
-        "Status": "Up 6 hours"
+        "Status": "Up 8 hours"
       },
       {
         "Command": "\"bash start.sh\"",
@@ -56,10 +56,10 @@
           "os": "linux"
         },
         "Ports": "0.0.0.0:3000->8080/tcp, [::]:3000->8080/tcp",
-        "RunningFor": "28 hours ago",
+        "RunningFor": "31 hours ago",
         "Size": "54.3MB (virtual 5.04GB)",
         "State": "running",
-        "Status": "Up 6 hours (healthy)"
+        "Status": "Up 8 hours (healthy)"
       },
       {
         "Command": "\"/bin/ollama serve\"",
@@ -76,10 +76,10 @@
           "os": "linux"
         },
         "Ports": "0.0.0.0:11434->11434/tcp, [::]:11434->11434/tcp",
-        "RunningFor": "28 hours ago",
+        "RunningFor": "31 hours ago",
         "Size": "16.4kB (virtual 6.56GB)",
         "State": "running",
-        "Status": "Up 6 hours"
+        "Status": "Up 8 hours"
       },
       {
         "Command": "\"/portainer\"",
@@ -96,10 +96,10 @@
           "os": "linux"
         },
         "Ports": "8000/tcp, 9443/tcp, 0.0.0.0:9000->9000/tcp, [::]:9000->9000/tcp",
-        "RunningFor": "28 hours ago",
+        "RunningFor": "31 hours ago",
         "Size": "16.4kB (virtual 182MB)",
         "State": "running",
-        "Status": "Up 6 hours"
+        "Status": "Up 8 hours"
       }
     ]
   },
@@ -117,6 +117,7 @@
         "node": "Gaming PC RX7900XT",
         "online": true,
         "models": [
+          "qwen2.5-coder-14b-instruct",
           "zhangfeng026/qwen2.5-coder-32b-instruct",
           "lmstudio-community/qwen2.5-coder-32b-instruct",
           "qwen2.5-coder-32b",
@@ -124,7 +125,6 @@
           "qwen3-14b-claude-sonnet-4.5-reasoning-distill",
           "flux.2-klein-9b",
           "moondream2-20250414",
-          "qwen2.5-coder-14b-instruct",
           "qwen/qwen2.5-coder-32b-instruct",
           "deepseek-coder-v2-lite-instruct",
           "text-embedding-nomic-embed-text-v2-moe",
@@ -148,42 +148,26 @@
       "node": "Gaming PC RX9070XT",
       "host": "192.168.1.50",
       "gpu_usage": {
-        "max_gpu_usage_percent": 0.73,
+        "max_gpu_usage_percent": 0.52,
         "active_engines": [
           {
-            "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_1192_luid_0x00000000_0x0001A54E_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
-            "value": 0.06683
-          },
-          {
             "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_13740_luid_0x00000000_0x0001A54E_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
-            "value": 0.516742
-          },
-          {
-            "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_1496_luid_0x00000000_0x0001A54E_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
-            "value": 0.032882
-          },
-          {
-            "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_17384_luid_0x00000000_0x0001A54E_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
-            "value": 0.126404
-          },
-          {
-            "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_4_luid_0x00000000_0x0001A54E_phys_0_eng_3_engtype_Copy)\\Utilization Percentage",
-            "value": 0.733386
+            "value": 0.517742
           },
           {
             "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_8948_luid_0x00000000_0x0001A54E_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
-            "value": 0.001495
+            "value": 0.004462
           }
         ]
       },
       "vram": {
-        "vram_used_gib": 2.69,
+        "vram_used_gib": 2.6,
         "vram_total_gib": 16,
-        "vram_free_gib_estimated": 13.31,
+        "vram_free_gib_estimated": 13.4,
         "raw_samples": [
           {
             "path": "\\\\X870EAORUSPRO\\GPU Adapter Memory(luid_0x00000000_0x0001A54E_phys_0)\\Dedicated Usage",
-            "value": 2893172736.0
+            "value": 2792030208.0
           },
           {
             "path": "\\\\X870EAORUSPRO\\GPU Adapter Memory(luid_0x00000000_0x0001D764_phys_0)\\Dedicated Usage",
@@ -196,18 +180,26 @@
       "node": "Gaming PC RX7900XT",
       "host": "192.168.1.60",
       "gpu_usage": {
-        "max_gpu_usage_percent": 0.01,
+        "max_gpu_usage_percent": 0.02,
         "active_engines": [
           {
+            "path": "\\\\X870AORUSELITE\\GPU Engine(pid_19236_luid_0x00000000_0x01F7A422_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
+            "value": 0.019875
+          },
+          {
             "path": "\\\\X870AORUSELITE\\GPU Engine(pid_8168_luid_0x00000000_0x01F7A422_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
-            "value": 0.008881
+            "value": 0.008918
+          },
+          {
+            "path": "\\\\X870AORUSELITE\\GPU Engine(pid_9932_luid_0x00000000_0x01F7A422_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
+            "value": 0.007227
           }
         ]
       },
       "vram": {
-        "vram_used_gib": 1.45,
+        "vram_used_gib": 14.01,
         "vram_total_gib": 20,
-        "vram_free_gib_estimated": 18.55,
+        "vram_free_gib_estimated": 5.99,
         "raw_samples": [
           {
             "path": "\\\\X870AORUSELITE\\GPU Adapter Memory(luid_0x00000000_0x000165A5_phys_0)\\Dedicated Usage",
@@ -215,7 +207,7 @@
           },
           {
             "path": "\\\\X870AORUSELITE\\GPU Adapter Memory(luid_0x00000000_0x01F7A422_phys_0)\\Dedicated Usage",
-            "value": 1560608768.0
+            "value": 15037755392.0
           }
         ]
       }

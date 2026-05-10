@@ -140,7 +140,7 @@ Routing priorities:
         "Image": "traefik:latest",
         "Labels": "com.docker.compose.config-hash=d7f80995e9ced71424becf4213a10ec5c26e62b796f82096017078b8ae159629,com.docker.compose.container-number=1,com.docker.compose.depends_on=,com.docker.compose.image=sha256:eb328e2c806c53aafbbace6c451fa54d268961261a85452fcf0fb752a30c17be,com.docker.compose.oneoff=False,com.docker.compose.project.config_files=/opt/ai-lab/stacks/traefik/docker-compose.yml,com.docker.compose.project.working_dir=/opt/ai-lab/stacks/traefik,com.docker.compose.project=traefik,com.docker.compose.replace=traefik,com.docker.compose.service=traefik,com.docker.compose.version=5.1.3,org.opencontainers.image.description=A modern reverse-proxy,org.opencontainers.image.documentation=https://docs.traefik.io,org.opencontainers.image.source=https://github.com/traefik/traefik,org.opencontainers.image.title=Traefik,org.opencontainers.image.url=https://traefik.io,org.opencontainers.image.vendor=Traefik Labs,org.opencontainers.image.version=v3.7.0",
         "LocalVolumes": "0",
-        "Mounts": "/etc/localtime,/var/run/docke\u2026,/opt/ai-lab/da\u2026,/opt/ai-lab/da\u2026",
+        "Mounts": "/opt/ai-lab/da\u2026,/opt/ai-lab/da\u2026,/etc/localtime,/var/run/docke\u2026",
         "Names": "traefik",
         "Networks": "proxy",
         "Platform": {
@@ -148,10 +148,10 @@ Routing priorities:
           "os": "linux"
         },
         "Ports": "0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp",
-        "RunningFor": "19 hours ago",
+        "RunningFor": "24 hours ago",
         "Size": "16.4kB (virtual 190MB)",
         "State": "running",
-        "Status": "Up 32 minutes"
+        "Status": "Up 6 hours"
       },
       {
         "Command": "\"./entrypoint.sh\"",
@@ -168,10 +168,10 @@ Routing priorities:
           "os": "linux"
         },
         "Ports": "0.0.0.0:6333-6334->6333-6334/tcp, [::]:6333-6334->6333-6334/tcp",
-        "RunningFor": "21 hours ago",
+        "RunningFor": "26 hours ago",
         "Size": "24.6kB (virtual 199MB)",
         "State": "running",
-        "Status": "Up 32 minutes"
+        "Status": "Up 6 hours"
       },
       {
         "Command": "\"bash start.sh\"",
@@ -188,10 +188,10 @@ Routing priorities:
           "os": "linux"
         },
         "Ports": "0.0.0.0:3000->8080/tcp, [::]:3000->8080/tcp",
-        "RunningFor": "23 hours ago",
+        "RunningFor": "28 hours ago",
         "Size": "54.3MB (virtual 5.04GB)",
         "State": "running",
-        "Status": "Up 32 minutes (healthy)"
+        "Status": "Up 6 hours (healthy)"
       },
       {
         "Command": "\"/bin/ollama serve\"",
@@ -208,10 +208,10 @@ Routing priorities:
           "os": "linux"
         },
         "Ports": "0.0.0.0:11434->11434/tcp, [::]:11434->11434/tcp",
-        "RunningFor": "23 hours ago",
+        "RunningFor": "28 hours ago",
         "Size": "16.4kB (virtual 6.56GB)",
         "State": "running",
-        "Status": "Up 32 minutes"
+        "Status": "Up 6 hours"
       },
       {
         "Command": "\"/portainer\"",
@@ -220,7 +220,7 @@ Routing priorities:
         "Image": "portainer/portainer-ce:latest",
         "Labels": "com.docker.compose.config-hash=ce5a79d75f29e29ccd685ad1fc5ae5aa7cc1082884660bbe2af954dd4e257d41,com.docker.compose.container-number=1,com.docker.compose.depends_on=,com.docker.compose.image=sha256:8d2f5c9fbc5b8490fb3a12efadbad74978e22991911e1db611d8a45871775112,com.docker.compose.oneoff=False,com.docker.compose.project.config_files=/opt/ai-lab/stacks/portainer/docker-compose.yml,com.docker.compose.project.working_dir=/opt/ai-lab/stacks/portainer,com.docker.compose.project=portainer,com.docker.compose.service=portainer,com.docker.compose.version=5.1.3,com.docker.desktop.extension.api.version=>= 0.2.2,com.docker.desktop.extension.icon=https://portainer-io-assets.sfo2.cdn.digitaloceanspaces.com/logos/portainer.png,com.docker.extension.additional-urls=[{\"title\":\"Website\",\"url\":\"https://www.portainer.io?utm_campaign=DockerCon&utm_source=DockerDesktop\"},{\"title\":\"Documentation\",\"url\":\"https://docs.portainer.io\"},{\"title\":\"Support\",\"url\":\"https://join.slack.com/t/portainer/shared_invite/zt-txh3ljab-52QHTyjCqbe5RibC2lcjKA\"}],com.docker.extension.detailed-description=<p data-renderer-start-pos=\"226\">Portainer&rsquo;s Docker Desktop extension gives you access to all of Portainer&rsquo;s rich management functionality within your docker desktop experience.</p><h2 data-renderer-start-pos=\"374\">With Portainer you can:</h2><ul><li>See all your running containers</li><li>Easily view all of your container logs</li><li>Console into containers</li><li>Easily deploy your code into containers using a simple form</li><li>Turn your YAML into custom templates for easy reuse</li></ul><h2 data-renderer-start-pos=\"660\">About Portainer&nbsp;</h2><p data-renderer-start-pos=\"680\">Portainer is the worlds&rsquo; most popular universal container management platform with more than 650,000 active monthly users. Portainer can be used to manage Docker Standalone, Kubernetes and Docker Swarm environments through a single common interface. It includes a simple GitOps automation engine and a Kube API.&nbsp;</p><p data-renderer-start-pos=\"1006\">Portainer Business Edition is our fully supported commercial grade product for business-wide use. It includes all the functionality that businesses need to manage containers at scale. Visit <a class=\"sc-jKJlTe dPfAtb\" href=\"http://portainer.io/\" title=\"http://Portainer.io\" data-renderer-mark=\"true\">Portainer.io</a> to learn more about Portainer Business and <a class=\"sc-jKJlTe dPfAtb\" href=\"http://portainer.io/take-3?utm_campaign=DockerCon&amp;utm_source=Docker%20Desktop\" title=\"http://portainer.io/take-3?utm_campaign=DockerCon&amp;utm_source=Docker%20Desktop\" data-renderer-mark=\"true\">get 3 free nodes.</a></p>,com.docker.extension.publisher-url=https://www.portainer.io,com.docker.extension.screenshots=[{\"alt\": \"screenshot one\", \"url\": \"https://portainer-io-assets.sfo2.digitaloceanspaces.com/screenshots/docker-extension-1.png\"},{\"alt\": \"screenshot two\", \"url\": \"https://portainer-io-assets.sfo2.digitaloceanspaces.com/screenshots/docker-extension-2.png\"},{\"alt\": \"screenshot three\", \"url\": \"https://portainer-io-assets.sfo2.digitaloceanspaces.com/screenshots/docker-extension-3.png\"},{\"alt\": \"screenshot four\", \"url\": \"https://portainer-io-assets.sfo2.digitaloceanspaces.com/screenshots/docker-extension-4.png\"},{\"alt\": \"screenshot five\", \"url\": \"https://portainer-io-assets.sfo2.digitaloceanspaces.com/screenshots/docker-extension-5.png\"},{\"alt\": \"screenshot six\", \"url\": \"https://portainer-io-assets.sfo2.digitaloceanspaces.com/screenshots/docker-extension-6.png\"},{\"alt\": \"screenshot seven\", \"url\": \"https://portainer-io-assets.sfo2.digitaloceanspaces.com/screenshots/docker-extension-7.png\"},{\"alt\": \"screenshot eight\", \"url\": \"https://portainer-io-assets.sfo2.digitaloceanspaces.com/screenshots/docker-extension-8.png\"},{\"alt\": \"screenshot nine\", \"url\": \"https://portainer-io-assets.sfo2.digitaloceanspaces.com/screenshots/docker-extension-9.png\"}],git_commit=ece7e56,io.portainer.server=true,org.opencontainers.image.created=2026-05-07T02:58:10Z,org.opencontainers.image.description=Portainer Community Edition server.,org.opencontainers.image.documentation=https://docs.portainer.io,org.opencontainers.image.revision=ece7e56,org.opencontainers.image.title=Portainer CE,org.opencontainers.image.url=https://www.portainer.io,org.opencontainers.image.vendor=Portainer.io,traefik.enable=true,traefik.http.routers.portainer.entrypoints=web,traefik.http.routers.portainer.rule=Host(`portainer.local`),traefik.http.services.portainer.loadbalancer.server.port=9000",
         "LocalVolumes": "0",
-        "Mounts": "/opt/ai-lab/da\u2026,/var/run/docke\u2026",
+        "Mounts": "/var/run/docke\u2026,/opt/ai-lab/da\u2026",
         "Names": "portainer",
         "Networks": "proxy",
         "Platform": {
@@ -228,10 +228,10 @@ Routing priorities:
           "os": "linux"
         },
         "Ports": "8000/tcp, 9443/tcp, 0.0.0.0:9000->9000/tcp, [::]:9000->9000/tcp",
-        "RunningFor": "23 hours ago",
+        "RunningFor": "28 hours ago",
         "Size": "16.4kB (virtual 182MB)",
         "State": "running",
-        "Status": "Up 32 minutes"
+        "Status": "Up 6 hours"
       }
     ]
   },
@@ -247,13 +247,29 @@ Routing priorities:
       },
       {
         "node": "Gaming PC RX7900XT",
-        "online": false,
-        "error": "HTTPConnectionPool(host='192.168.1.60', port=1234): Max retries exceeded with url: /v1/models (Caused by NewConnectionError(\"HTTPConnection(host='192.168.1.60', port=1234): Failed to establish a new connection: [Errno 113] No route to host\"))"
+        "online": true,
+        "models": [
+          "qwen2.5-coder-14b-instruct",
+          "zhangfeng026/qwen2.5-coder-32b-instruct",
+          "lmstudio-community/qwen2.5-coder-32b-instruct",
+          "qwen2.5-coder-32b",
+          "deepseek-r1-0528-qwen3-8b",
+          "qwen3-14b-claude-sonnet-4.5-reasoning-distill",
+          "flux.2-klein-9b",
+          "moondream2-20250414",
+          "qwen/qwen2.5-coder-32b-instruct",
+          "deepseek-coder-v2-lite-instruct",
+          "text-embedding-nomic-embed-text-v2-moe",
+          "llama-3.2-1b-instruct",
+          "google/gemma-4-26b-a4b",
+          "text-embedding-nomic-embed-text-v1.5"
+        ]
       },
       {
         "node": "Gaming PC RX9070XT",
         "online": true,
         "models": [
+          "qwen3-14b-claude-sonnet-4.5-reasoning-distill",
           "text-embedding-nomic-embed-text-v1.5"
         ]
       }
@@ -264,26 +280,38 @@ Routing priorities:
       "node": "Gaming PC RX9070XT",
       "host": "192.168.1.50",
       "gpu_usage": {
-        "max_gpu_usage_percent": 0.05,
+        "max_gpu_usage_percent": 0.59,
         "active_engines": [
           {
             "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_1192_luid_0x00000000_0x0001A54E_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
-            "value": 0.048941
+            "value": 0.586956
+          },
+          {
+            "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_13740_luid_0x00000000_0x0001A54E_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
+            "value": 0.471385
+          },
+          {
+            "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_1496_luid_0x00000000_0x0001A54E_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
+            "value": 0.033009
           },
           {
             "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_17384_luid_0x00000000_0x0001A54E_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
-            "value": 0.034092
+            "value": 0.584987
+          },
+          {
+            "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_8948_luid_0x00000000_0x0001A54E_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
+            "value": 0.001364
           }
         ]
       },
       "vram": {
-        "vram_used_gib": 2.31,
+        "vram_used_gib": 2.69,
         "vram_total_gib": 16,
-        "vram_free_gib_estimated": 13.69,
+        "vram_free_gib_estimated": 13.31,
         "raw_samples": [
           {
             "path": "\\\\X870EAORUSPRO\\GPU Adapter Memory(luid_0x00000000_0x0001A54E_phys_0)\\Dedicated Usage",
-            "value": 2479771648.0
+            "value": 2893172736.0
           },
           {
             "path": "\\\\X870EAORUSPRO\\GPU Adapter Memory(luid_0x00000000_0x0001D764_phys_0)\\Dedicated Usage",
@@ -296,10 +324,32 @@ Routing priorities:
       "node": "Gaming PC RX7900XT",
       "host": "192.168.1.60",
       "gpu_usage": {
-        "error": "ssh: connect to host 192.168.1.60 port 22: No route to host"
+        "max_gpu_usage_percent": 0.02,
+        "active_engines": [
+          {
+            "path": "\\\\X870AORUSELITE\\GPU Engine(pid_19236_luid_0x00000000_0x01F7A422_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
+            "value": 0.019091
+          },
+          {
+            "path": "\\\\X870AORUSELITE\\GPU Engine(pid_8168_luid_0x00000000_0x01F7A422_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
+            "value": 0.008925
+          }
+        ]
       },
       "vram": {
-        "error": "ssh: connect to host 192.168.1.60 port 22: No route to host"
+        "vram_used_gib": 13.13,
+        "vram_total_gib": 20,
+        "vram_free_gib_estimated": 6.87,
+        "raw_samples": [
+          {
+            "path": "\\\\X870AORUSELITE\\GPU Adapter Memory(luid_0x00000000_0x000165A5_phys_0)\\Dedicated Usage",
+            "value": 0.0
+          },
+          {
+            "path": "\\\\X870AORUSELITE\\GPU Adapter Memory(luid_0x00000000_0x01F7A422_phys_0)\\Dedicated Usage",
+            "value": 14103384064.0
+          }
+        ]
       }
     }
   ]
