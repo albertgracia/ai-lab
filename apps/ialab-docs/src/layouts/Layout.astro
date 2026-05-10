@@ -1,0 +1,62 @@
+---
+import "../styles/global.css";
+
+const { title = "AI-LAB" } = Astro.props;
+---
+
+<!doctype html>
+<html lang="es" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>{title}</title>
+  </head>
+
+  <body class="min-h-screen bg-zinc-950 text-zinc-100">
+    <div class="flex min-h-screen">
+      <aside class="hidden w-72 border-r border-zinc-800 bg-zinc-950 p-6 md:block">
+        <a href="/" class="block">
+          <h1 class="text-2xl font-bold text-cyan-400">AI-LAB</h1>
+          <p class="mt-2 text-sm text-zinc-500">
+            Cognitive Infrastructure
+          </p>
+        </a>
+
+        <nav class="mt-10 space-y-3">
+          <a href="/" class="block rounded-lg px-3 py-2 text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400">
+            Inicio
+          </a>
+
+          <a href="/docs" class="block rounded-lg px-3 py-2 text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400">
+            Documentación
+          </a>
+
+          <a href="/blog" class="block rounded-lg px-3 py-2 text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400">
+            Blog Técnico
+          </a>
+
+          <a href="/runbooks" class="block rounded-lg px-3 py-2 text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400">
+            Runbooks
+          </a>
+
+          <a href="/status" class="block rounded-lg px-3 py-2 text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400">
+            Estado del LAB
+          </a>
+        </nav>
+
+        <div class="mt-10 rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+          <p class="text-xs uppercase tracking-wide text-zinc-500">
+            Runtime
+          </p>
+          <p class="mt-2 text-sm text-zinc-300">
+            Router · GPUs · Docker · OpenCode
+          </p>
+        </div>
+      </aside>
+
+      <main class="flex-1 p-6 md:p-10">
+        <slot />
+      </main>
+    </div>
+  </body>
+</html>

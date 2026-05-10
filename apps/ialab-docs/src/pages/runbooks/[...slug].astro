@@ -1,0 +1,28 @@
+---
+import { getCollection, render } from "astro:content";
+import Layout from "../../layouts/Layout.astro";
+
+export async function getStaticPaths() {
+  const runbooks = await getCollection("runbooks");
+
+  return runbooks.map((runbook) => ({
+    params: { slug: runbook.id.replace(/\.md$/, "") },
+    props: { runbook },
+  }));
+}
+
+const { runbook } = Astro.props;
+const { Content } = await render(runbook);
+---
+
+<Layout title={runbook.data.title}>
+  <article class="prose prose-invert prose-cyan max-w-4xl">
+    <p class="uppercase text-xs text-amber-400">
+      Severity: {runbook.data.severity}
+    </p>
+
+    <h1>{runbook.data.title}</h1>
+    <p class="text-zinc-400">{runbook.data.summary}</p>
+    <Content />
+  </article>
+</Layout>
