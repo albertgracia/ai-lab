@@ -1,0 +1,47 @@
+<div
+  id="live-status"
+  class="mt-6 rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm text-zinc-400"
+>
+  <span class="text-cyan-400">LIVE</span>
+  · esperando actualización...
+</div>
+
+<script>
+  async function refreshStatus() {
+    const el = document.getElementById("live-status");
+
+    try {
+      const res = await fetch("/api/status.json", {
+        cache: "no-store",
+      });
+
+      const data = await res.json();
+
+      const gpuCount = Array.isArray(data.gpu) ? data.gpu.length : 0;
+      const dockerCount = Array.isArray(data.docker?.containers)
+        ? data.docker.containers.length
+        : 0;
+      const llmCount = Array.isArray(data.llm?.lmstudio_nodes)
+        ? data.llm.lmstudio_nodes.length
+        : 0;
+
+      const now = new Date().toLocaleTimeString();
+
+      el.innerHTML = `
+        <span class="text-emerald-400">LIVE</span>
+        · última actualización: ${now}
+        · GPUs: ${gpuCount}
+        · LLM nodes: ${llmCount}
+        · containers: ${dockerCount}
+      `;
+    } catch (err) {
+      el.innerHTML = `
+        <span class="text-red-400">OFFLINE</span>
+        · no se pudo leer /api/status.json
+      `;
+    }
+  }
+
+  refreshStatus();
+  setInterval(refreshStatus, 5000);
+</script>

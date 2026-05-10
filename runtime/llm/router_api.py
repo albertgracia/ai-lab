@@ -10,6 +10,17 @@ from runtime.state.system_state import build_system_state
 
 app = FastAPI(title="AI-LAB Router API")
 
+@app.get("/")
+def root():
+    return {
+        "service": "AI-LAB Router API",
+        "status": "ok",
+        "endpoints": [
+            "/health",
+            "/v1/models",
+            "/v1/chat/completions",
+        ],
+    }
 
 SYSTEM_CONTEXT = """
 Eres el router cognitivo del AI-LAB de Albert.

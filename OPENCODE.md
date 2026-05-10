@@ -1,3 +1,135 @@
+# FILE: /opt/ai-lab/config/opencode/AI_LAB_CONTEXT.md
+
+# AI-LAB CONTEXT
+
+You are operating inside Albert's local AI-Lab infrastructure.
+
+Always respond in Spanish unless explicitly requested otherwise.
+
+## Environment
+
+Main Linux node:
+- Hostname: ubuntu-ialab
+- IP: 192.168.1.30
+- Project root: /opt/ai-lab
+
+Windows GPU nodes:
+- Gaming PC RX9070XT
+  - IP: 192.168.1.50
+  - Hostname: X870EAORUSPRO
+  - SSH user: ailab
+  - VRAM: 16 GB
+
+- Gaming PC RX7900XT
+  - IP: 192.168.1.60
+  - Hostname: X870AORUSELITE
+  - SSH user: ailab
+  - VRAM: 20 GB
+
+## Core services
+
+Docker services:
+- traefik
+- qdrant
+- open-webui
+- ollama
+- portainer
+
+Runtime:
+- runtime/state/system_state.py
+- runtime/state/gpu_state.py
+- runtime/llm/model_router.py
+- runtime/llm/invoke.py
+
+## Rules
+
+Never invent files, ports, services, logs, or configuration.
+Use runtime state as source of truth.
+Prefer safe diagnostics before proposing changes.
+Do not restart, delete, overwrite, or modify infrastructure without explicit confirmation.
+Always distinguish FACT from HYPOTHESIS.
+For code changes, explain target file and expected effect.
+For infra changes, include rollback.
+
+
+---
+
+# FILE: /opt/ai-lab/config/opencode/POLICY.md
+
+# OPENCODE POLICY FOR AI-LAB
+
+## Language
+Always answer in Spanish.
+
+## Safety
+Do not perform destructive changes automatically.
+No rm -rf.
+No docker compose down unless explicitly approved.
+No systemctl restart unless explicitly approved.
+No editing production configs without backup.
+No secrets in logs.
+
+## Reasoning
+Use evidence from:
+- system_state.py
+- gpu_state.py
+- docker inspect/logs
+- git status
+- current files
+
+## Workflow
+1. Understand request.
+2. Inspect relevant files.
+3. Build hypothesis.
+4. Propose minimal change.
+5. Validate.
+6. Document result.
+
+## Preferred output
+- concise
+- actionable
+- command blocks
+- explain risk
+- include rollback when needed
+
+
+---
+
+# FILE: /opt/ai-lab/config/opencode/MODEL_STRATEGY.md
+
+# MODEL STRATEGY
+
+Default fast model:
+- google/gemma-4-e4b
+
+Reasoning model:
+- qwen3-14b-claude-sonnet-4.5-reasoning-distill
+
+Coding model:
+- qwen2.5-coder-14b-instruct
+- qwen2.5-coder-32b-instruct if enough VRAM
+
+Embedding model:
+- text-embedding-nomic-embed-text-v1.5
+
+Vision:
+- moondream2
+
+Image:
+- flux.2-klein-9b
+
+Routing priorities:
+1. Prefer online nodes.
+2. Prefer models already loaded.
+3. Prefer node with enough VRAM.
+4. Prefer lower GPU usage.
+5. Fallback to Main LM Studio.
+
+
+---
+
+# FILE: /opt/ai-lab/runtime/state/system_snapshot.json
+
 {
   "docker": {
     "containers": [
@@ -8,7 +140,7 @@
         "Image": "traefik:latest",
         "Labels": "com.docker.compose.config-hash=d7f80995e9ced71424becf4213a10ec5c26e62b796f82096017078b8ae159629,com.docker.compose.container-number=1,com.docker.compose.depends_on=,com.docker.compose.image=sha256:eb328e2c806c53aafbbace6c451fa54d268961261a85452fcf0fb752a30c17be,com.docker.compose.oneoff=False,com.docker.compose.project.config_files=/opt/ai-lab/stacks/traefik/docker-compose.yml,com.docker.compose.project.working_dir=/opt/ai-lab/stacks/traefik,com.docker.compose.project=traefik,com.docker.compose.replace=traefik,com.docker.compose.service=traefik,com.docker.compose.version=5.1.3,org.opencontainers.image.description=A modern reverse-proxy,org.opencontainers.image.documentation=https://docs.traefik.io,org.opencontainers.image.source=https://github.com/traefik/traefik,org.opencontainers.image.title=Traefik,org.opencontainers.image.url=https://traefik.io,org.opencontainers.image.vendor=Traefik Labs,org.opencontainers.image.version=v3.7.0",
         "LocalVolumes": "0",
-        "Mounts": "/opt/ai-lab/da\u2026,/etc/localtime,/var/run/docke\u2026,/opt/ai-lab/da\u2026",
+        "Mounts": "/etc/localtime,/var/run/docke\u2026,/opt/ai-lab/da\u2026,/opt/ai-lab/da\u2026",
         "Names": "traefik",
         "Networks": "proxy",
         "Platform": {
@@ -16,10 +148,10 @@
           "os": "linux"
         },
         "Ports": "0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp",
-        "RunningFor": "24 hours ago",
+        "RunningFor": "19 hours ago",
         "Size": "16.4kB (virtual 190MB)",
         "State": "running",
-        "Status": "Up 6 hours"
+        "Status": "Up 32 minutes"
       },
       {
         "Command": "\"./entrypoint.sh\"",
@@ -36,10 +168,10 @@
           "os": "linux"
         },
         "Ports": "0.0.0.0:6333-6334->6333-6334/tcp, [::]:6333-6334->6333-6334/tcp",
-        "RunningFor": "26 hours ago",
+        "RunningFor": "21 hours ago",
         "Size": "24.6kB (virtual 199MB)",
         "State": "running",
-        "Status": "Up 6 hours"
+        "Status": "Up 32 minutes"
       },
       {
         "Command": "\"bash start.sh\"",
@@ -56,10 +188,10 @@
           "os": "linux"
         },
         "Ports": "0.0.0.0:3000->8080/tcp, [::]:3000->8080/tcp",
-        "RunningFor": "28 hours ago",
+        "RunningFor": "23 hours ago",
         "Size": "54.3MB (virtual 5.04GB)",
         "State": "running",
-        "Status": "Up 6 hours (healthy)"
+        "Status": "Up 32 minutes (healthy)"
       },
       {
         "Command": "\"/bin/ollama serve\"",
@@ -76,10 +208,10 @@
           "os": "linux"
         },
         "Ports": "0.0.0.0:11434->11434/tcp, [::]:11434->11434/tcp",
-        "RunningFor": "28 hours ago",
+        "RunningFor": "23 hours ago",
         "Size": "16.4kB (virtual 6.56GB)",
         "State": "running",
-        "Status": "Up 6 hours"
+        "Status": "Up 32 minutes"
       },
       {
         "Command": "\"/portainer\"",
@@ -96,10 +228,10 @@
           "os": "linux"
         },
         "Ports": "8000/tcp, 9443/tcp, 0.0.0.0:9000->9000/tcp, [::]:9000->9000/tcp",
-        "RunningFor": "28 hours ago",
+        "RunningFor": "23 hours ago",
         "Size": "16.4kB (virtual 182MB)",
         "State": "running",
-        "Status": "Up 6 hours"
+        "Status": "Up 32 minutes"
       }
     ]
   },
@@ -115,29 +247,13 @@
       },
       {
         "node": "Gaming PC RX7900XT",
-        "online": true,
-        "models": [
-          "zhangfeng026/qwen2.5-coder-32b-instruct",
-          "lmstudio-community/qwen2.5-coder-32b-instruct",
-          "qwen2.5-coder-32b",
-          "deepseek-r1-0528-qwen3-8b",
-          "qwen3-14b-claude-sonnet-4.5-reasoning-distill",
-          "flux.2-klein-9b",
-          "moondream2-20250414",
-          "qwen2.5-coder-14b-instruct",
-          "qwen/qwen2.5-coder-32b-instruct",
-          "deepseek-coder-v2-lite-instruct",
-          "text-embedding-nomic-embed-text-v2-moe",
-          "llama-3.2-1b-instruct",
-          "google/gemma-4-26b-a4b",
-          "text-embedding-nomic-embed-text-v1.5"
-        ]
+        "online": false,
+        "error": "HTTPConnectionPool(host='192.168.1.60', port=1234): Max retries exceeded with url: /v1/models (Caused by NewConnectionError(\"HTTPConnection(host='192.168.1.60', port=1234): Failed to establish a new connection: [Errno 113] No route to host\"))"
       },
       {
         "node": "Gaming PC RX9070XT",
         "online": true,
         "models": [
-          "qwen3-14b-claude-sonnet-4.5-reasoning-distill",
           "text-embedding-nomic-embed-text-v1.5"
         ]
       }
@@ -148,42 +264,26 @@
       "node": "Gaming PC RX9070XT",
       "host": "192.168.1.50",
       "gpu_usage": {
-        "max_gpu_usage_percent": 0.73,
+        "max_gpu_usage_percent": 0.05,
         "active_engines": [
           {
             "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_1192_luid_0x00000000_0x0001A54E_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
-            "value": 0.06683
-          },
-          {
-            "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_13740_luid_0x00000000_0x0001A54E_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
-            "value": 0.516742
-          },
-          {
-            "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_1496_luid_0x00000000_0x0001A54E_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
-            "value": 0.032882
+            "value": 0.048941
           },
           {
             "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_17384_luid_0x00000000_0x0001A54E_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
-            "value": 0.126404
-          },
-          {
-            "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_4_luid_0x00000000_0x0001A54E_phys_0_eng_3_engtype_Copy)\\Utilization Percentage",
-            "value": 0.733386
-          },
-          {
-            "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_8948_luid_0x00000000_0x0001A54E_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
-            "value": 0.001495
+            "value": 0.034092
           }
         ]
       },
       "vram": {
-        "vram_used_gib": 2.69,
+        "vram_used_gib": 2.31,
         "vram_total_gib": 16,
-        "vram_free_gib_estimated": 13.31,
+        "vram_free_gib_estimated": 13.69,
         "raw_samples": [
           {
             "path": "\\\\X870EAORUSPRO\\GPU Adapter Memory(luid_0x00000000_0x0001A54E_phys_0)\\Dedicated Usage",
-            "value": 2893172736.0
+            "value": 2479771648.0
           },
           {
             "path": "\\\\X870EAORUSPRO\\GPU Adapter Memory(luid_0x00000000_0x0001D764_phys_0)\\Dedicated Usage",
@@ -196,28 +296,10 @@
       "node": "Gaming PC RX7900XT",
       "host": "192.168.1.60",
       "gpu_usage": {
-        "max_gpu_usage_percent": 0.01,
-        "active_engines": [
-          {
-            "path": "\\\\X870AORUSELITE\\GPU Engine(pid_8168_luid_0x00000000_0x01F7A422_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
-            "value": 0.008881
-          }
-        ]
+        "error": "ssh: connect to host 192.168.1.60 port 22: No route to host"
       },
       "vram": {
-        "vram_used_gib": 1.45,
-        "vram_total_gib": 20,
-        "vram_free_gib_estimated": 18.55,
-        "raw_samples": [
-          {
-            "path": "\\\\X870AORUSELITE\\GPU Adapter Memory(luid_0x00000000_0x000165A5_phys_0)\\Dedicated Usage",
-            "value": 0.0
-          },
-          {
-            "path": "\\\\X870AORUSELITE\\GPU Adapter Memory(luid_0x00000000_0x01F7A422_phys_0)\\Dedicated Usage",
-            "value": 1560608768.0
-          }
-        ]
+        "error": "ssh: connect to host 192.168.1.60 port 22: No route to host"
       }
     }
   ]

@@ -1,0 +1,35 @@
+---
+const {
+  title,
+  status = "online",
+  children,
+} = Astro.props;
+
+const colors = {
+  online: "border-emerald-500/40 bg-emerald-500/10 text-emerald-400",
+  degraded: "border-amber-500/40 bg-amber-500/10 text-amber-400",
+  offline: "border-red-500/40 bg-red-500/10 text-red-400",
+};
+
+const badge = colors[status] || colors.online;
+---
+
+<div class="rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-xl">
+
+  <div class="flex items-center justify-between">
+
+    <h3 class="text-xl font-semibold text-white">
+      {title}
+    </h3>
+
+    <span class={`rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wide ${badge}`}>
+      {status}
+    </span>
+
+  </div>
+
+  <div class="mt-6">
+    <slot />
+  </div>
+
+</div>
