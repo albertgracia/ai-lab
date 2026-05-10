@@ -1,44 +1,181 @@
 ---
 import "../styles/global.css";
 
+export interface Props {
+  title?: string;
+}
+
 const { title = "AI-LAB" } = Astro.props;
 ---
 
 <!doctype html>
 <html lang="es" class="dark">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
-    <title>{title}</title>
-  </head>
 
-  <body class="min-h-screen bg-zinc-950 text-zinc-100">
-    <div class="flex min-h-screen">
-      <aside class="hidden w-72 border-r border-zinc-800 bg-zinc-950 p-6 md:block">
-        <a href="/" class="block">
-          <h1 class="text-2xl font-bold text-cyan-400">AI-LAB</h1>
-          <p class="mt-2 text-sm text-zinc-500">Cognitive Infrastructure</p>
-        </a>
+<head>
+  <meta charset="UTF-8" />
 
-        <nav class="mt-10 space-y-3">
-          <a href="/" class="block rounded-lg px-3 py-2 text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400">Inicio</a>
-          <a href="/docs" class="block rounded-lg px-3 py-2 text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400">Documentación</a>
-          <a href="/blog" class="block rounded-lg px-3 py-2 text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400">Blog Técnico</a>
-          <a href="/runbooks" class="block rounded-lg px-3 py-2 text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400">Runbooks</a>
-          <a href="/services" class="block rounded-lg px-3 py-2 text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400">Servicios</a>
-          <a href="/status" class="block rounded-lg px-3 py-2 text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400">Estado Vivo</a>
-          <a href="/status/history" class="hover:text-cyan-400 transition">history</a>
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>{title}</title>
+
+  <link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+  />
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  />
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  />
+</head>
+
+<body class="bg-black text-white font-[Inter]">
+
+  <div class="min-h-screen flex">
+
+    <!-- SIDEBAR -->
+
+    <aside class="w-[300px] border-r border-zinc-800 bg-black/90 backdrop-blur sticky top-0 h-screen flex flex-col justify-between">
+
+      <div>
+
+        <!-- LOGO -->
+
+        <div class="p-6 border-b border-zinc-800">
+
+          <a href="/" class="block">
+
+            <h1 class="text-5xl font-black tracking-tight text-cyan-400">
+              AI-LAB
+            </h1>
+
+            <p class="mt-3 text-zinc-500 text-lg">
+              Cognitive Infrastructure
+            </p>
+
+          </a>
+
+        </div>
+
+        <!-- NAVIGATION -->
+
+        <nav class="p-5 space-y-2 text-lg">
+
+          <a
+            href="/"
+            class="block rounded-xl px-4 py-3 text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400 transition"
+          >
+            Inicio
+          </a>
+
+          <a
+            href="/architecture"
+            class="block rounded-xl px-4 py-3 text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400 transition"
+          >
+            Arquitectura
+          </a>
+
+          <a
+            href="/docs"
+            class="block rounded-xl px-4 py-3 text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400 transition"
+          >
+            Documentación
+          </a>
+
+          <a
+            href="/blog"
+            class="block rounded-xl px-4 py-3 text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400 transition"
+          >
+            Blog Técnico
+          </a>
+
+          <a
+            href="/runbooks"
+            class="block rounded-xl px-4 py-3 text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400 transition"
+          >
+            Runbooks
+          </a>
+
+          <a
+            href="/services"
+            class="block rounded-xl px-4 py-3 text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400 transition"
+          >
+            Servicios
+          </a>
+
+          <a
+            href="/status"
+            class="block rounded-xl px-4 py-3 text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400 transition"
+          >
+            Estado Vivo
+          </a>
+
+          <a
+            href="/status/history"
+            class="block rounded-xl px-4 py-3 text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400 transition"
+          >
+            Historical Telemetry
+          </a>
+
         </nav>
 
-        <div class="mt-10 rounded-xl border border-zinc-800 bg-zinc-900 p-4">
-          <p class="text-xs uppercase tracking-wide text-zinc-500">Runtime</p>
-          <p class="mt-2 text-sm text-zinc-300">Router · GPUs · Docker · OpenCode</p>
-        </div>
-      </aside>
+      </div>
 
-      <main class="flex-1 p-6 md:p-10">
+      <!-- FOOTER RUNTIME -->
+
+      <div class="p-5">
+
+        <div class="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
+
+          <p class="text-xs uppercase tracking-[0.3em] text-zinc-500">
+            Runtime
+          </p>
+
+          <div class="mt-4 space-y-2 text-lg">
+
+            <div class="text-zinc-300">
+              Router · GPUs · Docker · OpenCode
+            </div>
+
+            <div class="flex items-center gap-2 text-green-400 text-sm">
+
+              <div class="h-2 w-2 rounded-full bg-green-400 animate-pulse"></div>
+
+              <span>Operational</span>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </aside>
+
+    <!-- CONTENT -->
+
+    <main class="flex-1 overflow-x-hidden">
+
+      <div class="mx-auto max-w-7xl px-10 py-10">
+
         <slot />
-      </main>
-    </div>
-  </body>
+
+      </div>
+
+    </main>
+
+  </div>
+
+</body>
+
 </html>

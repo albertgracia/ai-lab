@@ -1,0 +1,50 @@
+---
+import Layout from "../../../layouts/Layout.astro";
+---
+
+<Layout title="Security · AI-LAB">
+  <section class="space-y-10">
+    <div>
+      <p class="uppercase tracking-[0.3em] text-cyan-400 text-sm">Zero Trust Architecture</p>
+      <h1 class="mt-4 text-5xl font-black text-white">Seguridad y publicación externa</h1>
+      <p class="mt-4 max-w-4xl text-xl text-zinc-400">
+        AI-LAB se publica mediante Cloudflare Access, Cloudflare Tunnel y Traefik sin abrir puertos de entrada.
+      </p>
+    </div>
+
+    <section class="rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
+      <h2 class="text-3xl font-bold">Cadena de acceso</h2>
+
+      <pre class="mermaid mt-8 rounded-xl bg-zinc-950 p-6">
+flowchart LR
+    User[Usuario] --> Access[Cloudflare Access]
+    Access --> Tunnel[Cloudflare Tunnel]
+    Tunnel --> Traefik[Traefik Reverse Proxy]
+    Traefik --> Astro[AI-LAB Astro Portal]
+    Astro --> Runtime[Runtime + Telemetry]
+      </pre>
+    </section>
+
+    <div class="grid gap-6 md:grid-cols-3">
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+        <h2 class="text-xl font-bold text-cyan-400">Sin puertos abiertos</h2>
+        <p class="mt-3 text-zinc-400">El acceso externo entra por túnel saliente seguro.</p>
+      </div>
+
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+        <h2 class="text-xl font-bold text-cyan-400">Zero Trust</h2>
+        <p class="mt-3 text-zinc-400">Cloudflare Access protege antes de llegar al homelab.</p>
+      </div>
+
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+        <h2 class="text-xl font-bold text-cyan-400">Traefik Gateway</h2>
+        <p class="mt-3 text-zinc-400">Traefik centraliza el routing interno.</p>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    import mermaid from "mermaid";
+    mermaid.initialize({ startOnLoad: true, theme: "dark", securityLevel: "loose" });
+  </script>
+</Layout>

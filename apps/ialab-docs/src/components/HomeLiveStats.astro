@@ -1,0 +1,60 @@
+<div class="grid gap-4 md:grid-cols-5" id="home-live-stats">
+  <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+    <p class="text-sm text-zinc-500">GPUs</p>
+    <p class="mt-2 text-3xl font-black text-cyan-400" id="stat-gpus">--</p>
+  </div>
+
+  <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+    <p class="text-sm text-zinc-500">LLM Nodes</p>
+    <p class="mt-2 text-3xl font-black text-cyan-400" id="stat-llm">--</p>
+  </div>
+
+  <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+    <p class="text-sm text-zinc-500">Docker</p>
+    <p class="mt-2 text-3xl font-black text-cyan-400" id="stat-docker">--</p>
+  </div>
+
+  <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+    <p class="text-sm text-zinc-500">VRAM usada</p>
+    <p class="mt-2 text-3xl font-black text-cyan-400" id="stat-vram">--</p>
+  </div>
+
+  <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+    <p class="text-sm text-zinc-500">Estado</p>
+    <p class="mt-2 text-3xl font-black text-emerald-400" id="stat-status">LIVE</p>
+  </div>
+</div>
+
+<script>
+  async function refreshHomeStats() {
+    try {
+      const res = await fetch("/api/status.json", { cache: "no-store" });
+      const data = await res.json();
+
+      const gpu = Array.isArray(data.gpu) ? data.gpu : [];
+      const llm = Array.isArray(data.llm?.lmstudio_nodes) ? data.llm.lmstudio_nodes : [];
+      const docker = Array.isArray(data.docker?.containers) ? data.docker.containers : [];
+
+      const gpuOnline = gpu.filter((n) => !(n.gpu_usage?.error || n.vram?.error)).length;
+      const llmOnline = llm.filter((n) => n.online).length;
+      const dockerRunning = docker.filter((c) => c.State === "running").length;
+
+      const vramUsed = gpu
+        .map((n) => Number(n.vram?.vram_used_gib || 0))
+        .reduce((a, b) => a + b, 0)
+        .toFixed(1);
+
+      document.getElementById("stat-gpus").textContent = `${gpuOnline}/${gpu.length}`;
+      document.getElementById("stat-llm").textContent = `${llmOnline}/${llm.length}`;
+      document.getElementById("stat-docker").textContent = `${dockerRunning}/${docker.length}`;
+      document.getElementById("stat-vram").textContent = `${vramUsed} GiB`;
+      document.getElementById("stat-status").textContent = "LIVE";
+    } catch {
+      document.getElementById("stat-status").textContent = "OFF";
+      document.getElementById("stat-status").className = "mt-2 text-3xl font-black text-red-400";
+    }
+  }
+
+  refreshHomeStats();
+  setInterval(refreshHomeStats, 5000);
+</script>

@@ -1,0 +1,40 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout title="Projects · AI-LAB">
+  <section class="space-y-10">
+    <div>
+      <p class="uppercase tracking-[0.3em] text-cyan-400 text-sm">Engineering Portfolio</p>
+      <h1 class="mt-4 text-5xl font-black text-white">Proyectos técnicos</h1>
+      <p class="mt-4 max-w-4xl text-xl text-zinc-400">
+        Proyectos reales desplegados, operativos y documentados dentro del AI-LAB.
+      </p>
+    </div>
+
+    <div class="grid gap-6">
+      {[
+        {
+          title: "AI-LAB Platform",
+          desc: "Infraestructura local de IA distribuida con router OpenAI-compatible, GPUs remotas y observabilidad viva.",
+          url: "/architecture",
+        },
+        {
+          title: "Historical Telemetry",
+          desc: "Snapshots históricos, API propia y gráficas Recharts para observar evolución del runtime.",
+          url: "/status/history",
+        },
+        {
+          title: "Secure Publishing",
+          desc: "Publicación segura con Cloudflare Access, Tunnel y Traefik como gateway interno.",
+          url: "/architecture/security",
+        },
+      ].map((project) => (
+        <a href={project.url} class="block rounded-2xl border border-zinc-800 bg-zinc-900 p-8 hover:border-cyan-500 transition">
+          <h2 class="text-3xl font-bold text-cyan-400">{project.title}</h2>
+          <p class="mt-4 text-zinc-400">{project.desc}</p>
+        </a>
+      ))}
+    </div>
+  </section>
+</Layout>

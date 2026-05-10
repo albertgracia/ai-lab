@@ -1,0 +1,101 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout title="AI-LAB Architecture">
+
+<section class="space-y-10">
+
+  <div>
+    <p class="uppercase tracking-[0.3em] text-cyan-400 text-sm">
+      AI-LAB Architecture
+    </p>
+
+    <h1 class="mt-4 text-5xl font-black text-white">
+      Arquitectura Visual del Laboratorio
+    </h1>
+
+    <p class="mt-5 max-w-4xl text-xl text-zinc-400">
+      Plataforma de inferencia IA distribuida, observabilidad histórica,
+      runtime persistente y routing OpenAI-compatible.
+    </p>
+  </div>
+
+  <section class="grid gap-6 md:grid-cols-3">
+    <div class="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+      <h2 class="text-2xl font-bold text-cyan-400">Runtime</h2>
+      <p class="mt-3 text-zinc-400">
+        Router API, snapshots vivos, observabilidad y servicios persistentes.
+      </p>
+    </div>
+
+    <div class="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+      <h2 class="text-2xl font-bold text-cyan-400">GPUs</h2>
+      <p class="mt-3 text-zinc-400">
+        RX9070XT + RX7900XT distribuidas mediante LM Studio.
+      </p>
+    </div>
+
+    <div class="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+      <h2 class="text-2xl font-bold text-cyan-400">Storage</h2>
+      <p class="mt-3 text-zinc-400">
+        Snapshots históricos, embeddings, modelos IA y runtime persistente.
+      </p>
+    </div>
+  </section>
+
+  <section class="rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
+    <h2 class="text-3xl font-bold">Topología general</h2>
+
+    <pre class="mermaid mt-8 rounded-xl bg-zinc-950 p-6">
+flowchart LR
+    User[Usuarios] --> Cloudflare[Cloudflare Tunnel]
+    Cloudflare --> Astro[Astro Portal]
+    User --> Router[Router API]
+
+    Router --> Runtime[Live Runtime]
+    Runtime --> History[Historical Telemetry]
+
+    Router --> GPU1[RX9070XT]
+    Router --> GPU2[RX7900XT]
+
+    GPU1 --> LM1[LM Studio]
+    GPU2 --> LM2[LM Studio]
+
+    Router --> Qdrant[Qdrant]
+    Storage[AI Storage] --> History
+    </pre>
+  </section>
+
+  <section class="rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
+    <h2 class="text-3xl font-bold">Runtime persistente</h2>
+
+    <pre class="mermaid mt-8 rounded-xl bg-zinc-950 p-6">
+flowchart TD
+    systemd[systemd] --> Docs[ialab-docs]
+    systemd --> Router[ialab-router-api]
+    systemd --> State[ialab-live-state]
+
+    State --> Snapshot[system_snapshot.json]
+
+    Snapshot --> StatusAPI[/api/status.json/]
+    Snapshot --> HistAPI[/api/history.json/]
+
+    StatusAPI --> Status[/status/]
+    HistAPI --> Telemetry[/status/history/]
+    </pre>
+  </section>
+
+</section>
+
+<script>
+  import mermaid from "mermaid";
+
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: "dark",
+    securityLevel: "loose",
+  });
+</script>
+
+</Layout>
