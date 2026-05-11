@@ -1,10 +1,27 @@
 ---
 import "../styles/global.css";
 
+import SidebarLink from "../components/SidebarLink.astro";
+
+import {
+  House,
+  Cpu,
+  FolderKanban,
+  ShieldCheck,
+  BookOpen,
+  Newspaper,
+  Wrench,
+  Server,
+  Activity,
+  MonitorSmartphone,
+  BarChart3,
+} from "@lucide/astro";
+
 const { title = "AI-LAB" } = Astro.props;
 ---
 
 <!doctype html>
+
 <html lang="es" class="dark">
 
 <head>
@@ -36,120 +53,101 @@ const { title = "AI-LAB" } = Astro.props;
 
 </head>
 
-<body class="bg-black text-white font-[Inter]">
+<body class="bg-black text-white font-[Inter] overflow-x-hidden">
 
   <div class="min-h-screen flex">
 
     <!-- SIDEBAR -->
 
-    <aside class="w-[300px] border-r border-zinc-800 bg-black/90 backdrop-blur sticky top-0 h-screen flex flex-col justify-between">
+    <aside class="w-[320px] border-r border-zinc-900 bg-black/90 backdrop-blur sticky top-0 h-screen flex flex-col justify-between">
 
       <div>
 
         <!-- LOGO -->
 
-        <div class="p-6 border-b border-zinc-800">
+        <div class="p-10 border-b border-zinc-900">
 
-          <a href="/" class="block">
+          <a href="/" class="flex justify-center">
 
-            <div class="flex items-center gap-4">
+            <img
+              src="/images/ai-lab-logo.png"
+              alt="AI-LAB"
+              class="w-64 h-auto object-contain"
+            />
 
-              <img
-                src="/images/ai-lab-logo.png"
-                alt="AI-LAB"
-                class="h-48 w-auto mx-auto"
-              />
+          </a>
 
-
-            </div>
+        </div>
 
         <!-- NAVIGATION -->
 
-        <nav class="p-5 space-y-2 text-lg">
+        <nav class="p-5 space-y-2">
 
-          <a
+          <SidebarLink
             href="/"
-            class="block rounded-xl px-4 py-3 text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400 transition"
-          >
-            Inicio
-          </a>
+            label="Inicio"
+            icon={House}
+          />
 
-          <a
+          <SidebarLink
             href="/architecture"
-            class="block rounded-xl px-4 py-3 text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400 transition"
-          >
-            Arquitectura
-          </a>
+            label="Arquitectura"
+            icon={Cpu}
+          />
 
-          <a
+          <SidebarLink
             href="/projects"
-            class="block rounded-xl px-4 py-3 text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400 transition"
-          >
-            Proyectos
-          </a>
+            label="Proyectos"
+            icon={FolderKanban}
+          />
 
-          <a
+          <SidebarLink
             href="/skills"
-            class="block rounded-xl px-4 py-3 text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400 transition"
-          >
-            Skills
-          </a>
+            label="Skills"
+            icon={ShieldCheck}
+          />
 
-          <a
+          <SidebarLink
             href="/docs"
-            class="block rounded-xl px-4 py-3 text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400 transition"
-          >
-            Documentación
-          </a>
+            label="Documentación"
+            icon={BookOpen}
+          />
 
-          <a
+          <SidebarLink
             href="/blog"
-            class="block rounded-xl px-4 py-3 text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400 transition"
-          >
-            Blog Técnico
-          </a>
+            label="Blog Técnico"
+            icon={Newspaper}
+          />
 
-          <a
+          <SidebarLink
             href="/runbooks"
-            class="block rounded-xl px-4 py-3 text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400 transition"
-          >
-            Runbooks
-          </a>
+            label="Runbooks"
+            icon={Wrench}
+          />
 
-          <a
+          <SidebarLink
             href="/services"
-            class="block rounded-xl px-4 py-3 text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400 transition"
-          >
-            Servicios
-          </a>
+            label="Servicios"
+            icon={Server}
+          />
 
-          <a
+          <SidebarLink
             href="/ops"
-            class="block rounded-xl px-4 py-3 text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400 transition"
-          >
-            Operations Center
-          </a>
+            label="Operations Center"
+            icon={MonitorSmartphone}
+          />
 
-          <a
+          <SidebarLink
             href="/status"
-            class="block rounded-xl px-4 py-3 text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400 transition"
-          >
-            Estado Vivo
-          </a>
+            label="Estado Vivo"
+            icon={Activity}
+          />
 
-          <a
-            href="/status/live"
-            class="block rounded-xl px-4 py-3 text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400 transition"
-          >
-            AI-LAB NOC
-          </a>
-
-          <a
+          <SidebarLink
             href="/status/history"
-            class="block rounded-xl px-4 py-3 text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400 transition"
-          >
-            Historical Telemetry
-          </a>
+            label="Historical Telemetry"
+            icon={BarChart3}
+          />
 
         </nav>
 
@@ -159,26 +157,42 @@ const { title = "AI-LAB" } = Astro.props;
 
       <div class="p-5">
 
-        <div class="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
+        <div class="rounded-3xl border border-cyan-500/20 bg-zinc-950 p-5 shadow-[0_0_35px_rgba(34,211,238,0.08)]">
 
-          <p class="text-xs uppercase tracking-[0.3em] text-zinc-500">
-            Runtime
-          </p>
+          <div class="flex items-center justify-between">
 
-          <div class="mt-4 space-y-2 text-lg">
+            <div>
 
-            <div class="text-zinc-300">
-              Router · GPUs · Docker · OpenCode
+              <p class="text-xs uppercase tracking-[0.3em] text-zinc-500">
+                Runtime
+              </p>
+
+              <div class="mt-3 text-lg font-semibold text-white">
+                AI-LAB Operational
+              </div>
+
             </div>
 
-            <div class="flex items-center gap-2 text-green-400 text-sm">
+            <div class="flex items-center gap-2 text-green-400">
 
-              <div class="h-2 w-2 rounded-full bg-green-400 animate-pulse"></div>
+              <div class="h-3 w-3 rounded-full bg-green-400 animate-pulse"></div>
 
-              <span>
-                Operational
+              <span class="text-sm">
+                LIVE
               </span>
 
+            </div>
+
+          </div>
+
+          <div class="mt-5 space-y-2 text-sm text-zinc-500">
+
+            <div>
+              Router · OpenCode · GPUs
+            </div>
+
+            <div>
+              Traefik · Qdrant · LM Studio
             </div>
 
           </div>
