@@ -1,0 +1,109 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout title="Hardware Lab · AI-LAB">
+  <section class="space-y-12">
+
+    <div class="rounded-3xl border border-cyan-500/30 bg-gradient-to-br from-zinc-900 to-black p-10">
+      <p class="text-sm uppercase tracking-[0.3em] text-cyan-400">
+        Physical Infrastructure
+      </p>
+
+      <h1 class="mt-6 text-5xl font-black text-white">
+        Hardware Lab
+      </h1>
+
+      <p class="mt-6 max-w-5xl text-xl leading-relaxed text-zinc-300">
+        Infraestructura física del laboratorio AI-LAB: workstations custom,
+        refrigeración líquida, nodos IA, almacenamiento NAS, networking
+        multi-gigabit y plataformas experimentales de observabilidad.
+      </p>
+    </div>
+
+    <div class="grid gap-8 xl:grid-cols-2">
+
+      <article class="overflow-hidden rounded-3xl border border-cyan-500/20 bg-zinc-950">
+        <img
+          src="/images/hardware/X870EAORUSPRO.jpg"
+          class="h-[420px] w-full object-contain bg-black"
+          alt="AI Workstation"
+        />
+
+        <div class="space-y-4 p-8">
+          <h2 class="text-3xl font-bold text-cyan-400">
+            AI Workstation
+          </h2>
+
+          <p class="text-zinc-300 leading-relaxed">
+            Workstation principal del laboratorio basada en AMD Ryzen,
+            refrigeración líquida custom loop, DDR5 RGB y plataforma AORUS.
+            Utilizada para inferencia local, observabilidad y experimentación IA.
+          </p>
+
+          <div class="grid gap-3 pt-4 text-sm text-zinc-400 md:grid-cols-2">
+            <div>CPU · AMD Ryzen</div>
+            <div>DDR5 RGB</div>
+            <div>Custom Loop</div>
+            <div>RDNA3 Radeon</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="overflow-hidden rounded-3xl border border-cyan-500/20 bg-zinc-950">
+        <img
+          src="/images/hardware/MinisforumN5.png"
+          class="h-[420px] w-full object-contain bg-black"
+          alt="Minisforum N5"
+        />
+
+        <div class="space-y-4 p-8">
+          <h2 class="text-3xl font-bold text-cyan-400">
+            Minisforum N5 AI NAS
+          </h2>
+
+          <p class="text-zinc-300 leading-relaxed">
+            Nodo principal de almacenamiento e inferencia distribuida con soporte
+            NVMe PCIe 4.0, networking 10GbE, OCuLink y capacidades IA locales.
+          </p>
+
+          <div class="grid gap-3 pt-4 text-sm text-zinc-400 md:grid-cols-2">
+            <div>Ryzen 7 255</div>
+            <div>10GbE + 5GbE</div>
+            <div>3x NVMe PCIe 4.0</div>
+            <div>5x SATA Hot Swap</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="overflow-hidden rounded-3xl border border-cyan-500/20 bg-zinc-950 xl:col-span-2">
+        <img
+          src="/images/rack/RACK.jpg"
+          class="h-[520px] w-full object-contain bg-black"
+          alt="Network Rack"
+        />
+
+        <div class="space-y-4 p-8">
+          <h2 class="text-3xl font-bold text-cyan-400">
+            Fiber & Networking Rack
+          </h2>
+
+          <p class="max-w-5xl text-zinc-300 leading-relaxed">
+            Infraestructura de red del laboratorio con UniFi Gateway, switching,
+            fibra óptica doméstica, distribución eléctrica protegida y segmentación
+            de servicios para observabilidad y AI runtime local.
+          </p>
+
+          <div class="grid gap-3 pt-4 text-sm text-zinc-400 md:grid-cols-4">
+            <div>UniFi Gateway</div>
+            <div>Multi-Gig Networking</div>
+            <div>Fiber WAN</div>
+            <div>Protected Power</div>
+          </div>
+        </div>
+      </article>
+
+    </div>
+
+  </section>
+</Layout>
