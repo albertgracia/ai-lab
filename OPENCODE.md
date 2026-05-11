@@ -148,10 +148,10 @@ Routing priorities:
           "os": "linux"
         },
         "Ports": "0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp",
-        "RunningFor": "14 hours ago",
+        "RunningFor": "15 hours ago",
         "Size": "16.4kB (virtual 190MB)",
         "State": "running",
-        "Status": "Up 2 hours"
+        "Status": "Up 3 hours"
       },
       {
         "Command": "\"./entrypoint.sh\"",
@@ -168,10 +168,10 @@ Routing priorities:
           "os": "linux"
         },
         "Ports": "0.0.0.0:6333-6334->6333-6334/tcp, [::]:6333-6334->6333-6334/tcp",
-        "RunningFor": "45 hours ago",
+        "RunningFor": "46 hours ago",
         "Size": "24.6kB (virtual 199MB)",
         "State": "running",
-        "Status": "Up 2 hours"
+        "Status": "Up 3 hours"
       },
       {
         "Command": "\"bash start.sh\"",
@@ -191,7 +191,7 @@ Routing priorities:
         "RunningFor": "2 days ago",
         "Size": "54.3MB (virtual 5.04GB)",
         "State": "running",
-        "Status": "Up 2 hours (healthy)"
+        "Status": "Up 3 hours (healthy)"
       },
       {
         "Command": "\"/bin/ollama serve\"",
@@ -211,7 +211,7 @@ Routing priorities:
         "RunningFor": "2 days ago",
         "Size": "16.4kB (virtual 6.56GB)",
         "State": "running",
-        "Status": "Up 2 hours"
+        "Status": "Up 3 hours"
       },
       {
         "Command": "\"/portainer\"",
@@ -231,7 +231,7 @@ Routing priorities:
         "RunningFor": "2 days ago",
         "Size": "16.4kB (virtual 182MB)",
         "State": "running",
-        "Status": "Up 2 hours"
+        "Status": "Up 3 hours"
       }
     ]
   },
@@ -258,12 +258,8 @@ Routing priorities:
         "node": "Gaming PC RX9070XT",
         "host": "192.168.1.50",
         "port": 1234,
-        "online": true,
-        "models": [
-          "qwen3-14b-claude-sonnet-4.5-reasoning-distill@q4_k_m",
-          "qwen3-14b-claude-sonnet-4.5-reasoning-distill@q3_k_m",
-          "text-embedding-nomic-embed-text-v1.5"
-        ]
+        "online": false,
+        "error": "HTTPConnectionPool(host='192.168.1.50', port=1234): Max retries exceeded with url: /v1/models (Caused by ConnectTimeoutError(<HTTPConnection(host='192.168.1.50', port=1234) at 0x725dcc7e2c10>, 'Connection to 192.168.1.50 timed out. (connect timeout=5)'))"
       }
     ]
   },
@@ -272,37 +268,37 @@ Routing priorities:
       "node": "Gaming PC RX9070XT",
       "host": "192.168.1.50",
       "gpu_usage": {
-        "max_gpu_usage_percent": 0.59,
+        "max_gpu_usage_percent": 0.43,
         "active_engines": [
           {
-            "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_1252_luid_0x00000000_0x0001A9C3_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
-            "value": 0.590375
+            "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_1188_luid_0x00000000_0x0001A38E_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
+            "value": 0.434361
           },
           {
-            "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_17168_luid_0x00000000_0x0001A9C3_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
-            "value": 0.592478
+            "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_21136_luid_0x00000000_0x0001A38E_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
+            "value": 0.398271
           },
           {
-            "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_8328_luid_0x00000000_0x0001A9C3_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
-            "value": 0.351658
+            "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_24480_luid_0x00000000_0x0001A38E_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
+            "value": 0.121027
           },
           {
-            "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_9840_luid_0x00000000_0x0001A9C3_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
-            "value": 0.001786
+            "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_4_luid_0x00000000_0x0001A38E_phys_0_eng_3_engtype_Copy)\\Utilization Percentage",
+            "value": 0.09396
           }
         ]
       },
       "vram": {
-        "vram_used_gib": 3.62,
+        "vram_used_gib": 2.19,
         "vram_total_gib": 16,
-        "vram_free_gib_estimated": 12.38,
+        "vram_free_gib_estimated": 13.81,
         "raw_samples": [
           {
-            "path": "\\\\X870EAORUSPRO\\GPU Adapter Memory(luid_0x00000000_0x0001A9C3_phys_0)\\Dedicated Usage",
-            "value": 3890229248.0
+            "path": "\\\\X870EAORUSPRO\\GPU Adapter Memory(luid_0x00000000_0x0001A38E_phys_0)\\Dedicated Usage",
+            "value": 2346930176.0
           },
           {
-            "path": "\\\\X870EAORUSPRO\\GPU Adapter Memory(luid_0x00000000_0x0001DAA1_phys_0)\\Dedicated Usage",
+            "path": "\\\\X870EAORUSPRO\\GPU Adapter Memory(luid_0x00000000_0x0001D3B0_phys_0)\\Dedicated Usage",
             "value": 0.0
           }
         ]
