@@ -8,3 +8,211 @@
   margin-top: 1rem;
   margin-bottom: 1rem;
 }
+
+/* AI-LAB Premium polish */
+
+aside img[alt="AI-LAB"] {
+  filter: drop-shadow(0 0 18px rgba(34, 211, 238, 0.28));
+  transition: transform 0.25s ease, filter 0.25s ease;
+}
+
+aside img[alt="AI-LAB"]:hover {
+  transform: scale(1.04);
+  filter: drop-shadow(0 0 28px rgba(34, 211, 238, 0.45));
+}
+
+aside nav a {
+  position: relative;
+}
+
+aside nav a:hover {
+  transform: translateX(4px);
+}
+
+aside nav a::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 20%;
+  height: 60%;
+  width: 3px;
+  border-radius: 999px;
+  background: transparent;
+  transition: background 0.2s ease;
+}
+
+aside nav a:hover::before {
+  background: rgb(34 211 238);
+}
+
+/* Better markdown/article rendering */
+
+.prose,
+main article,
+main .sl-markdown-content {
+  color: rgb(212 212 216);
+  line-height: 1.8;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+main article h1,
+main article h2,
+main article h3,
+main .sl-markdown-content h1,
+main .sl-markdown-content h2,
+main .sl-markdown-content h3 {
+  color: white;
+  letter-spacing: -0.03em;
+}
+
+.prose h1,
+main article h1,
+main .sl-markdown-content h1 {
+  font-size: clamp(2.4rem, 5vw, 4.5rem);
+  line-height: 1.05;
+  font-weight: 900;
+  margin-bottom: 1.5rem;
+}
+
+.prose h2,
+main article h2,
+main .sl-markdown-content h2 {
+  font-size: 2rem;
+  font-weight: 850;
+  margin-top: 3rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(63, 63, 70, 0.7);
+}
+
+.prose h3,
+main article h3,
+main .sl-markdown-content h3 {
+  color: rgb(34 211 238);
+  font-size: 1.35rem;
+  font-weight: 800;
+  margin-top: 2rem;
+}
+
+.prose p,
+main article p,
+main .sl-markdown-content p {
+  font-size: 1.05rem;
+  color: rgb(212 212 216);
+}
+
+.prose strong,
+main article strong,
+main .sl-markdown-content strong {
+  color: white;
+}
+
+.prose blockquote,
+main article blockquote,
+main .sl-markdown-content blockquote {
+  border-left: 4px solid rgb(34 211 238);
+  background: rgba(24, 24, 27, 0.85);
+  border-radius: 0 1rem 1rem 0;
+  padding: 1rem 1.25rem;
+  color: rgb(229 231 235);
+}
+
+.prose code,
+main article code,
+main .sl-markdown-content code {
+  color: rgb(103 232 249);
+  background: rgba(24, 24, 27, 0.95);
+  border: 1px solid rgba(63, 63, 70, 0.7);
+  border-radius: 0.45rem;
+  padding: 0.15rem 0.35rem;
+}
+
+.prose pre,
+main article pre,
+main .sl-markdown-content pre {
+  background: rgb(9 9 11);
+  border: 1px solid rgba(34, 211, 238, 0.18);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  box-shadow: 0 0 30px rgba(34, 211, 238, 0.06);
+}
+
+.prose table,
+main article table,
+main .sl-markdown-content table {
+  width: 100%;
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid rgb(39 39 42);
+}
+
+.prose th,
+main article th,
+main .sl-markdown-content th {
+  background: rgb(24 24 27);
+  color: rgb(34 211 238);
+  padding: 0.85rem;
+}
+
+.prose td,
+main article td,
+main .sl-markdown-content td {
+  border-top: 1px solid rgb(39 39 42);
+  padding: 0.85rem;
+}
+
+main a {
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+main a:hover {
+  color: rgb(34 211 238);
+}
+
+
+/* Article heading tuning */
+main article h1,
+main .sl-markdown-content h1,
+.prose h1 {
+  font-size: clamp(2.2rem, 4vw, 3.6rem) !important;
+  line-height: 1.08 !important;
+}
+
+main article h2,
+main .sl-markdown-content h2,
+.prose h2 {
+  font-size: clamp(1.6rem, 2.4vw, 2.2rem) !important;
+}
+
+main article h3,
+main .sl-markdown-content h3,
+.prose h3 {
+  font-size: 1.3rem !important;
+}
+
+/* Article heading tuning */
+main article h1,
+main .sl-markdown-content h1,
+.prose h1 {
+  font-size: clamp(2.2rem, 4vw, 3.6rem) !important;
+  line-height: 1.08 !important;
+}
+
+main article h2,
+main .sl-markdown-content h2,
+.prose h2 {
+  font-size: clamp(1.6rem, 2.4vw, 2.2rem) !important;
+}
+
+main article h3,
+main .sl-markdown-content h3,
+.prose h3 {
+  font-size: 1.3rem !important;
+}
+
+aside img[alt="AI-LAB"] {
+  mix-blend-mode: screen;
+  background: transparent;
+  border-radius: 1.5rem;
+}

@@ -4,8 +4,6 @@ summary: "Arquitectura de almacenamiento persistente del laboratorio."
 order: 10
 ---
 
-# Almacenamiento AI-LAB
-
 El AI-LAB utiliza una arquitectura de almacenamiento separada por función.
 
 ## Capas principales

@@ -5,8 +5,6 @@ summary: "Cómo AI-LAB terminó usando GPUs remotas, routing OpenAI-compatible y
 tags: ["runtime", "gpu", "router"]
 ---
 
-# Construyendo un runtime IA distribuido
-
 Uno de los problemas más interesantes de AI-LAB apareció muy pronto:
 
 ¿Cómo usar varios nodos GPU como una única plataforma?

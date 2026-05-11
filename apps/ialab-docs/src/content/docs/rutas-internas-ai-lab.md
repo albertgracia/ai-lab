@@ -4,8 +4,6 @@ summary: "URLs principales del laboratorio y servicios internos."
 order: 4
 ---
 
-# Rutas internas AI-LAB
-
 Listado de accesos principales del laboratorio.
 
 ## Accesos principales

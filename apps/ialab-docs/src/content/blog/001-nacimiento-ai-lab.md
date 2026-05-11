@@ -5,8 +5,6 @@ summary: "Primeros pasos del laboratorio de inferencia distribuida y documentaci
 tags: ["ai-lab", "infraestructura", "astro"]
 ---
 
-# Nacimiento del AI-LAB
-
 El AI-LAB nace como un laboratorio local para experimentar con inferencia distribuida, OpenCode, GPUs remotas y routing cognitivo.
 
 ## Primeros componentes

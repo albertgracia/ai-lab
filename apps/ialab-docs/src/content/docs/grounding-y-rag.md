@@ -4,8 +4,6 @@ summary: "Arquitectura de grounding contextual y recuperación semántica."
 order: 7
 ---
 
-# Grounding y RAG
-
 El AI-LAB implementa una arquitectura basada en:
 
 - grounding contextual

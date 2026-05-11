@@ -4,8 +4,6 @@ summary: "Servicios AI-LAB configurados para arranque automático."
 order: 3
 ---
 
-# Servicios persistentes systemd
-
 El AI-LAB utiliza `systemd` para mantener persistentes
 los servicios críticos del laboratorio.
 

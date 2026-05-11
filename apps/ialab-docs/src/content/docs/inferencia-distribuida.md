@@ -4,8 +4,6 @@ summary: "Arquitectura multinodo GPU del AI-LAB."
 order: 8
 ---
 
-# Inferencia Distribuida
-
 El AI-LAB está diseñado para soportar inferencia distribuida entre múltiples nodos GPU.
 
 Objetivos:

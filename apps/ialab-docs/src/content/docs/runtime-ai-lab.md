@@ -4,8 +4,6 @@ summary: "Arquitectura runtime y flujo operativo del laboratorio."
 order: 5
 ---
 
-# Runtime AI-LAB
-
 El runtime constituye el núcleo operativo del laboratorio.
 
 Gestiona:

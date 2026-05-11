@@ -4,8 +4,6 @@ summary: "Tarea pendiente para mejorar el failover inteligente entre nodos LM St
 order: 12
 ---
 
-# Router LM Studio Failover
-
 ## Objetivo
 
 OpenCode no debe depender de un nodo LM Studio fijo.

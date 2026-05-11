@@ -4,8 +4,6 @@ summary: "Checklist básico para comprobar que el laboratorio está operativo."
 severity: "info"
 ---
 
-# Operación diaria AI-LAB
-
 Checklist básico para validar el estado del laboratorio.
 
 ## 1. Comprobar servicios systemd

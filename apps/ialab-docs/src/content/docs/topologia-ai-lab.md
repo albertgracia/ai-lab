@@ -4,8 +4,6 @@ summary: "Diagrama de alto nivel del flujo OpenCode, router y nodos GPU."
 order: 2
 ---
 
-# Topología AI-LAB
-
 ```mermaid
 flowchart LR
     User[Usuario / OpenCode] --> Router[AI-LAB Router API]

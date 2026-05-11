@@ -5,8 +5,6 @@ summary: "Por qué construir infraestructura IA local y documentarla como una pl
 tags: ["filosofia", "ai-lab", "infraestructura"]
 ---
 
-# La filosofía detrás de AI-LAB
-
 AI-LAB nació como una idea sencilla: construir un laboratorio técnico real donde experimentar con infraestructura moderna, inteligencia artificial local y observabilidad.
 
 Pero con el tiempo dejó de ser un simple homelab.

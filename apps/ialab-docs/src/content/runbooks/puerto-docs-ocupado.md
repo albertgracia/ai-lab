@@ -4,8 +4,6 @@ summary: "Procedimiento cuando Astro Docs no puede usar el puerto 4321."
 severity: "medium"
 ---
 
-# Resolver puerto 4321 ocupado
-
 Este runbook sirve cuando `ialab-docs` no arranca en el puerto esperado.
 
 ## Síntoma

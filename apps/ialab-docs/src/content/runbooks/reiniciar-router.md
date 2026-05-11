@@ -4,8 +4,6 @@ summary: "Procedimiento seguro para reiniciar el router OpenAI-compatible."
 severity: "medium"
 ---
 
-# Reiniciar AI-LAB Router
-
 ## Procedimiento manual
 
 ```bash

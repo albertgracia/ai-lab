@@ -4,8 +4,6 @@ summary: "Sistema de monitorización y snapshots vivos del AI-LAB."
 order: 9
 ---
 
-# Observabilidad y Estado Vivo
-
 El AI-LAB mantiene un sistema de observabilidad continua para conocer en tiempo real:
 
 - estado GPU

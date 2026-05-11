@@ -4,8 +4,6 @@ summary: "Topología actual del laboratorio, nodos, servicios y flujo de inferen
 order: 1
 ---
 
-# Arquitectura AI-LAB
-
 AI-LAB es una infraestructura local de inferencia IA distribuida.
 
 ## Nodos

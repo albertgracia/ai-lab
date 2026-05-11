@@ -4,8 +4,6 @@ summary: "Persistencia temporal y observabilidad histórica del AI-LAB."
 order: 11
 ---
 
-# Snapshots Históricos
-
 El AI-LAB mantiene snapshots históricos automáticos del estado operativo del laboratorio.
 
 ---

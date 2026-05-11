@@ -4,8 +4,6 @@ summary: "Arranque manual de OpenCode UI."
 order: 12
 ---
 
-# Levantar OpenCode
-
 ## Arranque
 
 ```bash

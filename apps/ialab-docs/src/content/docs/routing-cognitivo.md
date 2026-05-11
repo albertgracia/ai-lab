@@ -4,8 +4,6 @@ summary: "Sistema de decisión inteligente del AI-LAB."
 order: 6
 ---
 
-# Routing Cognitivo
-
 El Routing Cognitivo es el sistema de decisión central del AI-LAB.
 
 Su función es determinar:

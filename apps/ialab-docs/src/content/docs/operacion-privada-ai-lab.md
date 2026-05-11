@@ -4,8 +4,6 @@ summary: "Runbook operativo interno del laboratorio AI-LAB."
 order: 20
 ---
 
-# Operación Privada AI-LAB
-
 > Documento interno operativo del laboratorio AI-LAB.
 
 ---

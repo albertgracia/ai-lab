@@ -4,8 +4,6 @@ summary: "Publicación segura del AI-LAB mediante Cloudflare Access y Tunnel."
 order: 13
 ---
 
-# Cloudflare Zero Trust
-
 ## Objetivo
 
 Publicar AI-LAB hacia Internet sin abrir puertos entrantes en el homelab.
