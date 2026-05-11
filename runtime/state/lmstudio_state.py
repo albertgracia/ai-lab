@@ -31,6 +31,8 @@ def get_models(node):
 
         return {
             "node": node["name"],
+            "host": node["host"],
+            "port": node["port"],
             "online": True,
             "models": [
                 model["id"]
@@ -41,6 +43,8 @@ def get_models(node):
     except Exception as e:
         return {
             "node": node["name"],
+            "host": node["host"],
+            "port": node["port"],
             "online": False,
             "error": str(e)
         }

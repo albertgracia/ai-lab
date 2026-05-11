@@ -1,0 +1,168 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout title="AI-LAB OPS">
+
+<section class="space-y-10">
+
+  <div>
+    <p class="uppercase tracking-[0.3em] text-cyan-400 text-sm">
+      Private Operations
+    </p>
+
+    <h1 class="mt-4 text-5xl font-black text-white">
+      AI-LAB Operations Center
+    </h1>
+
+    <p class="mt-4 max-w-4xl text-xl text-zinc-400">
+      Servicios internos, comandos operativos, networking y acceso rápido del laboratorio.
+    </p>
+  </div>
+
+  <!-- SERVICES -->
+
+  <section>
+
+    <h2 class="text-3xl font-bold text-white">
+      Servicios principales
+    </h2>
+
+    <div class="mt-6 grid gap-6 md:grid-cols-2">
+
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+        <h3 class="text-2xl font-bold text-cyan-400">
+          OpenCode
+        </h3>
+
+        <div class="mt-5 space-y-2 text-zinc-300">
+          <p>URL: http://192.168.1.30:4096</p>
+          <p>Host: ubuntu-ialab</p>
+          <p>Puerto: 4096</p>
+        </div>
+
+        <div class="mt-6 rounded-xl bg-zinc-950 p-4">
+<pre class="text-sm text-emerald-400 overflow-x-auto">
+cd /opt/ai-lab
+/opt/ai-lab/runtime/opencode_ui.sh
+</pre>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+        <h3 class="text-2xl font-bold text-cyan-400">
+          Router API
+        </h3>
+
+        <div class="mt-5 space-y-2 text-zinc-300">
+          <p>URL: http://192.168.1.30:8008</p>
+          <p>API: OpenAI Compatible</p>
+          <p>Puerto: 8008</p>
+        </div>
+
+        <div class="mt-6 rounded-xl bg-zinc-950 p-4">
+<pre class="text-sm text-emerald-400 overflow-x-auto">
+sudo systemctl restart ialab-router-api
+curl http://127.0.0.1:8008/health
+</pre>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+        <h3 class="text-2xl font-bold text-cyan-400">
+          Astro Docs
+        </h3>
+
+        <div class="mt-5 space-y-2 text-zinc-300">
+          <p>URL: https://blog-ai-lab.labrazahome.com</p>
+          <p>Puerto: 4321</p>
+        </div>
+
+        <div class="mt-6 rounded-xl bg-zinc-950 p-4">
+<pre class="text-sm text-emerald-400 overflow-x-auto">
+npm run build
+sudo systemctl restart ialab-docs
+</pre>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+        <h3 class="text-2xl font-bold text-cyan-400">
+          Traefik
+        </h3>
+
+        <div class="mt-5 space-y-2 text-zinc-300">
+          <p>Dashboard: http://192.168.1.30:8080</p>
+          <p>HTTP/HTTPS Gateway</p>
+        </div>
+
+        <div class="mt-6 rounded-xl bg-zinc-950 p-4">
+<pre class="text-sm text-emerald-400 overflow-x-auto">
+cd /opt/ai-lab/stacks/traefik
+docker compose up -d
+docker ps | grep traefik
+</pre>
+        </div>
+      </div>
+
+    </div>
+
+  </section>
+
+  <!-- NETWORK -->
+
+  <section>
+
+    <h2 class="text-3xl font-bold text-white">
+      Infraestructura de red
+    </h2>
+
+    <div class="mt-6 overflow-hidden rounded-2xl border border-zinc-800">
+
+      <table class="w-full text-left">
+
+        <thead class="bg-zinc-900">
+          <tr>
+            <th class="px-6 py-4 text-zinc-400">Nodo</th>
+            <th class="px-6 py-4 text-zinc-400">IP</th>
+            <th class="px-6 py-4 text-zinc-400">Función</th>
+          </tr>
+        </thead>
+
+        <tbody class="divide-y divide-zinc-800 bg-black">
+
+          <tr>
+            <td class="px-6 py-4 text-white">ubuntu-ialab</td>
+            <td class="px-6 py-4 text-cyan-400">192.168.1.30</td>
+            <td class="px-6 py-4 text-zinc-300">Core Runtime</td>
+          </tr>
+
+          <tr>
+            <td class="px-6 py-4 text-white">RX9070XT</td>
+            <td class="px-6 py-4 text-cyan-400">192.168.1.50</td>
+            <td class="px-6 py-4 text-zinc-300">GPU Node Principal</td>
+          </tr>
+
+          <tr>
+            <td class="px-6 py-4 text-white">RX7900XT</td>
+            <td class="px-6 py-4 text-cyan-400">192.168.1.60</td>
+            <td class="px-6 py-4 text-zinc-300">GPU Node Secundario</td>
+          </tr>
+
+          <tr>
+            <td class="px-6 py-4 text-white">Main LM Studio</td>
+            <td class="px-6 py-4 text-cyan-400">192.168.1.200</td>
+            <td class="px-6 py-4 text-zinc-300">Nodo IA Local</td>
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </section>
+
+</section>
+
+</Layout>
