@@ -1,14 +1,24 @@
 ---
 import Layout from "../../../layouts/Layout.astro";
+import HistoryCharts from "../../../components/HistoryCharts.jsx";
 ---
 
-<Layout title="Historical Telemetry · AI-LAB">
-  <section class="rounded-3xl border border-cyan-500/30 bg-zinc-950 p-10">
-    <p class="text-sm uppercase tracking-[0.3em] text-cyan-400">Telemetry Archive</p>
-    <h1 class="mt-6 text-5xl font-black text-white">Historical Telemetry</h1>
-    <p class="mt-6 max-w-4xl text-xl text-zinc-300">
-      Los históricos reales del laboratorio se conservan en el entorno privado.
-      Próximamente habrá una selección pública anonimizada.
-    </p>
-  </section>
+<Layout title="AI-LAB History">
+
+  <div class="space-y-8">
+
+    <div>
+      <h1 class="text-4xl font-bold">
+        AI-LAB Historical Telemetry
+      </h1>
+
+      <p class="text-zinc-400 mt-2">
+        Observabilidad histórica del laboratorio.
+      </p>
+    </div>
+
+    <HistoryCharts client:load />
+
+  </div>
+
 </Layout>
