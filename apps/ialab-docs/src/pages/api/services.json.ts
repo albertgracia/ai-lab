@@ -47,6 +47,13 @@ export const GET: APIRoute = async () => {
       description: "Registro de incidencias, cambios y fixes operativos.",
     },
     {
+      name: "Infrastructure Inventory",
+      status: "online",
+      category: "infrastructure",
+      url: "/infra",
+      description: "Inventario de nodos, GPUs y servicios del AI-LAB.",
+    },
+    {
       name: "Private Blog",
       status: "online",
       category: "knowledge",
