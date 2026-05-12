@@ -1,113 +1,101 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import LiveStatusCard from "../../components/LiveStatusCard.astro";
-import TerminalWidget from "../../components/TerminalWidget.astro";
-import TopologyGraph from "../../components/TopologyGraph.astro";
+import OpsServiceCard from "../../components/OpsServiceCard.astro";
+
+let services = [];
+let generatedAt = null;
+
+try {
+  const response = await fetch(new URL("/api/services.json", Astro.url));
+  const data = await response.json();
+  services = Array.isArray(data.services) ? data.services : [];
+  generatedAt = data.generated_at;
+} catch (error) {
+  console.error("Services API unavailable", error);
+}
+
+const online = services.filter((s) => s.status === "online").length;
+const planned = services.filter((s) => s.status === "planned").length;
+const total = services.length;
 ---
 
 <Layout title="Operations Center · AI-LAB">
+  <section class="space-y-10">
 
-<section class="space-y-10">
+    <header class="rounded-3xl border border-cyan-500/30 bg-zinc-950/80 p-8">
+      <p class="text-sm uppercase tracking-[0.35em] text-cyan-400">AI-LAB COMMAND CENTER</p>
 
-  <div class="rounded-3xl border border-cyan-500/30 bg-gradient-to-br from-zinc-900 to-black p-10">
-    <p class="text-sm uppercase tracking-[0.3em] text-cyan-400">
-      AI-LAB Operations Center
-    </p>
+      <div class="mt-6 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <h1 class="text-5xl font-black text-white">Operations Center</h1>
+          <p class="mt-4 max-w-4xl text-lg leading-8 text-zinc-300">
+            Centro operacional privado para supervisar servicios, telemetría, histórico,
+            runbooks y estado del laboratorio de IA.
+          </p>
+        </div>
 
-    <h1 class="mt-6 text-5xl font-black text-white">
-      Centro Operativo del Laboratorio
-    </h1>
+        <div class="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-5 py-4 text-emerald-300">
+          <p class="text-xs uppercase tracking-[0.25em]">Operational State</p>
+          <p class="mt-2 text-2xl font-black">ACTIVE</p>
+        </div>
+      </div>
+    </header>
 
-    <p class="mt-6 max-w-4xl text-xl text-zinc-300">
-      Panel privado de operación, servicios, comandos rápidos y topología del AI-LAB.
-    </p>
-  </div>
+    <section class="grid gap-4 md:grid-cols-3">
+      <div class="rounded-2xl border border-cyan-500/20 bg-zinc-950 p-6">
+        <p class="text-sm uppercase tracking-[0.25em] text-zinc-500">Services</p>
+        <p class="mt-3 text-4xl font-black text-white">{total}</p>
+      </div>
 
-  <section class="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-    <LiveStatusCard title="Router API" value="ONLINE" status="online" description="OpenAI-compatible router" />
-    <LiveStatusCard title="Main LM Studio" value="ONLINE" status="online" description="Fallback activo local" />
-    <LiveStatusCard title="RX9070XT" value="DEGRADED" status="warning" description="LM Studio en revisión" />
-    <LiveStatusCard title="RX7900XT" value="OFFLINE" status="offline" description="Nodo apagado" />
+      <div class="rounded-2xl border border-emerald-500/20 bg-zinc-950 p-6">
+        <p class="text-sm uppercase tracking-[0.25em] text-zinc-500">Online</p>
+        <p class="mt-3 text-4xl font-black text-emerald-300">{online}</p>
+      </div>
+
+      <div class="rounded-2xl border border-cyan-500/20 bg-zinc-950 p-6">
+        <p class="text-sm uppercase tracking-[0.25em] text-zinc-500">Planned</p>
+        <p class="mt-3 text-4xl font-black text-cyan-300">{planned}</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="mb-6 flex items-end justify-between gap-4">
+        <div>
+          <h2 class="text-3xl font-black text-white">Operational Services</h2>
+          <p class="mt-2 text-zinc-400">Mapa base de servicios internos del laboratorio.</p>
+        </div>
+
+        {generatedAt && (
+          <p class="text-xs text-zinc-500">
+            Generated: {generatedAt}
+          </p>
+        )}
+      </div>
+
+      <div class="grid gap-5 lg:grid-cols-2">
+        {services.map((service) => (
+          <OpsServiceCard service={service} />
+        ))}
+      </div>
+    </section>
+
+    <section class="rounded-3xl border border-cyan-500/20 bg-black/40 p-8">
+      <h2 class="text-3xl font-black text-white">Next Actions</h2>
+
+      <div class="mt-6 grid gap-4 md:grid-cols-3">
+        <a href="/status/live" class="rounded-2xl border border-cyan-500/20 bg-zinc-950 p-5 text-cyan-300 hover:border-cyan-400">
+          Ver Estado Vivo →
+        </a>
+
+        <a href="/status/history" class="rounded-2xl border border-cyan-500/20 bg-zinc-950 p-5 text-cyan-300 hover:border-cyan-400">
+          Ver Histórico →
+        </a>
+
+        <a href="/runbooks" class="rounded-2xl border border-cyan-500/20 bg-zinc-950 p-5 text-cyan-300 hover:border-cyan-400">
+          Abrir Runbooks →
+        </a>
+      </div>
+    </section>
+
   </section>
-
-  <section class="grid gap-6 xl:grid-cols-2">
-    <TerminalWidget
-      title="AI-LAB Runtime"
-      lines={[
-        "$ router status",
-        "> Router API: online",
-        "> OpenCode: online",
-        "> Primary LM Studio: Main Local",
-        "> RX9070XT: degraded",
-        "> RX7900XT: offline",
-        "> Cloudflare Access: protected",
-      ]}
-    />
-
-    <TerminalWidget
-      title="Quick Commands"
-      lines={[
-        "$ sudo systemctl restart ialab-router-api",
-        "$ sudo systemctl restart ialab-live-state",
-        "$ sudo systemctl restart ialab-docs",
-        "$ /opt/ai-lab/runtime/opencode_ui.sh",
-        "$ docker ps",
-        "$ journalctl -u ialab-router-api -f",
-      ]}
-    />
-  </section>
-
-  <TopologyGraph />
-
-  <section class="rounded-3xl border border-zinc-800 bg-zinc-900 p-8">
-    <h2 class="text-3xl font-black text-white">
-      Servicios principales
-    </h2>
-
-    <div class="mt-8 overflow-hidden rounded-2xl border border-zinc-800">
-      <table class="w-full text-left">
-        <thead class="bg-zinc-950">
-          <tr>
-            <th class="px-6 py-4 text-cyan-400">Servicio</th>
-            <th class="px-6 py-4 text-cyan-400">URL / IP</th>
-            <th class="px-6 py-4 text-cyan-400">Puerto</th>
-            <th class="px-6 py-4 text-cyan-400">Comando</th>
-          </tr>
-        </thead>
-
-        <tbody class="divide-y divide-zinc-800">
-          <tr>
-            <td class="px-6 py-4 text-white">OpenCode</td>
-            <td class="px-6 py-4 text-zinc-300">192.168.1.30</td>
-            <td class="px-6 py-4 text-zinc-300">4096</td>
-            <td class="px-6 py-4 text-emerald-400 font-mono text-sm">/opt/ai-lab/runtime/opencode_ui.sh</td>
-          </tr>
-
-          <tr>
-            <td class="px-6 py-4 text-white">Router API</td>
-            <td class="px-6 py-4 text-zinc-300">192.168.1.30</td>
-            <td class="px-6 py-4 text-zinc-300">8008</td>
-            <td class="px-6 py-4 text-emerald-400 font-mono text-sm">sudo systemctl restart ialab-router-api</td>
-          </tr>
-
-          <tr>
-            <td class="px-6 py-4 text-white">Astro Docs</td>
-            <td class="px-6 py-4 text-zinc-300">blog-ai-lab.labrazahome.com</td>
-            <td class="px-6 py-4 text-zinc-300">4321</td>
-            <td class="px-6 py-4 text-emerald-400 font-mono text-sm">sudo systemctl restart ialab-docs</td>
-          </tr>
-
-          <tr>
-            <td class="px-6 py-4 text-white">Traefik</td>
-            <td class="px-6 py-4 text-zinc-300">192.168.1.30</td>
-            <td class="px-6 py-4 text-zinc-300">80 / 443 / 8080</td>
-            <td class="px-6 py-4 text-emerald-400 font-mono text-sm">docker restart traefik</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-</section>
-
 </Layout>
