@@ -22,3 +22,7 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# Public deploy excludes local/private status pages
+src/pages/status/
+src/pages/ops/
