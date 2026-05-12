@@ -54,6 +54,13 @@ export const GET: APIRoute = async () => {
       description: "Inventario de nodos, GPUs y servicios del AI-LAB.",
     },
     {
+      name: "Architecture Map",
+      status: "online",
+      category: "blueprint",
+      url: "/architecture",
+      description: "Mapa de arquitectura operacional del AI-LAB.",
+    },
+    {
       name: "Private Blog",
       status: "online",
       category: "knowledge",
