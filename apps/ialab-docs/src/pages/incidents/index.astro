@@ -1,0 +1,95 @@
+---
+import Layout from "../../layouts/Layout.astro";
+
+let incidents = [];
+let generatedAt = null;
+
+try {
+  const response = await fetch(new URL("/api/incidents.json", Astro.url));
+  const data = await response.json();
+  incidents = Array.isArray(data.incidents) ? data.incidents : [];
+  generatedAt = data.generated_at;
+} catch (error) {
+  console.error("Incidents API unavailable", error);
+}
+
+const severityStyle = {
+  low: "border-cyan-500/40 bg-cyan-500/10 text-cyan-300",
+  medium: "border-yellow-500/40 bg-yellow-500/10 text-yellow-300",
+  high: "border-red-500/40 bg-red-500/10 text-red-300",
+};
+
+const statusStyle = {
+  resolved: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
+  completed: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
+  open: "border-red-500/40 bg-red-500/10 text-red-300",
+  investigating: "border-yellow-500/40 bg-yellow-500/10 text-yellow-300",
+};
+---
+
+<Layout title="Incidents · AI-LAB">
+  <section class="space-y-10">
+
+    <header class="rounded-3xl border border-cyan-500/30 bg-zinc-950 p-8">
+      <p class="text-sm uppercase tracking-[0.35em] text-cyan-400">AI-LAB OPERATIONS</p>
+      <h1 class="mt-5 text-5xl font-black text-white">Incident & Change Log</h1>
+      <p class="mt-4 max-w-4xl text-lg leading-8 text-zinc-300">
+        Registro privado de incidencias, cambios operativos, fixes y decisiones técnicas.
+      </p>
+
+      {generatedAt && (
+        <p class="mt-6 text-xs text-zinc-500">
+          Generated: {generatedAt}
+        </p>
+      )}
+    </header>
+
+    <section class="space-y-5">
+      {incidents.map((incident) => (
+        <article class="rounded-2xl border border-cyan-500/20 bg-zinc-950 p-6">
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p class="text-xs uppercase tracking-[0.25em] text-zinc-500">
+                {incident.id} · {incident.date} · {incident.type}
+              </p>
+
+              <h2 class="mt-3 text-2xl font-bold text-white">
+                {incident.title}
+              </h2>
+            </div>
+
+            <div class="flex gap-2">
+              <span class={`rounded-full border px-3 py-1 text-xs font-bold ${severityStyle[incident.severity] ?? severityStyle.low}`}>
+                {incident.severity}
+              </span>
+
+              <span class={`rounded-full border px-3 py-1 text-xs font-bold ${statusStyle[incident.status] ?? statusStyle.resolved}`}>
+                {incident.status}
+              </span>
+            </div>
+          </div>
+
+          <p class="mt-5 text-zinc-300">
+            {incident.summary}
+          </p>
+
+          <div class="mt-5 rounded-xl border border-zinc-800 bg-black/30 p-4">
+            <p class="text-sm uppercase tracking-[0.2em] text-cyan-400">Resolution</p>
+            <p class="mt-2 text-sm leading-6 text-zinc-400">
+              {incident.resolution}
+            </p>
+          </div>
+
+          <div class="mt-5 flex flex-wrap gap-2">
+            {incident.affected.map((item) => (
+              <code class="rounded-lg border border-zinc-800 bg-black px-3 py-1 text-xs text-cyan-300">
+                {item}
+              </code>
+            ))}
+          </div>
+        </article>
+      ))}
+    </section>
+
+  </section>
+</Layout>

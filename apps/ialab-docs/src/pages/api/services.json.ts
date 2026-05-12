@@ -34,10 +34,17 @@ export const GET: APIRoute = async () => {
     },
     {
       name: "Runbooks",
-      status: "planned",
+      status: "online",
       category: "recovery",
       url: "/runbooks",
       description: "Procedimientos de recuperación, diagnóstico y operación.",
+    },
+    {
+      name: "Incident Log",
+      status: "online",
+      category: "operations",
+      url: "/incidents",
+      description: "Registro de incidencias, cambios y fixes operativos.",
     },
     {
       name: "Private Blog",
