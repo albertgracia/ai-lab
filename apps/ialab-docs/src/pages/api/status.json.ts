@@ -9,7 +9,8 @@ export async function GET() {
     }),
     {
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "Cache-Control": "no-store"
       }
     }
   );
