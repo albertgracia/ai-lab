@@ -1,0 +1,39 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout title="Cloudflare Tunnel Recovery · AI-LAB">
+  <article class="prose prose-invert max-w-none">
+    <h1>Cloudflare Tunnel Recovery</h1>
+
+    <h2>Objetivo</h2>
+    <p>Recuperar el acceso privado al portal AI-LAB cuando el dominio interno no responde.</p>
+
+    <h2>Síntomas</h2>
+    <ul>
+      <li>El dominio privado no carga.</li>
+      <li>El acceso local por IP funciona.</li>
+      <li>Cloudflare muestra error de túnel, gateway o backend unreachable.</li>
+    </ul>
+
+    <h2>Diagnóstico rápido</h2>
+    <pre><code>cd /opt/ai-lab
+docker ps
+docker logs --tail=100 cloudflared</code></pre>
+
+    <h2>Validar servicio local</h2>
+    <pre><code>curl -I http://127.0.0.1:4322
+curl -I http://127.0.0.1:4322/ops
+curl -I http://127.0.0.1:4322/status/history</code></pre>
+
+    <h2>Recuperación</h2>
+    <pre><code>docker restart cloudflared</code></pre>
+
+    <h2>Validación</h2>
+    <pre><code>curl -I https://blog-ai-lab.labrazahome.com/ops
+curl -I https://blog-ai-lab.labrazahome.com/status/history</code></pre>
+
+    <h2>Rollback</h2>
+    <p>Si el dominio privado sigue sin responder, validar Traefik/Nginx, DNS Cloudflare y el origen local.</p>
+  </article>
+</Layout>

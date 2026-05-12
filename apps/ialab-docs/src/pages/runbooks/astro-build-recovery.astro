@@ -1,0 +1,32 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout title="Astro Build Recovery · AI-LAB">
+  <article class="prose prose-invert max-w-none">
+    <h1>Astro Build Recovery</h1>
+
+    <h2>Objetivo</h2>
+    <p>Recuperar el portal AI-LAB cuando el build falla o se genera una versión antigua.</p>
+
+    <h2>Diagnóstico</h2>
+    <pre><code>cd /opt/ai-lab/apps/ialab-docs
+git status
+npm run build</code></pre>
+
+    <h2>Limpieza segura</h2>
+    <pre><code>rm -rf dist .astro node_modules/.astro node_modules/.vite
+npm run build</code></pre>
+
+    <h2>Errores frecuentes</h2>
+    <ul>
+      <li>Conflicto de rutas Astro: <code>page.astro</code> vs <code>page/index.astro</code>.</li>
+      <li>Imports relativos incorrectos.</li>
+      <li>Uso de <code>127.0.0.1:4321</code> hardcodeado dentro del build.</li>
+      <li>Archivos ignorados por <code>.gitignore</code>.</li>
+    </ul>
+
+    <h2>Validación</h2>
+    <pre><code>npm run dev -- --host 0.0.0.0 --port 4322</code></pre>
+  </article>
+</Layout>

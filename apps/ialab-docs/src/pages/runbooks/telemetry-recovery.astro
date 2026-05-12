@@ -1,0 +1,46 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout title="Telemetry Recovery · AI-LAB">
+  <article class="prose prose-invert max-w-none">
+    <h1>Telemetry Recovery</h1>
+
+    <h2>Objetivo</h2>
+    <p>Recuperar la telemetría live e histórica del AI-LAB.</p>
+
+    <h2>Rutas críticas</h2>
+    <ul>
+      <li><code>/status</code></li>
+      <li><code>/status/live</code></li>
+      <li><code>/status/history</code></li>
+      <li><code>/api/status.json</code></li>
+      <li><code>/api/history.json</code></li>
+      <li><code>/api/services.json</code></li>
+    </ul>
+
+    <h2>Validación API</h2>
+    <pre><code>curl http://127.0.0.1:4322/api/status.json | jq
+curl http://127.0.0.1:4322/api/history.json | jq
+curl http://127.0.0.1:4322/api/services.json | jq</code></pre>
+
+    <h2>Validación UI</h2>
+    <pre><code>curl -I http://127.0.0.1:4322/status
+curl -I http://127.0.0.1:4322/status/live
+curl -I http://127.0.0.1:4322/status/history</code></pre>
+
+    <h2>Incidencia conocida</h2>
+    <p>
+      Si <code>/status/history</code> muestra placeholder antiguo, comprobar que no existan dos rutas:
+    </p>
+
+    <pre><code>src/pages/status/history.astro
+src/pages/status/history/index.astro</code></pre>
+
+    <p>
+      La ruta real recomendada es:
+    </p>
+
+    <pre><code>src/pages/status/history/index.astro</code></pre>
+  </article>
+</Layout>
