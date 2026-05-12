@@ -1,0 +1,70 @@
+---
+import Layout from "../../layouts/Layout.astro";
+
+let models = [];
+let generatedAt = null;
+
+try {
+  const response = await fetch(new URL("/api/models.json", Astro.url));
+  const data = await response.json();
+  models = Array.isArray(data.models) ? data.models : [];
+  generatedAt = data.generated_at;
+} catch (error) {
+  console.error("Models API unavailable", error);
+}
+
+const statusStyle = {
+  online: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
+  planned: "border-cyan-500/40 bg-cyan-500/10 text-cyan-300",
+  offline: "border-red-500/40 bg-red-500/10 text-red-300",
+};
+---
+
+<Layout title="Model Registry · AI-LAB">
+  <section class="space-y-10">
+
+    <header class="rounded-3xl border border-cyan-500/30 bg-zinc-950 p-8">
+      <p class="text-sm uppercase tracking-[0.35em] text-cyan-400">AI-LAB MODEL OPERATIONS</p>
+      <h1 class="mt-5 text-5xl font-black text-white">Model Registry</h1>
+      <p class="mt-4 max-w-4xl text-lg leading-8 text-zinc-300">
+        Inventario operacional de modelos, runtimes, endpoints y capacidades IA del laboratorio.
+      </p>
+      {generatedAt && <p class="mt-6 text-xs text-zinc-500">Generated: {generatedAt}</p>}
+    </header>
+
+    <section class="grid gap-6 lg:grid-cols-2">
+      {models.map((model) => (
+        <article class="rounded-3xl border border-cyan-500/20 bg-zinc-950/80 p-7">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <p class="text-xs uppercase tracking-[0.25em] text-cyan-400">
+                {model.runtime} · {model.provider}
+              </p>
+              <h2 class="mt-3 text-3xl font-black text-white">{model.name}</h2>
+            </div>
+
+            <span class={`rounded-full border px-3 py-1 text-xs font-bold ${statusStyle[model.status] ?? statusStyle.planned}`}>
+              {model.status}
+            </span>
+          </div>
+
+          <div class="mt-6 rounded-2xl border border-zinc-800 bg-black/30 p-4">
+            <p class="text-xs uppercase tracking-[0.2em] text-zinc-500">Endpoint</p>
+            <p class="mt-2 break-all font-mono text-sm text-cyan-300">{model.endpoint}</p>
+          </div>
+
+          <p class="mt-5 text-sm leading-6 text-zinc-400">{model.notes}</p>
+
+          <div class="mt-6 flex flex-wrap gap-2">
+            {model.capabilities.map((capability) => (
+              <span class="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-300">
+                {capability}
+              </span>
+            ))}
+          </div>
+        </article>
+      ))}
+    </section>
+
+  </section>
+</Layout>

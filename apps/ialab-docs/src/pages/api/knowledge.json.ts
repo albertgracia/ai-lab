@@ -54,6 +54,13 @@ export const GET: APIRoute = async () => {
     },
 
     {
+      title: "Model Registry",
+      category: "operations",
+      href: "/models",
+      description: "Inventario de runtimes, endpoints y capacidades IA.",
+    },
+
+    {
       title: "Private Technical Blog",
       category: "knowledge",
       href: "/blog",

@@ -68,6 +68,13 @@ export const GET: APIRoute = async () => {
       description: "Portal centralizado de documentación operacional AI-LAB.",
     },
     {
+      name: "Model Registry",
+      status: "online",
+      category: "ai",
+      url: "/models",
+      description: "Inventario de modelos, runtimes y endpoints IA.",
+    },
+    {
       name: "Private Blog",
       status: "online",
       category: "knowledge",
