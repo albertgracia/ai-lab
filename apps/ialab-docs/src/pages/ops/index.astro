@@ -6,10 +6,15 @@ let services = [];
 let generatedAt = null;
 
 try {
-  const response = await fetch(new URL("/api/services.json", Astro.url));
-  const data = await response.json();
-  services = Array.isArray(data.services) ? data.services : [];
-  generatedAt = data.generated_at;
+  const response = await Astro.fetchContent
+    ? null
+    : await fetch(new URL("/api/services.json", "http://127.0.0.1:4322"));
+
+  if (response && response.headers.get("content-type")?.includes("application/json")) {
+    const data = await response.json();
+    services = Array.isArray(data.services) ? data.services : [];
+    generatedAt = data.generated_at;
+  }
 } catch (error) {
   console.error("Services API unavailable", error);
 }
