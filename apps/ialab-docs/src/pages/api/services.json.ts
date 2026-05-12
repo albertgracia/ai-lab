@@ -61,6 +61,13 @@ export const GET: APIRoute = async () => {
       description: "Mapa de arquitectura operacional del AI-LAB.",
     },
     {
+      name: "Knowledge Hub",
+      status: "online",
+      category: "knowledge",
+      url: "/knowledge",
+      description: "Portal centralizado de documentación operacional AI-LAB.",
+    },
+    {
       name: "Private Blog",
       status: "online",
       category: "knowledge",
