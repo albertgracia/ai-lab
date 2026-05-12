@@ -1,17 +1,26 @@
+import fs from "fs/promises";
+
 export async function GET() {
-  return new Response(
-    JSON.stringify({
-      gpus: "2/2",
-      llmNodes: "2/2",
-      docker: "14",
-      vram: "28 GiB",
-      state: "LIVE"
-    }),
-    {
+  try {
+    const raw = await fs.readFile(
+      "/opt/ai-lab/runtime/state/system_snapshot.json",
+      "utf-8"
+    );
+
+    return new Response(raw, {
+      status: 200,
       headers: {
         "Content-Type": "application/json",
-        "Cache-Control": "no-store"
+      },
+    });
+  } catch (err) {
+    return new Response(
+      JSON.stringify({
+        error: "snapshot_unavailable",
+      }),
+      {
+        status: 500,
       }
-    }
-  );
+    );
+  }
 }

@@ -1,14 +1,184 @@
 ---
 import Layout from "../../layouts/Layout.astro";
+import StatusCard from "../../components/StatusCard.astro";
+import GpuBar from "../../components/GpuBar.astro";
+import LiveStatus from "../../components/LiveStatus.astro";
+
+let data = {
+  gpu: [],
+  llm: { lmstudio_nodes: [] },
+  docker: { containers: [] },
+};
+
+try {
+  const response = await fetch(new URL("/api/status.json", Astro.url));
+  data = await response.json();
+} catch (error) {
+  console.error("Status API unavailable", error);
+}
+
+const gpu = Array.isArray(data.gpu)
+  ? data.gpu
+  : [];
+
+const llm = Array.isArray(data.llm?.lmstudio_nodes)
+  ? data.llm.lmstudio_nodes
+  : [];
+
+const docker = Array.isArray(data.docker?.containers)
+  ? data.docker.containers
+  : [];
 ---
 
 <Layout title="Estado Vivo · AI-LAB">
-  <section class="rounded-3xl border border-cyan-500/30 bg-zinc-950 p-10">
-    <p class="text-sm uppercase tracking-[0.3em] text-cyan-400">Public Status</p>
-    <h1 class="mt-6 text-5xl font-black text-white">Estado Vivo</h1>
-    <p class="mt-6 max-w-4xl text-xl text-zinc-300">
-      La telemetría en tiempo real se mantiene privada. La versión pública expone
-      una vista segura del laboratorio y su arquitectura.
+
+<section class="space-y-12">
+
+  <div>
+
+    <p class="uppercase tracking-[0.3em] text-cyan-400 text-sm">
+      Runtime Observability
     </p>
+
+    <h1 class="mt-4 text-5xl font-black text-white">
+      Estado Vivo del AI-LAB
+    </h1>
+
+    <p class="mt-4 max-w-3xl text-xl text-zinc-400">
+      Monitorización operacional del laboratorio,
+      GPUs remotas, modelos LLM y servicios Docker.
+    </p>
+
+    <LiveStatus />
+
+  </div>
+
+  <!-- GPUs -->
+
+  <section>
+
+    <h2 class="mb-6 text-3xl font-bold text-white">
+      GPU Nodes
+    </h2>
+
+    <div class="grid gap-6 md:grid-cols-2">
+
+      {
+        gpu.map((node) => (
+
+          <StatusCard
+            title={node.node}
+            status={node.gpu_usage?.error || node.vram?.error ? "offline" : "online"}
+          >
+
+            <div class="space-y-5">
+
+              <div class="text-zinc-400">
+                {node.host}
+              </div>
+
+              <GpuBar
+                label="VRAM"
+                value={node.vram?.vram_used_gib ?? 0}
+                max={node.vram?.vram_total_gib ?? 16}
+              />
+
+              <GpuBar
+                label="GPU Usage"
+                value={node.gpu_usage?.max_gpu_usage_percent ?? 0}
+                max={100}
+              />
+
+            </div>
+
+          </StatusCard>
+        ))
+      }
+
+    </div>
+
   </section>
+
+  <!-- LLM -->
+
+  <section>
+
+    <h2 class="mb-6 text-3xl font-bold text-white">
+      Modelos LLM
+    </h2>
+
+    <div class="grid gap-6">
+
+      {
+        llm.map((node) => (
+
+          <StatusCard
+            title={node.node}
+            status={node.online ? "online" : "offline"}
+          >
+
+            <ul class="space-y-2 text-zinc-300">
+
+              {
+                (node.models || []).map((model) => (
+                  <li class="rounded-lg bg-zinc-950 px-4 py-2">
+                    {model}
+                  </li>
+                ))
+              }
+
+            </ul>
+
+          </StatusCard>
+        ))
+      }
+
+    </div>
+
+  </section>
+
+  <!-- Docker -->
+
+  <section>
+
+    <h2 class="mb-6 text-3xl font-bold text-white">
+      Docker Stack
+    </h2>
+
+    <div class="grid gap-6 md:grid-cols-2">
+
+      {
+        docker.map((container) => (
+
+          <StatusCard
+            title={container.Names}
+            status={
+              container.State === "running"
+                ? "online"
+                : "offline"
+            }
+          >
+
+            <div class="space-y-2 text-zinc-300">
+
+              <p>
+                {container.Image}
+              </p>
+
+              <p class="text-zinc-500 text-sm">
+                {container.Ports}
+              </p>
+
+            </div>
+
+          </StatusCard>
+        ))
+      }
+
+    </div>
+
+  </section>
+
+</section>
+
 </Layout>
