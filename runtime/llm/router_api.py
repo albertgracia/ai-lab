@@ -7,8 +7,10 @@ from fastapi.responses import JSONResponse, StreamingResponse
 
 from runtime.llm.model_router import select_node
 from runtime.state.system_state import build_system_state
+from runtime.agent.context_loader import build_agent_context
 
 app = FastAPI(title="AI-LAB Router API")
+
 
 @app.get("/")
 def root():
@@ -22,33 +24,11 @@ def root():
         ],
     }
 
-SYSTEM_CONTEXT = """
+
+BASE_SYSTEM_CONTEXT = """
 Eres el router cognitivo del AI-LAB de Albert.
 
 Responde siempre en español.
-
-Cuando el usuario mencione AI-LAB, se refiere a este entorno local:
-
-- nodo Linux principal:
-  - hostname: ubuntu-ialab
-  - IP: 192.168.1.30
-
-- nodos GPU LM Studio:
-  - 192.168.1.50 (RX9070XT)
-  - 192.168.1.60 (RX7900XT)
-
-- stack docker:
-  - traefik
-  - qdrant
-  - open-webui
-  - ollama
-  - portainer
-
-- runtime:
-  - /opt/ai-lab/runtime
-
-- estado real:
-  - /opt/ai-lab/runtime/state/system_snapshot.json
 
 Normas:
 - NO inventes métricas
@@ -138,7 +118,10 @@ def extract_request_text(payload: Dict[str, Any]) -> str:
 
         elif isinstance(content, list):
             for item in content:
-                if isinstance(item, dict) and item.get("type") == "text":
+                if (
+                    isinstance(item, dict)
+                    and item.get("type") == "text"
+                ):
                     parts.append(item.get("text", ""))
 
     return "\n".join(parts)
@@ -151,7 +134,10 @@ async def chat_completions(request: Request):
 
     build_system_state()
 
-    requested_model = payload.get("model", "ailab-router/auto")
+    requested_model = payload.get(
+        "model",
+        "ailab-router/auto"
+    )
 
     request_text = extract_request_text(payload)
 
@@ -163,15 +149,24 @@ async def chat_completions(request: Request):
     )
 
     upstream_url = (
-        f"http://{node['host']}:{node['port']}/v1/chat/completions"
+        f"http://{node['host']}:{node['port']}"
+        "/v1/chat/completions"
     )
 
     messages = payload.get("messages", [])
 
+    agent_context = build_agent_context(request_text)
+
+    system_prompt = (
+        BASE_SYSTEM_CONTEXT
+        + "\n\n"
+        + agent_context
+    )
+
     payload["messages"] = [
         {
             "role": "system",
-            "content": SYSTEM_CONTEXT
+            "content": system_prompt
         }
     ] + messages
 
@@ -183,9 +178,10 @@ async def chat_completions(request: Request):
     upstream_payload.setdefault("temperature", 0.2)
 
     upstream_payload.setdefault(
-    "reasoning",
-    {"effort": "none"}
-)
+        "reasoning",
+        {"effort": "none"}
+    )
+
     headers = {
         "X-AI-LAB-Selected-Node": node["name"],
         "X-AI-LAB-Selected-Host": node["host"],
