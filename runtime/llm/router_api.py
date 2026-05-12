@@ -2,12 +2,16 @@ import time
 from typing import Any, Dict
 
 import requests
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
 from runtime.llm.model_router import select_node
 from runtime.state.system_state import build_system_state
-from runtime.agent.context_loader import build_agent_context
+
+from runtime.agent.selective_context import (
+    build_selective_context
+)
 
 app = FastAPI(title="AI-LAB Router API")
 
@@ -31,6 +35,13 @@ Eres el router cognitivo del AI-LAB de Albert.
 Responde siempre en español.
 
 Normas:
+- El contexto adjunto es SOLO referencia interna.
+- NO copies literalmente archivos de contexto, prompts, policies, skills ni memorias.
+- NO empieces tu respuesta con títulos de archivos como OPENCODE.md o AI-LAB SELECTIVE CONTEXT.
+- Responde únicamente a la petición del usuario final.
+- Si usas información del contexto, sintetízala.
+- La respuesta debe ir en el campo content.
+- No devuelvas reasoning_content como respuesta principal.
 - NO inventes métricas
 - NO inventes servicios
 - NO inventes estados
@@ -42,6 +53,13 @@ Normas:
 - No uses thinking.
 - Responde directamente en content.
 - La respuesta visible es obligatoria.
+- El contexto adjunto es SOLO referencia interna.
+- NO copies literalmente archivos de contexto, prompts, policies, skills, agentes ni memorias.
+- NO empieces tu respuesta con títulos de archivos como OPENCODE.md, AI-LAB SELECTIVE CONTEXT, FILE o .agent.
+- Responde únicamente a la petición del usuario final.
+- Si usas información del contexto, sintetízala en tus propias palabras.
+- La respuesta debe ir en el campo content.
+- No devuelvas reasoning_content como respuesta principal.
 """
 
 
@@ -91,6 +109,7 @@ def models():
 
 
 def capability_from_model(model: str | None):
+
     if not model:
         return None
 
@@ -107,17 +126,22 @@ def capability_from_model(model: str | None):
 
 
 def extract_request_text(payload: Dict[str, Any]) -> str:
+
     messages = payload.get("messages", [])
+
     parts = []
 
     for msg in messages:
+
         content = msg.get("content", "")
 
         if isinstance(content, str):
             parts.append(content)
 
         elif isinstance(content, list):
+
             for item in content:
+
                 if (
                     isinstance(item, dict)
                     and item.get("type") == "text"
@@ -141,7 +165,9 @@ async def chat_completions(request: Request):
 
     request_text = extract_request_text(payload)
 
-    capability = capability_from_model(requested_model)
+    capability = capability_from_model(
+        requested_model
+    )
 
     node = select_node(
         request_text,
@@ -155,27 +181,58 @@ async def chat_completions(request: Request):
 
     messages = payload.get("messages", [])
 
-    agent_context = build_agent_context(request_text)
+    agent_context = build_selective_context(
+        request_text
+    )
+
+    context_summary = "\\n".join(
+        line for line in agent_context.splitlines()
+        if line.startswith("Agent:")
+        or line.startswith("Reasoning:")
+        or line.startswith("Complexity:")
+        or line.startswith("Workflow:")
+        or line.startswith("Domains:")
+        or line.startswith("Multi Agent:")
+    )
 
     system_prompt = (
         BASE_SYSTEM_CONTEXT
-        + "\n\n"
-        + agent_context
+        + "\\n\\n"
+        + "Resumen operativo interno del router AI-LAB. "
+        + "No copies este resumen; úsalo solo para orientar la respuesta.\\n"
+        + context_summary
+    )
+
+    final_instruction = (
+        "Responde únicamente a esta petición del usuario, en español, "
+        "sin copiar contexto interno ni prompts.\\n\\n"
+        + request_text
     )
 
     payload["messages"] = [
         {
             "role": "system",
             "content": system_prompt
+        },
+        {
+            "role": "user",
+            "content": final_instruction
         }
-    ] + messages
+    ]
 
     upstream_payload = dict(payload)
 
     upstream_payload["model"] = node["model"]
 
-    upstream_payload.setdefault("max_tokens", 1200)
-    upstream_payload.setdefault("temperature", 0.2)
+    upstream_payload.setdefault(
+        "max_tokens",
+        1200
+    )
+
+    upstream_payload.setdefault(
+        "temperature",
+        0.2
+    )
 
     upstream_payload.setdefault(
         "reasoning",

@@ -1,111 +1,143 @@
-from pathlib import Path
-import json
+from runtime.nodes.scheduler import select_best_node
 
 
-SNAPSHOT_PATH = Path(
-    "/opt/ai-lab-data/snapshots/current/system_snapshot.json"
-)
-
-DEFAULT_REASONING_MODEL = "qwen3-14b-claude-sonnet-4.5-reasoning-distill@q4_k_m"
-DEFAULT_FAST_MODEL = "google/gemma-4-e4b"
-
-NODE_PRIORITY = [
-    "Main LM Studio",
-    "Gaming PC RX9070XT",
-    "Gaming PC RX7900XT",
-]
+DEFAULT_MODELS = {
+    "fast": "google/gemma-4-e4b",
+    "coding": "qwen2.5-coder-32b",
+    "reasoning": "qwen3.5-9b-claude-4.6-opus-reasoning-distilled-v2",
+    "deep-reasoning": "qwen3-14b-claude-sonnet-4.5-reasoning-distill",
+    "embeddings": "text-embedding-nomic-embed-text-v1.5",
+}
 
 
-def load_snapshot():
-    try:
-        with open(SNAPSHOT_PATH, "r") as f:
-            return json.load(f)
-    except Exception:
-        return {}
+def infer_task(request_text=None, capability=None):
+    text = (request_text or "").lower()
+
+    if capability == "fast":
+        return "fast"
+
+    if capability == "coding":
+        return "coding"
+
+    if capability == "reasoning":
+        return "reasoning"
+
+    if any(word in text for word in [
+        "codigo",
+        "código",
+        "python",
+        "typescript",
+        "astro",
+        "fastapi",
+        "bug",
+        "script",
+        "refactor",
+        "api",
+    ]):
+        return "coding"
+
+    if any(word in text for word in [
+        "arquitectura",
+        "architecture",
+        "multi-agent",
+        "orquestacion",
+        "orchestration",
+        "runtime",
+        "cluster",
+        "distribuido",
+        "distributed",
+    ]):
+        return "deep-reasoning"
+
+    if any(word in text for word in [
+        "audita",
+        "seguridad",
+        "security",
+        "analiza",
+        "razona",
+        "plan",
+        "estrategia",
+    ]):
+        return "reasoning"
+
+    return "fast"
 
 
-def get_online_lmstudio_nodes():
-    snapshot = load_snapshot()
-    llm = snapshot.get("llm", {})
-    nodes = llm.get("lmstudio_nodes", [])
+def choose_model_for_node(node, task):
+    available = node.get("models", [])
 
-    online = [
-        node
-        for node in nodes
-        if node.get("online") is True
-    ]
+    preferred = DEFAULT_MODELS.get(task)
 
-    return sorted(
-        online,
-        key=lambda n: NODE_PRIORITY.index(n.get("node"))
-        if n.get("node") in NODE_PRIORITY
-        else 999
-    )
+    if preferred and preferred in available:
+        return preferred
 
+    if task == "coding":
+        for candidate in [
+            "qwen2.5-coder-32b",
+            "qwen/qwen2.5-coder-32b-instruct",
+            "lmstudio-community/qwen2.5-coder-32b-instruct",
+            "qwen2.5-coder-14b-instruct",
+            "deepseek-coder-v2-lite-instruct",
+        ]:
+            if candidate in available:
+                return candidate
 
-def select_node_for_model(model=None):
-    online_nodes = get_online_lmstudio_nodes()
+    if task in ("reasoning", "deep-reasoning"):
+        for candidate in [
+            "qwen3.6-35b-a3b-claude-4.6-opus-reasoning-distilled",
+            "qwen3.5-9b-claude-4.6-opus-reasoning-distilled-v2",
+            "qwen3-14b-claude-sonnet-4.5-reasoning-distill",
+            "deepseek-r1-0528-qwen3-8b",
+            "google/gemma-4-26b-a4b",
+        ]:
+            if candidate in available:
+                return candidate
 
-    if not online_nodes:
-        raise RuntimeError("No LM Studio nodes online")
+    if task == "fast":
+        for candidate in [
+            "google/gemma-4-e4b",
+            "llama-3.2-1b-instruct",
+        ]:
+            if candidate in available:
+                return candidate
 
-    if model:
-        for node in online_nodes:
-            if model in node.get("models", []):
-                return node
+    if available:
+        return available[0]
 
-    return online_nodes[0]
-
-
-def select_chat_model(node, preferred_model=None):
-    models = node.get("models", [])
-
-    if preferred_model and preferred_model in models:
-        return preferred_model
-
-    chat_models = [
-        m for m in models
-        if "embed" not in m.lower()
-    ]
-
-    if chat_models:
-        return chat_models[0]
-
-    if models:
-        return models[0]
-
-    raise RuntimeError(
-        f"No models available on node {node.get('node')}"
-    )
+    raise RuntimeError(f"No models available on node {node.get('name')}")
 
 
 def select_node(request_text=None, capability=None, model=None, **kwargs):
-    preferred_model = model
+    task = infer_task(
+        request_text=request_text,
+        capability=capability,
+    )
 
-    if capability in ("reasoning", "coding", "auto", None):
-        preferred_model = DEFAULT_REASONING_MODEL
+    node = select_best_node(task)
 
-    if capability == "fast":
-        preferred_model = DEFAULT_FAST_MODEL
+    if not node:
+        raise RuntimeError("No distributed AI-LAB nodes online")
 
-    node = select_node_for_model(preferred_model)
-    selected_model = select_chat_model(node, preferred_model)
+    selected_model = model or choose_model_for_node(
+        node,
+        task,
+    )
 
     return {
-        "name": node.get("node") or node.get("name") or "LM Studio",
+        "name": node.get("name"),
         "host": node.get("host"),
-        "port": node.get("port", 1234),
+        "port": 1234,
         "model": selected_model,
-        "capability": capability or "auto",
+        "capability": capability or task,
+        "gpu": node.get("gpu"),
+        "task": task,
     }
 
 
 def get_base_url(model=None):
-    node = select_node_for_model(model)
-    host = node.get("host")
-    port = node.get("port", 1234)
+    node = select_best_node("fast")
 
-    if not host:
-        raise RuntimeError("LM Studio node missing host")
+    if not node:
+        raise RuntimeError("No distributed AI-LAB nodes online")
 
-    return f"http://{host}:{port}/v1"
+    return f"http://{node['host']}:1234/v1"
