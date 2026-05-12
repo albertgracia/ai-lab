@@ -216,3 +216,219 @@ aside img[alt="AI-LAB"] {
   background: transparent;
   border-radius: 1.5rem;
 }
+
+/* =========================================================
+   AI-LAB Mermaid / Diagrams Dark Theme Fix
+   ========================================================= */
+
+.mermaid,
+pre.mermaid,
+.sl-markdown-content .mermaid {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 1.5rem;
+  border: 1px solid rgba(34, 211, 238, 0.25);
+  background:
+    radial-gradient(circle at top left, rgba(34, 211, 238, 0.10), transparent 35%),
+    linear-gradient(135deg, rgba(9, 9, 11, 0.98), rgba(0, 0, 0, 0.98));
+  padding: 2rem;
+  box-shadow: 0 0 45px rgba(34, 211, 238, 0.08);
+}
+
+.mermaid svg {
+  max-width: 100%;
+  height: auto;
+  background: transparent !important;
+}
+
+/* Nodos */
+.mermaid .node rect,
+.mermaid .node polygon,
+.mermaid .node circle,
+.mermaid .node ellipse,
+.mermaid .node path {
+  fill: #0f172a !important;
+  stroke: #22d3ee !important;
+  stroke-width: 2px !important;
+  filter: drop-shadow(0 0 10px rgba(34, 211, 238, 0.20));
+}
+
+/* Texto de nodos */
+.mermaid .nodeLabel,
+.mermaid .node text,
+.mermaid .label,
+.mermaid text {
+  fill: #ffffff !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+/* Texto dentro de foreignObject */
+.mermaid foreignObject,
+.mermaid foreignObject div,
+.mermaid foreignObject span,
+.mermaid .labelBkg {
+  color: #ffffff !important;
+  background: transparent !important;
+}
+
+/* Flechas y líneas */
+.mermaid .edgePath path,
+.mermaid .flowchart-link,
+.mermaid path.path {
+  stroke: #67e8f9 !important;
+  stroke-width: 2px !important;
+}
+
+.mermaid marker path {
+  fill: #67e8f9 !important;
+  stroke: #67e8f9 !important;
+}
+
+/* Labels de enlaces */
+.mermaid .edgeLabel,
+.mermaid .edgeLabel p,
+.mermaid .edgeLabel span,
+.mermaid .edgeLabel div {
+  color: #e5e7eb !important;
+  background: #020617 !important;
+  border-radius: 0.5rem;
+  padding: 0.15rem 0.4rem;
+}
+
+/* Clusters / subgraphs */
+.mermaid .cluster rect {
+  fill: rgba(15, 23, 42, 0.65) !important;
+  stroke: rgba(34, 211, 238, 0.45) !important;
+  stroke-width: 2px !important;
+  rx: 14px !important;
+}
+
+.mermaid .cluster text {
+  fill: #22d3ee !important;
+  font-weight: 900 !important;
+}
+
+/* Sequence / other Mermaid diagrams */
+.mermaid .actor {
+  fill: #0f172a !important;
+  stroke: #22d3ee !important;
+}
+
+.mermaid .actor-line {
+  stroke: #334155 !important;
+}
+
+.mermaid .messageLine0,
+.mermaid .messageLine1 {
+  stroke: #67e8f9 !important;
+}
+
+.mermaid .messageText {
+  fill: #ffffff !important;
+}
+
+.mermaid .loopText,
+.mermaid .loopLine {
+  fill: #ffffff !important;
+  stroke: #22d3ee !important;
+}
+
+.mermaid .note {
+  fill: #111827 !important;
+  stroke: #22d3ee !important;
+}
+
+.mermaid .noteText {
+  fill: #ffffff !important;
+}
+
+/* Gantt / pie / misc */
+.mermaid .section,
+.mermaid .taskText,
+.mermaid .titleText,
+.mermaid .slice,
+.mermaid .legend text {
+  fill: #ffffff !important;
+  color: #ffffff !important;
+}
+
+
+/* Mermaid label clipping fix */
+.mermaid svg {
+  overflow: visible !important;
+}
+
+.mermaid foreignObject {
+  overflow: visible !important;
+}
+
+.mermaid foreignObject div {
+  white-space: normal !important;
+  line-height: 1.25 !important;
+  overflow: visible !important;
+  padding: 0.2rem 0.35rem !important;
+}
+
+.mermaid .nodeLabel {
+  display: inline-block !important;
+  padding: 0.15rem 0.35rem !important;
+  line-height: 1.25 !important;
+}
+
+.mermaid .label-container,
+.mermaid .node rect {
+  rx: 10px !important;
+  ry: 10px !important;
+}
+
+.mermaid .node {
+  overflow: visible !important;
+}
+
+
+/* =========================================================
+   Mermaid node sizing fix
+   ========================================================= */
+
+.mermaid .label {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-direction: column !important;
+  padding: 0.75rem 1rem !important;
+  line-height: 1.5 !important;
+}
+
+.mermaid .node rect,
+.mermaid .node polygon,
+.mermaid .node ellipse {
+  height: auto !important;
+  min-height: 80px !important;
+}
+
+.mermaid .nodeLabel p {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.mermaid .nodeLabel {
+  line-height: 1.45 !important;
+  font-size: 18px !important;
+  white-space: nowrap !important;
+}
+
+/* Más espacio vertical general */
+.mermaid svg {
+  overflow: visible !important;
+}
+
+/* Corrige texto secundario */
+.mermaid foreignObject div {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 0.2rem !important;
+}
+

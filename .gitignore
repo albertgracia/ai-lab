@@ -1,14 +1,78 @@
-data/
-logs/
-*.log
-.env
-*.bak
-*.tmp
+# =========================================
+# AI-LAB Git Ignore
+# =========================================
 
+# Node
+node_modules/
+dist/
+.astro/
+
+# Python
 __pycache__/
 *.pyc
-*.pyo
-*.pyd
-runtime/state/system_snapshot.json
-runtime/opencode/
+.venv/
+venv/
+
+# Env / secrets
+.env
+.env.*
+*.key
+*.pem
+*.crt
+secrets/
+private/
+tokens/
+
+# Docker
+docker-data/
+volumes/
+
+# Logs
+logs/
+*.log
+
+# Temp
+tmp/
+temp/
+.cache/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# AI / Models
+models/
+gguf/
+*.gguf
+
+# Databases
+*.db
+*.sqlite
+qdrant_storage/
+loki-data/
+grafana-data/
+prometheus-data/
+
+# Reports / private docs
+informes-opencode/
+*.docx
+*.pdf
+
+# Snapshots
+snapshots/
+backups/
+
+# Local runtime
+runtime/
+sessions/
+
+
+# Runtime/private heavy data
+data/
+.agent/
 docs/system_snapshot.json
+
