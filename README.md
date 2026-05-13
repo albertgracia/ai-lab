@@ -1,417 +1,466 @@
 # AI-LAB
+## Local-First Distributed Cognitive Infrastructure
 
-AI-LAB is a local-first cognitive AI infrastructure focused on governed autonomous operation, semantic memory, modular orchestration and distributed inference.
+AI-LAB es una plataforma cognitiva operacional local-first diseñada para homelab, inferencia distribuida y automatización inteligente de infraestructura.
 
-## Current Runtime Capabilities
+El objetivo del proyecto no es únicamente ejecutar modelos LLM locales, sino construir un:
 
-- Local semantic RAG memory
-- Intent routing
-- Cognitive orchestration layer
-- Governance runtime
-- Operational modes:
-  - plan
-  - build
-  - execute
-- Capability isolation
-- Governed sandbox execution
-- Audit trail system
-- Governed OpenCode integration
-- LM Studio + Ollama support
-- Distributed inference node architecture
-- Persistent architecture memory
-- Local-first operational policies
+> Distributed Cognitive Runtime
 
-## Cognitive Runtime Pipeline
+capaz de:
+
+- razonar sobre infraestructura;
+- mantener memoria operacional;
+- enrutar tareas cognitivas;
+- coordinar workflows;
+- ejecutar inferencia distribuida;
+- aplicar governance;
+- automatizar operaciones;
+- evolucionar hacia una arquitectura multiagente autónoma.
+
+---
+
+# Current Status
+
+## Distributed Cognitive Runtime v1
+
+Estado actual del sistema:
+
+- Distributed Task Routing
+- Workflow Engine
+- Governance Runtime
+- Semantic Memory
+- Episodic Memory
+- Distributed Cognition
+- Capability-based Routing
+- Execution Profiles
+- Sandbox Runtime
+- Multi-node Inference
+- Persistent Audit Trail
+- Operational Cognitive Context
+
+---
+
+# Core Architecture
 
 ```text
-USER REQUEST
-â†“
-INTENT ROUTER
-â†“
-MODE SELECTOR
-â†“
-SEMANTIC CONTEXT LOADER
-â†“
-MODEL ROUTER
-â†“
-GOVERNANCE LAYER
-â†“
-SANDBOX EXECUTION
-â†“
-AUDIT + MEMORY# AI Lab Homelab
+User Request
+    ?
+Intent Router
+    ?
+Workflow Planner
+    ?
+Distributed Task Router
+    ?
+Execution Coordinator
+    ?
+Inference Nodes
+    ?
+Memory + Audit + Governance
+```
 
-Laboratorio local de IA para homelab.
+---
 
-Componentes previstos:
-- Traefik
-- Ollama
-- Open WebUI
+# Infrastructure
+
+## Main Orchestration Node
+
+| Component | Value |
+|---|---|
+| Host | Ubuntu Server |
+| Virtualization | Hyper-V |
+| Main Node | ubuntu-ialab |
+| IP | 192.168.1.30 |
+| Repository | /opt/ai-lab |
+
+---
+
+# Distributed Cognitive Cluster
+
+## Active Nodes
+
+### NAS Local Router Node
+
+| Property | Value |
+|---|---|
+| Host | 192.168.1.250 |
+| GPU | RX780M |
+| VRAM | 0.75 GB |
+| Role | Lightweight Routing + Memory |
+| Capabilities | fast, fallback, router, memory |
+
+### RX7900XT Reasoning Node
+
+| Property | Value |
+|---|---|
+| Host | 192.168.1.60 |
+| GPU | RX7900XT |
+| VRAM | 20 GB |
+| Role | Reasoning + Coding + Orchestration |
+| Capabilities | reasoning, coding, orchestration, backend, multi-agent |
+
+### RX9070 Multimodal Node
+
+| Property | Value |
+|---|---|
+| Host | 192.168.1.50 |
+| GPU | RX9070 |
+| VRAM | 16 GB |
+| Role | Vision + Multimodal + Frontend |
+| Capabilities | vision, image, multimodal, embeddings, creative |
+
+---
+
+# Current Runtime Components
+
+## Governance Runtime
+
+AI-LAB implementa un sistema de governance cognitiva con perfiles operacionales:
+
+| Profile | Purpose |
+|---|---|
+| sandbox | entorno experimental |
+| pilot | governance reforzada |
+| production | máxima seguridad |
+
+Características:
+
+- capability enforcement
+- shell restrictions
+- audit trail
+- execution validation
+- profile-based security
+
+---
+
+# Distributed Workflow Engine
+
+El runtime ya soporta:
+
+- workflow planning
+- distributed routing
+- capability matching
+- node scoring
+- orchestration simulation
+- execution trace persistence
+
+Ejemplo:
+
+```text
+reasoning      -> RX7900XT
+coding         -> RX7900XT
+vision         -> RX9070
+memory         -> RX9070
+fast/fallback  -> NAS local
+```
+
+---
+
+# Memory Architecture
+
+## Semantic Memory
+
+Motor RAG local basado en:
+
 - Qdrant
-- PostgreSQL
-- Grafana
-- Prometheus
-- Loki
-AI Lab — Arquitectura, Estado Actual y Roadmap Futuro
-? Visión del Proyecto
-El objetivo del AI Lab no es simplemente ejecutar modelos LLM locales, sino construir una:
-Plataforma Cognitiva Operacional para Homelab
-Un sistema capaz de:
-    • ejecutar inferencia IA local; 
-    • mantener memoria operacional; 
-    • razonar sobre infraestructura; 
-    • cargar capacidades dinámicamente; 
-    • automatizar workflows; 
-    • aprender del estado del sistema; 
-    • operar como un “AI Operations Brain”. 
+- sentence-transformers
+- local embeddings
+- semantic retrieval
 
-?? Arquitectura Actual
-Infraestructura Base
-Host
-Windows 11
-??? Hyper-V
-VM Principal
-Ubuntu Server 24.04 LTS
-Virtualización
-Hyper-V VM dedicada
+Usado para:
 
-? Stack Base Docker
-Reverse Proxy
-Traefik
-Funciones:
-    • reverse proxy central; 
-    • routing dinámico; 
-    • dashboard; 
-    • futura terminación TLS; 
-    • integración Docker labels. 
-Endpoints futuros:
-openwebui.local
-grafana.local
-qdrant.local
-portainer.local
+- contextual loading
+- workflow augmentation
+- operational cognition
+- knowledge retrieval
 
-Gestión Docker
-Portainer
-Funciones:
-    • gestión visual; 
-    • logs; 
-    • stacks; 
-    • redes; 
-    • debugging; 
-    • administración de contenedores. 
+---
 
-? Stack IA Actual
-Open WebUI
-Rol:
-Frontend unificado IA
-Funciones:
-    • interfaz chat; 
-    • multi-model; 
-    • conexiones API; 
-    • futura knowledge base; 
-    • futura integración RAG. 
+## Episodic Memory
 
-Ollama
-Rol:
-Motor local de inferencia CPU
-Uso:
-    • modelos ligeros; 
-    • embeddings; 
-    • inferencia persistente; 
-    • automatización. 
-Modelos previstos:
-qwen2.5
-mistral
-deepseek-coder
-llama3
+Sistema persistente de eventos cognitivos:
 
-LM Studio
-Rol:
-Motor GPU externo
-Arquitectura:
-Windows GPU Workstation
-??? OpenAI-compatible API
-Integración:
-Open WebUI
-? LM Studio API
+```text
+runtime/state/episodic_memory.jsonl
+```
 
-? Arquitectura de Storage
-Sistema
-LVM
-Distribución:
-ubuntu-lv     ? sistema operativo
-ai-models LV  ? modelos IA
+Registra:
 
-Volumen IA
-/mnt/ai-models
-Uso:
-    • modelos Ollama; 
-    • embeddings; 
-    • futuros datasets; 
-    • memoria persistente. 
+- workflows
+- routing
+- orchestration
+- governance events
+- execution traces
+- distributed decisions
 
-? Acceso y Gestión
-SSH
-Administración principal.
+---
 
-SMB
-Share Windows:
-\\192.168.1.30\ai-lab
-Permite:
-    • edición desde VSCode; 
-    • gestión de compose; 
-    • workflows; 
-    • skills; 
-    • runtime. 
+# Cognitive Runtime
 
-? Git Infrastructure
-Repositorio:
-/opt/ai-lab
-Contiene:
-docker stacks
-configs
-runtime cognitivo
-skills
-workflows
-Excluye:
-data/
-logs/
-modelos/
-runtime artifacts
+## Runtime Structure
 
-? Arquitectura Cognitiva
-Runtime .agent
-Tu .agent ya constituye una:
-Arquitectura Cognitiva Modular
-
-Estructura Actual
-.agent/
-??? agents/
-??? skills/
-??? workflows/
-??? rules/
-??? scripts/
-??? ARCHITECTURE.md
-
-? Agents
-Especialistas cognitivos:
-backend-specialist
-frontend-specialist
-debugger
-security-auditor
-devops-engineer
-orchestrator
-...
-Responsabilidad:
-    • razonamiento especializado; 
-    • identidad operacional; 
-    • coordinación multiagente futura. 
-
-? Skills
-Capacidades modulares cargables dinámicamente.
-Ejemplos:
-docker-expert
-systematic-debugging
-deployment-procedures
-bash-linux
-database-design
-performance-profiling
-Objetivo futuro:
-semantic skill loading
-
-? Workflows
-Procesos ejecutables.
-Ejemplos:
-/debug
-/deploy
-/orchestrate
-/test
-/plan
-
-? Rules
-Gobernanza global:
-GEMINI.md
-Funciones:
-    • restricciones; 
-    • políticas; 
-    • alignment; 
-    • comportamiento persistente. 
-
-? Estado Cognitivo Actual
-Actualmente:
-.agent = knowledge layer
-Todavía NO:
-    • routing dinámico; 
-    • selección automática; 
-    • ejecución multiagente; 
-    • orchestration runtime. 
-
-? Roadmap Futuro
-FASE 1 — Consolidación (Actual)
-? VM Ubuntu
-? Docker
-? Traefik
-? Portainer
-? Open WebUI
-? Ollama
-? LM Studio Integration
-? SMB
-? Git
-? LVM IA
-? Runtime .agent
-
-FASE 2 — Knowledge & RAG
-Objetivo
-Convertir .agent en conocimiento semántico vivo.
-
-Componentes
-Qdrant
-Rol:
-Vector Database
-Funciones:
-    • embeddings; 
-    • búsqueda semántica; 
-    • memoria contextual. 
-
-Embeddings
-Modelo previsto:
-nomic-embed-text-v1.5
-
-Flujo
-User Prompt
-    ?
-Embedding
-    ?
-Vector Search
-    ?
-Relevant Skills
-    ?
-Prompt Augmentation
-    ?
-LLM
-
-FASE 3 — Agent Runtime
-Objetivo
-Crear runtime cognitivo real.
-
-Arquitectura prevista
-Open WebUI
-    ?
-Agent Runtime API
-    ?
-Semantic Router
-    ?
-Workflow Engine
-    ?
-LLM Backend
-
-Nuevos módulos
+```text
 runtime/
-??? router.py
-??? orchestrator.py
-??? workflow_engine.py
-??? loader.py
-??? embeddings.py
-??? memory.py
++-- agent/
++-- distributed/
++-- execution/
++-- memory/
++-- planner/
++-- profiles/
++-- state/
++-- workflows/
+```
 
-FASE 4 — Observabilidad
-Stack previsto
-Prometheus
-Grafana
-Loki
-Promtail
-Node Exporter
-cAdvisor
+---
 
-Objetivo
-Permitir:
-    • análisis histórico; 
-    • correlación eventos; 
-    • reasoning operacional; 
-    • detección anomalías. 
+# Current Services
 
-FASE 5 — Knowledge Graph
-Objetivo
-Memoria relacional persistente.
+## Docker Stack
 
-Tecnología prevista
-Neo4j
+| Service | Purpose |
+|---|---|
+| Traefik | Reverse Proxy |
+| Open WebUI | Unified AI Frontend |
+| Ollama | Local Inference |
+| Qdrant | Vector Database |
+| Portainer | Docker Management |
 
-Ejemplo
-Traefik
- ??? USES_PORT ? 443
- ??? DEPENDS_ON ? docker network
- ??? EXPOSES ? Open WebUI
+---
 
-FASE 6 — MCP Integration
-Objetivo
-Dar herramientas reales al runtime.
+# AI Stack
 
-Herramientas futuras
-filesystem
-docker
-git
-grafana
-prometheus
-shell
-browser automation
-proxmox
+## Ollama
 
-FASE 7 — Multi-Agent Orchestration
-Objetivo
-Coordinación real entre agentes especializados.
+Local CPU inference runtime.
 
-Ejemplo
+Current usage:
+
+- lightweight models
+- embeddings
+- automation
+- fallback inference
+
+---
+
+## LM Studio
+
+External GPU inference backend.
+
+Integrated using:
+
+- OpenAI-compatible APIs
+- distributed cognitive routing
+- capability-based task assignment
+
+---
+
+# Observability (In Progress)
+
+Planned stack:
+
+- Prometheus
+- Grafana
+- Loki
+- Promtail
+- Node Exporter
+- cAdvisor
+
+Future objectives:
+
+- operational reasoning
+- anomaly detection
+- infrastructure cognition
+- historical analysis
+- telemetry-aware orchestration
+
+---
+
+# Distributed Cognition
+
+AI-LAB ya implementa:
+
+- distributed node registry
+- capability-aware routing
+- cognitive workload distribution
+- node scoring
+- workflow orchestration
+- distributed simulation
+
+Próximas fases:
+
+- real remote execution
+- async execution queues
+- failover engine
+- execution aggregation
+- autonomous workflows
+
+---
+
+# Multi-Agent Vision
+
+Objetivo futuro:
+
+```text
 planner-agent
     ?
-devops-agent
+reasoning-agent
+    ?
+coding-agent
     ?
 security-agent
     ?
-testing-agent
-    ?
 documentation-agent
+    ?
+execution-agent
+```
 
-? Objetivo Final
+Con coordinación autónoma distribuida.
+
+---
+
+# Storage Architecture
+
+## AI Models Storage
+
+```text
+/mnt/ai-models
+```
+
+Usado para:
+
+- Ollama models
+- embeddings
+- datasets
+- persistent cognitive memory
+
+---
+
+# Git Infrastructure
+
+Repository:
+
+```text
+/opt/ai-lab
+```
+
+Incluye:
+
+- runtime
+- workflows
+- distributed cognition
+- governance
+- orchestration
+- memory systems
+
+Excluye:
+
+- datasets
+- logs
+- runtime artifacts
+- model binaries
+
+---
+
+# Philosophy
+
+## Local First
+
+Todo el runtime está diseñado para ejecutarse:
+
+- local
+- private
+- self-hosted
+- sovereign
+
+---
+
+## Modular Architecture
+
+Separación explícita entre:
+
+- cognition
+- memory
+- execution
+- governance
+- workflows
+- orchestration
+- infrastructure
+
+---
+
+## Incremental Cognitive Growth
+
+La evolución del proyecto sigue capas progresivas:
+
+```text
+Infrastructure
+    ?
+Knowledge
+    ?
+Memory
+    ?
+Governance
+    ?
+Workflows
+    ?
+Distributed Cognition
+    ?
+Autonomous Operations
+```
+
+---
+
+# Current Roadmap
+
+## Phase 6 — Distributed Cognitive Runtime
+- distributed workflows
+- execution coordination
+- task aggregation
+- failover routing
+- async orchestration
+
+## Phase 7 — Autonomous Operations
+- autonomous remediation
+- operational reasoning
+- infrastructure cognition
+- adaptive workflows
+
+## Phase 8 — Multi-Agent Coordination
+- specialized agents
+- distributed cognition mesh
+- cooperative reasoning
+- autonomous planning
+
+---
+
+# Final Objective
+
 Construir una:
-Plataforma Cognitiva Operacional Local
+
+> Local-First Operational Cognitive Platform
+
 capaz de:
-    • razonar sobre infraestructura; 
-    • cargar capacidades dinámicamente; 
-    • mantener memoria persistente; 
-    • ejecutar workflows; 
-    • automatizar operaciones; 
-    • aprender del estado del sistema; 
-    • operar como un “AI Operations Brain”. 
 
-? Filosofía del Proyecto
-Principios
-Modularidad
-Separar:
-knowledge
-behavior
-execution
-policy
-memory
-workflow
+- razonar sobre infraestructura;
+- mantener memoria persistente;
+- coordinar agentes;
+- ejecutar workflows;
+- automatizar operaciones;
+- aprender del estado del sistema;
+- operar como un verdadero AI Operations Brain.
 
-Local First
-Todo ejecutado:
-local
-private
-self-hosted
+---
 
-Incremental Growth
-Construir por capas:
-infraestructura
-? conocimiento
-? memoria
-? runtime
-? automatización
-? inteligencia operacional
+# Project Status
 
-? Estado Actual del Proyecto
-Nivel actual
-AI Infrastructure Foundation
-Próximo gran salto
-Semantic Knowledge + Agent Runtime
+## Current Level
 
+```text
+Distributed Cognitive Infrastructure
+```
+
+## Next Major Milestone
+
+```text
+Distributed Execution Coordinator
+```
