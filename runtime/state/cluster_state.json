@@ -1,0 +1,82 @@
+{
+  "timestamp": 1778618731,
+  "online_nodes": 3,
+  "total_nodes": 3,
+  "nodes": [
+    {
+      "name": "nas-local",
+      "host": "192.168.1.250",
+      "gpu": "RX780M",
+      "online": true,
+      "latency_ms": 3.53,
+      "models": [
+        "google/gemma-4-e4b",
+        "text-embedding-nomic-embed-text-v1.5"
+      ],
+      "capabilities": [
+        "fast",
+        "lightweight",
+        "fallback",
+        "router",
+        "memory"
+      ],
+      "priority": 1,
+      "vram_gb": 0.75
+    },
+    {
+      "name": "rx7900xt-node",
+      "host": "192.168.1.60",
+      "gpu": "RX7900XT",
+      "online": true,
+      "latency_ms": 2.45,
+      "models": [
+        "zhangfeng026/qwen2.5-coder-32b-instruct",
+        "lmstudio-community/qwen2.5-coder-32b-instruct",
+        "qwen2.5-coder-32b",
+        "deepseek-r1-0528-qwen3-8b",
+        "qwen3-14b-claude-sonnet-4.5-reasoning-distill",
+        "flux.2-klein-9b",
+        "moondream2-20250414",
+        "qwen2.5-coder-14b-instruct",
+        "qwen/qwen2.5-coder-32b-instruct",
+        "deepseek-coder-v2-lite-instruct",
+        "text-embedding-nomic-embed-text-v2-moe",
+        "llama-3.2-1b-instruct",
+        "google/gemma-4-26b-a4b",
+        "text-embedding-nomic-embed-text-v1.5"
+      ],
+      "capabilities": [
+        "reasoning",
+        "coding",
+        "large-context",
+        "multi-agent",
+        "orchestration",
+        "backend"
+      ],
+      "priority": 10,
+      "vram_gb": 20
+    },
+    {
+      "name": "rx9070-node",
+      "host": "192.168.1.50",
+      "gpu": "RX9070",
+      "online": true,
+      "latency_ms": 2.79,
+      "models": [
+        "qwen3.5-9b-claude-4.6-opus-reasoning-distilled-v2",
+        "qwen3.6-35b-a3b-claude-4.6-opus-reasoning-distilled",
+        "text-embedding-nomic-embed-text-v1.5"
+      ],
+      "capabilities": [
+        "vision",
+        "image",
+        "multimodal",
+        "embeddings",
+        "creative",
+        "frontend"
+      ],
+      "priority": 8,
+      "vram_gb": 16
+    }
+  ]
+}
