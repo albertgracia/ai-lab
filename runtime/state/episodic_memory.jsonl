@@ -1,0 +1,1 @@
+{"timestamp": 1778664122, "event_type": "episodic_memory_test", "summary": "Episodic memory initialized successfully.", "payload": {"component": "runtime.memory.episodic_memory", "status": "ok"}}
