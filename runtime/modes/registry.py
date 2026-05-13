@@ -1,38 +1,55 @@
-from runtime.modes import plan, readonly, build, execute
+# /opt/ai-lab/runtime/modes/registry.py
 
 MODES = {
-    "plan": plan,
-    "readonly": readonly,
-    "build": build,
-    "execute": execute,
-}
+    "plan": {
+        "capabilities": [
+            "analyze",
+            "plan",
+            "rag",
+            "read",
+            "search",
+        ],
+    },
 
-DEFAULT_MODE = "readonly"
+    "build": {
+        "capabilities": [
+            "analyze",
+            "plan",
+            "rag",
+            "read",
+            "search",
+            "write",
+        ],
+    },
+
+    "execute": {
+        "capabilities": [
+            "analyze",
+            "plan",
+            "rag",
+            "read",
+            "search",
+            "write",
+            "shell",
+            "tools",
+        ],
+    },
+}
 
 
 def get_mode(mode_name: str | None = None):
-    name = mode_name or DEFAULT_MODE
 
-    if name not in MODES:
-        raise ValueError(f"Unknown mode: {name}")
+    if mode_name is None:
+        mode_name = "plan"
 
-    return MODES[name]
+    if mode_name not in MODES:
+        raise ValueError(f"Unknown mode: {mode_name}")
 
-
-def list_modes():
-    return list(MODES.keys())
+    return MODES[mode_name]
 
 
-def describe_mode(mode_name: str):
+def get_capabilities(mode_name: str | None = None):
+
     mode = get_mode(mode_name)
 
-    return {
-        "name": mode.MODE_NAME,
-        "description": mode.DESCRIPTION,
-        "capabilities": sorted(mode.ALLOWED_CAPABILITIES),
-    }
-
-
-if __name__ == "__main__":
-    for name in list_modes():
-        print(describe_mode(name))
+    return mode["capabilities"]
