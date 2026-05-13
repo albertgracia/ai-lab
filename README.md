@@ -1,4 +1,44 @@
-# AI Lab Homelab
+# AI-LAB
+
+AI-LAB is a local-first cognitive AI infrastructure focused on governed autonomous operation, semantic memory, modular orchestration and distributed inference.
+
+## Current Runtime Capabilities
+
+- Local semantic RAG memory
+- Intent routing
+- Cognitive orchestration layer
+- Governance runtime
+- Operational modes:
+  - plan
+  - build
+  - execute
+- Capability isolation
+- Governed sandbox execution
+- Audit trail system
+- Governed OpenCode integration
+- LM Studio + Ollama support
+- Distributed inference node architecture
+- Persistent architecture memory
+- Local-first operational policies
+
+## Cognitive Runtime Pipeline
+
+```text
+USER REQUEST
+↓
+INTENT ROUTER
+↓
+MODE SELECTOR
+↓
+SEMANTIC CONTEXT LOADER
+↓
+MODEL ROUTER
+↓
+GOVERNANCE LAYER
+↓
+SANDBOX EXECUTION
+↓
+AUDIT + MEMORY# AI Lab Homelab
 
 Laboratorio local de IA para homelab.
 
