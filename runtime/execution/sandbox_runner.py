@@ -1,24 +1,54 @@
 import subprocess
 import shlex
+
 from datetime import datetime, timezone
 
 from runtime.security.capability_guard import validate_shell_command
 from runtime.audit.audit_logger import audit_event
+from runtime.profiles.loader import load_profile
 
 
 DEFAULT_TIMEOUT = 30
 
 
+def validate_profile_command(profile: dict, command: str):
+
+    if not profile["allow_shell"]:
+        raise PermissionError(
+            f"Profile '{profile['name']}' blocks shell execution"
+        )
+
+    for blocked in profile["blocked_commands"]:
+
+        if blocked in command:
+            raise PermissionError(
+                f"Blocked command in profile '{profile['name']}': {blocked}"
+            )
+
+
 def run_safe_command(
     mode: str,
     command: str,
+    profile_name: str = "pilot",
     timeout: int = DEFAULT_TIMEOUT,
 ):
     """
-    Ejecuta comandos shell bajo governance.
+    Governed shell execution with mode + profile validation.
     """
 
     validate_shell_command(mode, command)
+
+    profile = load_profile(profile_name)
+
+    validate_profile_command(
+        profile,
+        command,
+    )
+
+    timeout = min(
+        timeout,
+        profile["max_command_timeout"],
+    )
 
     started = datetime.now(timezone.utc).isoformat()
 
@@ -26,6 +56,7 @@ def run_safe_command(
         "sandbox_execution_started",
         {
             "mode": mode,
+            "profile": profile_name,
             "command": command,
             "timeout": timeout,
             "started": started,
@@ -43,6 +74,7 @@ def run_safe_command(
 
         payload = {
             "mode": mode,
+            "profile": profile_name,
             "command": command,
             "returncode": result.returncode,
             "stdout": result.stdout[:4000],
@@ -60,6 +92,7 @@ def run_safe_command(
 
         payload = {
             "mode": mode,
+            "profile": profile_name,
             "command": command,
             "timeout": timeout,
             "error": "timeout",
@@ -76,6 +109,7 @@ def run_safe_command(
 
         payload = {
             "mode": mode,
+            "profile": profile_name,
             "command": command,
             "error": str(exc),
         }
@@ -90,9 +124,32 @@ def run_safe_command(
 
 if __name__ == "__main__":
 
-    result = run_safe_command(
-        mode="execute",
-        command="docker ps",
-    )
+    tests = [
+        ("execute", "sandbox", "docker ps"),
+        ("execute", "pilot", "docker ps"),
+        ("execute", "production", "docker ps"),
+    ]
 
-    print(result)
+    for mode, profile, cmd in tests:
+
+        print()
+        print("====================")
+        print("PROFILE:", profile)
+
+        try:
+            result = run_safe_command(
+                mode=mode,
+                profile_name=profile,
+                command=cmd,
+            )
+
+            print(result)
+
+        except Exception as exc:
+            print({
+                "mode": mode,
+                "profile": profile,
+                "command": cmd,
+                "blocked": True,
+                "reason": str(exc),
+            })
