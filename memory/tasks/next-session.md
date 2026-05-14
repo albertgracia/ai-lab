@@ -45,6 +45,20 @@ cd /opt/ai-lab/apps/ialab-docs
 npm install cytoscape uplot
 ```
 
+
+### Topología de Red UniFi
+- [ ] Integrar datos de UniFi Poller (1.40:9130) en la topología interactiva
+  - Cloud Gateway Fiber (1.100? 192.168.1.X)
+  - Switch USW Flex 2.5G 8 PoE
+  - Access Points WiFi
+  - Mapa de red: router → switch → APs → clientes
+- [ ] Componente `UniFiTopology.astro` con Cytoscape
+  - Nodos: gateway, switch, APs con estado online/offline
+  - Aristas: conexiones físicas con velocidad (2.5Gb / 10Gb)
+  - Indicador de clientes WiFi por AP
+- [ ] Página `/network/topology` — visor de topología de red
+- [ ] Datos en vivo via UniFi Poller → Prometheus → API
+
 ## Notas
 - El `TopologyGraph.astro` ya existe pero es ASCII art estático → reemplazar con Cytoscape
 - uPlot es 10x más rápido que Recharts para datos en vivo
