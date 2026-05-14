@@ -56,13 +56,7 @@ def create_workflow(user_goal: str) -> dict[str, Any]:
     write_episode(
         event_type="workflow_created",
         summary=f"Created workflow for goal: {user_goal}",
-        payload={
-            "user_goal": user_goal,
-            "intent": task_plan.intent,
-            "mode": task_plan.mode,
-            "profile": task_plan.profile,
-            "steps": workflow["steps"],
-        },
+        payload=workflow,
     )
 
     return workflow
@@ -71,22 +65,46 @@ def create_workflow(user_goal: str) -> dict[str, Any]:
 def route_workflow(workflow: dict[str, Any]) -> dict[str, Any]:
     workflow["status"] = "routed"
 
+    unavailable_steps = 0
+    fallback_steps = 0
+
     for step in workflow["steps"]:
         route = select_node(
             step["distributed_task"]
         )
 
         step["distributed_route"] = route
-        step["status"] = "routed"
+
+        if not route.get("available"):
+            step["status"] = "unavailable"
+            unavailable_steps += 1
+
+        elif route.get("mode") == "fallback":
+            step["status"] = "routed_fallback"
+            fallback_steps += 1
+
+        else:
+            step["status"] = "routed"
+
+    if unavailable_steps:
+        workflow["status"] = "degraded_unavailable"
+    elif fallback_steps:
+        workflow["status"] = "degraded_routed"
 
     write_episode(
         event_type="workflow_routed",
-        summary=f"Routed workflow for goal: {workflow['user_goal']}",
+        summary=(
+            f"Workflow routed for goal '{workflow['user_goal']}' "
+            f"with status '{workflow['status']}'."
+        ),
         payload={
             "user_goal": workflow["user_goal"],
             "intent": workflow["intent"],
             "mode": workflow["mode"],
             "profile": workflow["profile"],
+            "status": workflow["status"],
+            "fallback_steps": fallback_steps,
+            "unavailable_steps": unavailable_steps,
             "steps": workflow["steps"],
         },
     )
@@ -95,31 +113,45 @@ def route_workflow(workflow: dict[str, Any]) -> dict[str, Any]:
 
 
 def simulate_workflow(workflow: dict[str, Any]) -> dict[str, Any]:
-    workflow["status"] = "simulated"
+    if workflow["status"] == "degraded_unavailable":
+        simulation_status = "simulated_with_unavailable_steps"
+    elif workflow["status"] == "degraded_routed":
+        simulation_status = "simulated_degraded"
+    else:
+        simulation_status = "simulated"
+
+    workflow["status"] = simulation_status
 
     for step in workflow["steps"]:
-        step["status"] = "simulated"
+        route = step.get("distributed_route") or {}
 
-        node = None
-
-        if step.get("distributed_route"):
-            node = step["distributed_route"].get(
-                "selected_node"
+        if not route.get("available"):
+            step["result"] = (
+                f"Step '{step['title']}' cannot be simulated: "
+                "no available node."
             )
+            continue
+
+        node = route.get("selected_node")
+        route_mode = route.get("mode")
 
         step["result"] = (
-            f"Step '{step['title']}' validated in simulation mode"
-            + (f" on node '{node}'." if node else ".")
+            f"Step '{step['title']}' validated in simulation mode "
+            f"on node '{node}' using route mode '{route_mode}'."
         )
 
     write_episode(
         event_type="workflow_simulated",
-        summary=f"Simulated workflow for goal: {workflow['user_goal']}",
+        summary=(
+            f"Simulated workflow for goal '{workflow['user_goal']}' "
+            f"with status '{workflow['status']}'."
+        ),
         payload={
             "user_goal": workflow["user_goal"],
             "intent": workflow["intent"],
             "mode": workflow["mode"],
             "profile": workflow["profile"],
+            "status": workflow["status"],
             "steps": workflow["steps"],
         },
     )
@@ -128,8 +160,8 @@ def simulate_workflow(workflow: dict[str, Any]) -> dict[str, Any]:
 
 
 def print_workflow(workflow: dict[str, Any]):
-    print("AI-LAB DISTRIBUTED WORKFLOW")
-    print("===========================")
+    print("AI-LAB LIVE DISTRIBUTED WORKFLOW")
+    print("================================")
     print("GOAL:", workflow["user_goal"])
     print("INTENT:", workflow["intent"])
     print("MODE:", workflow["mode"])
@@ -151,10 +183,18 @@ def print_workflow(workflow: dict[str, Any]):
 
         if route:
             print(
-                f"   route={route['selected_node']} "
-                f"host={route['host']} "
-                f"score={route['score']}"
+                f"   available={route.get('available')} "
+                f"route={route.get('selected_node')} "
+                f"host={route.get('host')} "
+                f"score={route.get('score')} "
+                f"route_mode={route.get('mode')} "
+                f"matched_task={route.get('matched_task')}"
             )
+
+            if route.get("original_task"):
+                print(
+                    f"   original_task={route.get('original_task')}"
+                )
 
         if step.get("result"):
             print(f"   result={step['result']}")
