@@ -7,6 +7,7 @@ from runtime.distributed.task_router import (
 
 from runtime.distributed.token_router import (
     estimate_tokens,
+    normalize_route_models,
     select_model_for_task,
 )
 
@@ -39,8 +40,10 @@ def get_task_prompt(task_type, prompt=None):
 def select_token_safe_model(route, prompt, task_type):
     estimated_tokens = estimate_tokens(prompt)
 
+    dynamic_models = normalize_route_models(route)
+
     selected, ranked = select_model_for_task(
-        route.get("models", []),
+        dynamic_models,
         task_type,
         estimated_tokens,
     )
