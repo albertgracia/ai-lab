@@ -1,74 +1,64 @@
+"""
+AI-LAB STREAM SANITIZER
+Removes reasoning traces and empty chunks from LM Studio streams.
+"""
+
 import json
 
 
-def parse_sse_line(line: str):
+def relay_stream(upstream, handler):
     """
-    Parse SSE line:
-    data: {...}
-    """
-
-    if not line.startswith("data: "):
-        return None
-
-    payload = line[len("data: "):].strip()
-
-    if payload == "[DONE]":
-        return "[DONE]"
-
-    try:
-        return json.loads(payload)
-    except Exception:
-        return None
-
-
-def sanitize_stream_chunk(chunk: dict):
-    """
-    Remove reasoning_content from streaming chunks.
+    Relay OpenAI-compatible SSE stream while:
+    - removing reasoning_content
+    - dropping empty chunks
+    - preserving delta.content
     """
 
-    try:
-        choices = chunk.get("choices", [])
-
-        for choice in choices:
-
-            delta = choice.get("delta", {})
-
-            if "reasoning_content" in delta:
-                del delta["reasoning_content"]
-
-        return chunk
-
-    except Exception:
-        return chunk
-
-
-def relay_stream(response):
-    """
-    Relay + sanitize streaming response.
-    """
-
-    for raw_line in response.iter_lines():
+    for raw_line in upstream.iter_lines():
 
         if not raw_line:
             continue
 
-        try:
-            decoded = raw_line.decode("utf-8")
-        except Exception:
+        line = raw_line.decode("utf-8")
+
+        if not line.startswith("data: "):
             continue
 
-        parsed = parse_sse_line(decoded)
+        payload = line[6:].strip()
 
-        if parsed is None:
-            continue
-
-        if parsed == "[DONE]":
-            yield "data: [DONE]\n\n"
+        if payload == "[DONE]":
+            handler.wfile.write(b"data: [DONE]\n\n")
+            handler.wfile.flush()
             break
 
-        sanitized = sanitize_stream_chunk(parsed)
+        try:
+            obj = json.loads(payload)
 
-        if sanitized is None:
+            choices = obj.get("choices", [])
+
+            if not choices:
+                continue
+
+            delta = choices[0].get("delta", {})
+
+            # eliminar reasoning_content si existe
+            delta.pop("reasoning_content", None)
+
+            # si no hay contenido real → ignorar chunk
+            has_content = bool(delta.get("content"))
+            has_role = bool(delta.get("role"))
+
+            finish_reason = choices[0].get("finish_reason")
+
+            if not has_content and not has_role and not finish_reason:
+                continue
+
+            cleaned = json.dumps(obj, ensure_ascii=False)
+
+            handler.wfile.write(
+                f"data: {cleaned}\n\n".encode("utf-8")
+            )
+            handler.wfile.flush()
+
+        except Exception:
             continue
-
-        yield f"data: {json.dumps(sanitized)}\n\n"

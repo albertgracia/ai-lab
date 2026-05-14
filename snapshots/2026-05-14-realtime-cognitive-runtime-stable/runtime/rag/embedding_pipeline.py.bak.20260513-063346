@@ -1,0 +1,106 @@
+import json
+from pathlib import Path
+
+from runtime.rag.embedder import embed_text
+
+ROOT = Path("/opt/ai-lab")
+
+SUPPORTED_EXTENSIONS = {
+    ".py",
+    ".md",
+    ".json",
+    ".yaml",
+    ".yml",
+    ".txt",
+}
+
+OUTPUT_FILE = ROOT / "runtime/state/embedding_records.json"
+
+records = []
+
+
+def should_index(path: Path) -> bool:
+    return path.suffix.lower() in SUPPORTED_EXTENSIONS
+
+
+def chunk_text(text: str, chunk_size: int = 1200):
+    """
+    Divide texto en chunks simples.
+    """
+    return [
+        text[i:i + chunk_size]
+        for i in range(0, len(text), chunk_size)
+    ]
+
+
+def process_file(path: Path):
+    global records
+
+    print(f"\nINDEXING: {path}")
+
+    try:
+
+        content = path.read_text(
+            encoding="utf-8",
+            errors="ignore"
+        )
+
+        if not content.strip():
+            print("SKIPPED EMPTY")
+            return
+
+        chunks = chunk_text(content)
+
+        print(f"CHUNKS: {len(chunks)}")
+
+        for idx, chunk in enumerate(chunks):
+
+            if not chunk.strip():
+                continue
+
+            embedding = embed_text(chunk)
+
+            records.append({
+                "file": str(path),
+                "chunk": idx,
+                "text": chunk,
+                "embedding": embedding,
+            })
+
+        print(f"OK: {path}")
+
+    except Exception as e:
+        print(f"ERROR: {path}: {e}")
+
+
+def main():
+
+    files = []
+
+    for ext in SUPPORTED_EXTENSIONS:
+        files.extend(ROOT.rglob(f"*{ext}"))
+
+    print(f"FILES: {len(files)}")
+
+    for path in files:
+
+        if not path.is_file():
+            continue
+
+        process_file(path)
+
+    OUTPUT_FILE.parent.mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
+    with open(OUTPUT_FILE, "w") as f:
+        json.dump(records, f)
+
+    print("\n====================")
+    print(f"TOTAL RECORDS: {len(records)}")
+    print(f"SAVED: {OUTPUT_FILE}")
+
+
+if __name__ == "__main__":
+    main()

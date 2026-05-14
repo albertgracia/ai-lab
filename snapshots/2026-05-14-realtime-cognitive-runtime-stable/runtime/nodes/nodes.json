@@ -1,0 +1,81 @@
+[
+  {
+    "name": "nas-local",
+    "host": "192.168.1.250",
+    "port": 1234,
+    "backend": "lmstudio",
+    "gpu": "RX780M",
+    "vram_gb": 0.75,
+    "priority": 1,
+    "enabled": true,
+
+    "capabilities": [
+      "fast",
+      "lightweight",
+      "fallback",
+      "router",
+      "memory"
+    ],
+
+    "models": [
+      "google/gemma-4-e4b",
+      "llama-3.2-1b-instruct"
+    ]
+  },
+
+  {
+    "name": "rx7900xt-node",
+    "host": "192.168.1.60",
+    "port": 1234,
+    "backend": "lmstudio",
+    "gpu": "RX7900XT",
+    "vram_gb": 20,
+    "priority": 10,
+    "enabled": true,
+
+    "capabilities": [
+      "reasoning",
+      "coding",
+      "large-context",
+      "multi-agent",
+      "orchestration",
+      "backend"
+    ],
+
+    "models": [
+      "qwen2.5-coder-32b",
+      "qwen2.5-coder-14b-instruct",
+      "qwen3-14b-claude-sonnet-4.5-reasoning-distill",
+      "deepseek-r1-0528-qwen3-8b",
+      "deepseek-coder-v2-lite-instruct",
+      "google/gemma-4-26b-a4b"
+    ]
+  },
+
+  {
+    "name": "rx9070-node",
+    "host": "192.168.1.50",
+    "port": 1234,
+    "backend": "lmstudio",
+    "gpu": "RX9070",
+    "vram_gb": 16,
+    "priority": 8,
+    "enabled": true,
+
+    "capabilities": [
+      "vision",
+      "image",
+      "multimodal",
+      "embeddings",
+      "creative",
+      "frontend"
+    ],
+
+    "models": [
+      "flux.2-klein-9b",
+      "moondream2-20250414",
+      "text-embedding-nomic-embed-text-v1.5",
+      "text-embedding-nomic-embed-text-v2-moe"
+    ]
+  }
+]

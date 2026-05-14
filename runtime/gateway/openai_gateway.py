@@ -234,11 +234,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
             if stream_enabled:
                 self._send_sse_headers()
 
-                for chunk in relay_stream(response):
-                    self.wfile.write(
-                        chunk.encode("utf-8")
-                    )
-                    self.wfile.flush()
+                relay_stream(response, self)
 
                 return
 

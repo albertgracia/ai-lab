@@ -1,0 +1,228 @@
+{
+  "docker": {
+    "containers": [
+      {
+        "Command": "\"/entrypoint.sh --ap\u2026\"",
+        "CreatedAt": "2026-05-09 15:10:18 +0000 UTC",
+        "ID": "51e92b827907",
+        "Image": "traefik:latest",
+        "Labels": "com.docker.compose.config-hash=d7f80995e9ced71424becf4213a10ec5c26e62b796f82096017078b8ae159629,com.docker.compose.container-number=1,com.docker.compose.depends_on=,com.docker.compose.image=sha256:eb328e2c806c53aafbbace6c451fa54d268961261a85452fcf0fb752a30c17be,com.docker.compose.oneoff=False,com.docker.compose.project.config_files=/opt/ai-lab/stacks/traefik/docker-compose.yml,com.docker.compose.project.working_dir=/opt/ai-lab/stacks/traefik,com.docker.compose.project=traefik,com.docker.compose.replace=traefik,com.docker.compose.service=traefik,com.docker.compose.version=5.1.3,org.opencontainers.image.description=A modern reverse-proxy,org.opencontainers.image.documentation=https://docs.traefik.io,org.opencontainers.image.source=https://github.com/traefik/traefik,org.opencontainers.image.title=Traefik,org.opencontainers.image.url=https://traefik.io,org.opencontainers.image.vendor=Traefik Labs,org.opencontainers.image.version=v3.7.0",
+        "LocalVolumes": "0",
+        "Mounts": "/opt/ai-lab/da\u2026,/opt/ai-lab/da\u2026,/etc/localtime,/var/run/docke\u2026",
+        "Names": "traefik",
+        "Networks": "proxy",
+        "Platform": {
+          "architecture": "amd64",
+          "os": "linux"
+        },
+        "Ports": "0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp",
+        "RunningFor": "27 hours ago",
+        "Size": "16.4kB (virtual 190MB)",
+        "State": "running",
+        "Status": "Up 8 hours"
+      },
+      {
+        "Command": "\"./entrypoint.sh\"",
+        "CreatedAt": "2026-05-09 13:23:10 +0000 UTC",
+        "ID": "f52f55e1fc86",
+        "Image": "qdrant/qdrant:latest",
+        "Labels": "com.docker.compose.config-hash=5c7f308ed1feecc6ed55d4cd92a3e0b9c251345982d513d41bcb2c5cbdd570e1,com.docker.compose.container-number=1,com.docker.compose.depends_on=,com.docker.compose.image=sha256:1cf3e07c9f269030c7cfed0d5c0beea7bb081848a88e2ae13b35a613d4dd5019,com.docker.compose.oneoff=False,com.docker.compose.project.config_files=/opt/ai-lab/stacks/qdrant/docker-compose.yml,com.docker.compose.project.working_dir=/opt/ai-lab/stacks/qdrant,com.docker.compose.project=qdrant,com.docker.compose.service=qdrant,com.docker.compose.version=5.1.3,org.opencontainers.image.description=Official Qdrant image,org.opencontainers.image.documentation=https://qdrant.com/docs,org.opencontainers.image.source=https://github.com/qdrant/qdrant,org.opencontainers.image.title=Qdrant,org.opencontainers.image.url=https://qdrant.com/,org.opencontainers.image.vendor=Qdrant,org.opencontainers.image.version=v1.18.0,traefik.enable=true,traefik.http.routers.qdrant.rule=Host(`qdrant.local`),traefik.http.services.qdrant.loadbalancer.server.port=6333",
+        "LocalVolumes": "0",
+        "Mounts": "/opt/ai-lab/da\u2026",
+        "Names": "qdrant",
+        "Networks": "proxy",
+        "Platform": {
+          "architecture": "amd64",
+          "os": "linux"
+        },
+        "Ports": "0.0.0.0:6333-6334->6333-6334/tcp, [::]:6333-6334->6333-6334/tcp",
+        "RunningFor": "29 hours ago",
+        "Size": "24.6kB (virtual 199MB)",
+        "State": "running",
+        "Status": "Up 8 hours"
+      },
+      {
+        "Command": "\"bash start.sh\"",
+        "CreatedAt": "2026-05-09 10:56:33 +0000 UTC",
+        "ID": "6ad95129698d",
+        "Image": "ghcr.io/open-webui/open-webui:main",
+        "Labels": "com.docker.compose.config-hash=b2eb1af17ffcdd813b50c9a3fe2625f452555836326a0e5afb9efc2a1ff35b9e,com.docker.compose.container-number=1,com.docker.compose.depends_on=ollama:service_started:false,com.docker.compose.image=sha256:a6da0c292081d810a396ce786a10536d0b1b9ba2925dcca20ebb03f9fa90dbff,com.docker.compose.oneoff=False,com.docker.compose.project.config_files=/opt/ai-lab/stacks/ai-core/docker-compose.yml,com.docker.compose.project.working_dir=/opt/ai-lab/stacks/ai-core,com.docker.compose.project=ai-core,com.docker.compose.service=open-webui,com.docker.compose.version=5.1.3,org.opencontainers.image.created=2026-05-09T07:50:30.236Z,org.opencontainers.image.description=User-friendly AI Interface (Supports Ollama, OpenAI API, ...),org.opencontainers.image.licenses=NOASSERTION,org.opencontainers.image.revision=f51d2b026f1b0e7283b15f093412be8b67d24770,org.opencontainers.image.source=https://github.com/open-webui/open-webui,org.opencontainers.image.title=open-webui,org.opencontainers.image.url=https://github.com/open-webui/open-webui,org.opencontainers.image.version=main,traefik.enable=true,traefik.http.routers.openwebui.entrypoints=web,traefik.http.routers.openwebui.rule=Host(`openwebui.local`),traefik.http.services.openwebui.loadbalancer.server.port=8080",
+        "LocalVolumes": "0",
+        "Mounts": "/opt/ai-lab/da\u2026",
+        "Names": "open-webui",
+        "Networks": "proxy",
+        "Platform": {
+          "architecture": "amd64",
+          "os": "linux"
+        },
+        "Ports": "0.0.0.0:3000->8080/tcp, [::]:3000->8080/tcp",
+        "RunningFor": "31 hours ago",
+        "Size": "54.3MB (virtual 5.04GB)",
+        "State": "running",
+        "Status": "Up 8 hours (healthy)"
+      },
+      {
+        "Command": "\"/bin/ollama serve\"",
+        "CreatedAt": "2026-05-09 10:56:33 +0000 UTC",
+        "ID": "76166a5eff6a",
+        "Image": "ollama/ollama:latest",
+        "Labels": "com.docker.compose.config-hash=89452da86d630ace97f090a3ead000c98adb9fa4aa3c8d6d36677db020b654c9,com.docker.compose.container-number=1,com.docker.compose.depends_on=,com.docker.compose.image=sha256:d00473cb58f0082c07cd6ed0d326a8a86f443ab69c51f8fc2b1a41687d45c661,com.docker.compose.oneoff=False,com.docker.compose.project.config_files=/opt/ai-lab/stacks/ai-core/docker-compose.yml,com.docker.compose.project.working_dir=/opt/ai-lab/stacks/ai-core,com.docker.compose.project=ai-core,com.docker.compose.service=ollama,com.docker.compose.version=5.1.3,org.opencontainers.image.version=24.04",
+        "LocalVolumes": "0",
+        "Mounts": "/mnt/ai-models\u2026",
+        "Names": "ollama",
+        "Networks": "proxy",
+        "Platform": {
+          "architecture": "amd64",
+          "os": "linux"
+        },
+        "Ports": "0.0.0.0:11434->11434/tcp, [::]:11434->11434/tcp",
+        "RunningFor": "31 hours ago",
+        "Size": "16.4kB (virtual 6.56GB)",
+        "State": "running",
+        "Status": "Up 8 hours"
+      },
+      {
+        "Command": "\"/portainer\"",
+        "CreatedAt": "2026-05-09 10:44:50 +0000 UTC",
+        "ID": "84904750ef0a",
+        "Image": "portainer/portainer-ce:latest",
+        "Labels": "com.docker.compose.config-hash=ce5a79d75f29e29ccd685ad1fc5ae5aa7cc1082884660bbe2af954dd4e257d41,com.docker.compose.container-number=1,com.docker.compose.depends_on=,com.docker.compose.image=sha256:8d2f5c9fbc5b8490fb3a12efadbad74978e22991911e1db611d8a45871775112,com.docker.compose.oneoff=False,com.docker.compose.project.config_files=/opt/ai-lab/stacks/portainer/docker-compose.yml,com.docker.compose.project.working_dir=/opt/ai-lab/stacks/portainer,com.docker.compose.project=portainer,com.docker.compose.service=portainer,com.docker.compose.version=5.1.3,com.docker.desktop.extension.api.version=>= 0.2.2,com.docker.desktop.extension.icon=https://portainer-io-assets.sfo2.cdn.digitaloceanspaces.com/logos/portainer.png,com.docker.extension.additional-urls=[{\"title\":\"Website\",\"url\":\"https://www.portainer.io?utm_campaign=DockerCon&utm_source=DockerDesktop\"},{\"title\":\"Documentation\",\"url\":\"https://docs.portainer.io\"},{\"title\":\"Support\",\"url\":\"https://join.slack.com/t/portainer/shared_invite/zt-txh3ljab-52QHTyjCqbe5RibC2lcjKA\"}],com.docker.extension.detailed-description=<p data-renderer-start-pos=\"226\">Portainer&rsquo;s Docker Desktop extension gives you access to all of Portainer&rsquo;s rich management functionality within your docker desktop experience.</p><h2 data-renderer-start-pos=\"374\">With Portainer you can:</h2><ul><li>See all your running containers</li><li>Easily view all of your container logs</li><li>Console into containers</li><li>Easily deploy your code into containers using a simple form</li><li>Turn your YAML into custom templates for easy reuse</li></ul><h2 data-renderer-start-pos=\"660\">About Portainer&nbsp;</h2><p data-renderer-start-pos=\"680\">Portainer is the worlds&rsquo; most popular universal container management platform with more than 650,000 active monthly users. Portainer can be used to manage Docker Standalone, Kubernetes and Docker Swarm environments through a single common interface. It includes a simple GitOps automation engine and a Kube API.&nbsp;</p><p data-renderer-start-pos=\"1006\">Portainer Business Edition is our fully supported commercial grade product for business-wide use. It includes all the functionality that businesses need to manage containers at scale. Visit <a class=\"sc-jKJlTe dPfAtb\" href=\"http://portainer.io/\" title=\"http://Portainer.io\" data-renderer-mark=\"true\">Portainer.io</a> to learn more about Portainer Business and <a class=\"sc-jKJlTe dPfAtb\" href=\"http://portainer.io/take-3?utm_campaign=DockerCon&amp;utm_source=Docker%20Desktop\" title=\"http://portainer.io/take-3?utm_campaign=DockerCon&amp;utm_source=Docker%20Desktop\" data-renderer-mark=\"true\">get 3 free nodes.</a></p>,com.docker.extension.publisher-url=https://www.portainer.io,com.docker.extension.screenshots=[{\"alt\": \"screenshot one\", \"url\": \"https://portainer-io-assets.sfo2.digitaloceanspaces.com/screenshots/docker-extension-1.png\"},{\"alt\": \"screenshot two\", \"url\": \"https://portainer-io-assets.sfo2.digitaloceanspaces.com/screenshots/docker-extension-2.png\"},{\"alt\": \"screenshot three\", \"url\": \"https://portainer-io-assets.sfo2.digitaloceanspaces.com/screenshots/docker-extension-3.png\"},{\"alt\": \"screenshot four\", \"url\": \"https://portainer-io-assets.sfo2.digitaloceanspaces.com/screenshots/docker-extension-4.png\"},{\"alt\": \"screenshot five\", \"url\": \"https://portainer-io-assets.sfo2.digitaloceanspaces.com/screenshots/docker-extension-5.png\"},{\"alt\": \"screenshot six\", \"url\": \"https://portainer-io-assets.sfo2.digitaloceanspaces.com/screenshots/docker-extension-6.png\"},{\"alt\": \"screenshot seven\", \"url\": \"https://portainer-io-assets.sfo2.digitaloceanspaces.com/screenshots/docker-extension-7.png\"},{\"alt\": \"screenshot eight\", \"url\": \"https://portainer-io-assets.sfo2.digitaloceanspaces.com/screenshots/docker-extension-8.png\"},{\"alt\": \"screenshot nine\", \"url\": \"https://portainer-io-assets.sfo2.digitaloceanspaces.com/screenshots/docker-extension-9.png\"}],git_commit=ece7e56,io.portainer.server=true,org.opencontainers.image.created=2026-05-07T02:58:10Z,org.opencontainers.image.description=Portainer Community Edition server.,org.opencontainers.image.documentation=https://docs.portainer.io,org.opencontainers.image.revision=ece7e56,org.opencontainers.image.title=Portainer CE,org.opencontainers.image.url=https://www.portainer.io,org.opencontainers.image.vendor=Portainer.io,traefik.enable=true,traefik.http.routers.portainer.entrypoints=web,traefik.http.routers.portainer.rule=Host(`portainer.local`),traefik.http.services.portainer.loadbalancer.server.port=9000",
+        "LocalVolumes": "0",
+        "Mounts": "/opt/ai-lab/da\u2026,/var/run/docke\u2026",
+        "Names": "portainer",
+        "Networks": "proxy",
+        "Platform": {
+          "architecture": "amd64",
+          "os": "linux"
+        },
+        "Ports": "8000/tcp, 9443/tcp, 0.0.0.0:9000->9000/tcp, [::]:9000->9000/tcp",
+        "RunningFor": "31 hours ago",
+        "Size": "16.4kB (virtual 182MB)",
+        "State": "running",
+        "Status": "Up 8 hours"
+      }
+    ]
+  },
+  "llm": {
+    "lmstudio_nodes": [
+      {
+        "node": "Main LM Studio",
+        "online": true,
+        "models": [
+          "google/gemma-4-e4b",
+          "text-embedding-nomic-embed-text-v1.5"
+        ]
+      },
+      {
+        "node": "Gaming PC RX7900XT",
+        "online": true,
+        "models": [
+          "qwen2.5-coder-14b-instruct",
+          "zhangfeng026/qwen2.5-coder-32b-instruct",
+          "lmstudio-community/qwen2.5-coder-32b-instruct",
+          "qwen2.5-coder-32b",
+          "deepseek-r1-0528-qwen3-8b",
+          "qwen3-14b-claude-sonnet-4.5-reasoning-distill",
+          "flux.2-klein-9b",
+          "moondream2-20250414",
+          "qwen/qwen2.5-coder-32b-instruct",
+          "deepseek-coder-v2-lite-instruct",
+          "text-embedding-nomic-embed-text-v2-moe",
+          "llama-3.2-1b-instruct",
+          "google/gemma-4-26b-a4b",
+          "text-embedding-nomic-embed-text-v1.5"
+        ]
+      },
+      {
+        "node": "Gaming PC RX9070XT",
+        "online": true,
+        "models": [
+          "qwen3-14b-claude-sonnet-4.5-reasoning-distill",
+          "text-embedding-nomic-embed-text-v1.5"
+        ]
+      }
+    ]
+  },
+  "gpu": [
+    {
+      "node": "Gaming PC RX9070XT",
+      "host": "192.168.1.50",
+      "gpu_usage": {
+        "max_gpu_usage_percent": 0.5,
+        "active_engines": [
+          {
+            "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_1192_luid_0x00000000_0x0001A54E_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
+            "value": 0.067617
+          },
+          {
+            "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_13740_luid_0x00000000_0x0001A54E_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
+            "value": 0.499775
+          },
+          {
+            "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_17384_luid_0x00000000_0x0001A54E_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
+            "value": 0.078628
+          },
+          {
+            "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_4_luid_0x00000000_0x0001A54E_phys_0_eng_3_engtype_Copy)\\Utilization Percentage",
+            "value": 0.329202
+          },
+          {
+            "path": "\\\\X870EAORUSPRO\\GPU Engine(pid_8948_luid_0x00000000_0x0001A54E_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
+            "value": 0.00241
+          }
+        ]
+      },
+      "vram": {
+        "vram_used_gib": 2.65,
+        "vram_total_gib": 16,
+        "vram_free_gib_estimated": 13.35,
+        "raw_samples": [
+          {
+            "path": "\\\\X870EAORUSPRO\\GPU Adapter Memory(luid_0x00000000_0x0001A54E_phys_0)\\Dedicated Usage",
+            "value": 2849648640.0
+          },
+          {
+            "path": "\\\\X870EAORUSPRO\\GPU Adapter Memory(luid_0x00000000_0x0001D764_phys_0)\\Dedicated Usage",
+            "value": 0.0
+          }
+        ]
+      }
+    },
+    {
+      "node": "Gaming PC RX7900XT",
+      "host": "192.168.1.60",
+      "gpu_usage": {
+        "max_gpu_usage_percent": 0.02,
+        "active_engines": [
+          {
+            "path": "\\\\X870AORUSELITE\\GPU Engine(pid_19236_luid_0x00000000_0x01F7A422_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
+            "value": 0.016759
+          },
+          {
+            "path": "\\\\X870AORUSELITE\\GPU Engine(pid_8168_luid_0x00000000_0x01F7A422_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
+            "value": 0.004503
+          },
+          {
+            "path": "\\\\X870AORUSELITE\\GPU Engine(pid_9932_luid_0x00000000_0x01F7A422_phys_0_eng_0_engtype_3D)\\Utilization Percentage",
+            "value": 0.002376
+          }
+        ]
+      },
+      "vram": {
+        "vram_used_gib": 14.01,
+        "vram_total_gib": 20,
+        "vram_free_gib_estimated": 5.99,
+        "raw_samples": [
+          {
+            "path": "\\\\X870AORUSELITE\\GPU Adapter Memory(luid_0x00000000_0x000165A5_phys_0)\\Dedicated Usage",
+            "value": 0.0
+          },
+          {
+            "path": "\\\\X870AORUSELITE\\GPU Adapter Memory(luid_0x00000000_0x01F7A422_phys_0)\\Dedicated Usage",
+            "value": 15037755392.0
+          }
+        ]
+      }
+    }
+  ]
+}

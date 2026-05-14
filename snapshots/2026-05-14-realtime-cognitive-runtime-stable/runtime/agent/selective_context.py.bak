@@ -1,0 +1,274 @@
+from pathlib import Path
+
+from runtime.agent.intent_router import RouteDecision
+
+ROOT = Path("/opt/ai-lab")
+
+MAX_FILE_CHARS = 10000
+MAX_TOTAL_CHARS = 40000
+
+
+# =========================================================
+# HELPERS
+# =========================================================
+
+def read_file(path: Path) -> str:
+
+    try:
+        return path.read_text(
+            encoding="utf-8",
+            errors="ignore"
+        )[:MAX_FILE_CHARS]
+
+    except Exception as exc:
+        return f"[ERROR reading {path}: {exc}]"
+
+
+def add_file(
+    blocks,
+    total_chars,
+    path: Path,
+):
+
+    if not path.exists() or not path.is_file():
+        return total_chars
+
+    rel = path.relative_to(ROOT)
+
+    content = read_file(path)
+
+    block = f"\n\n---\n\n# FILE: {rel}\n\n{content}"
+
+    if total_chars + len(block) > MAX_TOTAL_CHARS:
+        return total_chars
+
+    blocks.append(block)
+
+    return total_chars + len(block)
+
+
+# =========================================================
+# BASE FILES
+# =========================================================
+
+BASE_FILES = [
+
+    "OPENCODE.md",
+
+    "config/opencode/AI_LAB_CONTEXT.md",
+
+    "config/opencode/POLICY.md",
+
+    "config/opencode/MODEL_STRATEGY.md",
+
+    ".agent/OPENCODE_PROMPT.md",
+
+    ".agent/ARCHITECTURE.md",
+
+    ".agent/rules/GEMINI.md",
+]
+
+
+# =========================================================
+# MEMORY FILES
+# =========================================================
+
+MEMORY_GLOBS = [
+
+    "memory/semantic/*.md",
+
+    "memory/decisions/*.md",
+
+    "memory/tasks/*.md",
+]
+
+
+# =========================================================
+# BUILD CONTEXT
+# =========================================================
+
+def build_selective_context(
+    route: RouteDecision,
+    user_request: str,
+) -> str:
+
+    blocks = []
+
+    total = 0
+
+    # =====================================================
+    # HEADER
+    # =====================================================
+
+    blocks.append(
+        f"""
+# AI-LAB SELECTIVE CONTEXT
+
+Agent:
+{route.agent}
+
+Reasoning:
+{route.reasoning}
+
+Complexity:
+{route.complexity}
+
+Workflow:
+{route.workflow}
+
+Domains:
+{", ".join(route.domains)}
+
+Multi Agent:
+{route.multi_agent}
+"""
+    )
+
+    # =====================================================
+    # USER REQUEST
+    # =====================================================
+
+    blocks.append(
+        f"""
+# USER REQUEST
+
+{user_request[:4000]}
+"""
+    )
+
+    # =====================================================
+    # BASE FILES
+    # =====================================================
+
+    for rel in BASE_FILES:
+
+        total = add_file(
+            blocks,
+            total,
+            ROOT / rel,
+        )
+
+    # =====================================================
+    # AGENT FILE
+    # =====================================================
+
+    agent_file = (
+        ROOT
+        / ".agent"
+        / "agents"
+        / f"{route.agent}.md"
+    )
+
+    total = add_file(
+        blocks,
+        total,
+        agent_file,
+    )
+
+    # =====================================================
+    # SKILLS
+    # =====================================================
+
+    for skill in route.skills:
+
+        skill_dir = (
+            ROOT
+            / ".agent"
+            / "skills"
+            / skill
+        )
+
+        if skill_dir.exists():
+
+            for file in sorted(skill_dir.rglob("*")):
+
+                if file.is_file():
+
+                    total = add_file(
+                        blocks,
+                        total,
+                        file,
+                    )
+
+    # =====================================================
+    # WORKFLOW
+    # =====================================================
+
+    if route.workflow:
+
+        workflow_file = (
+            ROOT
+            / ".agent"
+            / "workflows"
+            / f"{route.workflow}.md"
+        )
+
+        total = add_file(
+            blocks,
+            total,
+            workflow_file,
+        )
+
+    # =====================================================
+    # MEMORY
+    # =====================================================
+
+    for pattern in MEMORY_GLOBS:
+
+        for file in sorted(ROOT.glob(pattern)):
+
+            total = add_file(
+                blocks,
+                total,
+                file,
+            )
+
+    # =====================================================
+    # FOOTER
+    # =====================================================
+
+    blocks.append(
+        f"""
+
+---
+
+# CONTEXT STATS
+
+Total chars:
+{total}
+
+Selected agent:
+{route.agent}
+
+Loaded skills:
+{", ".join(route.skills)}
+"""
+    )
+
+    return "\n".join(blocks)
+
+
+# =========================================================
+# TEST
+# =========================================================
+
+if __name__ == "__main__":
+
+    from runtime.agent.intent_router import route_request
+
+    req = (
+        "Audita seguridad de OpenWebUI "
+        "y Ollama en AI-LAB"
+    )
+
+    route = route_request(req)
+
+    ctx = build_selective_context(
+        route,
+        req,
+    )
+
+    print(ctx[:8000])
+
+    print("\n\n===== LENGTH =====")
+    print(len(ctx))
