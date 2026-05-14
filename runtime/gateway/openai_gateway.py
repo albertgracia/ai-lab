@@ -1,9 +1,11 @@
 import json
 import time
-from http.server import BaseHTTPRequestHandler, HTTPServer
-from urllib.request import Request, urlopen
-from urllib.error import URLError, HTTPError
 from pathlib import Path
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+import requests
+
+from runtime.gateway.stream_sanitizer import relay_stream
 
 
 HOST = "0.0.0.0"
@@ -56,40 +58,16 @@ def inject_agent_context(payload):
 
     payload["messages"] = injected
 
-    payload["stream"] = False
-
-    if "max_tokens" not in payload or payload.get("max_tokens", 0) < 1024:
-        payload["max_tokens"] = 2048
-
     if "temperature" not in payload:
         payload["temperature"] = 0.2
 
+    if (
+        "max_tokens" not in payload
+        or payload.get("max_tokens", 0) < 1024
+    ):
+        payload["max_tokens"] = 2048
+
     return payload
-
-
-def proxy_json(method, path, payload=None):
-    url = f"{LMSTUDIO_BASE_URL}{path}"
-
-    data = None
-
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer lm-studio",
-    }
-
-    if payload is not None:
-        data = json.dumps(payload).encode("utf-8")
-
-    request = Request(
-        url,
-        data=data,
-        headers=headers,
-        method=method,
-    )
-
-    with urlopen(request, timeout=120) as response:
-        raw = response.read().decode("utf-8", errors="ignore")
-        return response.status, json.loads(raw)
 
 
 def sanitize_completion_response(data):
@@ -106,12 +84,32 @@ def sanitize_completion_response(data):
         message["content"] = sanitize_text(content)
 
         if not message["content"]:
-            message["content"] = "Respuesta generada, pero el contenido final llegó vacío desde el modelo."
+            message["content"] = (
+                "Respuesta generada, pero el contenido final "
+                "llegó vacío desde el modelo."
+            )
 
     return data
 
 
+def backend_headers():
+    return {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer lm-studio",
+    }
+
+
 class GatewayHandler(BaseHTTPRequestHandler):
+
+    def log_message(self, format, *args):
+        print(
+            "%s - - [%s] %s"
+            % (
+                self.client_address[0],
+                self.log_date_time_string(),
+                format % args,
+            )
+        )
 
     def _send_json(self, status, data):
         body = json.dumps(
@@ -121,20 +119,59 @@ class GatewayHandler(BaseHTTPRequestHandler):
         ).encode("utf-8")
 
         self.send_response(status)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Content-Length", str(len(body)))
+        self.send_header(
+            "Content-Type",
+            "application/json; charset=utf-8",
+        )
+        self.send_header(
+            "Content-Length",
+            str(len(body)),
+        )
         self.end_headers()
         self.wfile.write(body)
 
+    def _send_sse_headers(self):
+        self.send_response(200)
+        self.send_header(
+            "Content-Type",
+            "text/event-stream; charset=utf-8",
+        )
+        self.send_header(
+            "Cache-Control",
+            "no-cache",
+        )
+        self.send_header(
+            "Connection",
+            "keep-alive",
+        )
+        self.end_headers()
+
     def do_GET(self):
+        if self.path == "/health":
+            self._send_json(
+                200,
+                {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "backend": LMSTUDIO_BASE_URL,
+                    "mode": "stream-aware sanitized",
+                    "time": int(time.time()),
+                },
+            )
+            return
+
         if self.path == "/v1/models":
             try:
-                status, data = proxy_json(
-                    "GET",
-                    "/models",
+                response = requests.get(
+                    f"{LMSTUDIO_BASE_URL}/models",
+                    headers=backend_headers(),
+                    timeout=30,
                 )
 
-                self._send_json(status, data)
+                self._send_json(
+                    response.status_code,
+                    response.json(),
+                )
 
             except Exception as exc:
                 self._send_json(
@@ -144,19 +181,6 @@ class GatewayHandler(BaseHTTPRequestHandler):
                         "detail": str(exc),
                     },
                 )
-
-            return
-
-        if self.path == "/health":
-            self._send_json(
-                200,
-                {
-                    "status": "ok",
-                    "service": "ai-lab-openai-gateway",
-                    "backend": LMSTUDIO_BASE_URL,
-                    "time": int(time.time()),
-                },
-            )
 
             return
 
@@ -177,12 +201,14 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     "path": self.path,
                 },
             )
-
             return
 
         try:
             content_length = int(
-                self.headers.get("Content-Length", "0")
+                self.headers.get(
+                    "Content-Length",
+                    "0",
+                )
             )
 
             raw_body = self.rfile.read(content_length)
@@ -193,26 +219,39 @@ class GatewayHandler(BaseHTTPRequestHandler):
 
             payload = inject_agent_context(payload)
 
-            status, data = proxy_json(
-                "POST",
-                "/chat/completions",
-                payload,
+            stream_enabled = bool(
+                payload.get("stream", False)
             )
+
+            response = requests.post(
+                f"{LMSTUDIO_BASE_URL}/chat/completions",
+                headers=backend_headers(),
+                json=payload,
+                stream=stream_enabled,
+                timeout=600,
+            )
+
+            if stream_enabled:
+                self._send_sse_headers()
+
+                for chunk in relay_stream(response):
+                    self.wfile.write(
+                        chunk.encode("utf-8")
+                    )
+                    self.wfile.flush()
+
+                return
+
+            data = response.json()
 
             data = sanitize_completion_response(data)
 
-            self._send_json(status, data)
-
-        except HTTPError as exc:
             self._send_json(
-                exc.code,
-                {
-                    "error": "backend_http_error",
-                    "detail": str(exc),
-                },
+                response.status_code,
+                data,
             )
 
-        except URLError as exc:
+        except requests.exceptions.RequestException as exc:
             self._send_json(
                 502,
                 {
@@ -241,7 +280,7 @@ def run():
     print("=====================")
     print(f"Listening: http://{HOST}:{PORT}")
     print(f"Backend:   {LMSTUDIO_BASE_URL}")
-    print("Mode:      non-stream sanitized")
+    print("Mode:      stream-aware sanitized")
     print()
 
     server.serve_forever()
