@@ -25,20 +25,20 @@
       "name": "rx9070-node",
       "host": "192.168.1.50",
       "online": true,
-      "latency_ms": 2.22,
+      "latency_ms": 2.44,
       "models": [
         "deepseek-r1-distill-qwen-14b",
+        "qwen3.5-9b-claude-4.6-opus-reasoning-distilled-v2",
         "deepseek-r1-0528-qwen3-8b",
         "qwen3.6-35b-a3b-claude-4.6-opus-reasoning-distilled",
-        "qwen3.5-9b-claude-4.6-opus-reasoning-distilled-v2",
         "text-embedding-nomic-embed-text-v1.5"
       ],
-      "last_seen": 1778765492,
+      "last_seen": 1778776088,
       "status": "online"
     }
   ],
-  "updated_at": 1778765500,
-  "updated_at_iso": "2026-05-14T13:31:40.394577+00:00",
+  "updated_at": 1778776096,
+  "updated_at_iso": "2026-05-14T16:28:16.760650+00:00",
   "cluster_health": "degraded",
   "offline_nodes": 2,
   "discovered_nodes": [
@@ -47,12 +47,12 @@
       "port": 1234,
       "backend": "lmstudio",
       "online": true,
-      "latency_ms": 1.59,
+      "latency_ms": 2.01,
       "models": [
         "deepseek-r1-distill-qwen-14b",
+        "qwen3.5-9b-claude-4.6-opus-reasoning-distilled-v2",
         "deepseek-r1-0528-qwen3-8b",
         "qwen3.6-35b-a3b-claude-4.6-opus-reasoning-distilled",
-        "qwen3.5-9b-claude-4.6-opus-reasoning-distilled-v2",
         "text-embedding-nomic-embed-text-v1.5"
       ],
       "capabilities": [
@@ -62,7 +62,7 @@
         "memory",
         "reasoning"
       ],
-      "discovered_at": 1778765492,
+      "discovered_at": 1778776088,
       "status": "online"
     },
     {
@@ -73,7 +73,7 @@
       "latency_ms": null,
       "models": [],
       "capabilities": [],
-      "discovered_at": 1778765492,
+      "discovered_at": 1778776088,
       "status": "offline",
       "error": "HTTPConnectionPool(host='192.168.1.60', port=1234): Max retries exceeded with url: /v1/models (Caused by NewConnectionError(\"HTTPConnection(host='192.168.1.60', port=1234): Failed to establish a new connection: [Errno 113] No route to host\"))"
     },
@@ -85,9 +85,9 @@
       "latency_ms": null,
       "models": [],
       "capabilities": [],
-      "discovered_at": 1778765495,
+      "discovered_at": 1778776091,
       "status": "offline",
-      "error": "HTTPConnectionPool(host='192.168.1.250', port=1234): Max retries exceeded with url: /v1/models (Caused by ConnectTimeoutError(<HTTPConnection(host='192.168.1.250', port=1234) at 0x74602b790160>, 'Connection to 192.168.1.250 timed out. (connect timeout=5)'))"
+      "error": "HTTPConnectionPool(host='192.168.1.250', port=1234): Max retries exceeded with url: /v1/models (Caused by ConnectTimeoutError(<HTTPConnection(host='192.168.1.250', port=1234) at 0x74602be85260>, 'Connection to 192.168.1.250 timed out. (connect timeout=5)'))"
     }
   ],
   "discovered_online_nodes": 1,
