@@ -1,0 +1,17 @@
+[Unit]
+Description=AI-LAB Live API Server (Astro status endpoint)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=albert
+WorkingDirectory=/opt/ai-lab
+Environment=PYTHONPATH=/opt/ai-lab
+ExecStart=/opt/ai-lab/.venv/bin/python /opt/ai-lab/runtime/state/live_api.py
+Restart=always
+RestartSec=5
+MemoryMax=128M
+
+[Install]
+WantedBy=multi-user.target
