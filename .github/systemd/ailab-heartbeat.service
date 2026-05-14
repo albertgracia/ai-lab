@@ -1,0 +1,16 @@
+[Unit]
+Description=AI-LAB Persistent Cluster Heartbeat
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=albert
+WorkingDirectory=/opt/ai-lab
+Environment=PYTHONPATH=/opt/ai-lab
+ExecStart=/opt/ai-lab/.venv/bin/python /opt/ai-lab/runtime/distributed/heartbeat.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

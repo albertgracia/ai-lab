@@ -1,0 +1,17 @@
+[Unit]
+Description=AI-LAB OpenAI-Compatible Gateway
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=albert
+WorkingDirectory=/opt/ai-lab
+Environment=PYTHONPATH=/opt/ai-lab
+ExecStart=/opt/ai-lab/.venv/bin/python /opt/ai-lab/runtime/gateway/openai_gateway.py
+Restart=always
+RestartSec=5
+MemoryMax=256M
+
+[Install]
+WantedBy=multi-user.target

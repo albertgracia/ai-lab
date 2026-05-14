@@ -4,14 +4,85 @@ from pathlib import Path
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import requests
+import time
+
+from runtime.router.capability_router import choose_model
+
+from runtime.telemetry.gateway_metrics import (
+    register_request,
+    register_stream,
+    register_error,
+    register_latency,
+    get_metrics,
+)
+
+from runtime.distributed.execution_coordinator import (
+    register_execution,
+)
+
+from runtime.telemetry.runtime_api import (
+    runtime_snapshot,
+)
+
+from runtime.distributed.runtime_topology import (
+    get_topology,
+)
+
+from runtime.telemetry.runtime_api import (
+    runtime_snapshot,
+)
+
+from runtime.distributed.execution_coordinator import (
+    register_execution,
+)
+
 
 from runtime.gateway.stream_sanitizer import relay_stream
+from runtime.gateway.gateway_metrics import (
+    load_metrics,
+    record_request,
+    record_error,
+)
+from collections import defaultdict
+import threading
+
+RATE_LIMIT_REQUESTS = 30
+RATE_LIMIT_WINDOW = 60
+_rate_limit_data: dict = defaultdict(list)
+_rate_limit_lock = threading.Lock()
+
+
+def check_rate_limit(client_ip: str) -> bool:
+    now = time.time()
+    with _rate_limit_lock:
+        timestamps = _rate_limit_data[client_ip]
+        timestamps = [t for t in timestamps if now - t < RATE_LIMIT_WINDOW]
+        _rate_limit_data[client_ip] = timestamps
+        if len(timestamps) >= RATE_LIMIT_REQUESTS:
+            return False
+        timestamps.append(now)
+        return True
+
 
 
 HOST = "0.0.0.0"
 PORT = 8008
 
-LMSTUDIO_BASE_URL = "http://192.168.1.50:1234/v1"
+BACKENDS = [
+    {"name": "rx9070", "url": "http://192.168.1.50:1234/v1", "enabled": True},
+    {"name": "nas-n5", "url": "http://192.168.1.200:12345/v1", "enabled": False},
+    {"name": "rx7900xt", "url": "http://192.168.1.60:1234/v1", "enabled": False},
+]
+
+PRIMARY_BACKEND = "rx9070"
+
+
+def get_active_backend():
+    for backend in BACKENDS:
+        if backend["enabled"]:
+            return backend
+
+    return BACKENDS[0]
 
 AGENT_PROMPT_FILE = Path("/opt/ai-lab/.agent/OPENCODE_PROMPT.md")
 
@@ -76,8 +147,7 @@ def sanitize_completion_response(data):
     for choice in choices:
         message = choice.get("message", {})
 
-        if "reasoning_content" in message:
-            message.pop("reasoning_content", None)
+        message.pop("reasoning_content", None)
 
         content = message.get("content", "")
 
@@ -147,25 +217,89 @@ class GatewayHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
+        client_ip = self.client_address[0]
+        if not check_rate_limit(client_ip):
+            self._send_json(429, {"error": "rate_limit_exceeded", "message": "Too many requests. Try again later."})
+            return
         if self.path == "/health":
             self._send_json(
                 200,
                 {
                     "status": "ok",
                     "service": "ai-lab-openai-gateway",
-                    "backend": LMSTUDIO_BASE_URL,
+                    "backend": get_active_backend()["url"],
                     "mode": "stream-aware sanitized",
                     "time": int(time.time()),
                 },
             )
             return
 
+        
+        
+        if self.path == "/metrics":
+            metrics = load_metrics()
+            prom_text = (
+                "# HELP ailab_requests_total Total requests\n"
+                "# TYPE ailab_requests_total counter\n"
+                f"ailab_requests_total {metrics.get('requests_total', 0)}\n"
+                "# HELP ailab_streams_total Total streaming requests\n"
+                "# TYPE ailab_streams_total counter\n"
+                f"ailab_streams_total {metrics.get('streams_total', 0)}\n"
+                "# HELP ailab_errors_total Total errors\n"
+                "# TYPE ailab_errors_total counter\n"
+                f"ailab_errors_total {metrics.get('errors_total', 0)}\n"
+                "# HELP ailab_last_latency_ms Last request latency\n"
+                "# TYPE ailab_last_latency_ms gauge\n"
+                f"ailab_last_latency_ms {metrics.get('last_latency_ms', 0) or 0}\n"
+            )
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(prom_text.encode("utf-8"))
+            return
+
+        if self.path == "/runtime/topology":
+            self._send_json(
+                200,
+                get_topology()
+            )
+            return
+
+        if self.path == "/runtime/status":
+
+            self._send_json(
+                200,
+                runtime_snapshot()
+            )
+            return
+
+        if self.path == "/gateway/metrics":
+
+            self._send_json(
+                200,
+                load_metrics(),
+            )
+            return
+
         if self.path == "/v1/models":
+            start_time = time.time()
+
             try:
                 response = requests.get(
-                    f"{LMSTUDIO_BASE_URL}/models",
+                    f"{get_active_backend()['url']}/models",
                     headers=backend_headers(),
                     timeout=30,
+                )
+
+                latency_ms = int(
+                    (time.time() - start_time) * 1000
+                )
+
+                record_request(
+                    self.path,
+                    model=None,
+                    latency_ms=latency_ms,
+                    stream=False,
                 )
 
                 self._send_json(
@@ -174,6 +308,11 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 )
 
             except Exception as exc:
+                record_error(
+                    self.path,
+                    exc,
+                )
+
                 self._send_json(
                     502,
                     {
@@ -193,6 +332,10 @@ class GatewayHandler(BaseHTTPRequestHandler):
         )
 
     def do_POST(self):
+        client_ip = self.client_address[0]
+        if not check_rate_limit(client_ip):
+            self._send_json(429, {"error": "rate_limit_exceeded", "message": "Too many requests. Try again later."})
+            return
         if self.path != "/v1/chat/completions":
             self._send_json(
                 404,
@@ -202,6 +345,8 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 },
             )
             return
+
+        start_time = time.time()
 
         try:
             content_length = int(
@@ -219,22 +364,53 @@ class GatewayHandler(BaseHTTPRequestHandler):
 
             payload = inject_agent_context(payload)
 
+            requested_model = payload.get(
+                "model",
+                "default"
+            )
+
+            task_type = "reasoning"
+
+            if "code" in str(payload).lower():
+                task_type = "coding"
+
+            selected_model = choose_model(
+                task_type
+            )
+
+            payload["model"] = selected_model
+
             stream_enabled = bool(
                 payload.get("stream", False)
             )
 
             response = requests.post(
-                f"{LMSTUDIO_BASE_URL}/chat/completions",
+                f"{get_active_backend()['url']}/chat/completions",
                 headers=backend_headers(),
                 json=payload,
                 stream=stream_enabled,
                 timeout=600,
             )
 
+            latency_ms = int(
+                (time.time() - start_time) * 1000
+            )
+
+            record_request(
+                self.path,
+                model=payload.get("model"),
+                latency_ms=latency_ms,
+                stream=stream_enabled,
+            )
+
             if stream_enabled:
+                register_stream()
                 self._send_sse_headers()
 
-                relay_stream(response, self)
+                relay_stream(
+                    response,
+                    self,
+                )
 
                 return
 
@@ -248,6 +424,11 @@ class GatewayHandler(BaseHTTPRequestHandler):
             )
 
         except requests.exceptions.RequestException as exc:
+            record_error(
+                self.path,
+                exc,
+            )
+
             self._send_json(
                 502,
                 {
@@ -257,6 +438,11 @@ class GatewayHandler(BaseHTTPRequestHandler):
             )
 
         except Exception as exc:
+            record_error(
+                self.path,
+                exc,
+            )
+
             self._send_json(
                 500,
                 {
@@ -275,8 +461,9 @@ def run():
     print("AI-LAB OPENAI GATEWAY")
     print("=====================")
     print(f"Listening: http://{HOST}:{PORT}")
-    print(f"Backend:   {LMSTUDIO_BASE_URL}")
-    print("Mode:      stream-aware sanitized")
+    backend = get_active_backend()
+    print(f"Backend:   {backend['name']} @ {backend['url']}")
+    print("Mode:      stream-aware sanitized + metrics")
     print()
 
     server.serve_forever()

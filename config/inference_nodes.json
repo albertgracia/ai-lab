@@ -3,13 +3,14 @@
 
   "nodes": {
     "local_default": {
-      "name": "Current LM Studio",
+      "name": "NAS-N5 (Hyper-V Host)",
       "host": "192.168.1.200",
-      "port": 1234,
-      "model": "google/gemma-4-e4b",
+      "port": 12345,
+      "model": "qwen3.5-9b-deepseek-v4-flash",
       "role": "general",
-      "enabled": true,
-      "priority": 10
+      "enabled": false,
+      "priority": 10,
+      "note": "LM Studio bind a localhost, no accesible desde red. Habilitar solo si se cambia bind a 0.0.0.0"
     },
 
     "rx7900xt": {
