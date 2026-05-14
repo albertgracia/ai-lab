@@ -1,6 +1,9 @@
-from runtime.distributed.cognitive_cluster import (
-    load_cluster_state,
+from runtime.distributed.live_rerouter import (
+    TASK_CAPABILITY_MAP,
+    select_with_fallback,
+    enrich_scores,
     get_online_nodes,
+    load_cluster_state,
 )
 
 from runtime.memory.episodic_memory import (
@@ -8,135 +11,72 @@ from runtime.memory.episodic_memory import (
 )
 
 
-# ============================================================
-# CAPABILITY MAP
-# ============================================================
-
-TASK_CAPABILITY_MAP = {
-
-    "reasoning": [
-        "reasoning",
-        "large-context",
-    ],
-
-    "coding": [
-        "coding",
-        "backend",
-    ],
-
-    "vision": [
-        "vision",
-        "multimodal",
-        "image",
-    ],
-
-    "memory": [
-        "memory",
-        "embeddings",
-    ],
-
-    "creative": [
-        "creative",
-        "frontend",
-    ],
-
-    "orchestration": [
-        "orchestration",
-        "multi-agent",
-    ],
-
-    "fast": [
-        "fast",
-        "fallback",
-        "lightweight",
-    ],
-}
-
-
-# ============================================================
-# ROUTER
-# ============================================================
-
-def score_node(node, required_caps):
-
-    node_caps = node.get(
-        "capabilities",
-        []
-    )
-
-    score = 0
-
-    for cap in required_caps:
-
-        if cap in node_caps:
-            score += 10
-
-    score += node.get(
-        "priority",
-        0
-    )
-
-    latency = node.get(
-        "latency_ms",
-        999
-    )
-
-    score -= latency
-
-    return round(score, 2)
-
-
 def select_node(task_type):
-
     cluster = load_cluster_state()
 
-    nodes = get_online_nodes(cluster)
+    nodes = enrich_scores(
+        cluster.get("nodes", [])
+    )
+
+    online_nodes = get_online_nodes(nodes)
+
+    selected = select_with_fallback(
+        task_type,
+        online_nodes,
+    )
 
     required_caps = TASK_CAPABILITY_MAP.get(
         task_type,
-        ["fast"]
+        ["fast"],
     )
 
-    ranked = []
+    if not selected:
+        result = {
+            "task_type": task_type,
+            "required_capabilities": required_caps,
+            "selected_node": None,
+            "host": None,
+            "score": 0,
+            "models": [],
+            "mode": "unavailable",
+            "matched_task": None,
+            "available": False,
+        }
 
-    for node in nodes:
-
-        score = score_node(
-            node,
-            required_caps,
+        write_episode(
+            event_type="distributed_task_unavailable",
+            summary=f"No available node for task '{task_type}'.",
+            payload=result,
         )
 
-        ranked.append(
-            {
-                "node": node,
-                "score": score,
-            }
-        )
+        return result
 
-    ranked.sort(
-        key=lambda x: x["score"],
-        reverse=True,
-    )
+    node_models = []
 
-    best = ranked[0]
+    for node in online_nodes:
+        if node["name"] == selected["node"]:
+            node_models = node.get("models", [])
+            break
 
     result = {
         "task_type": task_type,
         "required_capabilities": required_caps,
-        "selected_node": best["node"]["name"],
-        "host": best["node"]["host"],
-        "score": best["score"],
-        "models": best["node"].get(
-            "models",
-            []
-        ),
+        "selected_node": selected["node"],
+        "host": selected["host"],
+        "score": selected["score"],
+        "models": node_models,
+        "mode": selected.get("mode", "primary"),
+        "matched_task": selected.get("matched_task", task_type),
+        "original_task": selected.get("original_task"),
+        "available": True,
     }
 
     write_episode(
         event_type="distributed_task_routed",
         summary=(
             f"Task '{task_type}' routed "
-            f"to node '{result['selected_node']}'."
+            f"to node '{result['selected_node']}' "
+            f"in {result['mode']} mode."
         ),
         payload=result,
     )
@@ -144,35 +84,25 @@ def select_node(task_type):
     return result
 
 
-# ============================================================
-# DEMO
-# ============================================================
-
 def print_route(task_type):
-
     route = select_node(task_type)
 
     print()
     print("====================")
     print("TASK:", route["task_type"])
-    print(
-        "NODE:",
-        route["selected_node"]
-    )
-    print(
-        "HOST:",
-        route["host"]
-    )
-    print(
-        "SCORE:",
-        route["score"]
-    )
+    print("AVAILABLE:", route["available"])
+    print("NODE:", route["selected_node"])
+    print("HOST:", route["host"])
+    print("SCORE:", route["score"])
+    print("MODE:", route["mode"])
+    print("MATCHED TASK:", route["matched_task"])
+
+    if route.get("original_task"):
+        print("ORIGINAL TASK:", route["original_task"])
 
     print("REQUIRED CAPS:")
 
-    for cap in route[
-        "required_capabilities"
-    ]:
+    for cap in route["required_capabilities"]:
         print(" -", cap)
 
     print("MODELS:")
@@ -182,7 +112,6 @@ def print_route(task_type):
 
 
 if __name__ == "__main__":
-
     tasks = [
         "reasoning",
         "coding",

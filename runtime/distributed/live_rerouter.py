@@ -12,15 +12,19 @@ TASK_CAPABILITY_MAP = {
     "coding": ["coding", "backend"],
     "vision": ["vision", "multimodal"],
     "memory": ["memory", "embeddings"],
+    "creative": ["creative", "frontend", "vision"],
+    "orchestration": ["orchestration", "multi-agent", "reasoning"],
     "fast": ["fast", "fallback"],
 }
 
 
 TASK_FALLBACK_MAP = {
     "reasoning": ["memory", "vision", "fast"],
-    "coding": ["reasoning", "memory", "fast"],
+    "coding": ["reasoning", "memory", "vision", "fast"],
     "vision": ["memory", "fast"],
     "memory": ["vision", "fast"],
+    "creative": ["vision", "memory", "fast"],
+    "orchestration": ["reasoning", "memory", "fast"],
     "fast": ["memory", "vision"],
 }
 
@@ -55,7 +59,7 @@ def load_cluster_state():
     if not CLUSTER_STATE_FILE.exists():
         return {"nodes": []}
 
-    with open(CLUSTER_STATE_FILE, "r") as f:
+    with open(CLUSTER_STATE_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -76,7 +80,11 @@ def get_required_capabilities(task_type):
 
 def node_supports_task(node_name, task_type):
     required = get_required_capabilities(task_type)
-    capabilities = NODE_CAPABILITIES.get(node_name, [])
+
+    capabilities = NODE_CAPABILITIES.get(
+        node_name,
+        [],
+    )
 
     for capability in required:
         if capability in capabilities:
@@ -164,7 +172,8 @@ def main():
 
     online_nodes = get_online_nodes(nodes)
 
-    print("\nAI-LAB LIVE REROUTER")
+    print()
+    print("AI-LAB LIVE REROUTER")
     print("=" * 50)
 
     for task_type in TASK_CAPABILITY_MAP.keys():
@@ -173,7 +182,8 @@ def main():
             online_nodes,
         )
 
-        print(f"\nTask: {task_type}")
+        print()
+        print(f"Task: {task_type}")
 
         if not selected:
             print("No available node")
