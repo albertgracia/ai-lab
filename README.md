@@ -1,466 +1,260 @@
 # AI-LAB
 ## Local-First Distributed Cognitive Infrastructure
 
-AI-LAB es una plataforma cognitiva operacional local-first diseñada para homelab, inferencia distribuida y automatización inteligente de infraestructura.
-
-El objetivo del proyecto no es únicamente ejecutar modelos LLM locales, sino construir un:
+AI-LAB es una plataforma cognitiva operacional local-first disenada para homelab, inferencia distribuida y automatizacion inteligente de infraestructura.
 
 > Distributed Cognitive Runtime
 
-capaz de:
-
-- razonar sobre infraestructura;
-- mantener memoria operacional;
-- enrutar tareas cognitivas;
-- coordinar workflows;
-- ejecutar inferencia distribuida;
-- aplicar governance;
-- automatizar operaciones;
-- evolucionar hacia una arquitectura multiagente autónoma.
+Capaz de razonar sobre infraestructura, mantener memoria operacional, enrutar tareas cognitivas, coordinar workflows, ejecutar inferencia distribuida, aplicar governance y automatizar operaciones.
 
 ---
 
-# Current Status
+## Current Status â€” Phase 7: Production Stabilization
 
-## Distributed Cognitive Runtime v1
+### System Services (systemd)
 
-Estado actual del sistema:
+Todos los componentes del runtime se ejecutan como servicios systemd con autoarranque, restart automatico y limites de memoria:
 
-- Distributed Task Routing
-- Workflow Engine
-- Governance Runtime
-- Semantic Memory
-- Episodic Memory
-- Distributed Cognition
-- Capability-based Routing
-- Execution Profiles
-- Sandbox Runtime
-- Multi-node Inference
-- Persistent Audit Trail
-- Operational Cognitive Context
+| Service | Port | Description | Memory |
+|---|---|---|---|
+| `ailab-gateway` | 8008 | OpenAI-compatible Gateway con sanitizacion, rate limiting (30 req/min) y metricas Prometheus | 256M |
+| `ailab-router` | 8083 | Cognitive Router API (FastAPI) con seleccion capability-aware | 256M |
+| `ailab-live-state` | --- | Snapshots de estado del sistema cada 5s | 128M |
+| `ailab-heartbeat` | --- | Cluster heartbeat cada 30s con exponential backoff | 128M |
+
+**Failover:** El gateway prueba backends en orden: primario -> secundario -> terciario. Si un nodo falla, el trafico se redirige automaticamente al siguiente disponible.
+
+**Exponential Backoff:** Nodos offline incrementan timeout progresivamente (5s -> 30s max). Tras 5 fallos consecutivos se saltan los checks.
+
+### Health Monitoring
+
+Sistema de monitorizacion de salud del cluster:
+
+- Health checks HTTP contra cada nodo LM Studio
+- Availability scoring basado en latencia y modelos disponibles
+- Fallback chains por tipo de tarea (reasoning -> memory -> fast)
+- Descubrimiento automatico de nodos y capacidades
+- Heartbeat persistente con registro en memoria episodica
 
 ---
 
-# Core Architecture
+## GPU Inference Cluster
+
+### Nodos Activos
+
+| Node | VRAM | Role | Status |
+|---|---|---|---|
+| RX9070 | 16 GB | Multimodal + Fast Inference | Online |
+| RX7900XT | 20 GB | Reasoning + Coding + Orchestration | Online |
+
+### Observabilidad GPU
+
+Cada nodo GPU expone metricas en tiempo real mediante:
+
+- **windows_exporter** (puerto 9182): metricas WMI de GPU (memoria dedicada, compartida, committed, engine time)
+- **GPU Metrics API** (puerto 9183): servidor HTTP PowerShell que lee sensores AMD via LibreHardwareMonitorLib
+
+**Metricas disponibles:**
+
+| Metrica | Descripcion |
+|---|---|
+| `gpu_temperature_celsius` | Temperatura GPU Core / Memory / HotSpot |
+| `gpu_fan_speed_rpm` | Velocidad del ventilador |
+| `gpu_clock_mhz` | Frecuencia Core / Memoria |
+| `gpu_load_percent` | Carga 3D, Compute 0, Copy, GPU Core, GPU Memory |
+| `gpu_power_watts` | Consumo energetico GPU Package |
+
+---
+
+## Observability Stack
+
+Stack centralizado de observabilidad:
+
+| Service | Port | Description |
+|---|---|---|
+| Prometheus | 9090 | Metricas y scraping de todos los nodos |
+| Grafana | 3000 | Dashboards unificados (migrados desde nodo runtime) |
+| Loki | 3100 | Logs centralizados |
+| Promtail | --- | Log shipping desde contenedores y sistema |
+| Cloudflare Tunnel | --- | Acceso seguro sin abrir puertos |
+
+### Dashboards
+
+| Dashboard | Source | Data |
+|---|---|---|
+| GPU AI Metrics | Prometheus | VRAM, temperatura, clocks, load, procesos, engine time de ambas GPUs |
+| Node Exporter Full | Prometheus | Sistema Ubuntu (CPU, RAM, disco, red) |
+| Cadvisor exporter | Prometheus | Contenedores Docker |
+| Labrazahome - Logs | Loki | Logs centralizados |
+| Labrazahome - Time-Series | Prometheus | Series temporales de infraestructura |
+| UniFi | UniFi Poller | Access Points, Gateway, Switch |
+
+---
+
+## Persistence & Backup
+
+- **Backup automatico:** Script `scripts/backup-runtime.sh` via cron diario a las 3AM
+- **Archivos respaldados:** cluster state, memoria episodica, auditoria, metrica gateway, configuracion nodos
+- **Retencion:** 7 dias rotativos
+- **Snapshot historico:** Cada hito importante preserva runtime + config + systemd files
+
+---
+
+## Core Architecture
 
 ```text
 User Request
-    ?
-Intent Router
-    ?
-Workflow Planner
-    ?
-Distributed Task Router
-    ?
-Execution Coordinator
-    ?
-Inference Nodes
-    ?
+    |
+Intent Router (keyword-based intent classification)
+    |
+Context Loader (RAG + semantic memory + archivos core)
+    |
+Orchestrator (plan de orquestacion)
+    |
+Workflow Planner (blueprint de 5 pasos)
+    |
+Distributed Task Router (capability matching + fallback chains)
+    |
+Execution Coordinator (token-aware model selection)
+    |
+Inference Nodes (LM Studio en nodos GPU remotos)
+    |
 Memory + Audit + Governance
 ```
 
 ---
 
-# Infrastructure
+## Runtime Components
 
-## Main Orchestration Node
-
-| Component | Value |
-|---|---|
-| Host | Ubuntu Server |
-| Virtualization | Hyper-V |
-| Main Node | ubuntu-ialab |
-| IP | 192.168.1.30 |
-| Repository | /opt/ai-lab |
-
----
-
-# Distributed Cognitive Cluster
-
-## Active Nodes
-
-### NAS Local Router Node
-
-| Property | Value |
-|---|---|
-| Host | 192.168.1.250 |
-| GPU | RX780M |
-| VRAM | 0.75 GB |
-| Role | Lightweight Routing + Memory |
-| Capabilities | fast, fallback, router, memory |
-
-### RX7900XT Reasoning Node
-
-| Property | Value |
-|---|---|
-| Host | 192.168.1.60 |
-| GPU | RX7900XT |
-| VRAM | 20 GB |
-| Role | Reasoning + Coding + Orchestration |
-| Capabilities | reasoning, coding, orchestration, backend, multi-agent |
-
-### RX9070 Multimodal Node
-
-| Property | Value |
-|---|---|
-| Host | 192.168.1.50 |
-| GPU | RX9070 |
-| VRAM | 16 GB |
-| Role | Vision + Multimodal + Frontend |
-| Capabilities | vision, image, multimodal, embeddings, creative |
-
----
-
-# Current Runtime Components
-
-## Governance Runtime
-
-AI-LAB implementa un sistema de governance cognitiva con perfiles operacionales:
+### Governance Runtime
 
 | Profile | Purpose |
 |---|---|
-| sandbox | entorno experimental |
+| sandbox | entorno experimental permisivo |
 | pilot | governance reforzada |
-| production | máxima seguridad |
+| production | maxima seguridad (read-only, sin shell) |
 
-Características:
+### Distributed Workflow Engine
 
-- capability enforcement
-- shell restrictions
-- audit trail
-- execution validation
-- profile-based security
+- Workflow planning en 5 pasos
+- Distributed routing con capability matching
+- Node scoring por disponibilidad y capacidad
+- Fallback chains por tipo de tarea
+- Execution trace persistence en memoria episodica
+
+### Memory Architecture
+
+- **Semantic Memory**: RAG con Qdrant + sentence-transformers + embeddings locales
+- **Episodic Memory**: JSONL append-log de eventos cognitivos (routing, orchestration, governance, execution)
 
 ---
 
-# Distributed Workflow Engine
+## Infrastructure Map (High-Level)
 
-El runtime ya soporta:
+```
+Hyper-V Host
+  +-- ubuntu-ialab    (AI-LAB Runtime: gateway, router, heartbeat, live-state + 16 Docker containers)
+  +-- ubuntu-server   (Observabilidad central: Prometheus, Loki, Grafana, Cloudflare Tunnel)
+  +-- Windows Server  (Servicios auxiliares)
 
-- workflow planning
-- distributed routing
-- capability matching
-- node scoring
-- orchestration simulation
-- execution trace persistence
+GPU Nodes (Windows)
+  +-- RX9070          (16GB VRAM - Inferencia multimodal + rapida)
+  +-- RX7900XT        (20GB VRAM - Razonamiento pesado + coding + orquestracion)
 
-Ejemplo:
-
-```text
-reasoning      -> RX7900XT
-coding         -> RX7900XT
-vision         -> RX9070
-memory         -> RX9070
-fast/fallback  -> NAS local
+NAS / Storage
+  +-- Storage server  (Modelos, backups, datos persistentes)
 ```
 
 ---
 
-# Memory Architecture
+## CI/CD
 
-## Semantic Memory
+Workflow GitHub Actions (`.github/workflows/deploy.yml`):
 
-Motor RAG local basado en:
-
-- Qdrant
-- sentence-transformers
-- local embeddings
-- semantic retrieval
-
-Usado para:
-
-- contextual loading
-- workflow augmentation
-- operational cognition
-- knowledge retrieval
+- **Trigger:** push a main
+- **Jobs:** validate (syntax check) -> deploy (rsync + restart servicios)
+- **Systemd files versionados** en `.github/systemd/`
 
 ---
 
-## Episodic Memory
+## Hardening
 
-Sistema persistente de eventos cognitivos:
-
-```text
-runtime/state/episodic_memory.jsonl
-```
-
-Registra:
-
-- workflows
-- routing
-- orchestration
-- governance events
-- execution traces
-- distributed decisions
-
----
-
-# Cognitive Runtime
-
-## Runtime Structure
-
-```text
-runtime/
-+-- agent/
-+-- distributed/
-+-- execution/
-+-- memory/
-+-- planner/
-+-- profiles/
-+-- state/
-+-- workflows/
-```
-
----
-
-# Current Services
-
-## Docker Stack
-
-| Service | Purpose |
+| Medida | Detalle |
 |---|---|
-| Traefik | Reverse Proxy |
-| Open WebUI | Unified AI Frontend |
-| Ollama | Local Inference |
-| Qdrant | Vector Database |
-| Portainer | Docker Management |
+| Rate limiting | 30 requests/minuto por IP en gateway |
+| Limite memoria | MemoryMax en cada servicio systemd |
+| Ulimit | `fs.file-max = 65535` |
+| Capability Guard | Bloqueo de comandos destructivos (rm -rf, mkfs, shutdown) |
 
 ---
 
-# AI Stack
+## Git Infrastructure
 
-## Ollama
-
-Local CPU inference runtime.
-
-Current usage:
-
-- lightweight models
-- embeddings
-- automation
-- fallback inference
-
----
-
-## LM Studio
-
-External GPU inference backend.
-
-Integrated using:
-
-- OpenAI-compatible APIs
-- distributed cognitive routing
-- capability-based task assignment
-
----
-
-# Observability (In Progress)
-
-Planned stack:
-
-- Prometheus
-- Grafana
-- Loki
-- Promtail
-- Node Exporter
-- cAdvisor
-
-Future objectives:
-
-- operational reasoning
-- anomaly detection
-- infrastructure cognition
-- historical analysis
-- telemetry-aware orchestration
-
----
-
-# Distributed Cognition
-
-AI-LAB ya implementa:
-
-- distributed node registry
-- capability-aware routing
-- cognitive workload distribution
-- node scoring
-- workflow orchestration
-- distributed simulation
-
-Próximas fases:
-
-- real remote execution
-- async execution queues
-- failover engine
-- execution aggregation
-- autonomous workflows
-
----
-
-# Multi-Agent Vision
-
-Objetivo futuro:
-
-```text
-planner-agent
-    ?
-reasoning-agent
-    ?
-coding-agent
-    ?
-security-agent
-    ?
-documentation-agent
-    ?
-execution-agent
-```
-
-Con coordinación autónoma distribuida.
-
----
-
-# Storage Architecture
-
-## AI Models Storage
-
-```text
-/mnt/ai-models
-```
-
-Usado para:
-
-- Ollama models
-- embeddings
-- datasets
-- persistent cognitive memory
-
----
-
-# Git Infrastructure
-
-Repository:
-
-```text
-/opt/ai-lab
-```
+Repository: `github.com/albertgracia/ai-lab`
 
 Incluye:
-
-- runtime
-- workflows
-- distributed cognition
-- governance
-- orchestration
-- memory systems
-
-Excluye:
-
-- datasets
-- logs
-- runtime artifacts
-- model binaries
+- `runtime/` â€” codigo fuente del runtime cognitivo
+- `config/` â€” configuracion de nodos y politicas
+- `stacks/` â€” docker-compose de infraestructura
+- `memory/` â€” ADRs, memoria semantica, roadmap
+- `.agent/` â€” Antigravity Kit (20 agents, 38 skills, 11 workflows)
+- `apps/` â€” Documentacion Astro + Starlight
 
 ---
 
-# Philosophy
+## Philosophy
 
-## Local First
+### Local First
+Todo el runtime disenado para ejecutarse local, privado, self-hosted y soberano.
 
-Todo el runtime está diseñado para ejecutarse:
+### Modular Architecture
+Separacion explicita entre cognicion, memoria, ejecucion, governance, workflows y orquestracion.
 
-- local
-- private
-- self-hosted
-- sovereign
-
----
-
-## Modular Architecture
-
-Separación explícita entre:
-
-- cognition
-- memory
-- execution
-- governance
-- workflows
-- orchestration
-- infrastructure
-
----
-
-## Incremental Cognitive Growth
-
-La evolución del proyecto sigue capas progresivas:
+### Incremental Cognitive Growth
 
 ```text
 Infrastructure
-    ?
+    |
 Knowledge
-    ?
+    |
 Memory
-    ?
+    |
 Governance
-    ?
+    |
 Workflows
-    ?
+    |
 Distributed Cognition
-    ?
+    |
 Autonomous Operations
 ```
 
 ---
 
-# Current Roadmap
+## Roadmap
 
-## Phase 6 — Distributed Cognitive Runtime
-- distributed workflows
-- execution coordination
-- task aggregation
-- failover routing
-- async orchestration
+### Phase 7 (Complete) â€” Production Stabilization
+- Systemd services con autoarranque y watchdog
+- Failover dinamico entre nodos de inferencia
+- Observabilidad centralizada (Prometheus + Grafana + Loki)
+- Monitorizacion GPU con temperatura, VRAM, load, procesos
+- Backup automatico y persistencia
+- Hardening: rate limiting, limites de memoria, ulimit
+- CI/CD GitHub Actions
 
-## Phase 7 — Autonomous Operations
-- autonomous remediation
-- operational reasoning
-- infrastructure cognition
-- adaptive workflows
+### Phase 8 â€” Autonomous Operations
+- Autonomous remediation
+- Operational reasoning
+- Infrastructure cognition
+- Adaptive workflows
 
-## Phase 8 — Multi-Agent Coordination
-- specialized agents
-- distributed cognition mesh
-- cooperative reasoning
-- autonomous planning
-
----
-
-# Final Objective
-
-Construir una:
-
-> Local-First Operational Cognitive Platform
-
-capaz de:
-
-- razonar sobre infraestructura;
-- mantener memoria persistente;
-- coordinar agentes;
-- ejecutar workflows;
-- automatizar operaciones;
-- aprender del estado del sistema;
-- operar como un verdadero AI Operations Brain.
+### Phase 9 â€” Multi-Agent Coordination
+- Specialized agents
+- Distributed cognition mesh
+- Cooperative reasoning
+- Autonomous planning
 
 ---
 
-# Project Status
+## Final Objective
 
-## Current Level
-
-```text
-Distributed Cognitive Infrastructure
-```
-
-## Next Major Milestone
-
-```text
-Distributed Execution Coordinator
-```
+Construir una Local-First Operational Cognitive Platform capaz de razonar sobre infraestructura, mantener memoria persistente, coordinar agentes, ejecutar workflows, automatizar operaciones y operar como un verdadero AI Operations Brain.
