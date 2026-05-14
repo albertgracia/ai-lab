@@ -8,7 +8,7 @@ let generatedAt = null;
 try {
   const response = await Astro.fetchContent
     ? null
-    : await fetch(new URL("/api/services.json", "http://127.0.0.1:4322"));
+    : await fetch("/api/services.json");
 
   if (response && response.headers.get("content-type")?.includes("application/json")) {
     const data = await response.json();

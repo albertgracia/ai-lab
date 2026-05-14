@@ -1,29 +1,45 @@
 ---
-title: "Servicios persistentes systemd"
-summary: "Servicios AI-LAB configurados para arranque automático."
-order: 3
+title: "Servicios Persistentes (systemd)"
+summary: "Servicios systemd del AI-LAB y cómo gestionarlos."
+order: 12
 ---
 
-El AI-LAB utiliza `systemd` para mantener persistentes
-los servicios críticos del laboratorio.
+## Servicios Activos
 
----
+| Servicio | Puerto | Descripción | Estado |
+|---|---|---|---|
+| \`ailab-heartbeat.service\` | — | Heartbeat persistente del cluster (30s) | ✅ Running |
+| \`ailab-gateway.service\` | 8008 | Gateway OpenAI-compatible con sanitización | ✅ Running |
+| \`ailab-router.service\` | 8083 | Router API cognitivo FastAPI | ✅ Running |
+| \`ailab-live-state.service\` | — | Snapshots de estado del sistema cada 5s | ✅ Running |
 
-# Servicios activos
+## Gestión
 
-| Servicio | Función | Puerto |
-|---|---|---|
-| ialab-live-state | Monitorización viva del laboratorio | N/A |
-| ialab-router-api | API OpenAI-compatible | 8008 |
-| ialab-docs | Portal documental Astro | 4321 |
+\`\`\`bash
+# Estado de todos los servicios
+systemctl status ailab-*
 
----
+# Reiniciar un servicio
+sudo systemctl restart ailab-gateway.service
 
-# Verificar estado
+# Ver logs
+journalctl -u ailab-gateway.service -n 50 --no-pager
 
-```bash
-systemctl status ialab-live-state --no-pager
+# Habilitar/Deshabilitar autoarranque
+sudo systemctl enable ailab-gateway.service
+sudo systemctl disable ailab-gateway.service
+\`\`\`
 
-systemctl status ialab-router-api --no-pager
+## Dependencias
 
-systemctl status ialab-docs --no-pager
+\`ailab-router.service\` depende de \`ailab-gateway.service\` (After).
+Todos dependen de \`network-online.target\`.
+
+## Límites de Recursos
+
+| Servicio | MemoryMax |
+|---|---|
+| ailab-gateway | 256M |
+| ailab-router | 256M |
+| ailab-live-state | 128M |
+| ailab-heartbeat | 128M |
