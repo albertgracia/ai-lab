@@ -1,0 +1,3 @@
+# Cloudflare Pages redirects
+# Proxy /api/* to live backend through Cloudflare Tunnel
+/api/* https://blog-ai-lab.labrazahome.com/api/:splat 200
