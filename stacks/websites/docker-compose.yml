@@ -1,0 +1,60 @@
+services:
+  agithome:
+    image: nginx:alpine
+    container_name: agithome
+    restart: unless-stopped
+    volumes:
+      - ./agithome:/usr/share/nginx/html:ro
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.agithome.rule=Host(`agithome.labrazahome.com`)"
+      - "traefik.http.routers.agithome.entrypoints=web"
+      - "traefik.http.services.agithome.loadbalancer.server.port=80"
+
+  agitservices:
+    image: nginx:alpine
+    container_name: agitservices
+    restart: unless-stopped
+    volumes:
+      - ./agitservices:/usr/share/nginx/html:ro
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.agitservices.rule=Host(`agitservices.labrazahome.com`)"
+      - "traefik.http.routers.agitservices.entrypoints=web"
+      - "traefik.http.services.agitservices.loadbalancer.server.port=80"
+
+  albertskills:
+    image: nginx:alpine
+    container_name: albertskills
+    restart: unless-stopped
+    volumes:
+      - ./albertskills:/usr/share/nginx/html:ro
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.albertskills.rule=Host(`albertskills.labrazahome.com`)"
+      - "traefik.http.routers.albertskills.entrypoints=web"
+      - "traefik.http.services.albertskills.loadbalancer.server.port=80"
+
+  albertskills-amd-multi:
+    image: nginx:alpine
+    container_name: albertskills-amd-multi
+    restart: unless-stopped
+    volumes:
+      - ./albertskills-amd-multi/dist:/usr/share/nginx/html:ro
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.albertskills-amd-multi.rule=Host(`skills.labrazahome.com`)"
+      - "traefik.http.routers.albertskills-amd-multi.entrypoints=web"
+      - "traefik.http.services.albertskills-amd-multi.loadbalancer.server.port=80"
+
+networks:
+  proxy:
+    external: true

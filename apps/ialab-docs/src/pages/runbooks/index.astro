@@ -1,7 +1,8 @@
 ---
 import Layout from "../../layouts/Layout.astro";
+import { getCollection } from "astro:content";
 
-const runbooks = [
+const staticRunbooks = [
   {
     title: "Cloudflare Tunnel Recovery",
     status: "ready",
@@ -21,6 +22,21 @@ const runbooks = [
     description: "Recuperación de páginas /status, /status/live y /status/history.",
   },
 ];
+
+const contentRunbooks = await getCollection("runbooks");
+
+const dynamicRunbooks = contentRunbooks.map((entry) => {
+  const slug = entry.id.replace(/\.md$/, "");
+
+  return {
+    title: entry.data.title,
+    status: "ready",
+    href: `/runbooks/${slug}`,
+    description: entry.data.summary ?? entry.data.description ?? "Runbook operativo AI-LAB.",
+  };
+});
+
+const runbooks = [...staticRunbooks, ...dynamicRunbooks];
 ---
 
 <Layout title="Runbooks · AI-LAB">

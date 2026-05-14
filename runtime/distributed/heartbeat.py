@@ -8,6 +8,10 @@ from runtime.distributed.health_monitor import (
     save_cluster_state,
 )
 
+from runtime.distributed.node_discovery import (
+    run_discovery,
+)
+
 from runtime.memory.episodic_memory import write_episode
 
 
@@ -23,7 +27,10 @@ def run_heartbeat_once():
         result = check_node(node)
         updated_nodes.append(result)
 
+    discovered_nodes = run_discovery()
+
     cluster_state["nodes"] = updated_nodes
+    cluster_state["discovered_nodes"] = discovered_nodes
     cluster_state["updated_at"] = int(time.time())
     cluster_state["updated_at_iso"] = datetime.now(timezone.utc).isoformat()
 
@@ -37,6 +44,11 @@ def run_heartbeat_once():
         if not node.get("online")
     ]
 
+    discovered_online = [
+        node for node in discovered_nodes
+        if node.get("online")
+    ]
+
     if not online_nodes:
         cluster_health = "offline"
     elif offline_nodes:
@@ -47,6 +59,8 @@ def run_heartbeat_once():
     cluster_state["cluster_health"] = cluster_health
     cluster_state["online_nodes"] = len(online_nodes)
     cluster_state["offline_nodes"] = len(offline_nodes)
+    cluster_state["discovered_online_nodes"] = len(discovered_online)
+    cluster_state["discovered_total_nodes"] = len(discovered_nodes)
 
     save_cluster_state(cluster_state)
 
@@ -60,7 +74,10 @@ def run_heartbeat_once():
             "cluster_health": cluster_health,
             "online_nodes": len(online_nodes),
             "offline_nodes": len(offline_nodes),
+            "discovered_online_nodes": len(discovered_online),
+            "discovered_total_nodes": len(discovered_nodes),
             "nodes": updated_nodes,
+            "discovered_nodes": discovered_nodes,
         },
     )
 
@@ -81,7 +98,9 @@ def run_forever():
             f"[{state['updated_at_iso']}] "
             f"health={state['cluster_health']} "
             f"online={state['online_nodes']} "
-            f"offline={state['offline_nodes']}"
+            f"offline={state['offline_nodes']} "
+            f"discovered_online={state['discovered_online_nodes']}/"
+            f"{state['discovered_total_nodes']}"
         )
 
         time.sleep(HEARTBEAT_INTERVAL_SECONDS)

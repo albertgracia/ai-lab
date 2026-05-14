@@ -1,0 +1,85 @@
+services:
+  calavera-lab:
+    build:
+      context: ./calavera-lab
+      dockerfile: Dockerfile
+    container_name: calavera-lab
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: "80"
+    env_file:
+      - ./calavera-lab/.env
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.calavera.rule=Host(`calavera.labrazahome.com`)"
+      - "traefik.http.routers.calavera.entrypoints=web"
+      - "traefik.http.services.calavera.loadbalancer.server.port=80"
+
+  musquera-db:
+    image: postgres:15-alpine
+    container_name: musquera-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: admin_raw
+      POSTGRES_PASSWORD: CAMBIAR_ESTA_CONTRASENA
+      POSTGRES_DB: raw_factory_db
+    volumes:
+      - musquera-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin_raw -d raw_factory_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=false"
+
+  musquera-server:
+    build:
+      context: ./musquera-raw
+      dockerfile: Dockerfile
+    container_name: musquera-server
+    restart: unless-stopped
+    depends_on:
+      musquera-db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      DATABASE_URL: postgres://admin_raw:CAMBIAR_ESTA_CONTRASENA@musquera-db:5432/raw_factory_db
+      JWT_SECRET: CAMBIAR_ESTE_JWT_SECRET
+    volumes:
+      - musquera-uploads:/app/public/uploads
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=false"
+
+  musquera-web:
+    image: nginx:alpine
+    container_name: musquera-web
+    restart: unless-stopped
+    volumes:
+      - ./musquera-raw:/usr/share/nginx/html:ro
+      - ./musquera-raw/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - musquera-server
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.musquera.rule=Host(`musquera.labrazahome.com`)"
+      - "traefik.http.routers.musquera.entrypoints=web"
+      - "traefik.http.services.musquera.loadbalancer.server.port=80"
+
+volumes:
+  musquera-db-data:
+  musquera-uploads:
+
+networks:
+  proxy:
+    external: true

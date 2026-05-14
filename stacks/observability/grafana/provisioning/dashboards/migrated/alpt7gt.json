@@ -1,0 +1,3163 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Dashboard experimental de An\u00e1lisis de Series Temporales. Descompone el comportamiento del sistema en Tendencia + Estacionalidad + Residual usando t\u00e9cnicas de PromQL avanzado: time offsets, subqueries, stddev y moving averages.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 3743403192193024,
+  "liveNow": false,
+  "panels": [
+    {
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 16,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "## \ud83e\udde0 An\u00e1lisis de Series Temporales \u2014 Laboratorio\n\nEste dashboard descompone el comportamiento del sistema en **tres componentes cl\u00e1sicos** y los extiende con an\u00e1lisis estad\u00edstico avanzado:\n\n| Componente | T\u00e9cnica PromQL | Secci\u00f3n |\n|---|---|---|\n| **Tendencia** | `avg_over_time` subquery 1h \u2014 media m\u00f3vil suavizada | Macro |\n| **Estacionalidad** | `offset 1d / 1w` \u2014 patr\u00f3n esperado superpuesto | Macro |\n| **Residual** | `actual \u2212 baseline` \u2014 desv\u00edo real vs. historial | Residual |\n| **Envelope \u00b12\u03c3** | `avg_over_time \u00b1 2\u00b7stddev_over_time` \u2014 banda de confianza | Macro |\n| **Z-Score** | `(actual \u2212 baseline) / \u03c3` \u2014 anomal\u00eda normalizada | Mini SOC |\n\n---\n\n### \ud83d\udcca Secciones del Dashboard\n\n**\ud83d\udcca Macro \u2014 Estacionalidad (Ciclos Humanos)**\nCPU y WAN con 5 capas: actual \u00b7 baseline \u00b7 tendencia suavizada \u00b7 banda superior +2\u03c3 \u00b7 banda inferior \u22122\u03c3 (relleno azul). Todo lo que sale del \u00e1rea azul es una anomal\u00eda estad\u00edstica.\n\n**\ud83d\udd25 Heatmaps Temporales \u2014 Estacionalidad Visual**\nCuatro heatmaps de distribuci\u00f3n temporal: CPU \u00b7 WAN \u00b7 Clientes WiFi \u00b7 IDS. Con rango **7 d\u00edas** emerge la matriz hora\u00d7d\u00eda y la huella humana del hogar es inmediatamente visible.\n\n**\u26a1 Micro \u2014 Periodicidad (Ciclos Electr\u00f3nicos)**\nInterrupciones de reloj por core \u00b7 C-States (reposo del procesador) \u00b7 paquetes de red RX/TX en espejo. Ritmos de nanosegundos/microsegundos.\n\n**\ud83d\udd2c Residual, Volatilidad & Descomposici\u00f3n**\nResidual CPU vs. patr\u00f3n diario \u00b7 volatilidad \u03c3 en ventanas 30m y 6h \u00b7 latencia WAN con banda \u03c3 \u00b7 descomposici\u00f3n por modo CPU (user/dpc/interrupt/privileged).\n\n**\ud83d\udce1 Mini SOC \u2014 Z-Score + Correlaci\u00f3n Loki \u2194 M\u00e9tricas**\nZ-score din\u00e1mico CPU & WAN con umbrales \u00b12\u03c3 \u00b7 actividad de logs por servicio (nginx, IDS, Docker, Windows) alineada temporalmente con las m\u00e9tricas \u00b7 eventos IDS de UniFi en vivo \u00b7 logs nginx/Docker/Windows \u00b7 actividad del stack completo del homelab.\n\n---\n\n### \ud83d\udca1 Tips de Uso\n\n| Rango temporal | Lo que ver\u00e1s |\n|---|---|\n| **6h** | Ciclos del d\u00eda actual, spikes recientes, logs en tiempo real |\n| **24h** | Ciclo diario completo, patr\u00f3n de trabajo/ocio |\n| **7d** | Estacionalidad semanal en heatmaps, patr\u00f3n lunes\u2013domingo |\n\n> \u26a0\ufe0f **Leer el Z-Score**: valores **> +2** o **< \u22122** indican anomal\u00edas estad\u00edsticas. Correlaciona con el panel \u201cCorrelaci\u00f3n Temporal\u201d inferior para identificar el servicio causante.\n>\n> \ud83d\udd0d **Heatmaps**: el patr\u00f3n hora\u00d7d\u00eda requiere m\u00ednimo **3\u20137 d\u00edas** de historial para ser legible. El eje Y es el valor de la m\u00e9trica; el color es la frecuencia.",
+        "mode": "markdown"
+      },
+      "pluginVersion": "13.1.0-25308208488",
+      "targets": [],
+      "title": "\ud83e\udde0 Gu\u00eda del Dashboard",
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "description": "Uso promedio de CPU en este momento. Comparar con el panel de Estacionalidad para detectar desviaciones.",
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 40
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percent"
+        }
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 6
+      },
+      "id": 17,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "pluginVersion": "13.1.0-25308208488",
+      "targets": [
+        {
+          "app": "grafana-assistant-app",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "expr": "avg_over_time((100 - avg(rate(windows_cpu_time_total{mode=\"idle\"}[2m])) * 100)[5m:1m])",
+          "instant": true,
+          "legendFormat": "CPU %",
+          "queryType": "instant",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "CPU: Uso Actual",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "description": "Desviaci\u00f3n est\u00e1ndar del % de CPU en los \u00faltimos 30 minutos. Alta \u03c3 indica inestabilidad o ciclos internos.",
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 2,
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 5
+              },
+              {
+                "color": "red",
+                "value": 15
+              }
+            ]
+          },
+          "unit": "percent"
+        }
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 6
+      },
+      "id": 18,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "pluginVersion": "13.1.0-25308208488",
+      "targets": [
+        {
+          "app": "grafana-assistant-app",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "expr": "stddev_over_time((100 - avg(rate(windows_cpu_time_total{mode=\"idle\"}[5m])) * 100)[30m:5m])",
+          "instant": true,
+          "legendFormat": "\u03c3 CPU %",
+          "queryType": "instant",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "CPU: Volatilidad \u03c3 (30m)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "description": "Throughput WAN combinado (RX+TX) en tiempo real.",
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "Bps"
+        }
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 6
+      },
+      "id": 19,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "pluginVersion": "13.1.0-25308208488",
+      "targets": [
+        {
+          "app": "grafana-assistant-app",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "expr": "unpoller_site_receive_rate_bytes{subsystem=\"wan\"} + unpoller_site_transmit_rate_bytes{subsystem=\"wan\"}",
+          "instant": true,
+          "legendFormat": "WAN RX+TX",
+          "queryType": "instant",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "WAN: Tr\u00e1fico Actual",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "description": "N\u00famero de clientes conectados actualmente. Refleja la estacionalidad social del hogar.",
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "purple",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 6
+      },
+      "id": 20,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "pluginVersion": "13.1.0-25308208488",
+      "targets": [
+        {
+          "app": "grafana-assistant-app",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "expr": "count(unpoller_client_uptime_seconds)",
+          "instant": true,
+          "legendFormat": "clientes",
+          "queryType": "instant",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Clientes WiFi Conectados",
+      "type": "stat"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 10
+      },
+      "id": 50,
+      "panels": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "description": "Cuatro capas: l\u00ednea actual (verde), tendencia/baseline suavizada (naranja), y la **banda de confianza \u00b12\u03c3** (azul sombreado). Todo lo que sale del \u00e1rea azul es una anomal\u00eda estad\u00edstica.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 5,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "showValues": false,
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": 0
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "percent"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "CPU % Actual"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "green",
+                      "mode": "fixed"
+                    }
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 2
+                  },
+                  {
+                    "id": "custom.fillOpacity",
+                    "value": 0
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Baseline (1h avg)"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "orange",
+                      "mode": "fixed"
+                    }
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 2
+                  },
+                  {
+                    "id": "custom.lineInterpolation",
+                    "value": "smooth"
+                  },
+                  {
+                    "id": "custom.fillOpacity",
+                    "value": 0
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Banda Superior +2\u03c3"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "rgba(99,135,255,0.6)",
+                      "mode": "fixed"
+                    }
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 1
+                  },
+                  {
+                    "id": "custom.fillBelowTo",
+                    "value": "Banda Inferior -2\u03c3"
+                  },
+                  {
+                    "id": "custom.fillOpacity",
+                    "value": 25
+                  },
+                  {
+                    "id": "custom.lineStyle",
+                    "value": {
+                      "dash": [
+                        4,
+                        4
+                      ],
+                      "fill": "dash"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Banda Inferior -2\u03c3"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "rgba(99,135,255,0.6)",
+                      "mode": "fixed"
+                    }
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 1
+                  },
+                  {
+                    "id": "custom.lineStyle",
+                    "value": {
+                      "dash": [
+                        4,
+                        4
+                      ],
+                      "fill": "dash"
+                    }
+                  },
+                  {
+                    "id": "custom.fillOpacity",
+                    "value": 0
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Baseline \u22121 d\u00eda"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "gray",
+                      "mode": "fixed"
+                    }
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 1
+                  },
+                  {
+                    "id": "custom.lineStyle",
+                    "value": {
+                      "dash": [
+                        8,
+                        4
+                      ],
+                      "fill": "dash"
+                    }
+                  },
+                  {
+                    "id": "custom.fillOpacity",
+                    "value": 0
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 24,
+            "x": 0,
+            "y": 11
+          },
+          "id": 21,
+          "options": {
+            "annotations": {
+              "clustering": -1,
+              "multiLane": false
+            },
+            "legend": {
+              "calcs": [
+                "mean",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "13.1.0-25308208488",
+          "targets": [
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "expr": "100 - avg(rate(windows_cpu_time_total{mode=\"idle\"}[$__rate_interval])) * 100",
+              "instant": false,
+              "legendFormat": "CPU % Actual",
+              "queryType": "range",
+              "range": true,
+              "refId": "A"
+            },
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "expr": "avg_over_time((100 - avg(rate(windows_cpu_time_total{mode=\"idle\"}[5m])) * 100)[1h:5m])",
+              "instant": false,
+              "legendFormat": "Baseline (1h avg)",
+              "queryType": "range",
+              "range": true,
+              "refId": "B"
+            },
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "expr": "avg_over_time((100 - avg(rate(windows_cpu_time_total{mode=\"idle\"}[5m])) * 100)[1h:5m]) + 2 * stddev_over_time((100 - avg(rate(windows_cpu_time_total{mode=\"idle\"}[5m])) * 100)[1h:5m])",
+              "instant": false,
+              "legendFormat": "Banda Superior +2\u03c3",
+              "queryType": "range",
+              "range": true,
+              "refId": "C"
+            },
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "expr": "clamp_min(avg_over_time((100 - avg(rate(windows_cpu_time_total{mode=\"idle\"}[5m])) * 100)[1h:5m]) - 2 * stddev_over_time((100 - avg(rate(windows_cpu_time_total{mode=\"idle\"}[5m])) * 100)[1h:5m]), 0)",
+              "instant": false,
+              "legendFormat": "Banda Inferior -2\u03c3",
+              "queryType": "range",
+              "range": true,
+              "refId": "D"
+            },
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "expr": "100 - avg(rate(windows_cpu_time_total{mode=\"idle\"}[$__rate_interval] offset 1d)) * 100",
+              "instant": false,
+              "legendFormat": "Baseline \u22121 d\u00eda",
+              "queryType": "range",
+              "range": true,
+              "refId": "E"
+            }
+          ],
+          "title": "CPU % \u2014 Actual + Envelope \u00b12\u03c3 + Estacionalidad",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "description": "WAN RX+TX con banda de confianza \u00b12\u03c3 din\u00e1mica. Los picos que atraviesan la banda superior indican descargas, streaming o eventos inusuales.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 5,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "showValues": false,
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": 0
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "Bps"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "WAN RX+TX Actual"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "green",
+                      "mode": "fixed"
+                    }
+                  },
+                  {
+                    "id": "custom.fillOpacity",
+                    "value": 0
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Baseline WAN (1h avg)"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "orange",
+                      "mode": "fixed"
+                    }
+                  },
+                  {
+                    "id": "custom.fillOpacity",
+                    "value": 0
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "WAN +2\u03c3"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "rgba(99,135,255,0.6)",
+                      "mode": "fixed"
+                    }
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 1
+                  },
+                  {
+                    "id": "custom.fillBelowTo",
+                    "value": "WAN -2\u03c3"
+                  },
+                  {
+                    "id": "custom.fillOpacity",
+                    "value": 25
+                  },
+                  {
+                    "id": "custom.lineStyle",
+                    "value": {
+                      "dash": [
+                        4,
+                        4
+                      ],
+                      "fill": "dash"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "WAN -2\u03c3"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "rgba(99,135,255,0.6)",
+                      "mode": "fixed"
+                    }
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 1
+                  },
+                  {
+                    "id": "custom.lineStyle",
+                    "value": {
+                      "dash": [
+                        4,
+                        4
+                      ],
+                      "fill": "dash"
+                    }
+                  },
+                  {
+                    "id": "custom.fillOpacity",
+                    "value": 0
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 14,
+            "x": 0,
+            "y": 20
+          },
+          "id": 22,
+          "options": {
+            "annotations": {
+              "clustering": -1,
+              "multiLane": false
+            },
+            "legend": {
+              "calcs": [
+                "mean",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "13.1.0-25308208488",
+          "targets": [
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "expr": "unpoller_site_receive_rate_bytes{subsystem=\"wan\"} + unpoller_site_transmit_rate_bytes{subsystem=\"wan\"}",
+              "instant": false,
+              "legendFormat": "WAN RX+TX Actual",
+              "queryType": "range",
+              "range": true,
+              "refId": "A"
+            },
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "expr": "avg_over_time((unpoller_site_receive_rate_bytes{subsystem=\"wan\"} + unpoller_site_transmit_rate_bytes{subsystem=\"wan\"})[1h:5m])",
+              "instant": false,
+              "legendFormat": "Baseline WAN (1h avg)",
+              "queryType": "range",
+              "range": true,
+              "refId": "B"
+            },
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "expr": "avg_over_time((unpoller_site_receive_rate_bytes{subsystem=\"wan\"} + unpoller_site_transmit_rate_bytes{subsystem=\"wan\"})[1h:5m]) + 2 * stddev_over_time((unpoller_site_receive_rate_bytes{subsystem=\"wan\"} + unpoller_site_transmit_rate_bytes{subsystem=\"wan\"})[1h:5m])",
+              "instant": false,
+              "legendFormat": "WAN +2\u03c3",
+              "queryType": "range",
+              "range": true,
+              "refId": "C"
+            },
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "expr": "clamp_min(avg_over_time((unpoller_site_receive_rate_bytes{subsystem=\"wan\"} + unpoller_site_transmit_rate_bytes{subsystem=\"wan\"})[1h:5m]) - 2 * stddev_over_time((unpoller_site_receive_rate_bytes{subsystem=\"wan\"} + unpoller_site_transmit_rate_bytes{subsystem=\"wan\"})[1h:5m]), 0)",
+              "instant": false,
+              "legendFormat": "WAN -2\u03c3",
+              "queryType": "range",
+              "range": true,
+              "refId": "D"
+            }
+          ],
+          "title": "WAN \u2014 Actual + Envelope \u00b12\u03c3",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "description": "N\u00famero de clientes WiFi conectados a lo largo del tiempo. El patr\u00f3n refleja los ciclos humanos del hogar: ma\u00f1ana, tarde, noche.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "stepAfter",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "showValues": false,
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "purple",
+                    "value": 0
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 10,
+            "x": 14,
+            "y": 20
+          },
+          "id": 23,
+          "options": {
+            "annotations": {
+              "clustering": -1,
+              "multiLane": false
+            },
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "13.1.0-25308208488",
+          "targets": [
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "expr": "count(unpoller_client_uptime_seconds)",
+              "instant": false,
+              "legendFormat": "Clientes WiFi",
+              "queryType": "range",
+              "range": true,
+              "refId": "A"
+            },
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "expr": "count(unpoller_client_uptime_seconds offset 1d)",
+              "instant": false,
+              "legendFormat": "Ayer \u22121d",
+              "queryType": "range",
+              "range": true,
+              "refId": "B"
+            },
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "expr": "count(unpoller_client_uptime_seconds offset 1w)",
+              "instant": false,
+              "legendFormat": "Semana pasada \u22121w",
+              "queryType": "range",
+              "range": true,
+              "refId": "C"
+            }
+          ],
+          "title": "Clientes WiFi \u2014 Estacionalidad Social (Ciclo Humano)",
+          "type": "timeseries"
+        }
+      ],
+      "title": "\ud83d\udcca Macro \u2014 Estacionalidad (Ciclos Humanos)",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 11
+      },
+      "id": 51,
+      "panels": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "description": "Distribuci\u00f3n del uso de CPU a lo largo del tiempo. Con rango 7 d\u00edas, ver\u00e1s las franjas de alta/baja actividad que corresponden a los ciclos humanos del hogar (ma\u00f1ana, tarde, noche). Cada columna = intervalo de tiempo, cada fila = bucket de % de CPU.",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "scaleDistribution": {
+                  "type": "linear"
+                }
+              },
+              "unit": "percent"
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 12
+          },
+          "id": 40,
+          "options": {
+            "annotations": {
+              "clustering": -1,
+              "multiLane": false
+            },
+            "calculate": true,
+            "calculation": {
+              "xBuckets": {
+                "mode": "count",
+                "value": "40"
+              },
+              "yBuckets": {
+                "mode": "size",
+                "value": "2"
+              }
+            },
+            "cellGap": 1,
+            "color": {
+              "exponent": 0.5,
+              "fill": "dark-orange",
+              "mode": "scheme",
+              "reverse": false,
+              "scale": "exponential",
+              "scheme": "Oranges",
+              "steps": 128
+            },
+            "exemplars": {
+              "color": "rgba(255,0,255,0.7)"
+            },
+            "filterValues": {
+              "le": 1e-09
+            },
+            "legend": {
+              "show": true
+            },
+            "rowsFrame": {
+              "layout": "auto"
+            },
+            "showValue": "never",
+            "tooltip": {
+              "mode": "single",
+              "showColorScale": false,
+              "yHistogram": false
+            },
+            "yAxis": {
+              "axisPlacement": "left",
+              "reverse": false,
+              "unit": "percent"
+            }
+          },
+          "pluginVersion": "13.1.0-25308208488",
+          "targets": [
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "expr": "100 - avg(rate(windows_cpu_time_total{mode=\"idle\"}[$__rate_interval])) * 100",
+              "instant": false,
+              "legendFormat": "",
+              "queryType": "range",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "\ud83d\udd25 Heatmap CPU \u2014 Distribuci\u00f3n Temporal (7d = ciclos diarios)",
+          "type": "heatmap"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "description": "Heatmap del tr\u00e1fico WAN. Los picos de color intenso revelan los momentos del d\u00eda con m\u00e1s actividad de red: descargas nocturnas, streaming vespertino, backups. Con 7 d\u00edas, la estacionalidad semanal es completamente visible.",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "scaleDistribution": {
+                  "type": "linear"
+                }
+              },
+              "unit": "Bps"
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 12
+          },
+          "id": 41,
+          "options": {
+            "annotations": {
+              "clustering": -1,
+              "multiLane": false
+            },
+            "calculate": true,
+            "calculation": {
+              "xBuckets": {
+                "mode": "count",
+                "value": "40"
+              },
+              "yBuckets": {
+                "mode": "size",
+                "value": "auto"
+              }
+            },
+            "cellGap": 1,
+            "color": {
+              "exponent": 0.5,
+              "fill": "dark-blue",
+              "mode": "scheme",
+              "reverse": false,
+              "scale": "exponential",
+              "scheme": "Blues",
+              "steps": 128
+            },
+            "exemplars": {
+              "color": "rgba(255,0,255,0.7)"
+            },
+            "filterValues": {
+              "le": 1e-09
+            },
+            "legend": {
+              "show": true
+            },
+            "rowsFrame": {
+              "layout": "auto"
+            },
+            "showValue": "never",
+            "tooltip": {
+              "mode": "single",
+              "showColorScale": false,
+              "yHistogram": false
+            },
+            "yAxis": {
+              "axisPlacement": "left",
+              "reverse": false,
+              "unit": "Bps"
+            }
+          },
+          "pluginVersion": "13.1.0-25308208488",
+          "targets": [
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "expr": "unpoller_site_receive_rate_bytes{subsystem=\"wan\"} + unpoller_site_transmit_rate_bytes{subsystem=\"wan\"}",
+              "instant": false,
+              "legendFormat": "",
+              "queryType": "range",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "\ud83d\udd25 Heatmap WAN \u2014 Distribuci\u00f3n Tr\u00e1fico (7d = estacionalidad social)",
+          "type": "heatmap"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "description": "Heatmap del n\u00famero de clientes WiFi conectados. El patr\u00f3n es la \u2018huella digital humana\u2019 del hogar: ver\u00e1s con claridad cu\u00e1ndo hay personas en casa y c\u00f3mo conectan/desconectan dispositivos.",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "scaleDistribution": {
+                  "type": "linear"
+                }
+              },
+              "unit": "short"
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 20
+          },
+          "id": 42,
+          "options": {
+            "annotations": {
+              "clustering": -1,
+              "multiLane": false
+            },
+            "calculate": true,
+            "calculation": {
+              "xBuckets": {
+                "mode": "count",
+                "value": "40"
+              },
+              "yBuckets": {
+                "mode": "size",
+                "value": "1"
+              }
+            },
+            "cellGap": 1,
+            "color": {
+              "exponent": 0.5,
+              "fill": "dark-purple",
+              "mode": "scheme",
+              "reverse": false,
+              "scale": "exponential",
+              "scheme": "Purples",
+              "steps": 128
+            },
+            "exemplars": {
+              "color": "rgba(255,0,255,0.7)"
+            },
+            "filterValues": {
+              "le": 0
+            },
+            "legend": {
+              "show": true
+            },
+            "rowsFrame": {
+              "layout": "auto"
+            },
+            "showValue": "never",
+            "tooltip": {
+              "mode": "single",
+              "showColorScale": false,
+              "yHistogram": false
+            },
+            "yAxis": {
+              "axisPlacement": "left",
+              "reverse": false,
+              "unit": "short"
+            }
+          },
+          "pluginVersion": "13.1.0-25308208488",
+          "targets": [
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "expr": "count(unpoller_client_uptime_seconds)",
+              "instant": false,
+              "legendFormat": "",
+              "queryType": "range",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "\ud83d\udd25 Heatmap Clientes WiFi \u2014 Huella Digital Humana",
+          "type": "heatmap"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "description": "Frecuencia de eventos IDS de UniFi a lo largo del tiempo. El color indica la intensidad de eventos de seguridad. Correlacionar con horas de alta actividad WAN para detectar ataques vs. tr\u00e1fico leg\u00edtimo.",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "scaleDistribution": {
+                  "type": "linear"
+                }
+              },
+              "unit": "short"
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 20
+          },
+          "id": 43,
+          "options": {
+            "annotations": {
+              "clustering": -1,
+              "multiLane": false
+            },
+            "calculate": true,
+            "calculation": {
+              "xBuckets": {
+                "mode": "count",
+                "value": "40"
+              },
+              "yBuckets": {
+                "mode": "size",
+                "value": "1"
+              }
+            },
+            "cellGap": 1,
+            "color": {
+              "exponent": 0.5,
+              "fill": "dark-red",
+              "mode": "scheme",
+              "reverse": false,
+              "scale": "exponential",
+              "scheme": "Reds",
+              "steps": 128
+            },
+            "exemplars": {
+              "color": "rgba(255,0,255,0.7)"
+            },
+            "filterValues": {
+              "le": 0
+            },
+            "legend": {
+              "show": true
+            },
+            "rowsFrame": {
+              "layout": "auto"
+            },
+            "showValue": "never",
+            "tooltip": {
+              "mode": "single",
+              "showColorScale": false,
+              "yHistogram": false
+            },
+            "yAxis": {
+              "axisPlacement": "left",
+              "reverse": false
+            }
+          },
+          "pluginVersion": "13.1.0-25308208488",
+          "targets": [
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "loki",
+                "uid": "P8E80F9AEF21F6940"
+              },
+              "expr": "count_over_time({service_name=\"unifi-ids\"}[$__auto])",
+              "instant": false,
+              "legendFormat": "",
+              "queryType": "range",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "\ud83d\udd25 Heatmap IDS \u2014 Intensidad de Eventos de Seguridad",
+          "type": "heatmap"
+        }
+      ],
+      "title": "\ud83d\udd25 Heatmaps Temporales \u2014 Estacionalidad Visual",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      },
+      "id": 52,
+      "panels": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "description": "Tasa total de interrupciones de reloj del sistema por segundo (suma de todos los cores). Las interrupciones son los 'ticks' fundamentales del sistema. Un ritmo constante indica comportamiento c\u00edclico electr\u00f3nico.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 8,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "smooth",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "showValues": false,
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": 0
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "cps"
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 13
+          },
+          "id": 24,
+          "options": {
+            "annotations": {
+              "clustering": -1,
+              "multiLane": false
+            },
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "13.1.0-25308208488",
+          "targets": [
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "expr": "sum(rate(windows_cpu_clock_interrupts_total[$__rate_interval]))",
+              "instant": false,
+              "legendFormat": "Clock Interrupts/s (todos los cores)",
+              "queryType": "range",
+              "range": true,
+              "refId": "A"
+            },
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "expr": "sum by(core) (rate(windows_cpu_interrupts_total[$__rate_interval]))",
+              "instant": false,
+              "legendFormat": "IRQ/s core {{core}}",
+              "queryType": "range",
+              "range": true,
+              "refId": "B"
+            }
+          ],
+          "title": "\u26a1 Interrupciones CPU \u2014 Periodicidad del Reloj del Sistema",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "description": "Porcentaje de tiempo que la CPU pasa en estados de bajo consumo (C1, C2, C3). Los C-states son el 'ritmo de respiraci\u00f3n' del procesador: periodicidad electr\u00f3nica pura.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "showValues": false,
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "normal"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": 0
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "percentunit"
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 13
+          },
+          "id": 25,
+          "options": {
+            "annotations": {
+              "clustering": -1,
+              "multiLane": false
+            },
+            "legend": {
+              "calcs": [
+                "mean"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "13.1.0-25308208488",
+          "targets": [
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "expr": "avg by(state) (rate(windows_cpu_cstate_seconds_total[$__rate_interval]))",
+              "instant": false,
+              "legendFormat": "C-State {{state}}",
+              "queryType": "range",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "\ud83d\udd0b CPU C-States \u2014 Ciclos de Reposo Electr\u00f3nico",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "description": "Tasa de paquetes de red enviados y recibidos por NIC. Picos peri\u00f3dicos revelan procesos con comunicaci\u00f3n r\u00edtmica (heartbeats, polling, sync).",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "bars",
+                "fillOpacity": 60,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "showValues": false,
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": 0
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "pps"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byRegexp",
+                  "options": ".*recibidos.*"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "blue",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byRegexp",
+                  "options": ".*enviados.*"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "orange",
+                      "mode": "fixed"
+                    }
+                  },
+                  {
+                    "id": "custom.transform",
+                    "value": "negative-Y"
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 21
+          },
+          "id": 26,
+          "options": {
+            "annotations": {
+              "clustering": -1,
+              "multiLane": false
+            },
+            "legend": {
+              "calcs": [
+                "mean",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "13.1.0-25308208488",
+          "targets": [
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "expr": "sum by(nic) (rate(windows_net_packets_received_total[$__rate_interval]))",
+              "instant": false,
+              "legendFormat": "RX paquetes/s {{nic}} (recibidos)",
+              "queryType": "range",
+              "range": true,
+              "refId": "A"
+            },
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "expr": "sum by(nic) (rate(windows_net_packets_sent_total[$__rate_interval]))",
+              "instant": false,
+              "legendFormat": "TX paquetes/s {{nic}} (enviados)",
+              "queryType": "range",
+              "range": true,
+              "refId": "B"
+            }
+          ],
+          "title": "\ud83d\udce1 Paquetes de Red por NIC \u2014 Detalle Micro (RX/TX)",
+          "type": "timeseries"
+        }
+      ],
+      "title": "\u26a1 Micro \u2014 Periodicidad (Ciclos Electr\u00f3nicos)",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 13
+      },
+      "id": 53,
+      "panels": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "description": "Diferencia entre la CPU actual y la de hace 7 d\u00edas en el mismo momento. Valores positivos = m\u00e1s carga que la semana pasada. Cero = comportamiento exactamente igual al patr\u00f3n hist\u00f3rico.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "bars",
+                "fillOpacity": 80,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "smooth",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "showValues": false,
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "line"
+                }
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "blue",
+                    "value": 0
+                  },
+                  {
+                    "color": "red",
+                    "value": 10
+                  }
+                ]
+              },
+              "unit": "percent"
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 14
+          },
+          "id": 27,
+          "options": {
+            "annotations": {
+              "clustering": -1,
+              "multiLane": false
+            },
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "13.1.0-25308208488",
+          "targets": [
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "expr": "(100 - avg(rate(windows_cpu_time_total{mode=\"idle\"}[$__rate_interval])) * 100) - (100 - avg(rate(windows_cpu_time_total{mode=\"idle\"}[$__rate_interval] offset 1d)) * 100)",
+              "instant": false,
+              "legendFormat": "Residual CPU (actual \u2212 baseline 1d)",
+              "queryType": "range",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "\ud83d\udd2c Residual CPU \u2014 Desviaci\u00f3n vs Patr\u00f3n Diario",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "description": "Volatilidad instant\u00e1nea: desviaci\u00f3n est\u00e1ndar del % de CPU calculada sobre una ventana deslizante de 30 minutos (subquery 5m). Alta \u03c3 = inestabilidad o ciclos internos activos.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 30,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "showValues": false,
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "area"
+                }
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": 0
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 5
+                  },
+                  {
+                    "color": "red",
+                    "value": 15
+                  }
+                ]
+              },
+              "unit": "percent"
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 14
+          },
+          "id": 28,
+          "options": {
+            "annotations": {
+              "clustering": -1,
+              "multiLane": false
+            },
+            "legend": {
+              "calcs": [
+                "mean",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "13.1.0-25308208488",
+          "targets": [
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "expr": "stddev_over_time((100 - avg(rate(windows_cpu_time_total{mode=\"idle\"}[5m])) * 100)[30m:5m])",
+              "instant": false,
+              "legendFormat": "\u03c3 CPU % (ventana 30m)",
+              "queryType": "range",
+              "range": true,
+              "refId": "A"
+            },
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "expr": "stddev_over_time((100 - avg(rate(windows_cpu_time_total{mode=\"idle\"}[5m])) * 100)[6h:5m])",
+              "instant": false,
+              "legendFormat": "\u03c3 CPU % (ventana 6h)",
+              "queryType": "range",
+              "range": true,
+              "refId": "B"
+            }
+          ],
+          "title": "\ud83d\udcc8 Volatilidad CPU \u00d7\u03c3 \u2014 Ventana 30m vs 6h",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "description": "Latencia del enlace WAN del gateway UniFi. Periodicidad constante indica ICMP/keepalives regu lares. Picos peri\u00f3dicos sugieren congesti\u00f3n c\u00edclica.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 5,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "smooth",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "showValues": false,
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": 0
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "ms"
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 14,
+            "x": 0,
+            "y": 22
+          },
+          "id": 29,
+          "options": {
+            "annotations": {
+              "clustering": -1,
+              "multiLane": false
+            },
+            "legend": {
+              "calcs": [
+                "mean",
+                "max",
+                "min"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "13.1.0-25308208488",
+          "targets": [
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "expr": "unpoller_device_uplink_latency_seconds * 1000",
+              "instant": false,
+              "legendFormat": "Latencia WAN (ms)",
+              "queryType": "range",
+              "range": true,
+              "refId": "A"
+            },
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "expr": "avg_over_time((unpoller_device_uplink_latency_seconds * 1000)[10m:30s])",
+              "instant": false,
+              "legendFormat": "Latencia WAN suavizada (10m avg)",
+              "queryType": "range",
+              "range": true,
+              "refId": "B"
+            },
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "expr": "stddev_over_time((unpoller_device_uplink_latency_seconds * 1000)[10m:30s])",
+              "instant": false,
+              "legendFormat": "\u03c3 Latencia (10m)",
+              "queryType": "range",
+              "range": true,
+              "refId": "C"
+            }
+          ],
+          "title": "\ud83c\udf10 Latencia WAN \u2014 Valor + Tendencia + Volatilidad",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "description": "Distribuci\u00f3n de las fuentes de uso de CPU: usuario, sistema, DPC, interrupciones y ocioso. Muestra c\u00f3mo se reparte el tiempo de CPU entre capas del sistema.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "showValues": false,
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "normal"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": 0
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "percentunit"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "idle"
+                },
+                "properties": [
+                  {
+                    "id": "custom.hideFrom",
+                    "value": {
+                      "legend": false,
+                      "tooltip": true,
+                      "viz": true
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 10,
+            "x": 14,
+            "y": 22
+          },
+          "id": 30,
+          "options": {
+            "annotations": {
+              "clustering": -1,
+              "multiLane": false
+            },
+            "legend": {
+              "calcs": [
+                "mean"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "13.1.0-25308208488",
+          "targets": [
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "expr": "avg by(mode) (rate(windows_cpu_time_total{mode!=\"idle\"}[$__rate_interval]))",
+              "instant": false,
+              "legendFormat": "{{mode}}",
+              "queryType": "range",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "\ud83d\udcc8 Descomposici\u00f3n CPU por Modo (user/dpc/interrupt/privileged)",
+          "type": "timeseries"
+        }
+      ],
+      "title": "\ud83d\udd2c Residual, Volatilidad & Descomposici\u00f3n",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "id": 54,
+      "panels": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "description": "Eventos de todos los servicios cr\u00edticos superpuestos en el tiempo. Busca correlaci\u00f3n temporal: \u00bfcuando el Z-score de CPU supera +2\u03c3, hay picos de errores nginx? \u00bfLos eventos IDS coinciden con picos WAN?",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "showValues": false,
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": 0
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 14,
+            "x": 0,
+            "y": 15
+          },
+          "id": 45,
+          "options": {
+            "annotations": {
+              "clustering": -1,
+              "multiLane": false
+            },
+            "legend": {
+              "calcs": [
+                "sum"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "13.1.0-25308208488",
+          "targets": [
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "loki",
+                "uid": "P8E80F9AEF21F6940"
+              },
+              "expr": "count_over_time({service_name=\"unifi-ids\"}[$__auto])",
+              "instant": false,
+              "legendFormat": "\ud83d\udee1\ufe0f IDS eventos",
+              "queryType": "range",
+              "range": true,
+              "refId": "A"
+            },
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "loki",
+                "uid": "P8E80F9AEF21F6940"
+              },
+              "expr": "count_over_time({service_name=\"nginx-proxy\"}[$__auto])",
+              "instant": false,
+              "legendFormat": "\ud83c\udf10 nginx logs",
+              "queryType": "range",
+              "range": true,
+              "refId": "B"
+            },
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "loki",
+                "uid": "P8E80F9AEF21F6940"
+              },
+              "expr": "count_over_time({service_name=\"docker\"}[$__auto])",
+              "instant": false,
+              "legendFormat": "\ud83d\udc33 docker eventos",
+              "queryType": "range",
+              "range": true,
+              "refId": "C"
+            },
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "loki",
+                "uid": "P8E80F9AEF21F6940"
+              },
+              "expr": "count_over_time({service_name=\"windows-eventlog\"}[$__auto])",
+              "instant": false,
+              "legendFormat": "\ud83e\udea1 windows events",
+              "queryType": "range",
+              "range": true,
+              "refId": "D"
+            },
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "loki",
+                "uid": "P8E80F9AEF21F6940"
+              },
+              "expr": "count_over_time({service_name=\"cloudflare-tunnel\"}[$__auto])",
+              "instant": false,
+              "legendFormat": "\u2601\ufe0f cloudflare-tunnel",
+              "queryType": "range",
+              "range": true,
+              "refId": "E"
+            }
+          ],
+          "title": "\ud83d\udd17 Correlaci\u00f3n Temporal \u2014 Actividad Log por Servicio",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "description": "Eventos IDS de UniFi en tiempo real. Cada l\u00ednea es una posible amenaza detectada por el sistema de detecci\u00f3n de intrusiones del gateway.",
+          "gridPos": {
+            "h": 8,
+            "w": 10,
+            "x": 14,
+            "y": 15
+          },
+          "id": 46,
+          "options": {
+            "dedupStrategy": "none",
+            "enableInfiniteScrolling": false,
+            "enableLogDetails": true,
+            "prettifyLogMessage": true,
+            "showCommonLabels": false,
+            "showControls": false,
+            "showFieldSelector": false,
+            "showLabels": false,
+            "showLevel": true,
+            "showLogAttributes": true,
+            "showTime": true,
+            "sortOrder": "Descending",
+            "timestampResolution": "ms",
+            "unwrappedColumns": false,
+            "wrapLogMessage": true
+          },
+          "pluginVersion": "13.1.0-25308208488",
+          "targets": [
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "loki",
+                "uid": "P8E80F9AEF21F6940"
+              },
+              "expr": "{service_name=\"unifi-ids\"}",
+              "instant": false,
+              "legendFormat": "",
+              "queryType": "range",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "\ud83d\udee1\ufe0f Eventos IDS \u2014 UniFi Intrusion Detection",
+          "type": "logs"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "description": "Logs de nginx, Docker y Windows Event Log con filtro de errores. Busca patrones temporales: errores que aparecen justo despu\u00e9s de picos de CPU o WAN.",
+          "gridPos": {
+            "h": 9,
+            "w": 14,
+            "x": 0,
+            "y": 23
+          },
+          "id": 47,
+          "options": {
+            "dedupStrategy": "none",
+            "enableInfiniteScrolling": false,
+            "enableLogDetails": true,
+            "prettifyLogMessage": true,
+            "showCommonLabels": false,
+            "showControls": false,
+            "showFieldSelector": false,
+            "showLabels": true,
+            "showLevel": true,
+            "showLogAttributes": true,
+            "showTime": true,
+            "sortOrder": "Descending",
+            "timestampResolution": "ms",
+            "unwrappedColumns": false,
+            "wrapLogMessage": false
+          },
+          "pluginVersion": "13.1.0-25308208488",
+          "targets": [
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "loki",
+                "uid": "P8E80F9AEF21F6940"
+              },
+              "expr": "{service_name=~\"nginx-proxy|docker|windows-eventlog\"} |= ``",
+              "instant": false,
+              "legendFormat": "",
+              "queryType": "range",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "\ud83d\udcdd Logs nginx / Docker / Windows \u2014 Correlaci\u00f3n con M\u00e9tricas",
+          "type": "logs"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "description": "Actividad de todos los servicios de infraestructura del homelab: wordpress, mariadb, redis, prometheus, grafana. Picos de actividad correlacionados con la carga del sistema.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "showValues": false,
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": 0
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            }
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 10,
+            "x": 14,
+            "y": 23
+          },
+          "id": 48,
+          "options": {
+            "annotations": {
+              "clustering": -1,
+              "multiLane": false
+            },
+            "legend": {
+              "calcs": [
+                "sum",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "13.1.0-25308208488",
+          "targets": [
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "loki",
+                "uid": "P8E80F9AEF21F6940"
+              },
+              "expr": "sum by(service_name) (count_over_time({service_name=~\"wordpress-site|mariadb-web|redis-cache|prometheus|grafana|nginx-proxy\"}[$__auto]))",
+              "instant": false,
+              "legendFormat": "{{service_name}}",
+              "queryType": "range",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "\ud83c\udf90 Actividad Stack Homelab \u2014 Todos los Servicios",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "description": "Z-score din\u00e1mico: (actual - baseline) / \u03c3. Zona verde = comportamiento normal (\u00b11\u03c3). Zona amarilla = alerta (1-2\u03c3). Zona roja = anomal\u00eda (\u22652\u03c3). Correlacionar con los eventos de log del panel inferior.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "showValues": false,
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "area"
+                }
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": 0
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 1
+                  },
+                  {
+                    "color": "red",
+                    "value": 2
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "+2\u03c3 umbral"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "red",
+                      "mode": "fixed"
+                    }
+                  },
+                  {
+                    "id": "custom.lineStyle",
+                    "value": {
+                      "dash": [
+                        8,
+                        4
+                      ],
+                      "fill": "dash"
+                    }
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 1
+                  },
+                  {
+                    "id": "custom.fillOpacity",
+                    "value": 0
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "-2\u03c3 umbral"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "red",
+                      "mode": "fixed"
+                    }
+                  },
+                  {
+                    "id": "custom.lineStyle",
+                    "value": {
+                      "dash": [
+                        8,
+                        4
+                      ],
+                      "fill": "dash"
+                    }
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 1
+                  },
+                  {
+                    "id": "custom.fillOpacity",
+                    "value": 0
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 24,
+            "x": 0,
+            "y": 32
+          },
+          "id": 44,
+          "options": {
+            "annotations": {
+              "clustering": -1,
+              "multiLane": false
+            },
+            "legend": {
+              "calcs": [
+                "mean",
+                "max",
+                "min"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "13.1.0-25308208488",
+          "targets": [
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "expr": "((100 - avg(rate(windows_cpu_time_total{mode=\"idle\"}[$__rate_interval])) * 100) - avg_over_time((100 - avg(rate(windows_cpu_time_total{mode=\"idle\"}[5m])) * 100)[1h:5m])) / clamp_min(stddev_over_time((100 - avg(rate(windows_cpu_time_total{mode=\"idle\"}[5m])) * 100)[1h:5m]), 0.01)",
+              "instant": false,
+              "legendFormat": "Z-score CPU",
+              "queryType": "range",
+              "range": true,
+              "refId": "A"
+            },
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "expr": "((unpoller_site_receive_rate_bytes{subsystem=\"wan\"} + unpoller_site_transmit_rate_bytes{subsystem=\"wan\"}) - avg_over_time((unpoller_site_receive_rate_bytes{subsystem=\"wan\"} + unpoller_site_transmit_rate_bytes{subsystem=\"wan\"})[1h:5m])) / clamp_min(stddev_over_time((unpoller_site_receive_rate_bytes{subsystem=\"wan\"} + unpoller_site_transmit_rate_bytes{subsystem=\"wan\"})[1h:5m]), 1)",
+              "instant": false,
+              "legendFormat": "Z-score WAN",
+              "queryType": "range",
+              "range": true,
+              "refId": "B"
+            },
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "expr": "vector(2)",
+              "instant": false,
+              "legendFormat": "+2\u03c3 umbral",
+              "queryType": "range",
+              "range": true,
+              "refId": "C"
+            },
+            {
+              "app": "grafana-assistant-app",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "expr": "vector(-2)",
+              "instant": false,
+              "legendFormat": "-2\u03c3 umbral",
+              "queryType": "range",
+              "range": true,
+              "refId": "D"
+            }
+          ],
+          "title": "\ud83c\udfaf Z-Score Din\u00e1mico \u2014 CPU & WAN (Detecci\u00f3n Autom\u00e1tica de Anomal\u00edas)",
+          "type": "timeseries"
+        }
+      ],
+      "title": "\ud83d\udce1 Mini SOC \u2014 Z-Score + Correlaci\u00f3n Loki \u2194 M\u00e9tricas",
+      "type": "row"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 15
+      },
+      "id": 55,
+      "title": "\ud83d\udcc8 CPU Forecast ML",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "description": "Predicci\u00f3n generada por Grafana ML. Verde = datos reales. Azul = predicci\u00f3n + banda de confianza 95%.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Real"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Predicci\u00f3n"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-blue",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "L\u00edmite.*"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 1
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 15
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
+      "id": 49,
+      "options": {
+        "annotations": {
+          "clustering": -1,
+          "multiLane": false
+        },
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "13.1.0-25308208488",
+      "targets": [
+        {
+          "app": "grafana-assistant-app",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "expr": "cpu_windows_forecast:actual",
+          "instant": false,
+          "legendFormat": "Real",
+          "queryType": "range",
+          "range": true,
+          "refId": "D"
+        },
+        {
+          "app": "grafana-assistant-app",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "expr": "cpu_windows_forecast:predicted{ml_forecast=\"yhat\"}",
+          "instant": false,
+          "legendFormat": "Predicci\u00f3n",
+          "queryType": "range",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "app": "grafana-assistant-app",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "expr": "cpu_windows_forecast:predicted{ml_forecast=\"yhat_upper\"}",
+          "instant": false,
+          "legendFormat": "L\u00edmite superior (95%)",
+          "queryType": "range",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "app": "grafana-assistant-app",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "expr": "cpu_windows_forecast:predicted{ml_forecast=\"yhat_lower\"}",
+          "instant": false,
+          "legendFormat": "L\u00edmite inferior (95%)",
+          "queryType": "range",
+          "range": true,
+          "refId": "C"
+        }
+      ],
+      "title": "\ud83d\udcc8 CPU \u2014 Forecast ML (pr\u00f3ximas 72h)",
+      "type": "timeseries"
+    }
+  ],
+  "preload": false,
+  "refresh": "",
+  "schemaVersion": 42,
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "browser",
+  "title": "Labrazahome \u2014 Time-Series Analysis",
+  "uid": "alpt7gt",
+  "version": 5
+}

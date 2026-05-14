@@ -1,0 +1,53 @@
+{
+  "updated_at": 1778762798,
+  "backend": "lmstudio",
+  "nodes": [
+    {
+      "host": "192.168.1.50",
+      "port": 1234,
+      "backend": "lmstudio",
+      "online": true,
+      "latency_ms": 1.45,
+      "models": [
+        "deepseek-r1-distill-qwen-14b",
+        "deepseek-r1-0528-qwen3-8b",
+        "qwen3.6-35b-a3b-claude-4.6-opus-reasoning-distilled",
+        "qwen3.5-9b-claude-4.6-opus-reasoning-distilled-v2",
+        "text-embedding-nomic-embed-text-v1.5"
+      ],
+      "capabilities": [
+        "embeddings",
+        "fast",
+        "large-context",
+        "memory",
+        "reasoning"
+      ],
+      "discovered_at": 1778762790,
+      "status": "online"
+    },
+    {
+      "host": "192.168.1.60",
+      "port": 1234,
+      "backend": "lmstudio",
+      "online": false,
+      "latency_ms": null,
+      "models": [],
+      "capabilities": [],
+      "discovered_at": 1778762790,
+      "status": "offline",
+      "error": "HTTPConnectionPool(host='192.168.1.60', port=1234): Max retries exceeded with url: /v1/models (Caused by NewConnectionError(\"HTTPConnection(host='192.168.1.60', port=1234): Failed to establish a new connection: [Errno 113] No route to host\"))"
+    },
+    {
+      "host": "192.168.1.250",
+      "port": 1234,
+      "backend": "lmstudio",
+      "online": false,
+      "latency_ms": null,
+      "models": [],
+      "capabilities": [],
+      "discovered_at": 1778762793,
+      "status": "offline",
+      "error": "HTTPConnectionPool(host='192.168.1.250', port=1234): Max retries exceeded with url: /v1/models (Caused by ConnectTimeoutError(<HTTPConnection(host='192.168.1.250', port=1234) at 0x74602bad8d10>, 'Connection to 192.168.1.250 timed out. (connect timeout=5)'))"
+    }
+  ]
+}

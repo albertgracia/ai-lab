@@ -1,0 +1,229 @@
+---
+import Layout from '../../layouts/Layout.astro'
+
+const dashboards = [
+  {
+    title: 'Macro Estacionalidad',
+    image: '/images/observability/CPU Uso Actual.png',
+    description:
+      'CPU y WAN con baseline temporal, envelope ±2σ, tendencia suavizada y comparación histórica para detección de anomalías.',
+    tags: ['Prometheus', 'Grafana', 'Grafana Cloud', 'Time-Series']
+  },
+  {
+    title: 'Forecast ML',
+    image: '/images/observability/CPU Forecast ML.png',
+    description:
+      'Predicción temporal de comportamiento CPU usando forecasting estadístico y bandas de confianza dinámicas.',
+    tags: ['Forecast', 'ML', 'Anomaly Detection']
+  },
+  {
+    title: 'Heatmaps Temporales',
+    image: '/images/observability/HeatMap CPU.png',
+    description:
+      'Visualización de ciclos humanos y estacionalidad semanal mediante heatmaps temporales de actividad.',
+    tags: ['Heatmaps', 'Temporal Analysis', 'Seasonality']
+  },
+  {
+    title: 'Micro Periodicidad',
+    image: '/images/observability/micro-periodicidad.png',
+    description:
+      'Análisis micro temporal de IRQs, C-States, latencia, paquetes de red y periodicidad electrónica del sistema.',
+    tags: ['Kernel', 'IRQs', 'C-States', 'Latency']
+  },
+  {
+    title: 'UniFi IDS',
+    image: '/images/observability/UnifiIDS.png',
+    description:
+      'Eventos IDS correlacionados temporalmente con métricas y actividad real del homelab.',
+    tags: ['Security', 'IDS', 'UniFi']
+  },
+  {
+    title: 'Clientes WiFi',
+    image: '/images/observability/Clientes Unifi.png',
+    description:
+      'Huella digital de ocupación y comportamiento humano mediante telemetría WiFi.',
+    tags: ['WiFi', 'Presence', 'Telemetry']
+  },
+  {
+    title: 'Logs Correlacionados',
+    image: '/images/observability/LOGSDOMAIN.png',
+    description:
+      'Correlación Loki ↔ métricas Prometheus para análisis contextual de eventos usando Grafana Alloy como collector.',
+    tags: ['Loki', 'Grafana Alloy', 'Logs', 'Correlation']
+  },
+  {
+    title: 'Latencia WAN',
+    image: '/images/observability/Latencia WAN.png',
+    description:
+      'Latencia, volatilidad y desviación estadística WAN monitorizada en tiempo real.',
+    tags: ['WAN', 'Latency', 'Networking']
+  },
+  {
+    title: 'NAS Telemetry',
+    image: '/images/observability/N5NAS.png',
+    description:
+      'Monitorización del Minisforum N5 AI NAS: procesos, temperatura, red y almacenamiento.',
+    tags: ['NAS', 'Storage', 'Telemetry']
+  },
+  {
+    title: 'Switch Telemetry',
+    image: '/images/observability/SWITCH.png',
+    description:
+      'Observabilidad del switching multi-gigabit y tráfico interno del laboratorio.',
+    tags: ['Switching', '10GbE', 'Networking']
+  },
+  {
+    title: 'Grafana Cloud Pipeline',
+    image: '/images/observability/grafana-cloud-pipeline.png',
+    description:
+      'Pipeline de observabilidad con Grafana Cloud, Alloy, Loki y Prometheus para métricas, logs y eventos del laboratorio.',
+    tags: ['Grafana Cloud', 'Grafana Alloy', 'Loki', 'Prometheus']
+  }
+]
+---
+
+<Layout title="Observability · AI-LAB">
+
+<section class="space-y-8">
+
+  <div class="rounded-3xl border border-cyan-500/20 bg-black/40 p-8">
+    <p class="mb-3 text-xs uppercase tracking-[0.35em] text-cyan-400">
+      AI-LAB OBSERVABILITY
+    </p>
+
+    <h1 class="mb-6 text-5xl font-black tracking-tight text-white">
+      Temporal Analytics & Monitoring
+    </h1>
+
+    <p class="max-w-4xl text-lg leading-relaxed text-zinc-300">
+      Plataforma de observabilidad avanzada basada en Prometheus, Grafana,
+      Grafana Cloud, Grafana Alloy y Loki. El laboratorio combina métricas,
+      logs, eventos IDS y telemetría de red para análisis temporal, detección
+      de anomalías, correlación de eventos y monitorización de infraestructura
+      AI self-hosted.
+    </p>
+  </div>
+
+  <div class="grid gap-8 xl:grid-cols-2">
+
+    {dashboards.map((item) => (
+
+      <article class="overflow-hidden rounded-3xl border border-cyan-500/20 bg-zinc-950/80 transition hover:border-cyan-400/40 hover:shadow-[0_0_40px_rgba(34,211,238,0.10)]">
+
+        <button
+          type="button"
+          class="group block w-full bg-black p-4 text-left"
+          data-lightbox={item.image}
+          data-title={item.title}
+        >
+          <img
+            src={item.image}
+            alt={item.title}
+            class="h-[420px] w-full rounded-2xl object-contain bg-black transition duration-300 group-hover:scale-[1.01]"
+            loading="lazy"
+          />
+
+          <p class="mt-3 text-center text-xs uppercase tracking-[0.25em] text-zinc-500 group-hover:text-cyan-400">
+            Click para ampliar
+          </p>
+        </button>
+
+        <div class="space-y-5 p-8">
+
+          <h2 class="text-3xl font-black text-white">
+            {item.title}
+          </h2>
+
+          <p class="leading-relaxed text-zinc-300">
+            {item.description}
+          </p>
+
+          <div class="flex flex-wrap gap-2">
+            {item.tags.map((tag) => (
+              <span class="rounded-full border border-cyan-500/30 px-3 py-1 text-sm text-cyan-300">
+                {tag}
+              </span>
+            ))}
+          </div>
+
+        </div>
+
+      </article>
+
+    ))}
+
+  </div>
+
+</section>
+
+<div
+  id="lightbox"
+  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/95 p-6"
+>
+  <button
+    id="lightbox-close"
+    class="absolute right-6 top-6 rounded-full border border-cyan-500/40 px-4 py-2 text-sm font-bold text-cyan-300 hover:bg-cyan-500/10"
+    type="button"
+  >
+    Cerrar
+  </button>
+
+  <div class="w-full max-w-7xl">
+    <p
+      id="lightbox-title"
+      class="mb-4 text-center text-xl font-black text-cyan-400"
+    ></p>
+
+    <img
+      id="lightbox-image"
+      src=""
+      alt=""
+      class="mx-auto max-h-[85vh] w-auto rounded-2xl border border-cyan-500/20 object-contain shadow-[0_0_50px_rgba(34,211,238,0.16)]"
+    />
+  </div>
+</div>
+
+<script>
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImage = document.getElementById('lightbox-image');
+  const lightboxTitle = document.getElementById('lightbox-title');
+  const closeButton = document.getElementById('lightbox-close');
+
+  document.querySelectorAll('[data-lightbox]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const src = button.getAttribute('data-lightbox');
+      const title = button.getAttribute('data-title') || '';
+
+      lightboxImage.setAttribute('src', src);
+      lightboxImage.setAttribute('alt', title);
+      lightboxTitle.textContent = title;
+
+      lightbox.classList.remove('hidden');
+      lightbox.classList.add('flex');
+      document.body.style.overflow = 'hidden';
+    });
+  });
+
+  function closeLightbox() {
+    lightbox.classList.add('hidden');
+    lightbox.classList.remove('flex');
+    lightboxImage.setAttribute('src', '');
+    document.body.style.overflow = '';
+  }
+
+  closeButton.addEventListener('click', closeLightbox);
+
+  lightbox.addEventListener('click', (event) => {
+    if (event.target === lightbox) {
+      closeLightbox();
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closeLightbox();
+    }
+  });
+</script>
+
+</Layout>

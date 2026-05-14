@@ -1,213 +1,254 @@
-from dataclasses import asdict
-from datetime import datetime, timezone
-from typing import Any
+from runtime.distributed.execution_coordinator import (
+    execute_with_failover,
+)
 
-from runtime.planner.task_planner import create_task_plan
-from runtime.memory.episodic_memory import write_episode
-from runtime.distributed.task_router import select_node
-
-
-CAPABILITY_TO_DISTRIBUTED_TASK = {
-    "analyze": "reasoning",
-    "plan": "reasoning",
-    "rag": "memory",
-    "read": "fast",
-    "search": "memory",
-    "write": "coding",
-    "shell": "orchestration",
-    "tools": "orchestration",
-}
+from runtime.memory.episodic_memory import (
+    write_episode,
+)
 
 
-def map_capability_to_task(capability: str) -> str:
-    return CAPABILITY_TO_DISTRIBUTED_TASK.get(
-        capability,
-        "fast",
-    )
+# ============================================================
+# WORKFLOW BLUEPRINTS
+# ============================================================
+
+WORKFLOW_STEPS = [
+
+    {
+        "order": 1,
+        "title": "Understand user goal and classify intent",
+        "mode": "plan",
+        "profile": "sandbox",
+        "capability_required": "analyze",
+        "distributed_task": "reasoning",
+    },
+
+    {
+        "order": 2,
+        "title": "Load semantic context and relevant operational memory",
+        "mode": "plan",
+        "profile": "sandbox",
+        "capability_required": "rag",
+        "distributed_task": "memory",
+    },
+
+    {
+        "order": 3,
+        "title": "Generate implementation or operational plan",
+        "mode": "plan",
+        "profile": "sandbox",
+        "capability_required": "plan",
+        "distributed_task": "reasoning",
+    },
+
+    {
+        "order": 4,
+        "title": "Prepare code changes in build mode",
+        "mode": "build",
+        "profile": "sandbox",
+        "capability_required": "write",
+        "distributed_task": "coding",
+    },
+
+    {
+        "order": 5,
+        "title": "Validate changes with safe tests",
+        "mode": "execute",
+        "profile": "pilot",
+        "capability_required": "shell",
+        "distributed_task": "orchestration",
+    },
+]
 
 
-def create_workflow(user_goal: str) -> dict[str, Any]:
-    task_plan = create_task_plan(user_goal)
+# ============================================================
+# WORKFLOW
+# ============================================================
 
-    steps = []
-
-    for step in task_plan.steps:
-        step_dict = {
-            **asdict(step),
-            "result": None,
-            "distributed_task": map_capability_to_task(
-                step.capability_required
-            ),
-            "distributed_route": None,
-        }
-
-        steps.append(step_dict)
+def build_workflow(goal):
 
     workflow = {
-        "created_at": datetime.now(timezone.utc).isoformat(),
-        "user_goal": user_goal,
-        "intent": task_plan.intent,
-        "mode": task_plan.mode,
-        "profile": task_plan.profile,
-        "status": "created",
-        "steps": steps,
+        "user_goal": goal,
+        "intent": "coding",
+        "mode": "build",
+        "profile": "sandbox",
+        "status": "initialized",
+        "steps": [],
     }
 
+    for item in WORKFLOW_STEPS:
+
+        workflow["steps"].append({
+            **item,
+            "status": "pending",
+            "result": None,
+        })
+
+    return workflow
+
+
+# ============================================================
+# EXECUTION
+# ============================================================
+
+def execute_workflow(goal):
+
+    workflow = build_workflow(goal)
+
+    degraded = False
+
+    for step in workflow["steps"]:
+
+        execution = execute_with_failover(
+            step["distributed_task"]
+        )
+
+        step["execution"] = execution
+
+        if execution["success"]:
+
+            step["status"] = "executed"
+
+            step["result"] = (
+                f"Executed on "
+                f"{execution['final_node']}"
+            )
+
+        else:
+
+            step["status"] = "failed"
+
+            step["result"] = (
+                "Execution failed "
+                "after retries."
+            )
+
+            degraded = True
+
+    if degraded:
+
+        workflow["status"] = (
+            "execution_degraded"
+        )
+
+    else:
+
+        workflow["status"] = (
+            "execution_completed"
+        )
+
     write_episode(
-        event_type="workflow_created",
-        summary=f"Created workflow for goal: {user_goal}",
+        event_type="workflow_executed",
+        summary=(
+            f"Workflow executed "
+            f"with status "
+            f"'{workflow['status']}'."
+        ),
         payload=workflow,
     )
 
     return workflow
 
 
-def route_workflow(workflow: dict[str, Any]) -> dict[str, Any]:
-    workflow["status"] = "routed"
+# ============================================================
+# OUTPUT
+# ============================================================
 
-    unavailable_steps = 0
-    fallback_steps = 0
+def print_workflow(workflow):
 
-    for step in workflow["steps"]:
-        route = select_node(
-            step["distributed_task"]
-        )
-
-        step["distributed_route"] = route
-
-        if not route.get("available"):
-            step["status"] = "unavailable"
-            unavailable_steps += 1
-
-        elif route.get("mode") == "fallback":
-            step["status"] = "routed_fallback"
-            fallback_steps += 1
-
-        else:
-            step["status"] = "routed"
-
-    if unavailable_steps:
-        workflow["status"] = "degraded_unavailable"
-    elif fallback_steps:
-        workflow["status"] = "degraded_routed"
-
-    write_episode(
-        event_type="workflow_routed",
-        summary=(
-            f"Workflow routed for goal '{workflow['user_goal']}' "
-            f"with status '{workflow['status']}'."
-        ),
-        payload={
-            "user_goal": workflow["user_goal"],
-            "intent": workflow["intent"],
-            "mode": workflow["mode"],
-            "profile": workflow["profile"],
-            "status": workflow["status"],
-            "fallback_steps": fallback_steps,
-            "unavailable_steps": unavailable_steps,
-            "steps": workflow["steps"],
-        },
-    )
-
-    return workflow
-
-
-def simulate_workflow(workflow: dict[str, Any]) -> dict[str, Any]:
-    if workflow["status"] == "degraded_unavailable":
-        simulation_status = "simulated_with_unavailable_steps"
-    elif workflow["status"] == "degraded_routed":
-        simulation_status = "simulated_degraded"
-    else:
-        simulation_status = "simulated"
-
-    workflow["status"] = simulation_status
-
-    for step in workflow["steps"]:
-        route = step.get("distributed_route") or {}
-
-        if not route.get("available"):
-            step["result"] = (
-                f"Step '{step['title']}' cannot be simulated: "
-                "no available node."
-            )
-            continue
-
-        node = route.get("selected_node")
-        route_mode = route.get("mode")
-
-        step["result"] = (
-            f"Step '{step['title']}' validated in simulation mode "
-            f"on node '{node}' using route mode '{route_mode}'."
-        )
-
-    write_episode(
-        event_type="workflow_simulated",
-        summary=(
-            f"Simulated workflow for goal '{workflow['user_goal']}' "
-            f"with status '{workflow['status']}'."
-        ),
-        payload={
-            "user_goal": workflow["user_goal"],
-            "intent": workflow["intent"],
-            "mode": workflow["mode"],
-            "profile": workflow["profile"],
-            "status": workflow["status"],
-            "steps": workflow["steps"],
-        },
-    )
-
-    return workflow
-
-
-def print_workflow(workflow: dict[str, Any]):
+    print()
     print("AI-LAB LIVE DISTRIBUTED WORKFLOW")
     print("================================")
-    print("GOAL:", workflow["user_goal"])
-    print("INTENT:", workflow["intent"])
-    print("MODE:", workflow["mode"])
-    print("PROFILE:", workflow["profile"])
-    print("STATUS:", workflow["status"])
+
+    print(
+        "GOAL:",
+        workflow["user_goal"]
+    )
+
+    print(
+        "INTENT:",
+        workflow["intent"]
+    )
+
+    print(
+        "MODE:",
+        workflow["mode"]
+    )
+
+    print(
+        "PROFILE:",
+        workflow["profile"]
+    )
+
+    print(
+        "STATUS:",
+        workflow["status"]
+    )
+
     print()
 
     for step in workflow["steps"]:
-        print(f"{step['order']}. {step['title']}")
+
         print(
-            f"   mode={step['mode']} "
-            f"profile={step['profile']} "
-            f"capability={step['capability_required']} "
-            f"distributed_task={step['distributed_task']} "
-            f"status={step['status']}"
+            f"{step['order']}. "
+            f"{step['title']}"
         )
 
-        route = step.get("distributed_route")
+        print(
+            f"   mode="
+            f"{step['mode']}"
+        )
 
-        if route:
+        print(
+            f"   profile="
+            f"{step['profile']}"
+        )
+
+        print(
+            f"   capability="
+            f"{step['capability_required']}"
+        )
+
+        print(
+            f"   distributed_task="
+            f"{step['distributed_task']}"
+        )
+
+        print(
+            f"   status="
+            f"{step['status']}"
+        )
+
+        if "execution" in step:
+
             print(
-                f"   available={route.get('available')} "
-                f"route={route.get('selected_node')} "
-                f"host={route.get('host')} "
-                f"score={route.get('score')} "
-                f"route_mode={route.get('mode')} "
-                f"matched_task={route.get('matched_task')}"
+                f"   execution_success="
+                f"{step['execution']['success']}"
             )
 
-            if route.get("original_task"):
-                print(
-                    f"   original_task={route.get('original_task')}"
-                )
+            print(
+                f"   execution_node="
+                f"{step['execution']['final_node']}"
+            )
 
-        if step.get("result"):
-            print(f"   result={step['result']}")
+        print(
+            f"   result="
+            f"{step['result']}"
+        )
 
+        print()
+
+
+# ============================================================
+# DEMO
+# ============================================================
 
 if __name__ == "__main__":
-    goal = (
-        "Implementa un workflow seguro para revisar estado Docker "
+
+    workflow = execute_workflow(
+        "Implementa un workflow seguro "
+        "para revisar estado Docker "
         "y documentar resultados"
     )
 
-    workflow = create_workflow(goal)
-    workflow = route_workflow(workflow)
-    workflow = simulate_workflow(workflow)
-
     print_workflow(workflow)
+

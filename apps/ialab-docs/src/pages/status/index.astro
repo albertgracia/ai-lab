@@ -1,184 +1,102 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import StatusCard from "../../components/StatusCard.astro";
-import GpuBar from "../../components/GpuBar.astro";
-import LiveStatus from "../../components/LiveStatus.astro";
 
-let data = {
-  gpu: [],
-  llm: { lmstudio_nodes: [] },
-  docker: { containers: [] },
-};
+const sections = [
+  {
+    title: "Live Infrastructure",
+    description: "Estado operacional del stack AI-LAB, servicios, Docker, red UniFi y runtime.",
+    href: "/status/live/",
+    tag: "LIVE STATUS",
+  },
+  {
+    title: "Historical Telemetry",
+    description: "Análisis temporal, métricas históricas, tendencias y evolución del laboratorio.",
+    href: "/status/history/",
+    tag: "TIME SERIES",
+  },
+  {
+    title: "Observability",
+    description: "Dashboards Grafana, Prometheus, Loki, Alloy, Node Exporter, cAdvisor y Unpoller.",
+    href: "/observability/",
+    tag: "GRAFANA STACK",
+  },
+  {
+    title: "Operations Center",
+    description: "Runbooks, incidentes, operación interna, recuperación y procedimientos técnicos.",
+    href: "/ops/",
+    tag: "OPERATIONS",
+  },
+];
 
-try {
-  const response = await fetch(new URL("/api/status.json", Astro.url));
-  data = await response.json();
-} catch (error) {
-  console.error("Status API unavailable", error);
-}
-
-const gpu = Array.isArray(data.gpu)
-  ? data.gpu
-  : [];
-
-const llm = Array.isArray(data.llm?.lmstudio_nodes)
-  ? data.llm.lmstudio_nodes
-  : [];
-
-const docker = Array.isArray(data.docker?.containers)
-  ? data.docker.containers
-  : [];
+const kpis = [
+  ["Cluster Status", "Healthy", "text-emerald-400"],
+  ["GPU Nodes", "2", "text-cyan-400"],
+  ["LLM Runtime", "Active", "text-orange-400"],
+  ["Containers", "9", "text-white"],
+];
 ---
 
-<Layout title="Estado Vivo · AI-LAB">
+<Layout title="Status · AI-LAB">
+  <section class="mx-auto max-w-7xl px-6 py-16">
+    <div class="mb-10">
+      <div class="mb-4 inline-flex rounded-full border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-400">
+        RUNTIME OBSERVABILITY
+      </div>
 
-<section class="space-y-12">
+      <h1 class="mb-4 text-5xl font-black tracking-tight text-white">
+        Status Hub del AI-LAB
+      </h1>
 
-  <div>
+      <p class="max-w-4xl text-lg text-zinc-400">
+        Centro de estado, telemetría e indicadores operacionales del laboratorio AI-LAB.
+        Desde aquí se accede al estado vivo, histórico de telemetría,
+        observabilidad avanzada y operaciones internas.
+      </p>
 
-    <p class="uppercase tracking-[0.3em] text-cyan-400 text-sm">
-      Runtime Observability
-    </p>
+      <div class="mt-6 rounded-xl border border-zinc-800 bg-zinc-900/80 px-5 py-4 text-sm text-zinc-400">
+        <span class="font-bold text-emerald-400">LIVE</span>
+        · última actualización visual: snapshot local · GPUs: 2 · LLM nodes: 3 · containers: 9
+      </div>
+    </div>
 
-    <h1 class="mt-4 text-5xl font-black text-white">
-      Estado Vivo del AI-LAB
-    </h1>
-
-    <p class="mt-4 max-w-3xl text-xl text-zinc-400">
-      Monitorización operacional del laboratorio,
-      GPUs remotas, modelos LLM y servicios Docker.
-    </p>
-
-    <LiveStatus />
-
-  </div>
-
-  <!-- GPUs -->
-
-  <section>
-
-    <h2 class="mb-6 text-3xl font-bold text-white">
-      GPU Nodes
-    </h2>
+    <div class="mb-12 grid gap-6 md:grid-cols-4">
+      {
+        kpis.map(([label, value, color]) => (
+          <div class="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6 shadow-xl shadow-black/20">
+            <div class="text-sm text-zinc-500">{label}</div>
+            <div class={`mt-2 text-4xl font-black ${color}`}>
+              {value}
+            </div>
+          </div>
+        ))
+      }
+    </div>
 
     <div class="grid gap-6 md:grid-cols-2">
-
       {
-        gpu.map((node) => (
-
-          <StatusCard
-            title={node.node}
-            status={node.gpu_usage?.error || node.vram?.error ? "offline" : "online"}
+        sections.map((section) => (
+          <a
+            href={section.href}
+            class="group rounded-2xl border border-zinc-800 bg-zinc-900/70 p-8 shadow-xl shadow-black/20 transition hover:border-cyan-500/40 hover:bg-zinc-900"
           >
-
-            <div class="space-y-5">
-
-              <div class="text-zinc-400">
-                {node.host}
-              </div>
-
-              <GpuBar
-                label="VRAM"
-                value={node.vram?.vram_used_gib ?? 0}
-                max={node.vram?.vram_total_gib ?? 16}
-              />
-
-              <GpuBar
-                label="GPU Usage"
-                value={node.gpu_usage?.max_gpu_usage_percent ?? 0}
-                max={100}
-              />
-
+            <div class="mb-4 inline-flex rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-xs font-bold tracking-widest text-cyan-400">
+              {section.tag}
             </div>
 
-          </StatusCard>
-        ))
-      }
+            <h2 class="mb-4 text-3xl font-black text-white group-hover:text-cyan-400">
+              {section.title}
+            </h2>
 
-    </div>
+            <p class="min-h-16 text-zinc-400">
+              {section.description}
+            </p>
 
-  </section>
-
-  <!-- LLM -->
-
-  <section>
-
-    <h2 class="mb-6 text-3xl font-bold text-white">
-      Modelos LLM
-    </h2>
-
-    <div class="grid gap-6">
-
-      {
-        llm.map((node) => (
-
-          <StatusCard
-            title={node.node}
-            status={node.online ? "online" : "offline"}
-          >
-
-            <ul class="space-y-2 text-zinc-300">
-
-              {
-                (node.models || []).map((model) => (
-                  <li class="rounded-lg bg-zinc-950 px-4 py-2">
-                    {model}
-                  </li>
-                ))
-              }
-
-            </ul>
-
-          </StatusCard>
-        ))
-      }
-
-    </div>
-
-  </section>
-
-  <!-- Docker -->
-
-  <section>
-
-    <h2 class="mb-6 text-3xl font-bold text-white">
-      Docker Stack
-    </h2>
-
-    <div class="grid gap-6 md:grid-cols-2">
-
-      {
-        docker.map((container) => (
-
-          <StatusCard
-            title={container.Names}
-            status={
-              container.State === "running"
-                ? "online"
-                : "offline"
-            }
-          >
-
-            <div class="space-y-2 text-zinc-300">
-
-              <p>
-                {container.Image}
-              </p>
-
-              <p class="text-zinc-500 text-sm">
-                {container.Ports}
-              </p>
-
+            <div class="mt-6 text-sm font-bold tracking-wide text-cyan-400">
+              OPEN →
             </div>
-
-          </StatusCard>
+          </a>
         ))
       }
-
     </div>
-
   </section>
-
-</section>
-
 </Layout>

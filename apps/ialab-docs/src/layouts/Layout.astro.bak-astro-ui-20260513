@@ -1,0 +1,252 @@
+---
+import "../styles/global.css";
+
+import SidebarLink from "../components/SidebarLink.astro";
+
+import {
+  House,
+  Cpu,
+  FolderKanban,
+  ShieldCheck,
+  BookOpen,
+  Newspaper,
+  Wrench,
+  Server,
+  Activity,
+  MonitorSmartphone,
+  BarChart3,
+} from "@lucide/astro";
+
+const { title = "AI-LAB" } = Astro.props;
+---
+
+<!doctype html>
+
+<html lang="es" class="dark">
+
+<head>
+
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>{title}</title>
+
+  <link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+  />
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  />
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  />
+
+</head>
+
+<body class="bg-black text-white font-[Inter] overflow-x-hidden">
+
+  <div class="min-h-screen flex">
+
+    <!-- SIDEBAR -->
+
+    <aside class="w-[320px] border-r border-zinc-900 bg-black/90 backdrop-blur sticky top-0 h-screen flex flex-col justify-between">
+
+      <div>
+
+        <!-- LOGO -->
+
+        <div class="p-10 border-b border-zinc-900">
+
+          <a href="/" class="flex justify-center">
+
+            <img
+              src="/images/ai-lab-logo.png"
+              alt="AI-LAB"
+              class="w-64 h-auto object-contain"
+            />
+
+          </a>
+
+        </div>
+
+        <!-- NAVIGATION -->
+
+        <nav class="p-5 space-y-2">
+
+          <SidebarLink
+            href="/"
+            label="Inicio"
+            icon={House}
+          />
+
+          <SidebarLink
+            href="/architecture"
+            label="Arquitectura"
+            icon={Cpu}
+          />
+
+          <SidebarLink
+            href="/research"
+            label="Research"
+            icon={BookOpen}
+          />
+
+          <SidebarLink
+            href="/hardware-lab"
+            label="Hardware Lab"
+            icon={Server}
+          />
+
+          <SidebarLink
+            href="/observability"
+            label="Observability"
+            icon={Activity}
+          />
+
+          <SidebarLink
+            href="/ai-infrastructure"
+            label="AI Infrastructure"
+            icon={Cpu}
+          />
+
+          <SidebarLink
+            href="/experiments"
+            label="Experiments"
+            icon={Wrench}
+          />
+
+          <SidebarLink
+            href="/projects"
+            label="Proyectos"
+            icon={FolderKanban}
+          />
+
+          <SidebarLink
+            href="/skills/"
+            label="Skills"
+            icon={ShieldCheck}
+          />
+
+          <SidebarLink
+            href="/docs"
+            label="Documentación"
+            icon={BookOpen}
+          />
+
+          <SidebarLink
+            href="/blog"
+            label="Blog Técnico"
+            icon={Newspaper}
+          />
+
+          <SidebarLink
+            href="/runbooks"
+            label="Runbooks"
+            icon={Wrench}
+          />
+
+          <SidebarLink
+            href="/services"
+            label="Servicios"
+            icon={Server}
+          />
+
+          <SidebarLink
+            href="/ops"
+            label="Operations Center"
+            icon={MonitorSmartphone}
+          />
+
+          <SidebarLink
+            href="/status"
+            label="Estado Vivo"
+            icon={Activity}
+          />
+
+          <SidebarLink
+            href="/status/history"
+            label="Historical Telemetry"
+            icon={BarChart3}
+          />
+
+        </nav>
+
+      </div>
+
+      <!-- FOOTER -->
+
+      <div class="p-5">
+
+        <div class="rounded-3xl border border-cyan-500/20 bg-zinc-950 p-5 shadow-[0_0_35px_rgba(34,211,238,0.08)]">
+
+          <div class="flex items-center justify-between">
+
+            <div>
+
+              <p class="text-xs uppercase tracking-[0.3em] text-zinc-500">
+                Runtime
+              </p>
+
+              <div class="mt-3 text-lg font-semibold text-white">
+                AI-LAB Operational
+              </div>
+
+            </div>
+
+            <div class="flex items-center gap-2 text-green-400">
+
+              <div class="h-3 w-3 rounded-full bg-green-400 animate-pulse"></div>
+
+              <span class="text-sm">
+                LIVE
+              </span>
+
+            </div>
+
+          </div>
+
+          <div class="mt-5 space-y-2 text-sm text-zinc-500">
+
+            <div>
+              Router · OpenCode · GPUs
+            </div>
+
+            <div>
+              Traefik · Qdrant · LM Studio
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </aside>
+
+    <!-- CONTENT -->
+
+    <main class="flex-1 overflow-x-hidden">
+
+      <div class="mx-auto max-w-7xl px-10 py-10">
+
+        <slot />
+
+      </div>
+
+    </main>
+
+  </div>
+
+</body>
+
+</html>
