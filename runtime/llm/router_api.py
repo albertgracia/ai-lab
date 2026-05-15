@@ -15,6 +15,21 @@ from runtime.agent.selective_context import (
     build_selective_context
 )
 
+# ── optional: working memory + context shaper (FASE 8.7) ────────────
+try:
+    from runtime.memory.working_memory import get_session
+    _HAVE_WORKING_MEMORY = True
+except ImportError:
+    get_session = None  # type: ignore[assignment]
+    _HAVE_WORKING_MEMORY = False
+
+try:
+    from runtime.agent.context_shaper import shape_context
+    _HAVE_CONTEXT_SHAPER = True
+except ImportError:
+    shape_context = None  # type: ignore[assignment]
+    _HAVE_CONTEXT_SHAPER = False
+
 app = FastAPI(title="AI-LAB Router API", servers=[{"url": "http://192.168.1.30:8083", "description": "AI-LAB Router API"}], version="1.0.0", description="Router cognitivo del AI-LAB. Proporciona enrutamiento capability-aware a nodos de inferencia GPU.")
 
 app.add_middleware(
@@ -243,9 +258,18 @@ async def chat_completions(request: Request):
 
     messages = payload.get("messages", [])
 
-    agent_context = build_selective_context(
-        request_text
-    )
+    # ── working memory + context shaper (FASE 8.7) ──────────────────
+    wm = None
+    if _HAVE_WORKING_MEMORY and _HAVE_CONTEXT_SHAPER:
+        session_id = request.headers.get("X-AI-LAB-Session", request.client.host if request.client else "default")
+        wm = get_session(session_id)
+        wm.add_turn("user", request_text)
+        task = node.get("capability", "general")
+        wm.set_task(task)
+
+        agent_context = shape_context(task, node.get("model", ""), wm)
+    else:
+        agent_context = build_selective_context(request_text)
 
     context_summary = "\\n".join(
         line for line in agent_context.splitlines()
