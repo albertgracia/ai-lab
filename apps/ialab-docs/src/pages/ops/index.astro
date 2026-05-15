@@ -218,7 +218,7 @@ import EventStream from "../../components/EventStream.astro";
       const pl = document.getElementById("pending-list");
       const actions = pend.actions || [];
       if (!actions.length) {
-        pl.innerHTML = '<span class="text-xs text-zinc-500">Sin acciones pendientes</span>';
+        pl.innerHTML = '<span class="text-xs text-zinc-500">Sin acciones pendientes</span><button onclick="rollbackAction()" class="text-xs text-orange-400 hover:text-orange-300 ml-4">↩ Rollback</button>';
       } else {
         pl.innerHTML = '<span class="text-xs text-emerald-400 mb-2 block">' + actions.length + ' pendiente(s)</span>' +
           actions.map(a => '<div class="flex items-center justify-between py-1 border-b border-zinc-800 text-xs"><span class="text-yellow-400">' + a.action + '</span><span class="text-zinc-500">' + (a.target || a.task || '--') + '</span><span class="text-zinc-400">' + Math.round(a.confidence*100) + '%</span></div>').join("");
@@ -234,6 +234,15 @@ import EventStream from "../../components/EventStream.astro";
   }
   async function rejectAction(id) {
     await fetch("/api/runtime-actions/reject?id=" + id, {method: "POST"});
+    loadAutonomous();
+  }
+  async function applyAction(id) {
+    await fetch("/api/runtime-actions/apply-single?id=" + id, {method: "POST"});
+    loadAutonomous();
+  }
+  async function rollbackAction() {
+    if (!confirm("Restaurar ultimo snapshot de pesos?")) return;
+    await fetch("/api/runtime-actions/rollback", {method: "POST"});
     loadAutonomous();
   }
 </script>

@@ -47,3 +47,23 @@ def _write(record: dict):
                 f.write(json.dumps(record, ensure_ascii=False) + "\n")
     except OSError:
         pass
+
+
+def restore_last_snapshot() -> dict:
+    """Restore LIVE_TASK_WEIGHTS to the most recent 'before' snapshot."""
+    if not SNAPSHOT_FILE.exists():
+        return {"error": "no snapshots exist"}
+    lines = SNAPSHOT_FILE.read_text(encoding="utf-8", errors="ignore").splitlines()
+    # find the last 'before' entry
+    for line in reversed(lines):
+        try:
+            r = json.loads(line)
+            if r.get("type") == "before" and r.get("weights"):
+                from runtime.autonomous.adaptive_weights import LIVE_TASK_WEIGHTS
+                with _lock:
+                    LIVE_TASK_WEIGHTS.clear()
+                    LIVE_TASK_WEIGHTS.update(r["weights"])
+                return {"rollback": "ok", "restored_to": r.get("adj_id", "unknown")}
+        except json.JSONDecodeError:
+            continue
+    return {"error": "no valid before snapshot found"}

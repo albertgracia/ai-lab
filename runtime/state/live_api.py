@@ -196,6 +196,19 @@ class APIHandler(BaseHTTPRequestHandler):
                 self._json(apply_approved())
             except ImportError:
                 self._json({"error": "runtime_action_executor not available"})
+        elif path == "/api/runtime-actions/apply-single" and adj_id:
+            try:
+                from runtime.autonomous.runtime_action_executor import apply_approved_action
+                result = apply_approved_action(adj_id)
+                self._json(result or {"error": "not found"})
+            except ImportError:
+                self._json({"error": "runtime_action_executor not available"})
+        elif path == "/api/runtime-actions/rollback":
+            try:
+                from runtime.autonomous.runtime_action_executor import rollback_last
+                self._json(rollback_last())
+            except ImportError:
+                self._json({"error": "runtime_action_executor not available"})
         elif path == "/api/runtime-actions/history":
             try:
                 from runtime.autonomous.pending_adjustments import all_adjustments
