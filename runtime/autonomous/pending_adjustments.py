@@ -84,3 +84,69 @@ def all_pending() -> list[dict]:
         except json.JSONDecodeError:
             continue
     return records
+
+
+# ── state mutators (FASE 9.1) ────────────────────────────────────────
+
+def _load_all() -> list[dict]:
+    """Read every line of the JSONL file into a list of dicts."""
+    if not HISTORY_FILE.exists():
+        return []
+    records = []
+    for line in HISTORY_FILE.read_text(encoding="utf-8", errors="ignore").splitlines():
+        try:
+            records.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+    return records
+
+
+def _save_all(records: list[dict]):
+    HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with _lock:
+        with open(HISTORY_FILE, "w", encoding="utf-8") as f:
+            for r in records:
+                f.write(json.dumps(r, ensure_ascii=False) + "\n")
+
+
+def _update_status(adj_id: str, new_status: str, error: str = ""):
+    records = _load_all()
+    for r in records:
+        if r.get("id") == adj_id:
+            r["status"] = new_status
+            r["updated_at"] = int(time.time())
+            if error:
+                r["error"] = error
+            _save_all(records)
+            return True
+    return False
+
+
+def approve_adjustment(adj_id: str) -> dict | None:
+    if _update_status(adj_id, "approved"):
+        return {"id": adj_id, "status": "approved"}
+    return None
+
+
+def reject_adjustment(adj_id: str) -> dict | None:
+    if _update_status(adj_id, "rejected"):
+        return {"id": adj_id, "status": "rejected"}
+    return None
+
+
+def mark_applied(adj_id: str) -> dict | None:
+    if _update_status(adj_id, "applied"):
+        return {"id": adj_id, "status": "applied"}
+    return None
+
+
+def mark_failed(adj_id: str, error: str = "") -> dict | None:
+    if _update_status(adj_id, "failed", error):
+        return {"id": adj_id, "status": "failed", "error": error}
+    return None
+
+
+def all_adjustments(limit: int = 50) -> list[dict]:
+    records = _load_all()
+    records.sort(key=lambda r: r.get("timestamp", 0), reverse=True)
+    return records[:limit]

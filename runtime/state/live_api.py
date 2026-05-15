@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """AI-LAB Live API v3 - Status, Topology, SSE Events, Analytics."""
-import json, subprocess
+import json, subprocess, urllib.parse
 from pathlib import Path
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from runtime.event_bus import emit
@@ -170,6 +170,41 @@ class APIHandler(BaseHTTPRequestHandler):
         elif self.path == "/api/events":
             self._sse()
         else: self._send_error(404)
+    def do_POST(self):
+        parsed = urllib.parse.urlparse(self.path)
+        path = parsed.path
+        qs = urllib.parse.parse_qs(parsed.query)
+        adj_id = qs.get("id", [None])[0]
+
+        if path == "/api/runtime-actions/approve" and adj_id:
+            try:
+                from runtime.autonomous.pending_adjustments import approve_adjustment
+                result = approve_adjustment(adj_id)
+                self._json(result or {"error": "not found"})
+            except ImportError:
+                self._json({"error": "pending_adjustments not available"})
+        elif path == "/api/runtime-actions/reject" and adj_id:
+            try:
+                from runtime.autonomous.pending_adjustments import reject_adjustment
+                result = reject_adjustment(adj_id)
+                self._json(result or {"error": "not found"})
+            except ImportError:
+                self._json({"error": "pending_adjustments not available"})
+        elif path == "/api/runtime-actions/apply":
+            try:
+                from runtime.autonomous.runtime_action_executor import apply_approved
+                self._json(apply_approved())
+            except ImportError:
+                self._json({"error": "runtime_action_executor not available"})
+        elif path == "/api/runtime-actions/history":
+            try:
+                from runtime.autonomous.pending_adjustments import all_adjustments
+                acts = all_adjustments(30)
+                self._json({"total": len(acts), "actions": acts})
+            except ImportError:
+                self._json({"error": "pending_adjustments not available"})
+        else:
+            self._send_error(404)
     def do_OPTIONS(self):
         self.send_response(204)
         self.send_header("Access-Control-Allow-Origin","*")

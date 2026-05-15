@@ -227,4 +227,13 @@ import EventStream from "../../components/EventStream.astro";
   }
   loadAutonomous();
   setInterval(loadAutonomous, 60000);
+
+  async function approveAction(id) {
+    await fetch("/api/runtime-actions/approve?id=" + id, {method: "POST"});
+    loadAutonomous();
+  }
+  async function rejectAction(id) {
+    await fetch("/api/runtime-actions/reject?id=" + id, {method: "POST"});
+    loadAutonomous();
+  }
 </script>
