@@ -3,55 +3,56 @@ set -euo pipefail
 
 # ============================================
 # AI-LAB Post-Reboot Startup Script
-# Verifies and starts all critical Docker stacks
+# Verifies and starts all critical stacks
 # ============================================
 
-echo "=== AI-LAB STARTUP CHECK ==="
-echo ""
+LOG_FILE="/opt/ai-lab/logs/startup.log"
+mkdir -p /opt/ai-lab/logs
+
+echo "=== AI-LAB STARTUP CHECK ===" | tee -a "$LOG_FILE"
+echo "" | tee -a "$LOG_FILE"
 
 # 1. Check systemd services
-echo "[1/4] Verificando servicios systemd..."
-for svc in ailab-gateway ailab-router ailab-live-state ailab-heartbeat ailab-live-api ailab-docs; do
+echo "[1/4] Servicios systemd..." | tee -a "$LOG_FILE"
+for svc in ailab-traefik ailab-gateway ailab-router ailab-live-state ailab-heartbeat ailab-live-api ailab-docs; do
     status=$(systemctl is-active "$svc" 2>/dev/null || echo "inactive")
-    echo "  $svc: $status"
+    echo "  $svc: $status" | tee -a "$LOG_FILE"
 done
 
 # 2. Check Traefik (docker compose stack)
-echo ""
-echo "[2/4] Verificando Traefik..."
-if docker ps --format '{{.Names}}' | grep -q '^traefik$'; then
-    echo "  traefik: running"
+echo "" | tee -a "$LOG_FILE"
+echo "[2/4] Verificando Traefik..." | tee -a "$LOG_FILE"
+if docker ps --format '{{.Names}}' | grep -q '^traefik$' 2>/dev/null; then
+    echo "  traefik: running" | tee -a "$LOG_FILE"
 else
-    echo "  traefik: DOWN - iniciando..."
-    cd /opt/ai-lab/stacks/traefik && docker compose up -d
-    echo "  traefik: started"
+    echo "  traefik: DOWN - iniciando..." | tee -a "$LOG_FILE"
+    cd /opt/ai-lab/stacks/traefik && docker compose up -d 2>&1 | tee -a "$LOG_FILE"
+    echo "  traefik: started" | tee -a "$LOG_FILE"
 fi
 
-# 3. Check Prometheus (on 1.40 via SSH)
-echo ""
-echo "[3/4] Verificando Prometheus..."
-if ssh albert@192.168.1.40 "docker ps --format '{{.Names}}' | grep -q '^prometheus$'" 2>/dev/null; then
-    echo "  prometheus: running"
+# 3. Check Prometheus (on 1.40 via SSH - if keyless auth available)
+echo "" | tee -a "$LOG_FILE"
+echo "[3/4] Verificando Prometheus..." | tee -a "$LOG_FILE"
+if ssh -o BatchMode=yes -o ConnectTimeout=3 albert@192.168.1.40 "docker ps --format '{{.Names}}' | grep -q '^prometheus$'" 2>/dev/null; then
+    echo "  prometheus: running (1.40)" | tee -a "$LOG_FILE"
+elif ssh -o BatchMode=yes -o ConnectTimeout=3 albert@192.168.1.40 "docker start prometheus" 2>/dev/null; then
+    echo "  prometheus: started (1.40)" | tee -a "$LOG_FILE"
 else
-    echo "  prometheus: DOWN - iniciando via SSH..."
-    ssh albert@192.168.1.40 "docker start prometheus" 2>/dev/null || true
-    echo "  prometheus: started"
+    echo "  prometheus: SKIP (no passwordless SSH a 1.40)" | tee -a "$LOG_FILE"
 fi
 
-# 4. Final health check
-echo ""
-echo "[4/4] Health checks..."
-for endpoint in     "Gateway:8008/health"     "Router:8083/health"     "LiveAPI:8084/api/status.json"; do
-    name="${endpoint%%:*}"
-    port="${endpoint##*:}"
-    path="${port#*/}"
-    port="${port%%/*}"
-    if curl -sf "http://localhost:${port}/${path}" > /dev/null 2>&1; then
-        echo "  $name: OK"
+# 4. Health checks locales
+echo "" | tee -a "$LOG_FILE"
+echo "[4/4] Health checks locales..." | tee -a "$LOG_FILE"
+for name in "Gateway:8008/health" "Router:8083/health" "Docs:4322"; do
+    n="${name%%:*}"
+    p="${name##*:}"
+    if curl -sf "http://localhost:${p}" > /dev/null 2>&1; then
+        echo "  $n: OK" | tee -a "$LOG_FILE"
     else
-        echo "  $name: FAIL"
+        echo "  $n: FAIL" | tee -a "$LOG_FILE"
     fi
 done
 
-echo ""
-echo "=== STARTUP COMPLETE ==="
+echo "" | tee -a "$LOG_FILE"
+echo "=== STARTUP COMPLETE ===" | tee -a "$LOG_FILE"
