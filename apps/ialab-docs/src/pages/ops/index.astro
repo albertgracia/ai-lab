@@ -80,6 +80,28 @@ import EventStream from "../../components/EventStream.astro";
     </section>
   </section>
 
+    <section class="rounded-2xl border border-emerald-500/30 bg-zinc-950 p-6">
+      <h2 class="text-xl font-bold text-emerald-400 mb-4">Autonomous Runtime (FASE 9.0)</h2>
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="rounded-xl border border-zinc-800 p-4">
+          <span class="text-xs text-zinc-500">Optimizer State</span>
+          <p class="text-2xl font-bold text-emerald-400" id="auto-state">active</p>
+        </div>
+        <div class="rounded-xl border border-zinc-800 p-4">
+          <span class="text-xs text-zinc-500">Recommendations</span>
+          <p class="text-2xl font-bold text-cyan-400" id="auto-recs">0</p>
+        </div>
+        <div class="rounded-xl border border-zinc-800 p-4">
+          <span class="text-xs text-zinc-500">Session Affinity</span>
+          <p class="text-2xl font-bold text-purple-400" id="auto-affinity">0</p>
+        </div>
+        <div class="rounded-xl border border-zinc-800 p-4">
+          <span class="text-xs text-zinc-500">Optimizer Actions</span>
+          <p class="text-2xl font-bold text-yellow-400" id="auto-actions">0</p>
+        </div>
+      </div>
+    </section>
+
     <section class="rounded-2xl border border-purple-500/30 bg-zinc-950 p-6">
       <h2 class="text-xl font-bold text-purple-400 mb-4">Cognitive Runtime (FASE 8.9)</h2>
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -166,4 +188,19 @@ import EventStream from "../../components/EventStream.astro";
   }
   loadCognitive();
   setInterval(loadCognitive, 15000);
+
+  async function loadAutonomous() {
+    try {
+      const [opt, aff, adj] = await Promise.all([
+        fetch("/api/runtime-optimizer").then(r => r.json()),
+        fetch("/api/runtime-affinity").then(r => r.json()),
+        fetch("/api/runtime-adjustments").then(r => r.json()),
+      ]);
+      document.getElementById("auto-recs").textContent = (opt.recommendations || []).length;
+      document.getElementById("auto-affinity").textContent = (aff.total_sessions || 0);
+      document.getElementById("auto-actions").textContent = Array.isArray(adj) ? adj.length : 0;
+    } catch {}
+  }
+  loadAutonomous();
+  setInterval(loadAutonomous, 60000);
 </script>
