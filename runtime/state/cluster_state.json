@@ -24,8 +24,8 @@
       "error": "Skipped after 10 consecutive failures"
     }
   ],
-  "updated_at": 1778878957,
-  "updated_at_iso": "2026-05-15T21:02:37.584290+00:00",
+  "updated_at": 1778879517,
+  "updated_at_iso": "2026-05-15T21:11:57.688743+00:00",
   "cluster_health": "offline",
   "offline_nodes": 2,
   "discovered_nodes": [
@@ -34,7 +34,7 @@
       "port": 1234,
       "backend": "lmstudio",
       "online": true,
-      "latency_ms": 2.48,
+      "latency_ms": 2.72,
       "models": [
         "qwen2.5-coder-14b-instruct",
         "llama-3.1-8b-instruct",
@@ -48,7 +48,7 @@
         "memory",
         "reasoning"
       ],
-      "discovered_at": 1778878952,
+      "discovered_at": 1778879512,
       "status": "online"
     },
     {
@@ -56,7 +56,7 @@
       "port": 1234,
       "backend": "lmstudio",
       "online": true,
-      "latency_ms": 1.83,
+      "latency_ms": 2.01,
       "models": [
         "qwen2.5-coder-32b-instruct",
         "qwen3-14b-claude-sonnet-4.5-reasoning-distill",
@@ -76,7 +76,7 @@
         "reasoning",
         "vision"
       ],
-      "discovered_at": 1778878952,
+      "discovered_at": 1778879512,
       "status": "online"
     },
     {
@@ -87,9 +87,9 @@
       "latency_ms": null,
       "models": [],
       "capabilities": [],
-      "discovered_at": 1778878952,
+      "discovered_at": 1778879512,
       "status": "offline",
-      "error": "HTTPConnectionPool(host='192.168.1.250', port=1234): Max retries exceeded with url: /v1/models (Caused by ConnectTimeoutError(<HTTPConnection(host='192.168.1.250', port=1234) at 0x7e4ab4412360>, 'Connection to 192.168.1.250 timed out. (connect timeout=5)'))"
+      "error": "HTTPConnectionPool(host='192.168.1.250', port=1234): Max retries exceeded with url: /v1/models (Caused by ConnectTimeoutError(<HTTPConnection(host='192.168.1.250', port=1234) at 0x7e4ab45cf790>, 'Connection to 192.168.1.250 timed out. (connect timeout=5)'))"
     }
   ],
   "discovered_online_nodes": 2,
