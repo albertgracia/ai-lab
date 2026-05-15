@@ -258,3 +258,35 @@ Autonomous Operations
 ## Final Objective
 
 Construir una Local-First Operational Cognitive Platform capaz de razonar sobre infraestructura, mantener memoria persistente, coordinar agentes, ejecutar workflows, automatizar operaciones y operar como un verdadero AI Operations Brain.
+
+---
+## API Endpoints — Estado Actual
+
+| Endpoint | Puerto | Descripcion | Estado |
+|---|---|---|---|
+| **Gateway** | `:8008` | OpenAI-compatible con sanitizacion, failover, rate limiting | ✅ |
+| **Router API** | `:8083` | Routing cognitivo capability-aware con FastAPI | ✅ |
+| **Live API** | `:8084` | `/api/status.json`, `/api/topology`, `/api/events` | ✅ |
+| **Open WebUI** | `:3000` | Frontend IA unificado (Ollama + AI-LAB Router) | ✅ |
+| **Astro Docs** | `:4322` | Portal de documentacion y blog | ✅ |
+
+### AI-LAB Router — Routing de Modelos
+
+| Endpoint | Modelo | Nodo | VRAM | Roll |
+|---|---|---|---|---|
+| `ailab-router/fast` | Llama 3.1 8B Instruct | RX9070 (1.50) | 16 GB | Respuestas rapidas, mantenimiento |
+| `ailab-router/coding` | Qwen 2.5 Coder 14B Instruct | RX9070 (1.50) | 16 GB | Programacion, debugging |
+| `ailab-router/reasoning` | Qwen 2.5 Coder 32B Instruct | RX7900XT (1.60) | 20 GB | Problemas complejos, arquitectura |
+| `ailab-router/auto` | Seleccion automatica por keyword | — | — | Routing inteligente |
+
+### Metricas Prometheus (14 nuevas)
+
+Gateway expone en `:8008/metrics`: requests, streams, errores, latencia, sesiones concurrentes, failovers, routing decisions, memory writes, bloqueos governance, rate limit hits, etc.
+
+### Dashboards Grafana (8)
+
+En `http://192.168.1.40:3000`: Cognitive Runtime Core, Cluster Topology, Event Bus, AI Sessions, Episodic Memory, AI Governance, Energy/Thermal, Runtime Historical Analytics.
+
+### Servicios Systemd (6)
+
+`ailab-gateway`, `ailab-router`, `ailab-live-state`, `ailab-heartbeat`, `ailab-live-api`, `ailab-docs` — todos con autoarranque, restart automatico y limites de memoria.
