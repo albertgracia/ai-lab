@@ -1,0 +1,61 @@
+---
+import Layout from "../../../layouts/Layout.astro";
+---
+
+<Layout title="GPU Telemetry · AI-LAB">
+  <section class="mx-auto max-w-7xl px-6 py-16 space-y-10">
+    <header class="rounded-3xl border border-cyan-500/30 bg-zinc-950 p-10">
+      <h1 class="text-5xl font-black text-white">GPU Live Telemetry</h1>
+      <p class="mt-4 max-w-4xl text-lg text-zinc-400">
+        Telemetria en tiempo real de las GPUs de inferencia via API de eventos y Prometheus.
+      </p>
+    </header>
+
+    <section id="gpu-cards" class="grid gap-6 md:grid-cols-2">
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+        <h2 class="text-xl font-bold text-orange-400">RX9070</h2>
+        <p class="text-sm text-zinc-500">192.168.1.50 · 16GB VRAM</p>
+        <div class="mt-4 grid grid-cols-2 gap-4">
+          <div><p class="text-xs text-zinc-500">VRAM Usada</p><p class="text-2xl font-black text-white" id="rx9070-vram">--</p></div>
+          <div><p class="text-xs text-zinc-500">Temp Core</p><p class="text-2xl font-black text-white" id="rx9070-temp">--</p></div>
+          <div><p class="text-xs text-zinc-500">Power</p><p class="text-2xl font-black text-white" id="rx9070-power">--</p></div>
+          <div><p class="text-xs text-zinc-500">Estado</p><p class="text-2xl font-black text-emerald-400" id="rx9070-status">ONLINE</p></div>
+        </div>
+      </div>
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+        <h2 class="text-xl font-bold text-purple-400">RX7900XT</h2>
+        <p class="text-sm text-zinc-500">192.168.1.60 · 20GB VRAM</p>
+        <div class="mt-4 grid grid-cols-2 gap-4">
+          <div><p class="text-xs text-zinc-500">VRAM Usada</p><p class="text-2xl font-black text-white" id="rx7900xt-vram">--</p></div>
+          <div><p class="text-xs text-zinc-500">Temp Core</p><p class="text-2xl font-black text-white" id="rx7900xt-temp">--</p></div>
+          <div><p class="text-xs text-zinc-500">Power</p><p class="text-2xl font-black text-white" id="rx7900xt-power">--</p></div>
+          <div><p class="text-xs text-zinc-500">Estado</p><p class="text-2xl font-black text-red-400" id="rx7900xt-status">OFFLINE</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+      <h2 class="text-xl font-bold text-cyan-400 mb-4">GPU Metrics API</h2>
+      <pre class="text-xs text-zinc-400 font-mono" id="gpu-raw">Esperando datos...</pre>
+    </section>
+  </section>
+</Layout>
+
+<script>
+  async function refreshGPUs() {
+    try {
+      const res = await fetch("/api/status.json", { cache: "no-store" });
+      const data = await res.json();
+      const gpu = Array.isArray(data.gpu) ? data.gpu : [];
+      for (const g of gpu) {
+        const prefix = g.node === "RX9070" ? "rx9070" : "rx7900xt";
+        document.getElementById(prefix + "-vram").textContent = (g.vram_used_gib || 0) + " / " + (g.vram_total_gib || 0) + " GiB";
+        document.getElementById(prefix + "-status").textContent = g.vram_total_gib > 0 ? "ONLINE" : "OFFLINE";
+        document.getElementById(prefix + "-status").className = "text-2xl font-black " + (g.vram_total_gib > 0 ? "text-emerald-400" : "text-red-400");
+      }
+      document.getElementById("gpu-raw").textContent = JSON.stringify(gpu, null, 2);
+    } catch {}
+  }
+  refreshGPUs();
+  setInterval(refreshGPUs, 10000);
+</script>

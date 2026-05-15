@@ -1,0 +1,58 @@
+---
+import Layout from "../../../layouts/Layout.astro";
+---
+
+<Layout title="Models · AI-LAB">
+  <section class="mx-auto max-w-7xl px-6 py-16 space-y-10">
+    <header class="rounded-3xl border border-cyan-500/30 bg-zinc-950 p-10">
+      <h1 class="text-5xl font-black text-white">LLM Models & Routing</h1>
+      <p class="mt-4 max-w-4xl text-lg text-zinc-400">
+        Modelos disponibles en el cluster, estado de los nodos LM Studio y routing capability-aware.
+      </p>
+    </header>
+
+    <section class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+      <h2 class="text-xl font-bold text-cyan-400 mb-4">AI-LAB Router — Modelos Virtuales</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead><tr class="text-zinc-500 border-b border-zinc-800">
+            <th class="text-left py-3 px-2">Ruta</th><th class="text-left px-2">Modelo Real</th><th class="text-left px-2">Nodo</th><th class="text-left px-2">VRAM</th><th class="text-left px-2">Uso</th>
+          </tr></thead>
+          <tbody>
+            <tr class="border-b border-zinc-800"><td class="py-3 px-2 text-cyan-400">ailab-router/fast</td><td class="px-2">Llama 3.1 8B</td><td class="px-2">RX9070</td><td class="px-2">16 GB</td><td class="px-2 text-emerald-400">Rapido</td></tr>
+            <tr class="border-b border-zinc-800"><td class="py-3 px-2 text-cyan-400">ailab-router/coding</td><td class="px-2">Qwen 2.5 Coder 14B / 32B</td><td class="px-2">RX9070/RX7900XT</td><td class="px-2">16-20 GB</td><td class="px-2 text-emerald-400">Programacion</td></tr>
+            <tr class="border-b border-zinc-800"><td class="py-3 px-2 text-cyan-400">ailab-router/reasoning</td><td class="px-2">Qwen 2.5 Coder 32B</td><td class="px-2">RX7900XT</td><td class="px-2">20 GB</td><td class="px-2 text-yellow-400">Razonamiento</td></tr>
+            <tr><td class="py-3 px-2 text-cyan-400">ailab-router/auto</td><td class="px-2">Seleccion automatica</td><td class="px-2">—</td><td class="px-2">—</td><td class="px-2 text-cyan-400">Routing inteligente</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="grid gap-6 md:grid-cols-2">
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+        <h3 class="text-lg font-bold text-orange-400 mb-3">RX9070 Models</h3>
+        <div id="rx9070-models" class="text-sm text-zinc-400 font-mono">Cargando...</div>
+      </div>
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+        <h3 class="text-lg font-bold text-purple-400 mb-3">RX7900XT Models</h3>
+        <div id="rx7900xt-models" class="text-sm text-zinc-400 font-mono">Cargando...</div>
+      </div>
+    </section>
+  </section>
+</Layout>
+
+<script>
+  async function loadModels() {
+    for (const [host, id] of [["192.168.1.50", "rx9070-models"], ["192.168.1.60", "rx7900xt-models"]]) {
+      try {
+        const res = await fetch("http://" + host + ":1234/v1/models");
+        const data = await res.json();
+        const models = data.data || [];
+        document.getElementById(id).innerHTML = models.length ? models.map(m => "<div>• " + m.id + "</div>").join("") : "<div class='text-red-400'>OFFLINE</div>";
+      } catch {
+        document.getElementById(id).innerHTML = "<div class='text-red-400'>OFFLINE</div>";
+      }
+    }
+  }
+  loadModels();
+</script>

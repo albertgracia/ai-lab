@@ -3,13 +3,49 @@ import Layout from "../../layouts/Layout.astro";
 ---
 
 <Layout title="AI Infrastructure · AI-LAB">
-  <section class="space-y-10">
-    <div class="rounded-3xl border border-cyan-500/30 bg-gradient-to-br from-zinc-900 to-black p-10">
-      <p class="text-sm uppercase tracking-[0.3em] text-cyan-400">Distributed Inference</p>
-      <h1 class="mt-6 text-5xl font-black text-white">AI Infrastructure</h1>
-      <p class="mt-6 max-w-4xl text-xl text-zinc-300">
-        Router OpenAI-compatible, LM Studio, nodos GPU, embeddings, Qdrant y runtime IA local.
+  <section class="mx-auto max-w-7xl px-6 py-16 space-y-10">
+    <header class="rounded-3xl border border-cyan-500/30 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black p-10">
+      <h1 class="text-5xl font-black text-white">AI-LAB Infrastructure</h1>
+      <p class="mt-4 max-w-4xl text-xl leading-9 text-zinc-300">
+        Arquitectura tecnica completa del AI-LAB: runtime cognitivo distribuido, observabilidad en tiempo real y automatic CI/CD.
       </p>
-    </div>
+    </header>
+
+    <section class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+        <p class="text-xs uppercase tracking-wider text-cyan-400">Distributed Inference</p>
+        <p class="mt-3 text-zinc-400">3 nodos GPU con LM Studio. Routing capability-aware via Gateway + Router API. Failover automatico entre nodos.</p>
+      </div>
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+        <p class="text-xs uppercase tracking-wider text-emerald-400">Realtime Cognitive Mesh</p>
+        <p class="mt-3 text-zinc-400">SSE Event Bus con 9 tipos de eventos. Stream en vivo cada 3s. Topologia interactiva del cluster.</p>
+      </div>
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+        <p class="text-xs uppercase tracking-wider text-purple-400">Observability Stack</p>
+        <p class="mt-3 text-zinc-400">Prometheus + Loki + Grafana en VM dedicada. 8 dashboards. 14+ metricas personalizadas.</p>
+      </div>
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+        <p class="text-xs uppercase tracking-wider text-yellow-400">GPU Telemetry Pipeline</p>
+        <p class="mt-3 text-zinc-400">Windows Exporter + PowerShell API. VRAM, temperatura, load, power en tiempo real via Prometheus.</p>
+      </div>
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+        <p class="text-xs uppercase tracking-wider text-red-400">CI/CD & Automation</p>
+        <p class="mt-3 text-zinc-400">Self-hosted GitHub Actions runner. Build automatico en push. Despliegue a blog publico + privado.</p>
+      </div>
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+        <p class="text-xs uppercase tracking-wider text-cyan-400">Event-Driven Runtime</p>
+        <p class="mt-3 text-zinc-400">Gateway con rate limiting, failover, sanitizacion. Router API con routing capability-aware. Session tracking.</p>
+      </div>
+    </section>
+
+    <section class="rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
+      <h2 class="text-2xl font-black text-cyan-400 mb-6">Stack Tecnologico</h2>
+      <div class="grid gap-4 md:grid-cols-4">
+        <div><p class="text-sm text-zinc-500">Runtime</p><p class="text-white">Python 3.14 · FastAPI · ThreadingHTTP</p></div>
+        <div><p class="text-sm text-zinc-500">Frontend</p><p class="text-white">Astro 6 · Starlight · React 19 · Tailwind 4</p></div>
+        <div><p class="text-sm text-zinc-500">Infra</p><p class="text-white">Docker · Traefik · Cloudflare · systemd</p></div>
+        <div><p class="text-sm text-zinc-500">Observabilidad</p><p class="text-white">Prometheus · Grafana · Loki · Grafana Alloy</p></div>
+      </div>
+    </section>
   </section>
 </Layout>
