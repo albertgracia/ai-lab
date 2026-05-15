@@ -52,17 +52,36 @@ def select_node(request_text, capability=None):
 
     # ---- fallback node if nothing available -------------------------------
     if not route.get("available") or not route.get("models"):
+        host = "192.168.1.50"
+        real_models = _get_real_models("", host) or ["llama-3.1-8b-instruct", "qwen2.5-coder-14b-instruct"]
+        # Always try registry scoring on real models first
+        selected = DEFAULT_MODELS.get(task, real_models[0])
+        try:
+            if _USE_REGISTRY:
+                from runtime.models.model_registry import best_for_task
+                best = best_for_task(task, real_models)
+                if best:
+                    selected = best
+        except ImportError:
+            if task in ("coding", "reasoning") and "qwen2.5-coder-14b-instruct" in real_models:
+                selected = "qwen2.5-coder-14b-instruct"
         return {
             "name": "rx9070-node",
-            "host": "192.168.1.50",
+            "host": host,
             "port": 1234,
-            "model": DEFAULT_MODELS.get(task, "llama-3.1-8b-instruct"),
+            "model": selected,
             "capability": task,
             "available": True,
         }
 
     # ---- model selection --------------------------------------------------
     models_on_node = route.get("models", [])
+
+    # ---- verify against real discovered models (FASE hardening) -----------
+    _real = _get_real_models(route.get("name", ""), route.get("host", ""))
+    if _real:
+        models_on_node = _real
+
     preferred = DEFAULT_MODELS.get(task)
 
     selected = preferred          # sensible default
@@ -93,3 +112,34 @@ def select_node(request_text, capability=None):
         "capability": task,
         "available": True,
     }
+
+
+def _get_real_models(node_name: str, node_host: str) -> list[str] | None:
+    """Query LM Studio directly for actually-loaded models on a node."""
+    import json
+    from pathlib import Path
+    # 1. Try discovered_nodes from cluster_state (fastest, already fresh)
+    try:
+        state_file = Path("/opt/ai-lab/runtime/state/cluster_state.json")
+        if state_file.exists():
+            state = json.loads(state_file.read_text())
+            for n in state.get("discovered_nodes", []):
+                if n.get("name") == node_name or n.get("host") == node_host:
+                    models = n.get("models", [])
+                    if models:
+                        return models
+    except Exception:
+        pass
+    # 2. Fallback: query LM Studio directly
+    try:
+        import urllib.request
+        url = f"http://{node_host}:1234/v1/models" if node_host else None
+        if url:
+            resp = urllib.request.urlopen(url, timeout=5)
+            data = json.loads(resp.read())
+            models = [m["id"] for m in data.get("data", [])]
+            if models:
+                return models
+    except Exception:
+        pass
+    return None
