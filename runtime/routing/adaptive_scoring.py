@@ -38,6 +38,7 @@ def hybrid_score(task_type, model_id, node_state=None, window_minutes=60):
     total = perf.get("total_requests", 0)
 
     if total < 10:
+        _inc_fallback()
         return cap_score  # not enough data — trust static only
 
     # streaming + non-streaming combined
@@ -67,6 +68,24 @@ def hybrid_score(task_type, model_id, node_state=None, window_minutes=60):
     hours_since = (time.time() - last_ts) / 3600.0
     decay = math.exp(-hours_since / 24.0)  # half-life: ~17 hours
 
-    # ── final hybrid ──────────────────────────────────────────────────
+     # ── final hybrid ──────────────────────────────────────────────────
     final = cap_score * 0.7 + perf_score * 0.3 * decay
+    _inc_routing()
     return round(min(final, 100), 1)
+
+
+# ── cognitive telemetry hooks (FASE 8.9) ──────────────────────────────
+
+def _inc_routing():
+    try:
+        from runtime.cognitive.cognitive_metrics import increment
+        increment("adaptive_routing_total")
+    except ImportError:
+        pass
+
+def _inc_fallback():
+    try:
+        from runtime.cognitive.cognitive_metrics import increment
+        increment("adaptive_routing_fallbacks")
+    except ImportError:
+        pass

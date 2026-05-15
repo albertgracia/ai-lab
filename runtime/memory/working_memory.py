@@ -86,6 +86,20 @@ class WorkingMemory:
 
     # ── persistence stubs ────────────────────────────────────────────
 
+    @classmethod
+    def stats(cls) -> dict:
+        """Aggregated stats across all active sessions."""
+        sessions = list(_sessions.values())
+        n = len(sessions)
+        if n == 0:
+            return {"sessions": 0, "avg_turns": 0, "avg_digest_size": 0, "largest_session": 0}
+        return {
+            "sessions": n,
+            "avg_turns": round(sum(len(s.conversation) for s in sessions) / n, 1),
+            "avg_digest_size": round(sum(len(s.digest()) for s in sessions) / n, 1),
+            "largest_session": max((len(s.conversation) for s in sessions), default=0),
+        }
+
     def to_dict(self) -> dict:
         return {
             "session_id": self.session_id,

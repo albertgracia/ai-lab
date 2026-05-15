@@ -78,6 +78,7 @@ def shape_context(
         Assembled context ready to be injected into the system prompt.
     """
     # ── 1. determine token budget ────────────────────────────────────
+    _start = time.time()   # cognitive telemetry start
     context_window = 32_000   # default fallback
     try:
         from runtime.models.model_registry import MODEL_REGISTRY
@@ -136,5 +137,34 @@ def shape_context(
         if used + len(digest) <= budget:
             chunks.append(f"## Conversation Context\n{digest}")
             used += len(digest)
+
+    # ── cognitive telemetry hook (FASE 8.9) ──────────────────────────
+    try:
+        from runtime.cognitive.cognitive_metrics import set_metric, store_context_debug, increment
+        from runtime.cognitive.cognitive_history import record_snapshot
+        elapsed = int((time.time() - _start) * 1000)
+        set_metric("avg_shaping_latency_ms", elapsed)
+        set_metric("avg_context_size", used)
+        set_metric("avg_context_budget_used", round(used / max(budget, 1), 3))
+        set_metric("last_files_used", len(chunks))
+        set_metric("last_files_names", [s["name"] for s, _ in scored[:len(chunks)]])
+        increment("context_shaping_total")
+        store_context_debug({
+            "task": task_type, "model": model_id, "budget": budget, "used": used,
+            "files_used": len(chunks),
+            "files_names": [s["name"] for s, _ in scored[:len(chunks)]],
+            "digest_size": len(digest) if working_memory else 0,
+            "shaping_latency_ms": elapsed,
+        })
+        record_snapshot(
+            task_type=task_type, model=model_id, context_size=used,
+            budget_used=round(used / max(budget, 1), 3),
+            shaping_latency_ms=elapsed, files_used=len(chunks),
+            files_used_names=[s["name"] for s, _ in scored[:len(chunks)]],
+            digest_size=len(digest) if working_memory else 0,
+            working_memory_used=bool(working_memory),
+        )
+    except ImportError:
+        pass
 
     return "\n\n---\n\n".join(chunks)
