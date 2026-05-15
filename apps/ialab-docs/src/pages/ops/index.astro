@@ -1,137 +1,276 @@
- cat /opt/ai-lab/apps/ialab-docs/src/pages/ops/index.astro [A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Ko
-[?2004l]3008;start=6c054d7c-ff23-473c-88cd-7ab242de98c1;machineid=20aaf5bfa7584e8fb6c0264046eebecd;user=albert;hostname=ubuntu-ialab;bootid=1fc818c4-677f-4c57-b21b-3a4b2a5c6134;pid=00000000000000199116;type=command;cwd=/home/albert\ cat /opt/ai-lab/apps/ialab-docs/src/pages/ops/index.astro [A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Ko
-[?2004l]3008;start=c208537e-36e1-487b-b483-3bc604ae233e;machineid=20aaf5bfa7584e8fb6c0264046eebecd;user=albert;hostname=ubuntu-ialab;bootid=1fc818c4-677f-4c57-b21b-3a4b2a5c6134;pid=00000000000000196559;type=command;cwd=/home/albert\---
-import Layout from "../../layouts/Layout.astro";
-import EventStream from "../../components/EventStream.astro";
----
-
-<Layout title="Operations Center · AI-LAB">
-  <section class="mx-auto max-w-7xl px-6 py-16 space-y-10">
-
-    <header class="rounded-3xl border border-cyan-500/30 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black p-10">
-      <div class="flex items-start justify-between gap-6">
-        <div>
-          <p class="text-sm uppercase tracking-[0.35em] text-cyan-400">AI-LAB COMMAND CENTER</p>
-          <h1 class="mt-3 text-5xl font-black text-white">AI Operations Center</h1>
-          <p class="mt-4 max-w-4xl text-lg text-zinc-300">
-            Centro de operaciones en tiempo real. Health score, metricas de inferencia, estado del cluster y eventos cognitivos.
-          </p>
-        </div>
-        <div id="health-badge" class="rounded-2xl border border-zinc-700 bg-zinc-900 px-6 py-5 text-center min-w-[140px]">
-          <p class="text-xs uppercase tracking-[0.25em] text-zinc-500">Health Score</p>
-          <p class="mt-1 text-5xl font-black" id="health-value">--</p>
-          <p class="text-xs text-zinc-500" id="health-level">--</p>
-        </div>
-      </div>
-    </header>
-
-    <section class="grid gap-5 md:grid-cols-2 lg:grid-cols-4" id="cluster-stats">
-      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
-        <p class="text-xs text-zinc-500">GPU Cluster</p>
-        <p class="mt-1 text-2xl font-black text-cyan-400" id="stat-gpus">--</p>
-      </div>
-      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
-        <p class="text-xs text-zinc-500">Requests</p>
-        <p class="mt-1 text-2xl font-black text-white" id="stat-requests">--</p>
-      </div>
-      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
-        <p class="text-xs text-zinc-500">Sesiones Activas</p>
-        <p class="mt-1 text-2xl font-black text-emerald-400" id="stat-sessions">--</p>
-      </div>
-      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
-        <p class="text-xs text-zinc-500">Nodos Online</p>
-        <p class="mt-1 text-2xl font-black text-emerald-400" id="stat-nodes">--</p>
-      </div>
-      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
-        <p class="text-xs text-zinc-500">Latencia Media</p>
-        <p class="mt-1 text-2xl font-black text-purple-400" id="stat-latency">--</p>
-      </div>
-      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
-        <p class="text-xs text-zinc-500">Routing Decisions</p>
-        <p class="mt-1 text-2xl font-black text-yellow-400" id="stat-routing">--</p>
-      </div>
-      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
-        <p class="text-xs text-zinc-500">Streams Activos</p>
-        <p class="mt-1 text-2xl font-black text-cyan-400" id="stat-streams">--</p>
-      </div>
-      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
-        <p class="text-xs text-zinc-500">Errores</p>
-        <p class="mt-1 text-2xl font-black text-red-400" id="stat-errors">--</p>
-      </div>
-    </section>
-
-    <section class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
-      <h3 class="text-lg font-bold text-cyan-400 mb-3">Health Score — Factores</h3>
-      <div id="health-reasons" class="grid gap-2 text-sm">
-        <p class="text-zinc-500 italic">Esperando datos...</p>
-      </div>
-    </section>
-
-    <div class="grid gap-6 lg:grid-cols-2">
-      <EventStream />
-      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
-        <h3 class="text-lg font-bold text-red-400 mb-3">Ultimos Errores</h3>
-        <div id="error-list" class="space-y-2 text-xs font-mono max-h-60 overflow-y-auto">
-          <p class="text-zinc-500 italic">Esperando datos...</p>
-        </div>
-      </div>
-    </div>
-
-    <section class="grid gap-5 md:grid-cols-4">
-      <a href="/status/live" class="rounded-xl border border-cyan-500/20 bg-zinc-950 p-5 text-cyan-300 hover:border-cyan-400 text-sm font-bold">Estado Vivo</a>
-      <a href="/status/history" class="rounded-xl border border-cyan-500/20 bg-zinc-950 p-5 text-cyan-300 hover:border-cyan-400 text-sm font-bold">Historico</a>
-      <a href="/status/gpus" class="rounded-xl border border-cyan-500/20 bg-zinc-950 p-5 text-cyan-300 hover:border-cyan-400 text-sm font-bold">GPU Telemetry</a>
-      <a href="/status/models" class="rounded-xl border border-cyan-500/20 bg-zinc-950 p-5 text-cyan-300 hover:border-cyan-400 text-sm font-bold">Modelos</a>
-    </section>
-  </section>
-</Layout>
-
-<script>
-  async function refresh() {
-    try {
-      const res = await fetch("/api/analytics", { cache: "no-store" });
-      const d = await res.json();
-      const h = d.health || {};
-      const m = d.metrics || {};
-      const s = d.sessions || {};
-      const eb = d.event_bus || {};
-
-      const score = h.score || 0;
-      const el = document.getElementById("health-value");
-      el.textContent = score;
-      el.className = "mt-1 text-5xl font-black " + (score >= 80 ? "text-emerald-400" : score >= 60 ? "text-yellow-400" : score >= 40 ? "text-orange-400" : "text-red-400");
-      document.getElementById("health-level").textContent = h.level || "--";
-      document.getElementById("health-badge").className = "rounded-2xl border px-6 py-5 text-center min-w-[140px] " + (score >= 80 ? "border-emerald-500/30 bg-emerald-500/10" : score >= 60 ? "border-yellow-500/30 bg-yellow-500/10" : score >= 40 ? "border-orange-500/30 bg-orange-500/10" : "border-red-500/30 bg-red-500/10");
-
-      document.getElementById("stat-gpus").textContent = (m.online_nodes || 0) + "/" + (m.total_nodes || 0);
-      document.getElementById("stat-requests").textContent = m.requests_total || 0;
-      document.getElementById("stat-sessions").textContent = s.active_sessions || 0;
-      document.getElementById("stat-nodes").textContent = (m.online_nodes || 0) + "/" + (m.total_nodes || 0);
-      document.getElementById("stat-latency").textContent = (m.last_latency_ms || 0).toFixed(0) + "ms";
-      document.getElementById("stat-routing").textContent = m.routing_decisions_total || 0;
-      document.getElementById("stat-streams").textContent = m.active_streams || 0;
-      document.getElementById("stat-errors").textContent = m.errors_total || 0;
-
-      const reasons = document.getElementById("health-reasons");
-      if (h.reasons && h.reasons.length) {
-        reasons.innerHTML = h.reasons.map(r => 
-          '<div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-red-400 shrink-0"></span>' + r + '</div>'
-        ).join("");
-      } else {
-        reasons.innerHTML = '<div class="text-emerald-400">Todos los sistemas operativos</div>';
-      }
-
-      const errList = document.getElementById("error-list");
-      if (m.recent_errors && m.recent_errors.length) {
-        errList.innerHTML = m.recent_errors.slice(-10).reverse().map(e =>
-          '<div class="text-red-400">[' + new Date(e.ts * 1000).toLocaleTimeString() + '] ' + (e.error || "?") + '</div>'
-        ).join("");
-      } else {
-        errList.innerHTML = '<div class="text-emerald-400">Sin errores recientes</div>';
-      }
-    } catch {}
-  }
-  refresh();
-  setInterval(refresh, 8000);
-</script>
+ cat /opt/ai-lab/apps/ialab-docs/src/pages/ops/index.astro 
+[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Ko
+[?2004l
+]3008;start=6c054d7c-ff23-473c-88cd-7ab242de98c1;machineid=20aaf5bfa7584e8fb6c0264046eebecd;user=albert;hostname=ubuntu-ialab;bootid=1fc818c4-677f-4c57-b21b-3a4b2a5c6134;pid=00000000000000199116;type=command;cwd=/home/albert\ cat /opt/ai-lab/apps/ialab-docs/src/pages/ops/index.astro 
+[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Ko
+
+[?2004l
+]3008;start=c208537e-36e1-487b-b483-3bc604ae233e;machineid=20aaf5bfa7584e8fb6c0264046eebecd;user=albert;hostname=ubuntu-ialab;bootid=1fc818c4-677f-4c57-b21b-3a4b2a5c6134;pid=00000000000000196559;type=command;cwd=/home/albert\---
+
+import Layout from "../../layouts/Layout.astro";
+
+import EventStream from "../../components/EventStream.astro";
+
+---
+
+
+
+<Layout title="Operations Center · AI-LAB">
+
+  <section class="mx-auto max-w-7xl px-6 py-16 space-y-10">
+
+
+
+    <header class="rounded-3xl border border-cyan-500/30 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black p-10">
+
+      <div class="flex items-start justify-between gap-6">
+
+        <div>
+
+          <p class="text-sm uppercase tracking-[0.35em] text-cyan-400">AI-LAB COMMAND CENTER</p>
+
+          <h1 class="mt-3 text-5xl font-black text-white">AI Operations Center</h1>
+
+          <p class="mt-4 max-w-4xl text-lg text-zinc-300">
+
+            Centro de operaciones en tiempo real. Health score, metricas de inferencia, estado del cluster y eventos cognitivos.
+
+          </p>
+
+        </div>
+
+        <div id="health-badge" class="rounded-2xl border border-zinc-700 bg-zinc-900 px-6 py-5 text-center min-w-[140px]">
+
+          <p class="text-xs uppercase tracking-[0.25em] text-zinc-500">Health Score</p>
+
+          <p class="mt-1 text-5xl font-black" id="health-value">--</p>
+
+          <p class="text-xs text-zinc-500" id="health-level">--</p>
+
+        </div>
+
+      </div>
+
+    </header>
+
+
+
+    <section class="grid gap-5 md:grid-cols-2 lg:grid-cols-4" id="cluster-stats">
+
+      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+
+        <p class="text-xs text-zinc-500">GPU Cluster</p>
+
+        <p class="mt-1 text-2xl font-black text-cyan-400" id="stat-gpus">--</p>
+
+      </div>
+
+      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+
+        <p class="text-xs text-zinc-500">Requests</p>
+
+        <p class="mt-1 text-2xl font-black text-white" id="stat-requests">--</p>
+
+      </div>
+
+      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+
+        <p class="text-xs text-zinc-500">Sesiones Activas</p>
+
+        <p class="mt-1 text-2xl font-black text-emerald-400" id="stat-sessions">--</p>
+
+      </div>
+
+      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+
+        <p class="text-xs text-zinc-500">Nodos Online</p>
+
+        <p class="mt-1 text-2xl font-black text-emerald-400" id="stat-nodes">--</p>
+
+      </div>
+
+      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+
+        <p class="text-xs text-zinc-500">Latencia Media</p>
+
+        <p class="mt-1 text-2xl font-black text-purple-400" id="stat-latency">--</p>
+
+      </div>
+
+      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+
+        <p class="text-xs text-zinc-500">Routing Decisions</p>
+
+        <p class="mt-1 text-2xl font-black text-yellow-400" id="stat-routing">--</p>
+
+      </div>
+
+      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+
+        <p class="text-xs text-zinc-500">Streams Activos</p>
+
+        <p class="mt-1 text-2xl font-black text-cyan-400" id="stat-streams">--</p>
+
+      </div>
+
+      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+
+        <p class="text-xs text-zinc-500">Errores</p>
+
+        <p class="mt-1 text-2xl font-black text-red-400" id="stat-errors">--</p>
+
+      </div>
+
+    </section>
+
+
+
+    <section class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+
+      <h3 class="text-lg font-bold text-cyan-400 mb-3">Health Score — Factores</h3>
+
+      <div id="health-reasons" class="grid gap-2 text-sm">
+
+        <p class="text-zinc-500 italic">Esperando datos...</p>
+
+      </div>
+
+    </section>
+
+
+
+    <div class="grid gap-6 lg:grid-cols-2">
+
+      <EventStream />
+
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+
+        <h3 class="text-lg font-bold text-red-400 mb-3">Ultimos Errores</h3>
+
+        <div id="error-list" class="space-y-2 text-xs font-mono max-h-60 overflow-y-auto">
+
+          <p class="text-zinc-500 italic">Esperando datos...</p>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+
+    <section class="grid gap-5 md:grid-cols-4">
+
+      <a href="/status/live" class="rounded-xl border border-cyan-500/20 bg-zinc-950 p-5 text-cyan-300 hover:border-cyan-400 text-sm font-bold">Estado Vivo</a>
+
+      <a href="/status/history" class="rounded-xl border border-cyan-500/20 bg-zinc-950 p-5 text-cyan-300 hover:border-cyan-400 text-sm font-bold">Historico</a>
+
+      <a href="/status/gpus" class="rounded-xl border border-cyan-500/20 bg-zinc-950 p-5 text-cyan-300 hover:border-cyan-400 text-sm font-bold">GPU Telemetry</a>
+
+      <a href="/status/models" class="rounded-xl border border-cyan-500/20 bg-zinc-950 p-5 text-cyan-300 hover:border-cyan-400 text-sm font-bold">Modelos</a>
+
+    </section>
+
+  </section>
+
+</Layout>
+
+
+
+<script>
+
+  async function refresh() {
+
+    try {
+
+      const res = await fetch("/api/analytics", { cache: "no-store" });
+
+      const d = await res.json();
+
+      const h = d.health || {};
+
+      const m = d.metrics || {};
+
+      const s = d.sessions || {};
+
+      const eb = d.event_bus || {};
+
+
+
+      const score = h.score || 0;
+
+      const el = document.getElementById("health-value");
+
+      el.textContent = score;
+
+      el.className = "mt-1 text-5xl font-black " + (score >= 80 ? "text-emerald-400" : score >= 60 ? "text-yellow-400" : score >= 40 ? "text-orange-400" : "text-red-400");
+
+      document.getElementById("health-level").textContent = h.level || "--";
+
+      document.getElementById("health-badge").className = "rounded-2xl border px-6 py-5 text-center min-w-[140px] " + (score >= 80 ? "border-emerald-500/30 bg-emerald-500/10" : score >= 60 ? "border-yellow-500/30 bg-yellow-500/10" : score >= 40 ? "border-orange-500/30 bg-orange-500/10" : "border-red-500/30 bg-red-500/10");
+
+
+
+      document.getElementById("stat-gpus").textContent = (m.online_nodes || 0) + "/" + (m.total_nodes || 0);
+
+      document.getElementById("stat-requests").textContent = m.requests_total || 0;
+
+      document.getElementById("stat-sessions").textContent = s.active_sessions || 0;
+
+      document.getElementById("stat-nodes").textContent = (m.online_nodes || 0) + "/" + (m.total_nodes || 0);
+
+      document.getElementById("stat-latency").textContent = (m.last_latency_ms || 0).toFixed(0) + "ms";
+
+      document.getElementById("stat-routing").textContent = m.routing_decisions_total || 0;
+
+      document.getElementById("stat-streams").textContent = m.active_streams || 0;
+
+      document.getElementById("stat-errors").textContent = m.errors_total || 0;
+
+
+
+      const reasons = document.getElementById("health-reasons");
+
+      if (h.reasons && h.reasons.length) {
+
+        reasons.innerHTML = h.reasons.map(r => 
+
+          '<div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-red-400 shrink-0"></span>' + r + '</div>'
+
+        ).join("");
+
+      } else {
+
+        reasons.innerHTML = '<div class="text-emerald-400">Todos los sistemas operativos</div>';
+
+      }
+
+
+
+      const errList = document.getElementById("error-list");
+
+      if (m.recent_errors && m.recent_errors.length) {
+
+        errList.innerHTML = m.recent_errors.slice(-10).reverse().map(e =>
+
+          '<div class="text-red-400">[' + new Date(e.ts * 1000).toLocaleTimeString() + '] ' + (e.error || "?") + '</div>'
+
+        ).join("");
+
+      } else {
+
+        errList.innerHTML = '<div class="text-emerald-400">Sin errores recientes</div>';
+
+      }
+
+    } catch {}
+
+  }
+
+  refresh();
+
+  setInterval(refresh, 8000);
+
+</script>
+
 ]3008;end=c208537e-36e1-487b-b483-3bc604ae233e;exit=success\]3008;start=abcd44d7-cecc-4f04-a9ed-f749924260e6;machineid=20aaf5bfa7584e8fb6c0264046eebecd;user=albert;hostname=ubuntu-ialab;bootid=1fc818c4-677f-4c57-b21b-3a4b2a5c6134;pid=00000000000000196559;type=shell;cwd=/home/albert\[?2004h]0;albert@ubuntu-ialab: ~[01;32malbert@ubuntu-ialab[00m:[01;34m~[00m]3008;end=6c054d7c-ff23-473c-88cd-7ab242de98c1;exit=success\]3008;start=01185c25-4ab7-4255-83ed-5b8f9dd6f038;machineid=20aaf5bfa7584e8fb6c0264046eebecd;user=albert;hostname=ubuntu-ialab;bootid=1fc818c4-677f-4c57-b21b-3a4b2a5c6134;pid=00000000000000199116;type=shell;cwd=/home/albert\[?2004h]0;albert@ubuntu-ialab: ~[01;32malbert@ubuntu-ialab[00m:[01;34m~[00m
