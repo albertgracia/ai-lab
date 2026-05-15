@@ -3,38 +3,157 @@ import Layout from "../../layouts/Layout.astro";
 ---
 
 <Layout title="Projects · AI-LAB">
-  <section class="space-y-10">
-    <div>
-      <p class="uppercase tracking-[0.3em] text-cyan-400 text-sm">Engineering Portfolio</p>
-      <h1 class="mt-4 text-5xl font-black text-white">Proyectos técnicos</h1>
-      <p class="mt-4 max-w-4xl text-xl text-zinc-400">
-        Proyectos reales desplegados, operativos y documentados dentro del AI-LAB.
-      </p>
-    </div>
+  <section class="mx-auto max-w-7xl px-6 py-16 space-y-10">
 
-    <div class="grid gap-6">
-      {[
-        {
-          title: "AI-LAB Platform",
-          desc: "Infraestructura local de IA distribuida con router OpenAI-compatible, GPUs remotas y observabilidad viva.",
-          url: "/architecture",
-        },
-        {
-          title: "Historical Telemetry",
-          desc: "Snapshots históricos, API propia y gráficas Recharts para observar evolución del runtime.",
-          url: "/status/history",
-        },
-        {
-          title: "Secure Publishing",
-          desc: "Publicación segura con Cloudflare Access, Tunnel y Traefik como gateway interno.",
-          url: "/architecture/security",
-        },
-      ].map((project) => (
-        <a href={project.url} class="block rounded-2xl border border-zinc-800 bg-zinc-900 p-8 hover:border-cyan-500 transition">
-          <h2 class="text-3xl font-bold text-cyan-400">{project.title}</h2>
-          <p class="mt-4 text-zinc-400">{project.desc}</p>
-        </a>
-      ))}
-    </div>
+    <header class="rounded-3xl border border-cyan-500/30 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black p-10">
+      <p class="text-sm uppercase tracking-[0.35em] text-cyan-400">AI-LAB PROJECTS</p>
+      <h1 class="mt-4 text-6xl font-black text-white">8 Proyectos Activos</h1>
+      <p class="mt-4 max-w-4xl text-xl leading-9 text-zinc-300">
+        Proyectos que componen la plataforma cognitiva distribuida AI-LAB.
+        Cada proyecto incluye arquitectura, componentes, telemetria y roadmap.
+      </p>
+    </header>
+
+    <section class="grid gap-6 lg:grid-cols-2">
+
+      <div class="rounded-2xl border border-cyan-500/20 bg-zinc-950 p-6 hover:border-cyan-400/50 transition">
+        <span class="text-xs uppercase tracking-wider text-cyan-400">Proyecto 1</span>
+        <h2 class="mt-2 text-2xl font-black text-white">AI-LAB Runtime Core</h2>
+        <p class="mt-2 text-sm text-zinc-400">Gateway OpenAI-compatible, Router API con routing capability-aware, sesiones, failover y sanitizacion de streaming.</p>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <span class="px-2 py-1 text-xs rounded bg-zinc-800 text-zinc-300">Gateway :8008</span>
+          <span class="px-2 py-1 text-xs rounded bg-zinc-800 text-zinc-300">Router :8083</span>
+          <span class="px-2 py-1 text-xs rounded bg-zinc-800 text-zinc-300">Capability-Aware</span>
+          <span class="px-2 py-1 text-xs rounded bg-zinc-800 text-zinc-300">Stream Sanitization</span>
+        </div>
+        <div class="mt-4 grid grid-cols-2 gap-2 text-xs text-zinc-500">
+          <div>Componentes: 6</div>
+          <div>Estado: <span class="text-emerald-400">Production</span></div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-cyan-500/20 bg-zinc-950 p-6 hover:border-cyan-400/50 transition">
+        <span class="text-xs uppercase tracking-wider text-cyan-400">Proyecto 2</span>
+        <h2 class="mt-2 text-2xl font-black text-white">Realtime Cognitive Mesh</h2>
+        <p class="mt-2 text-sm text-zinc-400">SSE Event Bus con 9 tipos de eventos, streaming en vivo cada 3s, topologia interactiva y sincronizacion distribuida.</p>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <span class="px-2 py-1 text-xs rounded bg-zinc-800 text-zinc-300">Event Bus</span>
+          <span class="px-2 py-1 text-xs rounded bg-zinc-800 text-zinc-300">SSE Stream</span>
+          <span class="px-2 py-1 text-xs rounded bg-zinc-800 text-zinc-300">ClusterHealth</span>
+          <span class="px-2 py-1 text-xs rounded bg-zinc-800 text-zinc-300">TopologyGraph</span>
+        </div>
+        <div class="mt-4 grid grid-cols-2 gap-2 text-xs text-zinc-500">
+          <div>Componentes: 4</div>
+          <div>Estado: <span class="text-emerald-400">Production</span></div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-cyan-500/20 bg-zinc-950 p-6 hover:border-cyan-400/50 transition">
+        <span class="text-xs uppercase tracking-wider text-cyan-400">Proyecto 3</span>
+        <h2 class="mt-2 text-2xl font-black text-white">GPU Telemetry Stack</h2>
+        <p class="mt-2 text-sm text-zinc-400">Monitorizacion AMD GPU en tiempo real: VRAM, temperatura, load, power. Exporters Prometheus + PowerShell API.</p>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <span class="px-2 py-1 text-xs rounded bg-zinc-800 text-zinc-300">windows_exporter</span>
+          <span class="px-2 py-1 text-xs rounded bg-zinc-800 text-zinc-300">GPU API :9183</span>
+          <span class="px-2 py-1 text-xs rounded bg-zinc-800 text-zinc-300">LibreHWMonitor</span>
+          <span class="px-2 py-1 text-xs rounded bg-zinc-800 text-zinc-300">Prometheus</span>
+        </div>
+        <div class="mt-4 grid grid-cols-2 gap-2 text-xs text-zinc-500">
+          <div>GPUs: 2</div>
+          <div>Estado: <span class="text-emerald-400">Production</span></div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-cyan-500/20 bg-zinc-950 p-6 hover:border-cyan-400/50 transition">
+        <span class="text-xs uppercase tracking-wider text-cyan-400">Proyecto 4</span>
+        <h2 class="mt-2 text-2xl font-black text-white">AI Operations Center</h2>
+        <p class="mt-2 text-sm text-zinc-400">Centro de operaciones AI con health score, runtime analytics, metricas agregadas y visibilidad de incidentes.</p>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <span class="px-2 py-1 text-xs rounded bg-zinc-800 text-zinc-300">Health Score</span>
+          <span class="px-2 py-1 text-xs rounded bg-zinc-800 text-zinc-300">Analytics API</span>
+          <span class="px-2 py-1 text-xs rounded bg-zinc-800 text-zinc-300">/ops</span>
+          <span class="px-2 py-1 text-xs rounded bg-zinc-800 text-zinc-300">EventStream</span>
+        </div>
+        <div class="mt-4 grid grid-cols-2 gap-2 text-xs text-zinc-500">
+          <div>Metricas: 12</div>
+          <div>Estado: <span class="text-emerald-400">Production</span></div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-cyan-500/20 bg-zinc-950 p-6 hover:border-cyan-400/50 transition">
+        <span class="text-xs uppercase tracking-wider text-cyan-400">Proyecto 5</span>
+        <h2 class="mt-2 text-2xl font-black text-white">Observability Platform</h2>
+        <p class="mt-2 text-sm text-zinc-400">Stack completo: Prometheus + Grafana + Loki. 8 dashboards, 14+ metricas personalizadas, telemetria historica.</p>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <span class="px-2 py-1 text-xs rounded bg-zinc-800 text-zinc-300">Prometheus</span>
+          <span class="px-2 py-1 text-xs rounded bg-zinc-800 text-zinc-300">Grafana</span>
+          <span class="px-2 py-1 text-xs rounded bg-zinc-800 text-zinc-300">Loki</span>
+          <span class="px-2 py-1 text-xs rounded bg-zinc-800 text-zinc-300">8 Dashboards</span>
+        </div>
+        <div class="mt-4 grid grid-cols-2 gap-2 text-xs text-zinc-500">
+          <div>Nodos: 1.40</div>
+          <div>Estado: <span class="text-emerald-400">Production</span></div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-cyan-500/20 bg-zinc-950 p-6 hover:border-cyan-400/50 transition">
+        <span class="text-xs uppercase tracking-wider text-cyan-400">Proyecto 6</span>
+        <h2 class="mt-2 text-2xl font-black text-white">OpenWebUI Integration Layer</h2>
+        <p class="mt-2 text-sm text-zinc-400">Conexion de Open WebUI al Router API con streaming sanitizado, abstraccion de modelos y orquestacion multi-modelo.</p>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <span class="px-2 py-1 text-xs rounded bg-zinc-800 text-zinc-300">Open WebUI</span>
+          <span class="px-2 py-1 text-xs rounded bg-zinc-800 text-zinc-300">Router API</span>
+          <span class="px-2 py-1 text-xs rounded bg-zinc-800 text-zinc-300">CORS</span>
+          <span class="px-2 py-1 text-xs rounded bg-zinc-800 text-zinc-300">Sanitization</span>
+        </div>
+        <div class="mt-4 grid grid-cols-2 gap-2 text-xs text-zinc-500">
+          <div>Modelos: 4 rutas</div>
+          <div>Estado: <span class="text-emerald-400">Production</span></div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-cyan-500/20 bg-zinc-950 p-6 hover:border-cyan-400/50 transition">
+        <span class="text-xs uppercase tracking-wider text-cyan-400">Proyecto 7</span>
+        <h2 class="mt-2 text-2xl font-black text-white">AI Governance & Memory</h2>
+        <p class="mt-2 text-sm text-zinc-400">Auditoria de gobernanza, memoria episodica, analitica de sesiones y decisiones del runtime. Seguridad y trazabilidad.</p>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <span class="px-2 py-1 text-xs rounded bg-zinc-800 text-zinc-300">Governance</span>
+          <span class="px-2 py-1 text-xs rounded bg-zinc-800 text-zinc-300">Episodic Memory</span>
+          <span class="px-2 py-1 text-xs rounded bg-zinc-800 text-zinc-300">Session Tracking</span>
+          <span class="px-2 py-1 text-xs rounded bg-zinc-800 text-zinc-300">Audit Trail</span>
+        </div>
+        <div class="mt-4 grid grid-cols-2 gap-2 text-xs text-zinc-500">
+          <div>Eventos: 9 tipos</div>
+          <div>Estado: <span class="text-yellow-400">En Progreso</span></div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-cyan-500/20 bg-zinc-950 p-6 hover:border-cyan-400/50 transition">
+        <span class="text-xs uppercase tracking-wider text-cyan-400">Proyecto 8</span>
+        <h2 class="mt-2 text-2xl font-black text-white">Infrastructure & Delivery Platform</h2>
+        <p class="mt-2 text-sm text-zinc-400">Traefik, Cloudflare Tunnel, GitHub Actions runner, Astro platform, Docker stacks y servicios systemd.</p>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <span class="px-2 py-1 text-xs rounded bg-zinc-800 text-zinc-300">Traefik</span>
+          <span class="px-2 py-1 text-xs rounded bg-zinc-800 text-zinc-300">Cloudflare</span>
+          <span class="px-2 py-1 text-xs rounded bg-zinc-800 text-zinc-300">CI/CD Runner</span>
+          <span class="px-2 py-1 text-xs rounded bg-zinc-800 text-zinc-300">8 Servicios</span>
+        </div>
+        <div class="mt-4 grid grid-cols-2 gap-2 text-xs text-zinc-500">
+          <div>Stacks: 7 Docker</div>
+          <div>Estado: <span class="text-emerald-400">Production</span></div>
+        </div>
+      </div>
+
+    </section>
+
+    <section class="rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
+      <h2 class="text-2xl font-black text-cyan-400">Proximo: Experiments Lab</h2>
+      <p class="mt-4 text-zinc-400 max-w-4xl">
+        El siguiente salto es el laboratorio de experimentos: benchmarks GPU, comparativas de modelos,
+        pruebas de routing, latencia, VRAM, SSE y tests del event bus. Esto alimentara el blog,
+        el SEO y la credibilidad tecnica del proyecto.
+      </p>
+    </section>
+
   </section>
 </Layout>
