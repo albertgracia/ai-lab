@@ -120,8 +120,8 @@ def _runtime_affinity():
 
 def _runtime_confidence():
     try:
-        from runtime.autonomous.runtime_confidence import compute_confidence
-        return {"status": "ok", "note": "use /api/runtime-confidence?task=X&model=Y&session=Z"}
+        from runtime.autonomous.runtime_confidence import get_all_confidences
+        return {"models": get_all_confidences()}
     except ImportError:
         return {"error": "runtime_confidence not available"}
 

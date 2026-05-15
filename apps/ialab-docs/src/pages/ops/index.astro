@@ -82,14 +82,21 @@ import EventStream from "../../components/EventStream.astro";
 
     <section class="rounded-2xl border border-emerald-500/30 bg-zinc-950 p-6">
       <h2 class="text-xl font-bold text-emerald-400 mb-4">Autonomous Runtime (FASE 9.0)</h2>
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div class="rounded-xl border border-zinc-800 p-4">
           <span class="text-xs text-zinc-500">Optimizer State</span>
           <p class="text-2xl font-bold text-emerald-400" id="auto-state">active</p>
         </div>
         <div class="rounded-xl border border-zinc-800 p-4">
-          <span class="text-xs text-zinc-500">Recommendations</span>
-          <p class="text-2xl font-bold text-cyan-400" id="auto-recs">0</p>
+          <span class="text-xs text-zinc-500">Confidence (avg)</span>
+          <p class="text-2xl font-bold text-cyan-400" id="auto-conf-avg">--</p>
+        </div>
+        <div class="rounded-xl border border-zinc-800 p-4">
+          <span class="text-xs text-zinc-500">Recent Recs</span>
+          <p class="text-2xl font-bold text-yellow-400" id="auto-recs">0</p>
+        <div class="rounded-xl border border-zinc-800 p-4">
+          <span class="text-xs text-zinc-500">Session Affinity</span>
+          <p class="text-2xl font-bold text-purple-400" id="auto-affinity">0</p>
         </div>
         <div class="rounded-xl border border-zinc-800 p-4">
           <span class="text-xs text-zinc-500">Session Affinity</span>
@@ -191,14 +198,18 @@ import EventStream from "../../components/EventStream.astro";
 
   async function loadAutonomous() {
     try {
-      const [opt, aff, adj] = await Promise.all([
+      const [opt, aff, adj, conf] = await Promise.all([
         fetch("/api/runtime-optimizer").then(r => r.json()),
         fetch("/api/runtime-affinity").then(r => r.json()),
         fetch("/api/runtime-adjustments").then(r => r.json()),
+        fetch("/api/runtime-confidence").then(r => r.json()),
       ]);
       document.getElementById("auto-recs").textContent = (opt.recommendations || []).length;
       document.getElementById("auto-affinity").textContent = (aff.total_sessions || 0);
       document.getElementById("auto-actions").textContent = Array.isArray(adj) ? adj.length : 0;
+      const models = (conf.models || {});
+      const vals = Object.values(models).map(m => m.confidence || 0);
+      document.getElementById("auto-conf-avg").textContent = vals.length ? Math.round((vals.reduce((a,b)=>a+b,0)/vals.length)*100) + "%" : "--";
     } catch {}
   }
   loadAutonomous();

@@ -96,3 +96,54 @@ def compute_confidence(
         failover_penalty * 0.1
     )
     return round(min(confidence, 1.0), 3), reasons
+
+
+def get_all_confidences(window_minutes: int = 1440) -> dict:
+    """Return per-model confidence dict with samples and detailed stats.
+
+    Returns:
+        {"llama-3.1-8b-instruct": {"confidence": 0.91, "samples": 22,
+                                     "success_rate": 0.98, "avg_latency_ms": 1200}, ...}
+    """
+    result = {}
+    try:
+        from runtime.routing.routing_history import stats_by_model
+        from runtime.routing.model_performance import get_model_performance
+        perf = get_model_performance(window_minutes=window_minutes)
+
+        for model_id, data in perf.items():
+            s = data.get("streaming", {})
+            ns = data.get("non_streaming", {})
+            combo_n = s.get("count", 0) + ns.get("count", 0)
+            combo_lat = (
+                (s.get("avg_latency_ms", 0) * s.get("count", 0) +
+                 ns.get("avg_latency_ms", 0) * ns.get("count", 0)) /
+                max(combo_n, 1)
+            )
+            sr = data.get("success_rate", 0)
+            fr = data.get("failover_rate", 0)
+            lat_score = max(0, 1 - combo_lat / 30_000)
+            failover_penalty = max(0, 1 - fr * 5)
+            conf = round(
+                sr * 0.5 + lat_score * 0.2 + failover_penalty * 0.1, 3
+            )
+            reasons = []
+            if sr >= 0.9:
+                reasons.append("high_success_rate")
+            if lat_score >= 0.8:
+                reasons.append("low_latency")
+            if fr == 0:
+                reasons.append("low_failover_rate")
+
+            display = data.get("display_name", model_id)
+            result[model_id] = {
+                "confidence": conf,
+                "samples": combo_n,
+                "success_rate": round(sr, 3),
+                "avg_latency_ms": round(combo_lat, 1),
+                "reasons": reasons,
+                "display_name": display,
+            }
+    except ImportError:
+        pass
+    return result

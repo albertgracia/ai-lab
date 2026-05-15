@@ -33,6 +33,7 @@ def record_route_result(
     working_memory_used: bool = False,
     tokens_estimated: int = 0,
     gpu_load: int = 0,
+    session_id: str = "",
 ):
     """Append one route record to the JSONL file."""
     record = {
@@ -50,6 +51,9 @@ def record_route_result(
         "working_memory_used": working_memory_used,
         "tokens_estimated": tokens_estimated,
         "gpu_load": gpu_load,
+        "session_id": session_id or "default",
+        "confidence": 0.0,
+        "confidence_reasons": [],
     }
 
     try:
@@ -63,6 +67,17 @@ def record_route_result(
         _memory_cache.append(record)
         while len(_memory_cache) > _MAX_CACHE:
             _memory_cache.pop(0)
+
+    # ── session affinity hook (FASE 9.0.2) ───────────────────────────
+    try:
+        from runtime.autonomous.session_affinity import record_success, record_failure
+        sid = session_id or "default"
+        if success:
+            record_success(sid, model)
+        else:
+            record_failure(sid, model)
+    except ImportError:
+        pass
 
 
 def read_route_history(limit: int = 500, from_disk: bool = False):
