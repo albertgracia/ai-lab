@@ -107,6 +107,9 @@ import EventStream from "../../components/EventStream.astro";
           <p class="text-2xl font-bold text-yellow-400" id="auto-actions">0</p>
         </div>
       </div>
+      <div class="mt-4 rounded-xl border border-zinc-800 p-3" id="pending-list">
+        <span class="text-xs text-zinc-500">Sin acciones pendientes</span>
+      </div>
     </section>
 
     <section class="rounded-2xl border border-purple-500/30 bg-zinc-950 p-6">
@@ -210,6 +213,16 @@ import EventStream from "../../components/EventStream.astro";
       const models = (conf.models || {});
       const vals = Object.values(models).map(m => m.confidence || 0);
       document.getElementById("auto-conf-avg").textContent = vals.length ? Math.round((vals.reduce((a,b)=>a+b,0)/vals.length)*100) + "%" : "--";
+
+      const pend = await fetch("/api/runtime-pending-actions").then(r => r.json());
+      const pl = document.getElementById("pending-list");
+      const actions = pend.actions || [];
+      if (!actions.length) {
+        pl.innerHTML = '<span class="text-xs text-zinc-500">Sin acciones pendientes</span>';
+      } else {
+        pl.innerHTML = '<span class="text-xs text-emerald-400 mb-2 block">' + actions.length + ' pendiente(s)</span>' +
+          actions.map(a => '<div class="flex items-center justify-between py-1 border-b border-zinc-800 text-xs"><span class="text-yellow-400">' + a.action + '</span><span class="text-zinc-500">' + (a.target || a.task || '--') + '</span><span class="text-zinc-400">' + Math.round(a.confidence*100) + '%</span></div>').join("");
+      }
     } catch {}
   }
   loadAutonomous();

@@ -132,6 +132,14 @@ def _runtime_adjustments():
     except ImportError:
         return {"error": "optimizer_history not available"}
 
+def _pending_actions():
+    try:
+        from runtime.autonomous.pending_adjustments import all_pending
+        actions = all_pending()
+        return {"pending": len(actions), "actions": actions}
+    except ImportError:
+        return {"error": "pending_adjustments not available"}
+
 class APIHandler(BaseHTTPRequestHandler):
     timeout = 10
     def do_GET(self):
@@ -157,6 +165,8 @@ class APIHandler(BaseHTTPRequestHandler):
             self._json(_runtime_confidence())
         elif self.path == "/api/runtime-adjustments":
             self._json(_runtime_adjustments())
+        elif self.path == "/api/runtime-pending-actions":
+            self._json(_pending_actions())
         elif self.path == "/api/events":
             self._sse()
         else: self._send_error(404)

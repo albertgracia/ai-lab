@@ -89,7 +89,7 @@ def run_optimizer_cycle() -> dict:
     data = _read_sources()
     recs = _compute_recommendations(data)
 
-    # record to history
+    # record to history AND queue pending adjustments (FASE 9.0.3)
     for rec in recs:
         try:
             from runtime.autonomous.optimizer_history import record_optimizer_action
@@ -99,6 +99,24 @@ def run_optimizer_cycle() -> dict:
                 reason=rec.get("reason", ""),
                 confidence=rec.get("confidence", 0.0),
             )
+        except ImportError:
+            pass
+
+        # ── safe pending adjustment (FASE 9.0.3) ─────────────────
+        target = rec.get("model", rec.get("task", "general"))
+        conf = rec.get("confidence", 0.0)
+        try:
+            from runtime.autonomous.optimizer_policy import validate_action
+            allowed, reason = validate_action(rec.get("action", ""), conf)
+            if allowed:
+                from runtime.autonomous.pending_adjustments import create_pending
+                create_pending(
+                    action=rec["action"],
+                    target=target,
+                    task=rec.get("task", ""),
+                    reason=rec.get("reason", ""),
+                    confidence=conf,
+                )
         except ImportError:
             pass
 
