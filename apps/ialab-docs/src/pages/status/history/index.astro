@@ -142,11 +142,8 @@ import Layout from "../../../layouts/Layout.astro";
 
     try {
 
-      const r = await fetch("https://blog-ai-lab.labrazahome.com/api/analytics", {
+      const r = await fetch("/api/analytics", {
         cache: "no-store",
-        headers: {
-          "CF-Access-Client-Id": "3093bf6c93d1c8dbb6ab65db21941ac0.access",
-          "CF-Access-Client-Secret": "e54c05bb3496e0ff55c55b6af63c456aa6b7d5171a74f42aeebd3facefe30a1c"
         }
       });
 
