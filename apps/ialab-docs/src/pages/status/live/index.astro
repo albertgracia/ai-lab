@@ -1,117 +1,20 @@
 ---
 import Layout from "../../../layouts/Layout.astro";
-
-const services = [
-  {
-    name: "Prometheus",
-    status: "Operational",
-    endpoint: "192.168.1.40:9090",
-    role: "Metrics backend",
-  },
-  {
-    name: "Loki",
-    status: "Operational",
-    endpoint: "192.168.1.40:3100",
-    role: "Centralized logs",
-  },
-  {
-    name: "Grafana",
-    status: "Operational",
-    endpoint: "192.168.1.40:3000",
-    role: "Visualization",
-  },
-  {
-    name: "Open WebUI",
-    status: "Operational",
-    endpoint: "192.168.1.30:3000",
-    role: "Inference UI",
-  },
-  {
-    name: "Qdrant",
-    status: "Operational",
-    endpoint: "192.168.1.30:6333",
-    role: "Vector database",
-  },
-  {
-    name: "Ollama",
-    status: "Operational",
-    endpoint: "192.168.1.30:11434",
-    role: "LLM runtime",
-  },
-  {
-    name: "UniFi",
-    status: "Operational",
-    endpoint: "192.168.1.1",
-    role: "Network fabric",
-  },
-  {
-    name: "NAS-N5",
-    status: "Operational",
-    endpoint: "192.168.1.250",
-    role: "Windows telemetry + Hyper-V",
-  },
-];
+import ClusterHealth from "../../../components/ClusterHealth.astro";
+import EventStream from "../../../components/EventStream.astro";
 ---
 
-<Layout title="Live Status · AI-LAB">
+<Layout title="Estado Vivo · AI-LAB">
   <section class="mx-auto max-w-7xl px-6 py-16">
-    <div class="mb-10">
-      <div class="mb-4 inline-flex rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-400">
-        AI-LAB STATUS · OPERATIONAL
-      </div>
-
-      <h1 class="mb-4 text-5xl font-black tracking-tight text-white">
-        Live Infrastructure Status
-      </h1>
-
-      <p class="max-w-3xl text-lg text-zinc-400">
-        Estado operacional del stack AI-LAB, observabilidad, inferencia distribuida,
-        servicios internos, red UniFi y nodos principales del laboratorio.
+    <div class="mb-8">
+      <h1 class="text-5xl font-black tracking-tight text-white">Estado Vivo del AI-LAB</h1>
+      <p class="mt-4 max-w-4xl text-lg text-zinc-400">
+        Monitorizacion en tiempo real via eventos SSE.
       </p>
     </div>
-
-    <div class="mb-12 grid gap-6 md:grid-cols-4">
-      <div class="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
-        <div class="text-sm text-zinc-500">Services Online</div>
-        <div class="mt-2 text-4xl font-black text-emerald-400">8</div>
-      </div>
-
-      <div class="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
-        <div class="text-sm text-zinc-500">Metrics Active</div>
-        <div class="mt-2 text-4xl font-black text-cyan-400">5900+</div>
-      </div>
-
-      <div class="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
-        <div class="text-sm text-zinc-500">Cluster State</div>
-        <div class="mt-2 text-4xl font-black text-emerald-400">Healthy</div>
-      </div>
-
-      <div class="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
-        <div class="text-sm text-zinc-500">Environment</div>
-        <div class="mt-2 text-4xl font-black text-orange-400">HOMELAB</div>
-      </div>
-    </div>
-
-    <div class="grid gap-6">
-      {
-        services.map((service) => (
-          <div class="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6 shadow-xl shadow-black/20">
-            <div class="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-              <div>
-                <h2 class="text-2xl font-bold text-white">{service.name}</h2>
-                <p class="mt-2 text-zinc-400">{service.role}</p>
-                <div class="mt-3 text-sm text-zinc-500">
-                  Endpoint: {service.endpoint}
-                </div>
-              </div>
-
-              <div class="inline-flex w-fit rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 font-bold text-emerald-400">
-                {service.status}
-              </div>
-            </div>
-          </div>
-        ))
-      }
+    <ClusterHealth />
+    <div class="mt-8">
+      <EventStream />
     </div>
   </section>
 </Layout>

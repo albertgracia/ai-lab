@@ -1,34 +1,52 @@
-<div class="rounded-3xl border border-zinc-800 bg-zinc-900 p-8">
+---
+// TopologyGraph.astro - Live topology via SSE
+---
 
-  <h2 class="text-4xl font-black text-cyan-400">
-    AI-LAB Live Topology
-  </h2>
-
-  <div class="mt-10 overflow-auto rounded-2xl border border-zinc-800 bg-black p-8">
-
-<pre class="text-sm leading-8 text-cyan-400">
-Internet
-   │
-Cloudflare Tunnel
-   │
-Traefik Reverse Proxy
-   │
-├── Astro Docs
-├── OpenCode
-├── OpenWebUI
-├── Router API
-│
-├── LM Studio Local
-├── RX9070XT Node
-└── RX7900XT Node
-
-Router API
-   │
-├── Qdrant
-├── Embeddings
-└── Runtime Snapshots
-</pre>
-
+<div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-2xl font-black text-cyan-400">AI-LAB Live Topology</h2>
+    <span id="topo-status" class="px-3 py-1 text-xs rounded-full bg-red-500/20 text-red-400">OFFLINE</span>
   </div>
-
+  <div id="topology-graph" class="rounded-xl border border-zinc-800 bg-black p-6">
+    <pre id="topo-ascii" class="text-xs leading-6 text-cyan-400 font-mono">
+Cargando topologia...
+    </pre>
+  </div>
 </div>
+
+<script>
+  const statusEl = document.getElementById("topo-status");
+  const asciiEl = document.getElementById("topo-ascii");
+
+  async function renderTopology() {
+    try {
+      const res = await fetch("/api/topology", { cache: "no-store" });
+      const data = await res.json();
+
+      const nodes = data.nodes || [];
+      const edges = data.edges || [];
+
+      let ascii = "     AI-LAB CLUSTER TOPOLOGY\n";
+      ascii += "     ======================\n\n";
+
+      for (const n of nodes) {
+        const icon = n.arc__online === 1 ? "\u25CF" : "\u25CB";
+        ascii += `  ${icon} ${n.title} (${n.mainstat})\n`;
+      }
+      ascii += "\n";
+      for (const e of edges) {
+        ascii += `  ${e.source} -> ${e.target}: ${e.mainstat}\n`;
+      }
+
+      asciiEl.textContent = ascii;
+      statusEl.textContent = "LIVE";
+      statusEl.className = "px-3 py-1 text-xs rounded-full bg-emerald-500/20 text-emerald-400";
+    } catch {
+      statusEl.textContent = "OFFLINE";
+      statusEl.className = "px-3 py-1 text-xs rounded-full bg-red-500/20 text-red-400";
+    }
+  }
+
+  renderTopology();
+  setInterval(renderTopology, 5000);
+</script>
