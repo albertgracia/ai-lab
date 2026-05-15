@@ -194,13 +194,22 @@ def _build_hard_facts() -> str:
         if state_file.exists():
             state = json.loads(state_file.read_text())
             discovered = state.get("discovered_nodes", [])
+            # Also load inference_nodes.json for friendly names
+            node_names = {}
+            try:
+                cfg_file = Path("/opt/ai-lab/config/inference_nodes.json")
+                cfg = json.loads(cfg_file.read_text()) if cfg_file.exists() else {}
+                for nid, nd in cfg.get("nodes", {}).items():
+                    node_names[nd.get("host", "")] = nd.get("name", nid)
+            except Exception:
+                pass
             if discovered:
                 lines.append("GPU NODES:")
                 for n in discovered:
-                    name = n.get("name", "unknown")
                     host = n.get("host", "0.0.0.0")
+                    friendly = node_names.get(host, n.get("name", "unknown"))
                     status = "ONLINE" if n.get("online") else "OFFLINE"
-                    lines.append(f"  - {name} → {host} ({status})")
+                    lines.append(f"  - {friendly} → {host} ({status})")
                 lines.append("")
     except Exception:
         pass
@@ -227,6 +236,26 @@ def _build_hard_facts() -> str:
                 lines.append("")
     except Exception:
         pass
+
+    # ── Router models (from Router API) ──────────────────────────────
+    lines.append("ROUTER MODELS (available via :8083/v1/models):")
+    lines.append("  - ailab-router/auto       → automatic capability-based routing")
+    lines.append("  - ailab-router/fast       → fast responses (Llama 3.1 8B)")
+    lines.append("  - ailab-router/coding     → code generation (Qwen 2.5 Coder)")
+    lines.append("  - ailab-router/reasoning  → heavy reasoning (Qwen 2.5 Coder)")
+    lines.append("")
+
+    # ── Systemd services ─────────────────────────────────────────────
+    lines.append("SYSTEMD SERVICES (running on 192.168.1.30):")
+    lines.append("  - ailab-gateway (:8008)   → OpenAI-compatible gateway")
+    lines.append("  - ailab-router (:8083)    → cognitive router API")
+    lines.append("  - ailab-live-api (:8084)  → status/topology/analytics/events")
+    lines.append("  - ailab-docs (:4322)      → Astro portal preview")
+    lines.append("  - ailab-heartbeat         → cluster heartbeat")
+    lines.append("  - ailab-live-state        → system snapshot service")
+    lines.append("  - ailab-runner             → GitHub Actions runner")
+    lines.append("  - ailab-traefik            → reverse proxy (Docker Compose)")
+    lines.append("")
 
     # ── Forbidden references ─────────────────────────────────────────
     lines.append("FORBIDDEN REFERENCES (never mention):")

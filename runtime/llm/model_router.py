@@ -36,7 +36,7 @@ def infer_task(request_text=None, capability=None):
     text = (request_text or "").lower()
     if any(w in text for w in ["python", "code", "script", "bug", "api", "refactor"]):
         return "coding"
-    if any(w in text for w in ["arquitectura", "architecture", "complex", "analyze", "optimizar"]):
+    if any(w in text for w in ["arquitectura", "architecture", "complex", "analyze", "optimizar", "infraestructura", "infrastructure", "informe", "report", "analisis", "diagnostico"]):
         return "reasoning"
     return "fast"
 
