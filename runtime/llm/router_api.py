@@ -277,10 +277,11 @@ async def chat_completions(request: Request):
 
     system_prompt = (
         BASE_SYSTEM_CONTEXT
-        + "\\n\\n"
-        + "Resumen operativo interno del router AI-LAB. "
-        + "No copies este resumen; úsalo solo para orientar la respuesta.\\n"
-        + context_summary
+        + "\n\n"
+        + "=== CONTEXTO OPERATIVO (datos reales del runtime) ===\n"
+        + agent_context[:6000]   # first 6K chars = HARD FACTS + most relevant sources
+        + "\n\n"
+        + "Usa los datos anteriores para responder. No copies literalmente, sintetiza."
     )
 
     final_instruction = (
