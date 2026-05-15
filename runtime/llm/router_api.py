@@ -253,10 +253,6 @@ async def chat_completions(request: Request):
 
     request_text = extract_request_text(payload)
 
-    # FASE 8.9 handler counter
-    if _HAVE_COGNITIVE:
-        _cog_inc("context_shaping_errors")
-
     capability = capability_from_model(
         requested_model
     )
@@ -285,8 +281,6 @@ async def chat_completions(request: Request):
         agent_context = shape_context(task, node.get("model", ""), wm)
     else:
         agent_context = build_selective_context(request_text)
-        if _HAVE_COGNITIVE:
-            _cog_inc("context_shaping_errors")
 
     context_summary = "\\n".join(
         line for line in agent_context.splitlines()
