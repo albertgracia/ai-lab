@@ -1,0 +1,2 @@
+# Proxy API through Cloudflare Pages edge (bypasses Cloudflare Access)
+/api/* https://blog-ai-lab.labrazahome.com/api/:splat 200

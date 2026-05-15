@@ -83,7 +83,7 @@ import EventStream from "../../components/EventStream.astro";
 <script>
   async function refresh() {
     try {
-      const res = await fetch("https://blog-ai-lab.labrazahome.com/api/analytics", { cache: "no-store" });
+      const res = await fetch("/api/analytics", { cache: "no-store" });
       const d = await res.json();
       const h = d.health || {};
       const m = d.metrics || {};
