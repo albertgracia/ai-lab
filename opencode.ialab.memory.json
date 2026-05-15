@@ -18,6 +18,27 @@
           "name": "Gemma 4 E4B"
         }
       }
+    },
+    "ailab-router": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "AI-LAB Router",
+      "options": {
+        "baseURL": "http://192.168.1.30:8083/v1"
+      },
+      "models": {
+        "ailab-router/auto": {
+          "name": "AI-LAB Router (auto)"
+        },
+        "ailab-router/fast": {
+          "name": "AI-LAB Router (fast)"
+        },
+        "ailab-router/reasoning": {
+          "name": "AI-LAB Router (reasoning)"
+        },
+        "ailab-router/coding": {
+          "name": "AI-LAB Router (coding)"
+        }
+      }
     }
   },
   "agentRoot": ".agent",

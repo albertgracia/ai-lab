@@ -1,5 +1,5 @@
 {
-  "updated_at": 1778776096,
+  "updated_at": 1778810360,
   "backend": "lmstudio",
   "nodes": [
     {
@@ -7,35 +7,51 @@
       "port": 1234,
       "backend": "lmstudio",
       "online": true,
-      "latency_ms": 2.01,
+      "latency_ms": 1.39,
       "models": [
-        "deepseek-r1-distill-qwen-14b",
-        "qwen3.5-9b-claude-4.6-opus-reasoning-distilled-v2",
-        "deepseek-r1-0528-qwen3-8b",
-        "qwen3.6-35b-a3b-claude-4.6-opus-reasoning-distilled",
+        "qwen2.5-coder-14b-instruct",
+        "llama-3.1-8b-instruct",
         "text-embedding-nomic-embed-text-v1.5"
       ],
       "capabilities": [
+        "backend",
+        "coding",
         "embeddings",
         "fast",
-        "large-context",
         "memory",
         "reasoning"
       ],
-      "discovered_at": 1778776088,
+      "discovered_at": 1778810355,
       "status": "online"
     },
     {
       "host": "192.168.1.60",
       "port": 1234,
       "backend": "lmstudio",
-      "online": false,
-      "latency_ms": null,
-      "models": [],
-      "capabilities": [],
-      "discovered_at": 1778776088,
-      "status": "offline",
-      "error": "HTTPConnectionPool(host='192.168.1.60', port=1234): Max retries exceeded with url: /v1/models (Caused by NewConnectionError(\"HTTPConnection(host='192.168.1.60', port=1234): Failed to establish a new connection: [Errno 113] No route to host\"))"
+      "online": true,
+      "latency_ms": 1.42,
+      "models": [
+        "zhangfeng026/qwen2.5-coder-32b-instruct",
+        "qwen2.5-coder-32b-instruct",
+        "qwen3-14b-claude-sonnet-4.5-reasoning-distill",
+        "moondream2-20250414",
+        "qwen2.5-coder-14b-instruct",
+        "text-embedding-nomic-embed-text-v2-moe",
+        "text-embedding-nomic-embed-text-v1.5"
+      ],
+      "capabilities": [
+        "backend",
+        "coding",
+        "embeddings",
+        "fast",
+        "large-context",
+        "memory",
+        "multimodal",
+        "reasoning",
+        "vision"
+      ],
+      "discovered_at": 1778810355,
+      "status": "online"
     },
     {
       "host": "192.168.1.250",
@@ -45,9 +61,9 @@
       "latency_ms": null,
       "models": [],
       "capabilities": [],
-      "discovered_at": 1778776091,
+      "discovered_at": 1778810355,
       "status": "offline",
-      "error": "HTTPConnectionPool(host='192.168.1.250', port=1234): Max retries exceeded with url: /v1/models (Caused by ConnectTimeoutError(<HTTPConnection(host='192.168.1.250', port=1234) at 0x74602be85260>, 'Connection to 192.168.1.250 timed out. (connect timeout=5)'))"
+      "error": "HTTPConnectionPool(host='192.168.1.250', port=1234): Max retries exceeded with url: /v1/models (Caused by ConnectTimeoutError(<HTTPConnection(host='192.168.1.250', port=1234) at 0x79f0adbbf9b0>, 'Connection to 192.168.1.250 timed out. (connect timeout=5)'))"
     }
   ]
 }

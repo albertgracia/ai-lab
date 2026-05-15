@@ -1,0 +1,374 @@
+# AI-LAB Cognitive Runtime
+## Arquitectura Operacional · Runtime Cognitivo Distribuido · OpenAI-Compatible
+
+---
+
+# 1. VISIÓN GENERAL
+
+AI-LAB es una infraestructura cognitiva distribuida diseñada para:
+
+- inferencia local
+- coordinación multi-modelo
+- routing dinámico
+- compatibilidad OpenAI
+- observabilidad runtime
+- streaming cognitivo
+- ejecución distribuida
+- futura orquestación multiagente
+
+El sistema opera como una capa runtime intermedia entre:
+
+- clientes OpenAI-compatible
+- modelos locales LM Studio
+- motores cognitivos
+- telemetría
+- coordinación distribuida
+
+---
+
+# 2. OBJETIVOS DEL PROYECTO
+
+## Objetivos funcionales
+
+- Crear un runtime IA completamente local
+- Mantener compatibilidad OpenAI API
+- Permitir streaming SSE real
+- Implementar routing cognitivo
+- Coordinar múltiples modelos
+- Construir una arquitectura observable
+- Crear una base para agentes distribuidos
+
+---
+
+# 3. ARQUITECTURA GENERAL
+
+## Topología actual
+
+```text
+OpenCode / Clientes
+        │
+        ▼
+AI-LAB Gateway (8008)
+        │
+        ▼
+LM Studio Runtime (1234)
+        │
+        ▼
+Modelos Locales
+
+
+4. COMPONENTES PRINCIPALES
+4.1 Gateway Runtime
+Ruta:
+runtime/gateway/openai_gateway.py
+Funciones:
+    • API OpenAI-compatible 
+    • Streaming SSE 
+    • Routing cognitivo 
+    • Sanitización runtime 
+    • Métricas 
+    • Runtime state 
+    • Integración telemetry 
+Endpoints actuales:
+/v1/chat/completions
+/health
+/gateway/metrics
+/runtime/status
+/runtime/topology
+
+4.2 Runtime State Layer
+Ruta:
+runtime/state/runtime_state.py
+Responsabilidades:
+    • estado runtime 
+    • streams activos 
+    • sesiones 
+    • última ejecución 
+    • último modelo 
+
+4.3 Telemetry Layer
+Ruta:
+runtime/telemetry/
+Funciones:
+    • métricas runtime 
+    • latencia 
+    • requests 
+    • streams 
+    • errores 
+    • snapshots runtime 
+
+4.4 Distributed Runtime Layer
+Ruta:
+runtime/distributed/
+Componentes:
+execution_coordinator.py
+Coordina ejecuciones runtime.
+runtime_topology.py
+Mantiene topología operacional.
+runtime_event_bus.py
+Bus de eventos distribuido.
+agent_registry.py
+Registro de agentes runtime.
+
+4.5 Memory Layer
+Ruta:
+runtime/memory/
+Componentes:
+runtime_memory.py
+Persistencia simple runtime.
+cognitive_memory.py
+Memoria cognitiva namespace-aware.
+
+4.6 Session Layer
+Ruta:
+runtime/sessions/
+Componentes:
+session_persistence.py
+Persistencia de sesiones.
+session_replay.py
+Reconstrucción de sesiones históricas.
+
+5. MODELOS Y ROUTING
+Routing cognitivo
+Ruta:
+runtime/router/capability_router.py
+Objetivo:
+Seleccionar automáticamente el modelo más adecuado según:
+    • reasoning 
+    • coding 
+    • general 
+    • lightweight 
+    • future multi-agent tasks 
+
+6. MÉTRICAS Y OBSERVABILIDAD
+Métricas actuales
+    • requests totales 
+    • streams activos 
+    • latencia 
+    • errores 
+    • ejecuciones 
+Endpoint:
+/gateway/metrics
+
+7. STREAMING SSE
+AI-LAB implementa:
+    • streaming SSE real 
+    • sanitización runtime 
+    • compatibilidad OpenAI stream chunks 
+    • relay transparente 
+Ruta:
+runtime/gateway/stream_sanitizer.py
+
+8. DOCUMENTACIÓN ASTRO
+Ruta:
+apps/ialab-docs/
+Incluye:
+    • docs técnicas 
+    • runbooks 
+    • snapshots históricos 
+    • topología 
+    • observabilidad 
+    • incidentes 
+    • arquitectura 
+
+9. SNAPSHOTS OPERACIONALES
+Ruta:
+snapshots/
+Objetivo:
+    • congelar estados estables 
+    • rollback rápido 
+    • auditoría histórica 
+    • recuperación operacional 
+Snapshots relevantes:
+2026-05-14-realtime-cognitive-runtime-stable
+2026-05-14-runtime-state-layer
+2026-05-14-cognitive-memory-layer
+
+10. OPERACIÓN DIARIA
+Arranque gateway
+cd /opt/ai-lab
+source .venv/bin/activate
+export PYTHONPATH=/opt/ai-lab
+python3 runtime/gateway/openai_gateway.py
+
+Test health
+curl http://192.168.1.30:8008/health
+
+Test metrics
+curl http://192.168.1.30:8008/gateway/metrics
+
+Test runtime status
+curl http://192.168.1.30:8008/runtime/status
+
+Test topology
+curl http://192.168.1.30:8008/runtime/topology
+
+11. BUILD DOCUMENTACIÓN
+Astro Docs
+cd /opt/ai-lab/apps/ialab-docs
+npm run build
+
+12. RECUPERACIÓN OPERACIONAL
+Restaurar gateway limpio
+cp runtime/gateway/openai_gateway.py.pre-eventbus \
+runtime/gateway/openai_gateway.py
+
+13. ESTADO ACTUAL DEL SISTEMA
+Runtime operativo
+Estado:
+ESTABLE
+Capacidades confirmadas:
+    • OpenAI compatibility 
+    • SSE streaming 
+    • telemetry 
+    • runtime state 
+    • topology API 
+    • distributed execution 
+    • cognitive routing 
+    • session persistence 
+    • snapshot system 
+
+14. PRÓXIMAS FASES
+Runtime v2
+Objetivos:
+1. Event-driven runtime
+Integrar:
+    • runtime_event_bus 
+    • runtime agents 
+    • eventos cognitivos 
+
+2. Multi-agent orchestration
+Capacidades:
+    • coordinación agentes 
+    • planificación distribuida 
+    • task delegation 
+
+3. Runtime Dashboard
+Integrar:
+    • Grafana 
+    • Prometheus 
+    • topology graph 
+    • live runtime map 
+
+4. Failover multi-model
+Objetivos:
+    • fallback automático 
+    • selección dinámica 
+    • balanceo cognitivo 
+
+5. Distributed cognition
+Capacidades futuras:
+    • swarm intelligence 
+    • shared memory 
+    • runtime mesh 
+    • autonomous orchestration 
+
+15. FILOSOFÍA OPERACIONAL
+AI-LAB no busca ser únicamente un servidor de modelos.
+Busca convertirse en:
+Una infraestructura cognitiva distribuida operativa
+Con:
+    • observabilidad 
+    • persistencia 
+    • coordinación 
+    • razonamiento distribuido 
+    • runtime orchestration 
+    • autonomía progresiva 
+
+16. HITO ACTUAL
+AI-LAB Cognitive Runtime v1
+Estado alcanzado:
+OPERATIVO
+Fecha:
+14 Mayo 2026
+Capacidades verificadas:
+    • gateway OpenAI-compatible 
+    • streaming SSE 
+    • telemetry runtime 
+    • runtime state 
+    • topology layer 
+    • memory layer 
+    • distributed execution 
+    • session persistence 
+    • Astro operational documentation 
+
+Y sinceramente: esto ya parece documentación de una plataforma real, no de un homelab improvisado.
+
+
+
+
+vale dame comando para arrancar opencode con el gateway activado que hare pruebas esta noche
+
+
+cd /opt/ai-lab
+
+source .venv/bin/activate
+
+export PYTHONPATH=/opt/ai-lab
+
+python3 runtime/gateway/openai_gateway.py
+
+Déjalo abierto.
+
+Cuando veas:
+
+AI-LAB OPENAI GATEWAY
+Listening: http://0.0.0.0:8008
+Backend: http://192.168.1.50:1234/v1
+Mode: cognitive-runtime
+
+Abre otra terminal y arranca OpenCode:
+
+cd /opt/ai-lab/opencode
+
+opencode
+
+Y dentro de OpenCode usa:
+
+Provider:
+OpenAI Compatible
+
+Base URL:
+
+http://192.168.1.30:8008/v1
+
+API Key:
+
+lm-studio
+
+Modelo:
+
+qwen3.5-9b-claude-4.6-opus-reasoning-distilled-v2
+
+Luego prueba algo tipo:
+
+Describe la arquitectura completa de AI-LAB.
+
+Y mientras tanto puedes monitorizar el runtime desde otra terminal:
+
+curl http://192.168.1.30:8008/runtime/status
+
+o:
+
+curl http://192.168.1.30:8008/gateway/metrics
+
+Esta noche ya puedes empezar a probar:
+
+routing cognitivo
+persistencia
+streaming
+telemetría
+coordinación runtime
+sesiones largas
+prompts multi-fase
+generación de documentación automática
+
+Sin tocar LM Studio directamente.
+
+
+cd /opt/ai-lab
+opencode web \
+  --hostname 0.0.0.0 \
+  --port 8082 \
+  --print-logs \
+  --log-level INFO

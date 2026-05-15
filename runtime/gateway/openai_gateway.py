@@ -1,7 +1,7 @@
 import json
 import time
 from pathlib import Path
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import requests
 import time
@@ -62,6 +62,196 @@ def check_rate_limit(client_ip: str) -> bool:
             return False
         timestamps.append(now)
         return True
+
+# Enhanced runtime metrics
+MODEL_SELECTIONS = []
+ACTIVE_STREAMS = 0
+ROUTING_DECISIONS = 0
+FAILOVERS = 0
+MEMORY_WRITES = 0
+
+# Session tracking
+import uuid
+SESSION_STORE = {}
+SESSION_COUNTER = 0
+ORPHAN_SESSIONS = 0
+EPISODIC_RECALLS = 0
+ACCUMULATED_MEMORY = 0
+EPISODIC_TOTAL = 0
+EPISODIC_EMBEDDINGS = 0
+EPISODIC_DOMAINS = {}
+BLOCKED_PROMPTS = 0
+SANITIZATIONS = 0
+RATE_LIMIT_HITS = 0
+CONTEXT_OVERFLOWS = 0
+HALLUCINATION_GUARDS = 0
+PARSER_FAILURES = 0
+
+
+def create_session(task_type, model, node):
+    global SESSION_COUNTER
+    sid = str(uuid.uuid4())[:8]
+    with _metrics_lock:
+        SESSION_COUNTER += 1
+        SESSION_STORE[sid] = {
+            "session_id": sid,
+            "start_time": time.time(),
+            "duration": 0,
+            "model": model,
+            "node": node,
+            "task": task_type,
+            "tokens": 0,
+            "status": "active",
+        }
+    return sid
+
+
+def complete_session(sid, tokens=0):
+    global EPISODIC_RECALLS, ACCUMULATED_MEMORY
+    with _metrics_lock:
+        if sid in SESSION_STORE:
+            s = SESSION_STORE[sid]
+            s["duration"] = int((time.time() - s["start_time"]) * 1000)
+            s["tokens"] = tokens
+            s["status"] = "completed"
+            EPISODIC_RECALLS += 1
+            ACCUMULATED_MEMORY += tokens
+
+
+def mark_orphan_session(sid):
+    global ORPHAN_SESSIONS
+    with _metrics_lock:
+        if sid in SESSION_STORE:
+            SESSION_STORE[sid]["status"] = "orphan"
+            ORPHAN_SESSIONS += 1
+
+
+def get_sessions(limit=50):
+    with _metrics_lock:
+        all_sessions = list(SESSION_STORE.values())
+        all_sessions.sort(key=lambda x: x["start_time"], reverse=True)
+        return all_sessions[:limit]
+
+
+def cleanup_old_sessions():
+    with _metrics_lock:
+        now = time.time()
+        expired = [sid for sid, s in SESSION_STORE.items() if s["status"] == "active" and now - s["start_time"] > 3600]
+        for sid in expired:
+            SESSION_STORE[sid]["status"] = "orphan"
+        if expired:
+            global ORPHAN_SESSIONS
+            ORPHAN_SESSIONS += len(expired)
+        if len(SESSION_STORE) > 2000:
+            old = sorted(SESSION_STORE.keys(), key=lambda sid: SESSION_STORE[sid]["start_time"])[:1000]
+            for sid in old:
+                del SESSION_STORE[sid]
+
+
+import threading
+_metrics_lock = threading.Lock()
+
+
+def record_model_selection(task_type, model, node, latency_ms):
+    with _metrics_lock:
+        MODEL_SELECTIONS.append({
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "task": task_type,
+            "model": model,
+            "node": node,
+            "latency_ms": latency_ms,
+        })
+        if len(MODEL_SELECTIONS) > 1000:
+            MODEL_SELECTIONS[:] = MODEL_SELECTIONS[-500:]
+
+
+def record_routing_decision():
+    global ROUTING_DECISIONS
+    with _metrics_lock:
+        ROUTING_DECISIONS += 1
+
+
+def record_blocked_prompt():
+    global BLOCKED_PROMPTS
+    with _metrics_lock:
+        BLOCKED_PROMPTS += 1
+
+
+def record_sanitization():
+    global SANITIZATIONS
+    with _metrics_lock:
+        SANITIZATIONS += 1
+
+
+def record_rate_limit_hit():
+    global RATE_LIMIT_HITS
+    with _metrics_lock:
+        RATE_LIMIT_HITS += 1
+
+
+def record_context_overflow():
+    global CONTEXT_OVERFLOWS
+    with _metrics_lock:
+        CONTEXT_OVERFLOWS += 1
+
+
+def record_hallucination_guard():
+    global HALLUCINATION_GUARDS
+    with _metrics_lock:
+        HALLUCINATION_GUARDS += 1
+
+
+def record_parser_failure():
+    global PARSER_FAILURES
+    with _metrics_lock:
+        PARSER_FAILURES += 1
+
+
+def record_episode(domain='general'):
+    global EPISODIC_TOTAL
+    with _metrics_lock:
+        EPISODIC_TOTAL += 1
+        EPISODIC_DOMAINS[domain] = EPISODIC_DOMAINS.get(domain, 0) + 1
+
+
+def record_embedding():
+    global EPISODIC_EMBEDDINGS
+    with _metrics_lock:
+        EPISODIC_EMBEDDINGS += 1
+
+
+def get_top_domains(limit=10):
+    with _metrics_lock:
+        sorted_domains = sorted(EPISODIC_DOMAINS.items(), key=lambda x: x[1], reverse=True)
+        return [{'domain': d, 'count': c} for d, c in sorted_domains[:limit]]
+
+
+def get_memory_size_mb():
+    import os
+    mem_file = "/opt/ai-lab/runtime/state/episodic_memory.jsonl"
+    try:
+        size = os.path.getsize(mem_file)
+        return round(size / (1024 * 1024), 2)
+    except:
+        return 0
+
+
+def record_memory_write():
+    global MEMORY_WRITES
+    with _metrics_lock:
+        MEMORY_WRITES += 1
+
+
+def record_failover():
+    global FAILOVERS
+    with _metrics_lock:
+        FAILOVERS += 1
+
+
+def get_model_selections(limit=50):
+    with _metrics_lock:
+        return list(MODEL_SELECTIONS[-limit:])
+
 
 
 
@@ -170,6 +360,7 @@ def backend_headers():
 
 
 class GatewayHandler(BaseHTTPRequestHandler):
+    timeout = 30
 
     def log_message(self, format, *args):
         print(
@@ -216,6 +407,13 @@ class GatewayHandler(BaseHTTPRequestHandler):
         )
         self.end_headers()
 
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "*")
+        self.end_headers()
+
     def do_GET(self):
         client_ip = self.client_address[0]
         if not check_rate_limit(client_ip):
@@ -251,11 +449,123 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 "# HELP ailab_last_latency_ms Last request latency\n"
                 "# TYPE ailab_last_latency_ms gauge\n"
                 f"ailab_last_latency_ms {metrics.get('last_latency_ms', 0) or 0}\n"
+                "# HELP ailab_active_streams Current active streams\n"
+                "# TYPE ailab_active_streams gauge\n"
+                f"ailab_active_streams {ACTIVE_STREAMS}\n"
+                "# HELP ailab_routing_decisions_total Total routing decisions\n"
+                "# TYPE ailab_routing_decisions_total counter\n"
+                f"ailab_routing_decisions_total {ROUTING_DECISIONS}\n"
+                "# HELP ailab_failovers_total Total failover events\n"
+                "# TYPE ailab_failovers_total counter\n"
+                f"ailab_memory_writes_total {MEMORY_WRITES}\n"
+                + f"ailab_failovers_total {FAILOVERS}\n"
+                + "# HELP ailab_episodic_total Total episodic memory entries\n"
+                + "# TYPE ailab_episodic_total gauge\n"
+                + f"ailab_episodic_total {EPISODIC_TOTAL}\n"
+                + "# HELP ailab_episodic_embeddings_total Total embeddings created\n"
+                + "# TYPE ailab_episodic_embeddings_total counter\n"
+                + f"ailab_episodic_embeddings_total {EPISODIC_EMBEDDINGS}\n"
+                + "# HELP ailab_episodic_memory_size_mb Episodic memory file size\n"
+                + "# TYPE ailab_episodic_memory_size_mb gauge\n"
+                + f"ailab_episodic_memory_size_mb {get_memory_size_mb()}\n"
+                + "# HELP ailab_sessions_total Total sessions created\n"
+                + "# TYPE ailab_sessions_total counter\n"
+                + f"ailab_sessions_total {SESSION_COUNTER}\n"
+                + "# HELP ailab_sessions_concurrent Current concurrent sessions\n"
+                + "# TYPE ailab_sessions_concurrent gauge\n"
+                + f"ailab_sessions_concurrent {len([s for s in SESSION_STORE.values() if s['status'] == 'active'])}\n"
+                + "# HELP ailab_sessions_orphan Total orphan sessions\n"
+                + "# TYPE ailab_sessions_orphan counter\n"
+                + f"ailab_sessions_orphan {ORPHAN_SESSIONS}\n"
+                + "# HELP ailab_episodic_recalls_total Total episodic recalls\n"
+                + "# TYPE ailab_episodic_recalls_total counter\n"
+                + f"ailab_episodic_recalls_total {EPISODIC_RECALLS}\n"
+                + "# HELP ailab_accumulated_memory_total Accumulated memory tokens\n"
+                + "# TYPE ailab_accumulated_memory_total counter\n"
+                + f"ailab_accumulated_memory_total {ACCUMULATED_MEMORY}\n"
+                + "# HELP ailab_governance_blocked_prompts_total Blocked prompts\n"
+                + "# TYPE ailab_governance_blocked_prompts_total counter\n"
+                + f"ailab_governance_blocked_prompts_total {BLOCKED_PROMPTS}\n"
+                + "# HELP ailab_governance_sanitizations_total Sanitizations performed\n"
+                + "# TYPE ailab_governance_sanitizations_total counter\n"
+                + f"ailab_governance_sanitizations_total {SANITIZATIONS}\n"
+                + "# HELP ailab_governance_rate_limit_hits_total Rate limit blocked requests\n"
+                + "# TYPE ailab_governance_rate_limit_hits_total counter\n"
+                + f"ailab_governance_rate_limit_hits_total {RATE_LIMIT_HITS}\n"
+                + "# HELP ailab_governance_context_overflows_total Context size overflow errors\n"
+                + "# TYPE ailab_governance_context_overflows_total counter\n"
+                + f"ailab_governance_context_overflows_total {CONTEXT_OVERFLOWS}\n"
+                + "# HELP ailab_governance_hallucination_guards_total Hallucination guard activations\n"
+                + "# TYPE ailab_governance_hallucination_guards_total counter\n"
+                + f"ailab_governance_hallucination_guards_total {HALLUCINATION_GUARDS}\n"
+                + "# HELP ailab_governance_parser_failures_total Parser failures\n"
+                + "# TYPE ailab_governance_parser_failures_total counter\n"
+                + f"ailab_governance_parser_failures_total {PARSER_FAILURES}\n"
             )
             self.send_response(200)
             self.send_header("Content-Type", "text/plain; charset=utf-8")
             self.end_headers()
             self.wfile.write(prom_text.encode("utf-8"))
+            return
+
+
+        if self.path == "/api/v1/models/selections":
+            selections = get_model_selections(100)
+            body = json.dumps(selections, ensure_ascii=False).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+
+
+
+
+        if self.path == "/api/v1/governance":
+            data = {
+                "blocked_prompts": BLOCKED_PROMPTS,
+                "sanitizations": SANITIZATIONS,
+                "rate_limit_hits": RATE_LIMIT_HITS,
+                "context_overflows": CONTEXT_OVERFLOWS,
+                "hallucination_guards": HALLUCINATION_GUARDS,
+                "parser_failures": PARSER_FAILURES,
+            }
+            body = json.dumps(data, ensure_ascii=False).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+
+        if self.path == "/api/v1/episodic":
+            data = {
+                "total": EPISODIC_TOTAL,
+                "embeddings": EPISODIC_EMBEDDINGS,
+                "size_mb": get_memory_size_mb(),
+                "top_domains": get_top_domains(10),
+            }
+            body = json.dumps(data, ensure_ascii=False).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+
+        if self.path == "/api/v1/sessions":
+            sessions = get_sessions(100)
+            body = json.dumps(sessions, ensure_ascii=False, default=str).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
             return
 
         if self.path == "/runtime/topology":
@@ -288,13 +598,14 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 response = requests.get(
                     f"{get_active_backend()['url']}/models",
                     headers=backend_headers(),
-                    timeout=30,
+                    timeout=(5, 30),
                 )
 
                 latency_ms = int(
                     (time.time() - start_time) * 1000
                 )
 
+                record_routing_decision()
                 record_request(
                     self.path,
                     model=None,
@@ -377,7 +688,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
             selected_model = choose_model(
                 task_type
             )
-
+            session_id = create_session(task_type, selected_model, get_active_backend()["name"])
             payload["model"] = selected_model
 
             stream_enabled = bool(
@@ -389,19 +700,21 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 headers=backend_headers(),
                 json=payload,
                 stream=stream_enabled,
-                timeout=600,
+                timeout=(10, 600),
             )
 
             latency_ms = int(
                 (time.time() - start_time) * 1000
             )
 
+            record_routing_decision()
             record_request(
                 self.path,
                 model=payload.get("model"),
                 latency_ms=latency_ms,
                 stream=stream_enabled,
             )
+            record_model_selection(task_type, selected_model, get_active_backend()["name"], latency_ms)
 
             if stream_enabled:
                 register_stream()
@@ -453,7 +766,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
 
 
 def run():
-    server = HTTPServer(
+    server = ThreadingHTTPServer(
         (HOST, PORT),
         GatewayHandler,
     )

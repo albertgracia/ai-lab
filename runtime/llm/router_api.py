@@ -4,7 +4,9 @@ from typing import Any, Dict
 import requests
 
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
+import json as json_mod
 
 from runtime.llm.model_router import select_node
 from runtime.state.system_state import build_system_state
@@ -13,18 +15,26 @@ from runtime.agent.selective_context import (
     build_selective_context
 )
 
-app = FastAPI(title="AI-LAB Router API")
+app = FastAPI(title="AI-LAB Router API", servers=[{"url": "http://192.168.1.30:8083", "description": "AI-LAB Router API"}], version="1.0.0", description="Router cognitivo del AI-LAB. Proporciona enrutamiento capability-aware a nodos de inferencia GPU.")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/")
 def root():
     return {
-        "service": "AI-LAB Router API",
-        "status": "ok",
-        "endpoints": [
-            "/health",
-            "/v1/models",
-            "/v1/chat/completions",
+        "object": "list",
+        "data": [
+            {"id": "ailab-router/auto", "object": "model"},
+            {"id": "ailab-router/fast", "object": "model"},
+            {"id": "ailab-router/reasoning", "object": "model"},
+            {"id": "ailab-router/coding", "object": "model"},
         ],
     }
 
@@ -151,7 +161,59 @@ def extract_request_text(payload: Dict[str, Any]) -> str:
     return "\n".join(parts)
 
 
+
+
+@app.get("/api/v1/tools")
+@app.get("/api/tools")
+@app.get("/api/v1/functions")
+def list_tools():
+    return {"data": []}
+
+
+@app.get("/api/v1/tools/")
+@app.get("/api/tools/")
+@app.get("/api/v1/functions/")
+def list_tools_slash():
+    return {"data": []}
+
+
+@app.get("/models")
+@app.get("/api/models")
+def api_models():
+    import time
+    return {
+        "object": "list",
+        "data": [
+            {"id": "ailab-router/auto", "object": "model", "created": int(time.time()), "owned_by": "ai-lab"},
+            {"id": "ailab-router/fast", "object": "model", "created": int(time.time()), "owned_by": "ai-lab"},
+            {"id": "ailab-router/reasoning", "object": "model", "created": int(time.time()), "owned_by": "ai-lab"},
+            {"id": "ailab-router/coding", "object": "model", "created": int(time.time()), "owned_by": "ai-lab"},
+        ],
+    }
+
+
+@app.get("/api/config")
+def api_config():
+    return {"status": "ok"}
+
+
+@app.get("/api/version")
+def api_version():
+    return {"version": "1.0.0", "ai-lab": "cognitive-runtime"}
+
+
+@app.get("/api/v1/configs/banners")
+def api_banners():
+    return {"banners": []}
+
+
+@app.get("/api/usage")
+def api_usage():
+    return {"usage": {"completion_tokens": 0, "prompt_tokens": 0, "total_tokens": 0}}
+
+
 @app.post("/v1/chat/completions")
+@app.post("/chat/completions")
 async def chat_completions(request: Request):
 
     payload = await request.json()
@@ -234,10 +296,12 @@ async def chat_completions(request: Request):
         0.2
     )
 
-    upstream_payload.setdefault(
-        "reasoning",
-        {"effort": "none"}
-    )
+    # Only set reasoning effort for non-reasoning models
+    if "reasoning" not in upstream_payload.get("model", "") and "reasoning" not in upstream_payload.get("model", ""):
+        upstream_payload.setdefault(
+            "reasoning",
+            {"effort": "none"}
+        )
 
     headers = {
         "X-AI-LAB-Selected-Node": node["name"],
@@ -257,8 +321,35 @@ async def chat_completions(request: Request):
                 timeout=300,
             )
 
+            async def sanitize_stream():
+                for raw_line in upstream.iter_lines():
+                    if not raw_line:
+                        continue
+                    line = raw_line.decode("utf-8", errors="replace")
+                    if not line.startswith("data: "):
+                        yield line + "\n"
+                        continue
+                    payload = line[6:].strip()
+                    if payload == "[DONE]":
+                        yield "data: [DONE]\n\n"
+                        break
+                    try:
+                        obj = json_mod.loads(payload)
+                        choices = obj.get("choices", [])
+                        for choice in choices:
+                            delta = choice.get("delta", {})
+                            if "reasoning_content" in delta:
+                                rc = delta.pop("reasoning_content")
+                                if not delta.get("content"):
+                                    delta["content"] = rc
+                                else:
+                                    delta["content"] = rc + "\n" + delta["content"]
+                        yield f"data: {json_mod.dumps(obj, ensure_ascii=False)}\n\n"
+                    except Exception:
+                        yield line + "\n"
+
             return StreamingResponse(
-                upstream.iter_content(chunk_size=8192),
+                sanitize_stream(),
                 status_code=upstream.status_code,
                 media_type=upstream.headers.get(
                     "content-type",
@@ -273,9 +364,18 @@ async def chat_completions(request: Request):
             timeout=300
         )
 
+        content = upstream.json()
+        choices = content.get("choices", [])
+        for choice in choices:
+            msg = choice.get("message", {})
+            if "reasoning_content" in msg:
+                rc = msg.pop("reasoning_content")
+                if not msg.get("content"):
+                    msg["content"] = rc
+
         return JSONResponse(
             status_code=upstream.status_code,
-            content=upstream.json(),
+            content=content,
             headers=headers,
         )
 

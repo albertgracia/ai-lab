@@ -36,5 +36,5 @@ EOF
 
 /usr/local/bin/opencode run \
   --dir /opt/ai-lab \
-  --model lmstudio/qwen3-14b-claude-sonnet-4.5-reasoning-distill \
+  --model ailab-router/ailab-router/auto \
   -- "$(cat "$PROMPT_FILE")"
