@@ -1,1 +1,0 @@
- [H[2J]0;albert@ubuntu-ialab: ~[01;32malbert@ubuntu-ialab[00m:[01;34m~[00m
