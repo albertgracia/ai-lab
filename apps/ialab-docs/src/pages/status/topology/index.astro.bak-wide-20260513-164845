@@ -1,0 +1,130 @@
+---
+import Layout from "../../../layouts/Layout.astro";
+---
+
+<Layout title="Topology · AI-LAB">
+  <section class="mx-auto max-w-7xl px-6 py-16">
+
+    <div class="mb-12">
+      <div class="mb-4 inline-flex rounded-full border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-400">
+        INFRASTRUCTURE MAP
+      </div>
+
+      <h1 class="mb-4 text-5xl font-black tracking-tight text-white">
+        AI-LAB Infrastructure Topology
+      </h1>
+
+      <p class="max-w-4xl text-lg text-zinc-400">
+        Topología operacional del laboratorio AI-LAB. Backbone 10Gb,
+        observabilidad distribuida, runtime IA, telemetría centralizada
+        y nodos de inferencia.
+      </p>
+    </div>
+
+    <div class="rounded-3xl border border-zinc-800 bg-zinc-950/80 p-8 shadow-2xl shadow-cyan-950/20">
+      <pre class="mermaid">
+flowchart TB
+    INTERNET["🌍 Internet"]
+    CLOUDFLARE["☁️ Cloudflare"]
+    TRAEFIK["⚡ Traefik"]
+
+    UCG["🛜 UCG-Fiber<br/>192.168.1.1"]
+    SWITCH["🔀 USW Flex 2.5G<br/>10Gb DAC Backbone"]
+
+    AP1["📡 U7 Lite"]
+    AP2["📡 U7 In-Wall"]
+
+    AI30["🧠 Ubuntu AI-LAB<br/>192.168.1.30"]
+    PROM["📊 Prometheus + Loki<br/>192.168.1.40"]
+    NAS["💾 NAS-N5<br/>Windows + Hyper-V"]
+
+    GPU1["🎮 RX9070 Node"]
+    GPU2["🎮 RX7900XT Node"]
+
+    GRAFANA["📈 Grafana"]
+    OLLAMA["🤖 Ollama"]
+    QDRANT["🧬 Qdrant"]
+    OPENWEBUI["🖥️ Open WebUI"]
+
+    ALLOY["📡 Alloy"]
+    PROMTAIL["📜 Promtail"]
+    UNIFI["🛜 Unpoller"]
+
+    INTERNET --> CLOUDFLARE
+    CLOUDFLARE --> TRAEFIK
+    TRAEFIK --> UCG
+    UCG --> SWITCH
+
+    SWITCH --> AP1
+    SWITCH --> AP2
+    SWITCH --> AI30
+    SWITCH --> PROM
+    SWITCH --> NAS
+    SWITCH --> GPU1
+    SWITCH --> GPU2
+
+    AI30 --> GRAFANA
+    AI30 --> OLLAMA
+    AI30 --> QDRANT
+    AI30 --> OPENWEBUI
+
+    NAS --> ALLOY
+    AI30 --> PROMTAIL
+    UCG --> UNIFI
+
+    ALLOY --> PROM
+    PROMTAIL --> PROM
+    UNIFI --> PROM
+
+    classDef network fill:#111827,stroke:#06b6d4,color:#ffffff,stroke-width:2px;
+    classDef ai fill:#1e1b4b,stroke:#8b5cf6,color:#ffffff,stroke-width:2px;
+    classDef obs fill:#052e16,stroke:#22c55e,color:#ffffff,stroke-width:2px;
+
+    class INTERNET,CLOUDFLARE,TRAEFIK,UCG,SWITCH,AP1,AP2 network;
+    class AI30,GPU1,GPU2,OLLAMA,QDRANT,OPENWEBUI ai;
+    class PROM,GRAFANA,ALLOY,PROMTAIL,UNIFI obs;
+      </pre>
+    </div>
+
+    <div class="mt-10 grid gap-6 md:grid-cols-3">
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
+        <div class="text-sm text-zinc-500">Backbone</div>
+        <div class="mt-2 text-5xl font-black text-cyan-400">10Gb</div>
+      </div>
+
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
+        <div class="text-sm text-zinc-500">Observability</div>
+        <div class="mt-2 text-5xl font-black text-emerald-400">Active</div>
+      </div>
+
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
+        <div class="text-sm text-zinc-500">AI Runtime</div>
+        <div class="mt-2 text-5xl font-black text-white">Online</div>
+      </div>
+    </div>
+
+  </section>
+
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: "dark",
+      securityLevel: "loose",
+      flowchart: {
+        curve: "basis",
+        htmlLabels: true
+      },
+      themeVariables: {
+        background: "#020617",
+        primaryColor: "#0f172a",
+        primaryTextColor: "#ffffff",
+        primaryBorderColor: "#06b6d4",
+        lineColor: "#06b6d4",
+        secondaryColor: "#111827",
+        tertiaryColor: "#020617"
+      }
+    });
+  </script>
+</Layout>
