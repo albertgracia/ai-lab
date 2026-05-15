@@ -1,3 +1,6 @@
+import sys
+sys.path.insert(0, "/opt/ai-lab")
+
 import time
 from typing import Any, Dict
 
@@ -14,6 +17,14 @@ from runtime.state.system_state import build_system_state
 from runtime.agent.selective_context import (
     build_selective_context
 )
+
+# ── cognitive telemetry (FASE 8.9) ─────────────────────────────────
+try:
+    from runtime.cognitive.cognitive_metrics import increment as _cog_inc, set_metric as _cog_set
+    _HAVE_COGNITIVE = True
+except ImportError:
+    _cog_inc = _cog_set = None
+    _HAVE_COGNITIVE = False
 
 # ── optional: working memory + context shaper (FASE 8.7) ────────────
 try:
@@ -242,6 +253,10 @@ async def chat_completions(request: Request):
 
     request_text = extract_request_text(payload)
 
+    # FASE 8.9 handler counter
+    if _HAVE_COGNITIVE:
+        _cog_inc("context_shaping_errors")
+
     capability = capability_from_model(
         requested_model
     )
@@ -270,6 +285,8 @@ async def chat_completions(request: Request):
         agent_context = shape_context(task, node.get("model", ""), wm)
     else:
         agent_context = build_selective_context(request_text)
+        if _HAVE_COGNITIVE:
+            _cog_inc("context_shaping_errors")
 
     context_summary = "\\n".join(
         line for line in agent_context.splitlines()

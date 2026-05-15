@@ -76,6 +76,34 @@ def _model_performance():
     except ImportError:
         return {"error": "model_performance module not available"}
 
+def _cognitive_snapshot():
+    try:
+        from runtime.cognitive.cognitive_history import read_history
+        from runtime.memory.working_memory import WorkingMemory
+        records = read_history(1)
+        latest = records[0] if records else {}
+        wm_stats = WorkingMemory.stats()
+        return {
+            "latest_shaping": latest,
+            "working_memory": wm_stats,
+        }
+    except ImportError:
+        return {"error": "cognitive module not available"}
+
+def _cognitive_history():
+    try:
+        from runtime.cognitive.cognitive_history import read_history
+        return read_history(20)
+    except ImportError:
+        return {"error": "cognitive_history module not available"}
+
+def _context_debug():
+    try:
+        from runtime.cognitive.cognitive_metrics import get_context_debug
+        return get_context_debug()
+    except ImportError:
+        return {"error": "cognitive module not available"}
+
 class APIHandler(BaseHTTPRequestHandler):
     timeout = 10
     def do_GET(self):
@@ -87,6 +115,12 @@ class APIHandler(BaseHTTPRequestHandler):
             self._json(get_analytics_data())
         elif self.path == "/api/model-performance":
             self._json(_model_performance())
+        elif self.path == "/api/cognitive":
+            self._json(_cognitive_snapshot())
+        elif self.path == "/api/cognitive/history":
+            self._json(_cognitive_history())
+        elif self.path == "/api/context-debug":
+            self._json(_context_debug())
         elif self.path == "/api/events":
             self._sse()
         else: self._send_error(404)
