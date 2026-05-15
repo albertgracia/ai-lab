@@ -81,6 +81,13 @@ class APIHandler(BaseHTTPRequestHandler):
         elif self.path == "/api/events":
             self._sse()
         else: self._send_error(404)
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self.send_header("Access-Control-Allow-Origin","*")
+        self.send_header("Access-Control-Allow-Methods","GET, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers","Content-Type, Authorization")
+        self.send_header("Access-Control-Max-Age","86400")
+        self.end_headers()
     def _sse(self):
         self.send_response(200)
         self.send_header("Content-Type","text/event-stream")
