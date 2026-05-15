@@ -1,10 +1,12 @@
----
+ cat /opt/ai-lab/apps/ialab-docs/src/content/docs/architecture_phase8.md
+[?2004l
+]3008;start=9b463b96-0548-4361-b8f2-60e199fc54cd;machineid=20aaf5bfa7584e8fb6c0264046eebecd;user=albert;hostname=ubuntu-ialab;bootid=1fc818c4-677f-4c57-b21b-3a4b2a5c6134;pid=00000000000000061390;type=command;cwd=/home/albert\---
 title: "Phase 8 Architecture — Realtime Cognitive Mesh"
 summary: "Arquitectura completa del AI-LAB tras la Fase 8: runtime cognitivo con eventos SSE, topologia viva y observabilidad en tiempo real."
 order: 1
 ---
 
-# Phase 8 Architecture — Realtime Cognitive Mesh
+
 
 ## Overview
 
@@ -99,3 +101,4 @@ Prometheus (:9090 en 1.40)
 - Rate limiting en Gateway (30 req/min)
 - Cloudflare Zero Trust para acceso publico
 - Sin exponer puertos entrantes (solo Tunnel)
+]3008;end=9b463b96-0548-4361-b8f2-60e199fc54cd;exit=success\]3008;start=da4295b8-58a2-4b7b-beb8-e909d3b51b99;machineid=20aaf5bfa7584e8fb6c0264046eebecd;user=albert;hostname=ubuntu-ialab;bootid=1fc818c4-677f-4c57-b21b-3a4b2a5c6134;pid=00000000000000061390;type=shell;cwd=/home/albert\[?2004h]0;albert@ubuntu-ialab: ~[01;32malbert@ubuntu-ialab[00m:[01;34m~[00m

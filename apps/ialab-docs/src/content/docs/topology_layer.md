@@ -1,110 +1,101 @@
+ cat /opt/ai-lab/apps/ialab-docs/src/content/docs/sse_runtime.md
+[?2004l
+]3008;start=41cd94cf-7caa-497c-8360-facd613139ed;machineid=20aaf5bfa7584e8fb6c0264046eebecd;user=albert;hostname=ubuntu-ialab;bootid=1fc818c4-677f-4c57-b21b-3a4b2a5c6134;pid=00000000000000061390;type=command;cwd=/home/albert\---
+title: "SSE Runtime — Streaming de Eventos"
+summary: "Implementacion del servidor SSE en la Live API, con ThreadingHTTPServer y conexiones persistentes."
+order: 3
 ---
-title: "Topology Layer — Mapa Vivo del Cluster"
-summary: "Capa de topologia interactiva del AI-LAB: nodos, conexiones, estados en tiempo real."
-order: 4
----
 
-# Topology Layer — Mapa Vivo del Cluster
 
-## Descripcion
 
-La capa de topologia proporciona un mapa vivo del cluster AI-LAB mostrando
-todos los nodos (GPU, servicios, componentes) y sus conexiones, con estado
-online/offline en tiempo real.
+## Servidor: `runtime/state/live_api.py`
 
-## Fuente de Datos: `GET /api/topology`
+La Live API sirve como punto de entrada para todos los datos en tiempo real.
+Implementa un servidor HTTP multi-thread (`ThreadingHTTPServer`) que permite
+multiples conexiones SSE simultaneas sin bloqueo.
 
-### Formato de Respuesta
-
-```json
-{
-  "nodes": [
-    {
-      "id": "rx9070-node",
-      "title": "RX9070",
-      "subtitle": "192.168.1.50",
-      "mainstat": "3ms",
-      "secondarystat": "5 models",
-      "arc__online": 1,
-      "arc__offline": 0
-    },
-    {
-      "id": "gateway",
-      "title": "Gateway AI-LAB",
-      "subtitle": ":8008 | OpenAI API",
-      "mainstat": "OK",
-      "secondarystat": "1.30",
-      "arc__online": 1,
-      "arc__offline": 0
-    }
-  ],
-  "edges": [
-    {
-      "id": "gateway-rx9070-node",
-      "source": "gateway",
-      "target": "rx9070-node",
-      "mainstat": "3ms",
-      "secondarystat": "RTT"
-    }
-  ]
-}
-```
-
-### Nodos Virtuales
-
-| Nodo | Descripcion | Subtitulo |
-|---|---|---|
-| `gateway` | Gateway AI-LAB | :8008 \| OpenAI API |
-| `event-bus` | Event Bus | Cognitivo |
-| `episodic-memory` | Episodic Memory | JSONL Store |
-
-### Nodos Dinamicos (desde cluster_state.json)
-
-Se generan automaticamente a partir del estado actual del cluster,
-incluyendo latencia, modelos disponibles y estado online/offline.
-
-## Componente: `TopologyGraph.astro`
-
-Renderiza la topologia como texto estructurado con colores:
+### Endpoint SSE: `GET /api/events`
 
 ```
-     AI-LAB CLUSTER TOPOLOGY
-     ======================
+Formato: text/event-stream
+Cache: no-cache
+CORS: Access-Control-Allow-Origin: *
 
-  ● RX9070 (3ms)
-  ○ RX7900XT (OFFLINE)
-  ● Gateway AI-LAB (OK)
-  ● Event Bus (OK)
-  ● Episodic Memory (OK)
-
-  gateway -> RX9070: 3ms
-  gateway -> RX7900XT: OFFLINE
-  gateway -> event-bus: active
-  event-bus -> episodic-memory: recording
+Secuencia:
+1. Snapshot inicial (estado completo del cluster)
+2. Heartbeats cada 3s con GPU + topologia
 ```
 
-### Cytoscape.js
+### Formato del Stream
 
-Cytoscape.js esta instalado en el proyecto Astro para una futura migracion
-a un grafo interactivo con las siguientes capacidades:
+```
+data: {"event": "snapshot", "data": {"topology": {...}, "docker": {...}, "gpu": [...]}}
 
-- Nodos coloreados por estado (verde online, rojo offline)
-- Aristas con etiquetas de latencia
-- Layout breadfirst (jerarquico)
-- Tooltips con metricas al hacer hover
-- Actualizacion en tiempo real via SSE
+data: {"event": "heartbeat", "data": {"gpu": [...], "topology": {...}, "ts": 1778849000}}
 
-## Paginas
+data: {"event": "node_online", "data": {"host": "192.168.1.50", "latency_ms": 3}}
+```
 
-| Pagina | Ruta | Componente |
-|---|---|---|
-| Topologia Publica | `/status/topology` | TopologyGraph |
-| Estado Vivo | `/status/live` | ClusterHealth + EventStream |
+### Consumo desde el Frontend
 
-## Plan de Migracion a Cytoscape
+```javascript
+// Native EventSource API
+const es = new EventSource("/api/events");
 
-1. Implementar renderizado Cytoscape en TopologyGraph.tsx
-2. Conectar a SSE para actualizacion en vivo
-3. Anadir colores degradados (amarillo = degraded)
-4. Anadir tooltips con metricas al hover
-5. Pagina privada `/ops/topology` con detalle ampliado
+es.onmessage = (msg) => {
+  const evt = JSON.parse(msg.data);
+  switch (evt.event) {
+    case "snapshot":
+      renderInitialState(evt.data);
+      break;
+    case "heartbeat":
+      updateMetrics(evt.data);
+      break;
+    case "node_online":
+      markNodeOnline(evt.data.host);
+      break;
+    case "node_offline":
+      markNodeOffline(evt.data.host);
+      break;
+  }
+};
+
+es.onerror = () => {
+  showOfflineIndicator();
+};
+```
+
+### Componentes Consumidores
+
+| Componente | Archivo | Tipo | Fuente |
+|---|---|---|---|
+| ClusterHealth | `ClusterHealth.astro` | polling `/api/status.json` | Cada 5s |
+| EventStream | `EventStream.astro` | SSE `/api/events` | Tiempo real |
+| TopologyGraph | `TopologyGraph.astro` | polling `/api/topology` | Cada 5s |
+| HomeLiveStats | `HomeLiveStats.astro` | polling `/api/status.json` | Cada 5s |
+
+### ThreadingHTTPServer
+
+El servidor usa `ThreadingHTTPServer` para evitar bloqueos. Cada conexion SSE
+se mantiene en un hilo separado. El servidor puede manejar conexiones SSE
+simultaneas mientras sigue sirviendo peticiones REST.
+
+```python
+from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
+
+class APIHandler(BaseHTTPRequestHandler):
+    timeout = 10
+
+    def _handle_sse(self):
+        # Enviar snapshot inicial
+        self.wfile.write(f"data: {json.dumps(snapshot)}\\n\\n".encode())
+        self.wfile.flush()
+
+        # Loop de heartbeat
+        while True:
+            data = {"event": "heartbeat", "data": get_gpu_data()}
+            self.wfile.write(f"data: {json.dumps(data)}\\n\\n".encode())
+            self.wfile.flush()
+            time.sleep(3)
+```
+]3008;end=41cd94cf-7caa-497c-8360-facd613139ed;exit=success\]3008;start=da4295b8-58a2-4b7b-beb8-e909d3b51b99;machineid=20aaf5bfa7584e8fb6c0264046eebecd;user=albert;hostname=ubuntu-ialab;bootid=1fc818c4-677f-4c57-b21b-3a4b2a5c6134;pid=00000000000000061390;type=shell;cwd=/home/albert\[?2004h]0;albert@ubuntu-ialab: ~[01;32malbert@ubuntu-ialab[00m:[01;34m~[00m

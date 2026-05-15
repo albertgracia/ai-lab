@@ -1,102 +1,113 @@
+ cat /opt/ai-lab/apps/ialab-docs/src/content/docs/topology_layer.md
+[?2004l
+]3008;start=51fa343f-1d42-4401-b386-794e9a2d665d;machineid=20aaf5bfa7584e8fb6c0264046eebecd;user=albert;hostname=ubuntu-ialab;bootid=1fc818c4-677f-4c57-b21b-3a4b2a5c6134;pid=00000000000000061390;type=command;cwd=/home/albert\---
+title: "Topology Layer — Mapa Vivo del Cluster"
+summary: "Capa de topologia interactiva del AI-LAB: nodos, conexiones, estados en tiempo real."
+order: 4
 ---
-title: "Runtime Flow — Flujo completo de una peticion"
-summary: "Recorrido completo de una peticion desde Open WebUI hasta la GPU, pasando por Router API, Gateway y LM Studio."
-order: 5
----
 
-# Runtime Flow — Flujo Completo de una Peticion
 
-## Diagrama de Flujo
 
-```
-Usuario
-   │
-   ▼
-Open WebUI (:3000)
-   │ POST /api/chat/completions
-   │ model: ailab-router/auto
-   ▼
-ROUTER API (:8083)
-   │
-   ├── 1. Recibe peticion
-   ├── 2. CORS check
-   ├── 3. Extrae capability del modelo (auto/fast/coding/reasoning)
-   ├── 4. build_system_state() → actualiza estado del cluster
-   ├── 5. select_node(request_text, capability)
-   │       ├── infer_task() → detecta tipo de tarea
-   │       ├── select_best_node() → elige nodo optimo
-   │       └── choose_model_for_node() → selecciona modelo
-   ├── 6. build_selective_context() → contexto RAG
-   ├── 7. Construye payload con system prompt + contexto
-   └── 8. Envia a LM Studio
-        │
-        ▼
-   GATEWAY (:8008)
-   │
-   ├── 1. Recibe peticion del Router API
-   ├── 2. choose_model(task_type) → selecciona modelo
-   ├── 3. inject_agent_context() → anyade prompt del agente
-   ├── 4. Rate limit check
-   ├── 5. Envia a LM Studio
-   │       │ POST /v1/chat/completions
-   │       │ model: qwen2.5-coder-14b-instruct
-   │       ▼
-   └── LM STUDIO (RX9070 :1234)
-        │
-        ├── 1. Carga/usa modelo en VRAM
-        ├── 2. Procesa prompt
-        ├── 3. Genera respuesta (streaming o completa)
-        └── 4. Devuelve respuesta
-             │
-             ▼
-   ROUTER API
-   │
-   ├── 1. Recibe respuesta de LM Studio
-   ├── 2. Sanitiza stream (elimina reasoning_content)
-   ├── 3. Aplica CORS headers
-   └── 4. Devuelve streaming SSE a Open WebUI
-        │
-        ▼
-   USUARIO
-   │ Recibe respuesta en Open WebUI
+## Descripcion
+
+La capa de topologia proporciona un mapa vivo del cluster AI-LAB mostrando
+todos los nodos (GPU, servicios, componentes) y sus conexiones, con estado
+online/offline en tiempo real.
+
+## Fuente de Datos: `GET /api/topology`
+
+### Formato de Respuesta
+
+```json
+{
+  "nodes": [
+    {
+      "id": "rx9070-node",
+      "title": "RX9070",
+      "subtitle": "192.168.1.50",
+      "mainstat": "3ms",
+      "secondarystat": "5 models",
+      "arc__online": 1,
+      "arc__offline": 0
+    },
+    {
+      "id": "gateway",
+      "title": "Gateway AI-LAB",
+      "subtitle": ":8008 | OpenAI API",
+      "mainstat": "OK",
+      "secondarystat": "1.30",
+      "arc__online": 1,
+      "arc__offline": 0
+    }
+  ],
+  "edges": [
+    {
+      "id": "gateway-rx9070-node",
+      "source": "gateway",
+      "target": "rx9070-node",
+      "mainstat": "3ms",
+      "secondarystat": "RTT"
+    }
+  ]
+}
 ```
 
-## Flujo de Eventos (Fase 8)
+### Nodos Virtuales
 
-Cada paso del flujo emite eventos al Event Bus:
-
-```
-1. request_started    → event_bus.emit()
-2. routing_decision   → event_bus.emit()
-3. model_selected     → event_bus.emit()
-4. request_finished   → event_bus.emit()
-5. session_created    → event_bus.emit()
-                        │
-                        ▼
-                   Event Stream SSE
-                        │
-                   ┌────┴────┐
-                   │         │
-              Dashboard    Frontend
-              Grafana      Astro
-```
-
-## Tiempos Tipicos
-
-| Paso | Tiempo | Notas |
+| Nodo | Descripcion | Subtitulo |
 |---|---|---|
-| Routing decision | <5ms | Capacidad-aware |
-| Context loading | <10ms | RAG + archivos core |
-| LM Studio prompt eval | 1-2 ms/token | Depende del modelo |
-| LM Studio generation | 20-30 ms/token | Depende del modelo |
-| Stream sanitization | <1ms | Inline en el stream |
-| Total (50 tokens) | 1-2s | Con modelo 14B en RX9070 |
+| `gateway` | Gateway AI-LAB | :8008 \| OpenAI API |
+| `event-bus` | Event Bus | Cognitivo |
+| `episodic-memory` | Episodic Memory | JSONL Store |
 
-## Modelos y Rutas
+### Nodos Dinamicos (desde cluster_state.json)
 
-| Ruta API | Modelo | Nodo | VRAM |
-|---|---|---|---|
-| `ailab-router/auto` | Seleccion automatica | — | — |
-| `ailab-router/fast` | Llama 3.1 8B / Qwen 14B | RX9070 | 16 GB |
-| `ailab-router/coding` | Qwen 2.5 Coder 14B / 32B | RX9070/RX7900XT | 16-20 GB |
-| `ailab-router/reasoning` | Qwen 2.5 Coder 32B | RX7900XT | 20 GB |
+Se generan automaticamente a partir del estado actual del cluster,
+incluyendo latencia, modelos disponibles y estado online/offline.
+
+## Componente: `TopologyGraph.astro`
+
+Renderiza la topologia como texto estructurado con colores:
+
+```
+     AI-LAB CLUSTER TOPOLOGY
+     ======================
+
+  ● RX9070 (3ms)
+  ○ RX7900XT (OFFLINE)
+  ● Gateway AI-LAB (OK)
+  ● Event Bus (OK)
+  ● Episodic Memory (OK)
+
+  gateway -> RX9070: 3ms
+  gateway -> RX7900XT: OFFLINE
+  gateway -> event-bus: active
+  event-bus -> episodic-memory: recording
+```
+
+### Cytoscape.js
+
+Cytoscape.js esta instalado en el proyecto Astro para una futura migracion
+a un grafo interactivo con las siguientes capacidades:
+
+- Nodos coloreados por estado (verde online, rojo offline)
+- Aristas con etiquetas de latencia
+- Layout breadfirst (jerarquico)
+- Tooltips con metricas al hacer hover
+- Actualizacion en tiempo real via SSE
+
+## Paginas
+
+| Pagina | Ruta | Componente |
+|---|---|---|
+| Topologia Publica | `/status/topology` | TopologyGraph |
+| Estado Vivo | `/status/live` | ClusterHealth + EventStream |
+
+## Plan de Migracion a Cytoscape
+
+1. Implementar renderizado Cytoscape en TopologyGraph.tsx
+2. Conectar a SSE para actualizacion en vivo
+3. Anadir colores degradados (amarillo = degraded)
+4. Anadir tooltips con metricas al hover
+5. Pagina privada `/ops/topology` con detalle ampliado
+]3008;end=51fa343f-1d42-4401-b386-794e9a2d665d;exit=success\]3008;start=da4295b8-58a2-4b7b-beb8-e909d3b51b99;machineid=20aaf5bfa7584e8fb6c0264046eebecd;user=albert;hostname=ubuntu-ialab;bootid=1fc818c4-677f-4c57-b21b-3a4b2a5c6134;pid=00000000000000061390;type=shell;cwd=/home/albert\[?2004h]0;albert@ubuntu-ialab: ~[01;32malbert@ubuntu-ialab[00m:[01;34m~[00m
