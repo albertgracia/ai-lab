@@ -140,6 +140,13 @@ def _pending_actions():
     except ImportError:
         return {"error": "pending_adjustments not available"}
 
+def _watchdog():
+    try:
+        from runtime.watchdog.runtime_watchdog import run_watchdog
+        return run_watchdog()
+    except ImportError:
+        return {"status": "error", "checks": {}, "error": "watchdog not available"}
+
 class APIHandler(BaseHTTPRequestHandler):
     timeout = 10
     def do_GET(self):
@@ -167,6 +174,8 @@ class APIHandler(BaseHTTPRequestHandler):
             self._json(_runtime_adjustments())
         elif self.path == "/api/runtime-pending-actions":
             self._json(_pending_actions())
+        elif self.path == "/api/watchdog":
+            self._json(_watchdog())
         elif self.path == "/api/events":
             self._sse()
         else: self._send_error(404)

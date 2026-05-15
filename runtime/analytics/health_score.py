@@ -19,8 +19,15 @@ def calculate():
         try:
             state = json.loads(gpu_file.read_text())
             discovered = state.get("discovered_nodes", [])
+            # ── maintenance awareness (FASE 9.3) ──────────────────
+            mf = Path("/opt/ai-lab/runtime/state/maintenance_nodes.json")
+            maintenance = []
+            if mf.exists():
+                try: maintenance = json.loads(mf.read_text()).get("maintenance", [])
+                except: pass
             if discovered:
-                gpu_online = len([n for n in discovered if n.get("online")])
+                gpu_online = len([n for n in discovered
+                                   if n.get("online") or n.get("name") in maintenance])
                 gpu_total = len(discovered)
             else:
                 nodes = state.get("nodes", [])
