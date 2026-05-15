@@ -1,9 +1,4 @@
----
-title: "SSE Runtime — Streaming de Eventos"
-summary: "Implementacion del servidor SSE en la Live API, con ThreadingHTTPServer y conexiones persistentes."
-order: 3
----
-
+ [H[2J]0;albert@ubuntu-ialab: ~[01;32malbert@ubuntu-ialab[00m:[01;34m~[00m
 
 ## Servidor: `runtime/state/live_api.py`
 

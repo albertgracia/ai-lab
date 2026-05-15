@@ -1,9 +1,14 @@
----
+ cat /opt/ai-lab/apps/ialab-docs/src/content/docs/architecture_phase8.md
+[?2004l]3008;start=dd43b2d0-b41a-4f31-a8ee-8a1814ef0ef8;machineid=20aaf5bfa7584e8fb6c0264046eebecd;user=albert;hostname=ubuntu-ialab;bootid=1fc818c4-677f-4c57-b21b-3a4b2a5c6134;pid=00000000000000094699;type=command;cwd=/home/albert\---
 title: "Phase 8 Architecture — Realtime Cognitive Mesh"
-summary: "Arquitectura completa del AI-LAB tras la Fase 8: runtime cognitivo con eventos SSE, topologia viva y observabilidad en tiempo real."
-order: 1
+summary: "Arquitectura completa del AI-LAB tras la Fase 8 con eventos SSE, topologia viva y observabilidad en tiempo real."
+order: 16
 ---
 
+## Overview
+
+La Fase 8 transforma AI-LAB en un Cognitive Mesh en tiempo real.
+]3008;end=dd43b2d0-b41a-4f31-a8ee-8a1814ef0ef8;exit=success\]3008;start=083f1e15-3bae-457a-ad21-998be969a6d6;machineid=20aaf5bfa7584e8fb6c0264046eebecd;user=albert;hostname=ubuntu-ialab;bootid=1fc818c4-677f-4c57-b21b-3a4b2a5c6134;pid=00000000000000094699;type=shell;cwd=/home/albert\[?2004h]0;albert@ubuntu-ialab: ~[01;32malbert@ubuntu-ialab[00m:[01;34m~[00m
 
 ## Overview
 

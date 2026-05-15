@@ -1,9 +1,14 @@
----
-title: "Topology Layer — Mapa Vivo del Cluster"
-summary: "Capa de topologia interactiva del AI-LAB: nodos, conexiones, estados en tiempo real."
-order: 4
+ cat /opt/ai-lab/apps/ialab-docs/src/content/docs/sse_runtime.md
+[?2004l]3008;start=3dc039a0-a43f-4610-b3a0-aeef1fa653df;machineid=20aaf5bfa7584e8fb6c0264046eebecd;user=albert;hostname=ubuntu-ialab;bootid=1fc818c4-677f-4c57-b21b-3a4b2a5c6134;pid=00000000000000094699;type=command;cwd=/home/albert\---
+title: "SSE Runtime — Streaming de Eventos"
+summary: "Implementacion del servidor SSE en la Live API con ThreadingHTTPServer y conexiones persistentes."
+order: 18
 ---
 
+## Servidor
+
+La Live API sirve como punto de entrada para datos en tiempo real.
+]3008;end=3dc039a0-a43f-4610-b3a0-aeef1fa653df;exit=success\]3008;start=083f1e15-3bae-457a-ad21-998be969a6d6;machineid=20aaf5bfa7584e8fb6c0264046eebecd;user=albert;hostname=ubuntu-ialab;bootid=1fc818c4-677f-4c57-b21b-3a4b2a5c6134;pid=00000000000000094699;type=shell;cwd=/home/albert\[?2004h]0;albert@ubuntu-ialab: ~[01;32malbert@ubuntu-ialab[00m:[01;34m~[00m
 
 ## Descripcion
 
