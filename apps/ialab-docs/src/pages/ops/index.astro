@@ -79,6 +79,29 @@ import EventStream from "../../components/EventStream.astro";
       <a href="/status/models" class="rounded-xl border border-cyan-500/20 bg-zinc-950 p-5 text-cyan-300 hover:border-cyan-400 text-sm font-bold">Modelos</a>
     </section>
   </section>
+
+    <section class="rounded-2xl border border-purple-500/30 bg-zinc-950 p-6">
+      <h2 class="text-xl font-bold text-purple-400 mb-4">Cognitive Runtime (FASE 8.9)</h2>
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="rounded-xl border border-zinc-800 p-4">
+          <span class="text-xs text-zinc-500">Shaping Latency</span>
+          <p class="text-2xl font-bold text-cyan-400" id="cog-latency">--ms</p>
+        </div>
+        <div class="rounded-xl border border-zinc-800 p-4">
+          <span class="text-xs text-zinc-500">Context Budget</span>
+          <p class="text-2xl font-bold text-yellow-400" id="cog-budget">--%</p>
+        </div>
+        <div class="rounded-xl border border-zinc-800 p-4">
+          <span class="text-xs text-zinc-500">Working Sessions</span>
+          <p class="text-2xl font-bold text-emerald-400" id="cog-sessions">--</p>
+        </div>
+        <div class="rounded-xl border border-zinc-800 p-4">
+          <span class="text-xs text-zinc-500">Files Used</span>
+          <p class="text-2xl font-bold text-orange-400" id="cog-files">--</p>
+        </div>
+      </div>
+    </section>
+  </section>
 </Layout>
 <script>
   async function refresh() {
@@ -128,4 +151,19 @@ import EventStream from "../../components/EventStream.astro";
   }
   refresh();
   setInterval(refresh, 8000);
+
+  async function loadCognitive() {
+    try {
+      const r = await fetch("/api/cognitive");
+      const d = await r.json();
+      const s = d.latest_shaping || {};
+      document.getElementById("cog-latency").textContent = (s.shaping_latency_ms || 0) + "ms";
+      document.getElementById("cog-budget").textContent = Math.round((s.budget_used || 0) * 100) + "%";
+      document.getElementById("cog-files").textContent = s.files_used || "--";
+      const wm = d.working_memory || {};
+      document.getElementById("cog-sessions").textContent = wm.sessions || 0;
+    } catch {}
+  }
+  loadCognitive();
+  setInterval(loadCognitive, 15000);
 </script>
