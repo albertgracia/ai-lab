@@ -24,8 +24,8 @@
       "error": "Skipped after 10 consecutive failures"
     }
   ],
-  "updated_at": 1778848505,
-  "updated_at_iso": "2026-05-15T12:35:05.499098+00:00",
+  "updated_at": 1778849684,
+  "updated_at_iso": "2026-05-15T12:54:44.253891+00:00",
   "cluster_health": "offline",
   "offline_nodes": 2,
   "discovered_nodes": [
@@ -37,9 +37,9 @@
       "latency_ms": null,
       "models": [],
       "capabilities": [],
-      "discovered_at": 1778848494,
+      "discovered_at": 1778849672,
       "status": "offline",
-      "error": "HTTPConnectionPool(host='192.168.1.50', port=1234): Max retries exceeded with url: /v1/models (Caused by ConnectTimeoutError(<HTTPConnection(host='192.168.1.50', port=1234) at 0x7e4ab48a4160>, 'Connection to 192.168.1.50 timed out. (connect timeout=5)'))"
+      "error": "HTTPConnectionPool(host='192.168.1.50', port=1234): Max retries exceeded with url: /v1/models (Caused by ConnectTimeoutError(<HTTPConnection(host='192.168.1.50', port=1234) at 0x7e4ab4412f10>, 'Connection to 192.168.1.50 timed out. (connect timeout=5)'))"
     },
     {
       "host": "192.168.1.60",
@@ -49,7 +49,7 @@
       "latency_ms": null,
       "models": [],
       "capabilities": [],
-      "discovered_at": 1778848499,
+      "discovered_at": 1778849677,
       "status": "offline",
       "error": "HTTPConnectionPool(host='192.168.1.60', port=1234): Max retries exceeded with url: /v1/models (Caused by NewConnectionError(\"HTTPConnection(host='192.168.1.60', port=1234): Failed to establish a new connection: [Errno 113] No route to host\"))"
     },
@@ -61,9 +61,9 @@
       "latency_ms": null,
       "models": [],
       "capabilities": [],
-      "discovered_at": 1778848500,
+      "discovered_at": 1778849679,
       "status": "offline",
-      "error": "HTTPConnectionPool(host='192.168.1.250', port=1234): Max retries exceeded with url: /v1/models (Caused by ConnectTimeoutError(<HTTPConnection(host='192.168.1.250', port=1234) at 0x7e4ab48a4af0>, 'Connection to 192.168.1.250 timed out. (connect timeout=5)'))"
+      "error": "HTTPConnectionPool(host='192.168.1.250', port=1234): Max retries exceeded with url: /v1/models (Caused by ConnectTimeoutError(<HTTPConnection(host='192.168.1.250', port=1234) at 0x7e4ab44138a0>, 'Connection to 192.168.1.250 timed out. (connect timeout=5)'))"
     }
   ],
   "discovered_online_nodes": 0,
