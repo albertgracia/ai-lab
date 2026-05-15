@@ -44,7 +44,7 @@ import Layout from "../../../layouts/Layout.astro";
 <script>
   async function refreshGPUs() {
     try {
-      const res = await fetch("/api/status.json", { cache: "no-store" });
+      const res = await fetch("https://blog-ai-lab.labrazahome.com/api/status.json", { cache: "no-store" });
       const data = await res.json();
       const gpu = Array.isArray(data.gpu) ? data.gpu : [];
       for (const g of gpu) {
