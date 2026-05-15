@@ -69,6 +69,13 @@ def get_analytics_data():
     except Exception as e:
         return {"health": {"score": 0, "level": "error", "reasons": [str(e)]}, "error": str(e)}
 
+def _model_performance():
+    try:
+        from runtime.routing.model_performance import get_model_performance
+        return get_model_performance()
+    except ImportError:
+        return {"error": "model_performance module not available"}
+
 class APIHandler(BaseHTTPRequestHandler):
     timeout = 10
     def do_GET(self):
@@ -78,6 +85,8 @@ class APIHandler(BaseHTTPRequestHandler):
             self._json(get_cluster_topology())
         elif self.path == "/api/analytics":
             self._json(get_analytics_data())
+        elif self.path == "/api/model-performance":
+            self._json(_model_performance())
         elif self.path == "/api/events":
             self._sse()
         else: self._send_error(404)

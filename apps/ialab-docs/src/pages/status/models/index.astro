@@ -38,6 +38,19 @@ import Layout from "../../../layouts/Layout.astro";
         <div id="rx7900xt-models" class="text-sm text-zinc-400 font-mono">Cargando...</div>
       </div>
     </section>
+
+    <section class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+      <h2 class="text-xl font-bold text-emerald-400 mb-4">Model Performance (FASE 8.6)</h2>
+      <p class="text-sm text-zinc-500 mb-4">Routing adaptativo con scoring hibrido (capability + rendimiento historico).</p>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm" id="perf-table">
+          <thead><tr class="text-zinc-500 border-b border-zinc-800">
+            <th class="text-left py-3 px-2">Modelo</th><th class="text-left px-2">Capability</th><th class="text-left px-2">Perf Real</th><th class="text-left px-2">Latencia (stream)</th><th class="text-left px-2">Success Rate</th><th class="text-left px-2">GPU</th><th class="text-left px-2">Requests</th>
+          </tr></thead>
+          <tbody id="perf-body"><tr><td colspan="7" class="py-6 text-center text-zinc-500">Cargando datos de rendimiento...</td></tr></tbody>
+        </table>
+      </div>
+    </section>
   </section>
 </Layout>
 
@@ -55,4 +68,37 @@ import Layout from "../../../layouts/Layout.astro";
     }
   }
   loadModels();
+
+  async function loadPerformance() {
+    try {
+      const res = await fetch("/api/model-performance");
+      const data = await res.json();
+      const tbody = document.getElementById("perf-body");
+      if (!data || data.error) {
+        tbody.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-zinc-500">Sin datos de rendimiento todavia (FASE 8.6 activa)</td></tr>';
+        return;
+      }
+      const entries = Object.entries(data).sort((a, b) => b[1].performance_index - a[1].performance_index);
+      if (!entries.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-emerald-400">Esperando datos de inferencia...</td></tr>';
+        return;
+      }
+      tbody.innerHTML = entries.map(([model, perf]) => {
+        const s = perf.streaming || {};
+        const cap = perf.capability_score || 0;
+        const pi = perf.performance_index || 0;
+        const lat = s.avg_latency_ms ? (s.avg_latency_ms / 1000).toFixed(1) + "s" : "--";
+        const succ = perf.success_rate ? (perf.success_rate * 100).toFixed(0) + "%" : "--";
+        const gpu = perf.gpu || "--";
+        const total = perf.total_requests || 0;
+        const display = perf.display_name || model.substring(0, 30);
+        const capClass = cap >= 80 ? "text-emerald-400" : cap >= 60 ? "text-yellow-400" : "text-zinc-400";
+        const piClass = pi >= 80 ? "text-emerald-400" : pi >= 60 ? "text-yellow-400" : pi >= 40 ? "text-orange-400" : "text-red-400";
+        return '<tr class="border-b border-zinc-800"><td class="py-2 px-2 text-cyan-400">' + display + '</td><td class="px-2 ' + capClass + '">' + cap + '</td><td class="px-2 ' + piClass + '">' + pi + '</td><td class="px-2">' + lat + '</td><td class="px-2">' + succ + '</td><td class="px-2 text-purple-400">' + gpu + '</td><td class="px-2">' + total + '</td></tr>';
+      }).join("");
+    } catch {
+      document.getElementById("perf-body").innerHTML = '<tr><td colspan="7" class="py-6 text-center text-zinc-500">Endpoint no disponible</td></tr>';
+    }
+  }
+  loadPerformance();
 </script>
