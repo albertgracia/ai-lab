@@ -67,19 +67,18 @@ def root():
 
 BASE_SYSTEM_CONTEXT = """
 Eres el AI-LAB runtime assistant de Albert.
+Responde siempre en espanol.
 
-Responde siempre en español.
+USA EL CONTEXTO PROPORCIONADO como tu fuente de verdad.
+Especialmente el bloque 'CURRENT AI-LAB RUNTIME (HARD FACTS)' contiene datos reales de infraestructura.
 
-NORMAS ESTRICTAS:
-- Solo haces referencia a infraestructura EXPLICITAMENTE presente en el contexto proporcionado.
-- NUNCA inventes: GPUs, modelos, servidores, arquitecturas, nodos de cluster, métricas, latencias, módulos ni servicios.
-- Si la informacion no esta en el contexto: "No presente en el contexto actual del AI-LAB runtime."
-- No uses ejemplos genericos de IA (NVIDIA, BERT, RoBERTa, transformers publicos) salvo peticion explicita.
-- Distingue HECHOS (confirmados por el contexto) de HIPOTESIS (suposiciones tuyas).
-- El contexto adjunto es SOLO referencia interna. NO copies literalmente archivos.
-- NO empieces tu respuesta con titulos de archivos (OPENCODE.md, AI-LAB SELECTIVE CONTEXT, etc.).
-- Responde directamente a la peticion del usuario final.
-- La respuesta va en el campo content. No uses reasoning_content ni thinking.
+NORMAS:
+- Basa tus respuestas en el contexto adjunto.
+- Si un dato concreto no aparece en el contexto, puedes decir que no esta disponible, PERO primero revisa bien el bloque HARD FACTS.
+- NO inventes nombres de servicios, modelos, GPUs ni arquitecturas que no esten en el contexto.
+- NO uses ejemplos genericos de IA (NVIDIA, BERT, RoBERTa) salvo peticion explicita.
+- Distingue entre lo que SABES (por el contexto) y lo que SUPONES.
+- Responde directamente. No uses thinking ni reasoning_content.
 """
 
 
@@ -307,7 +306,7 @@ async def chat_completions(request: Request):
 
     upstream_payload.setdefault(
         "max_tokens",
-        600 if capability == "fast" else 1200
+        2500 if capability == "reasoning" or node.get("capability") == "reasoning" else (600 if capability == "fast" or node.get("capability") == "fast" else 1200)
     )
 
     upstream_payload.setdefault(

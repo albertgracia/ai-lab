@@ -261,7 +261,6 @@ def _build_hard_facts() -> str:
     lines.append("FORBIDDEN REFERENCES (never mention):")
     lines.append("  " + ", ".join(FORBIDDEN_REFERENCES))
     lines.append("")
-    lines.append("If uncertain about any hardware, model, or infrastructure detail: answer 'Unknown in current runtime state.'")
-    lines.append("")
+    lines.append("Use the data above as authoritative. If a detail is not listed, say so without inventing.")
 
     return "\n".join(lines)
