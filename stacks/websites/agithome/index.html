@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AG IT Home Services - Soluciones IT a domicilio en tiempo récord. Reparación de PCs, redes Unifi, WiFi profesional, seguridad y más.">
+    <meta name="keywords" content="IT home services, reparación PC, Unifi, WiFi profesional, soporte técnico, redes, seguridad">
+    <meta name="author" content="AG IT Home Services">
+    <meta property="og:title" content="AG IT Home Services | Soluciones IT a domicilio">
+    <meta property="og:description" content="Soporte técnico profesional a domicilio. Redes Unifi, WiFi, migración 10Gb y más.">
+    <meta property="og:type" content="website">
+    <title>AG IT Home Services | Soluciones IT a Domicilio</title>
+    <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+
+    <!-- Preconnect for Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- ========== PARTICLES BACKGROUND ========== -->
+    <div id="particles-container" class="particles-container"></div>
+
+    <!-- ========== NAVBAR ========== -->
+    <nav class="navbar" id="navbar">
+        <div class="container nav-container">
+            <a href="#home" class="nav-logo" aria-label="AG IT Home Services">
+                <!-- Logo SVG inline -->
+                <div class="logo-mark">
+                    <svg width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="38" height="38" rx="10" fill="url(#logo-grad)"/>
+                        <path d="M19 7L7 14v10h6v-6h12v6h6V14L19 7z" fill="white" opacity="0.9"/>
+                        <circle cx="19" cy="26" r="3" fill="white"/>
+                        <path d="M13 26c0-3.31 2.69-6 6-6s6 2.69 6 6" stroke="white" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.6"/>
+                        <path d="M10 26c0-4.97 4.03-9 9-9s9 4.03 9 9" stroke="white" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.3"/>
+                        <defs>
+                            <linearGradient id="logo-grad" x1="0" y1="0" x2="38" y2="38">
+                                <stop offset="0%" stop-color="#60a5fa"/>
+                                <stop offset="100%" stop-color="#2563eb"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <span class="logo-text">AG IT <span class="logo-accent">Home</span></span>
+            </a>
+
+            <ul class="nav-links" id="nav-links">
+                <li><a href="#servicios" class="nav-link">Servicios</a></li>
+                <li><a href="#unifi" class="nav-link">Unifi</a></li>
+                <li><a href="#nosotros" class="nav-link">Nosotros</a></li>
+                <li><a href="#testimonios" class="nav-link">Clientes</a></li>
+                <li><a href="#contacto" class="nav-link nav-link-cta">Contactar</a></li>
+            </ul>
+
+            <button class="hamburger" id="hamburger" aria-label="Menú" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobile-menu">
+        <ul>
+            <li><a href="#servicios" class="mobile-link">Servicios</a></li>
+            <li><a href="#unifi" class="mobile-link">Unifi</a></li>
+            <li><a href="#nosotros" class="mobile-link">Nosotros</a></li>
+            <li><a href="#testimonios" class="mobile-link">Clientes</a></li>
+            <li><a href="#contacto" class="mobile-link mobile-cta">Contactar Ahora</a></li>
+        </ul>
+    </div>
+
+    <!-- ========== HERO SECTION ========== -->
+    <section class="hero" id="home">
+        <div class="hero-bg-gradient"></div>
+
+        <div class="container hero-container">
+            <div class="hero-content">
+                <div class="hero-badge animate-fade-up">
+                    <span class="badge-dot"></span>
+                    🛠️ Servicio Premium a Domicilio
+                </div>
+
+                <h1 class="hero-title animate-fade-up delay-1">
+                    Tu hogar,<br>
+                    <span class="gradient-text">conectado</span><br>
+                    al máximo.
+                </h1>
+
+                <p class="hero-subtitle animate-fade-up delay-2">
+                    Expertos en redes Unifi, WiFi profesional y soporte técnico IT.<br>
+                    <strong>Soluciones a domicilio en tiempo récord.</strong>
+                </p>
+
+                <div class="hero-actions animate-fade-up delay-3">
+                    <a href="#contacto" class="btn-primary btn-glow" id="hero-cta">
+                        <span>Solicitar Visita</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </a>
+                    <a href="#servicios" class="btn-outline">
+                        Ver Servicios
+                    </a>
+                </div>
+
+                <div class="hero-stats animate-fade-up delay-4">
+                    <div class="stat-item">
+                        <span class="stat-number" data-target="500">0</span><span class="stat-suffix">+</span>
+                        <span class="stat-label">Instalaciones</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-item">
+                        <span class="stat-number" data-target="98">0</span><span class="stat-suffix">%</span>
+                        <span class="stat-label">Satisfacción</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-item">
+                        <span class="stat-number" data-target="24">0</span><span class="stat-suffix">h</span>
+                        <span class="stat-label">Respuesta</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hero Visual: Animated Network -->
+            <div class="hero-visual animate-fade-right">
+                <div class="network-orb">
+                    <canvas id="network-canvas" width="500" height="500"></canvas>
+                    <div class="orb-glow"></div>
+                    <div class="orb-ring ring-1"></div>
+                    <div class="orb-ring ring-2"></div>
+                    <div class="orb-ring ring-3"></div>
+
+                    <!-- Floating cards around orb -->
+                    <div class="float-card card-tl">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        Securizado
+                    </div>
+                    <div class="float-card card-tr">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+                        WiFi 6E
+                    </div>
+                    <div class="float-card card-bl">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                        10 Gbps
+                    </div>
+                    <div class="float-card card-br">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+                        24h
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scroll indicator -->
+        <div class="scroll-indicator">
+            <div class="scroll-line"></div>
+            <span>Scroll</span>
+        </div>
+    </section>
+
+    <!-- ========== TRUST BAND ========== -->
+    <section class="trust-band">
+        <div class="container">
+            <p class="trust-label">Trabajamos con tecnología de</p>
+            <div class="trust-logos">
+                <div class="trust-item">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="2"/><path d="M12 2C7.5 2 3.7 5 3 9.5s1.5 8 5 10l4 2.5 4-2.5c3.5-2 5.7-5.5 5-10S16.5 2 12 2z"/></svg>
+                    <span>Ubiquiti Unifi</span>
+                </div>
+                <div class="trust-item">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                    <span>Windows & macOS</span>
+                </div>
+                <div class="trust-item">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+                    <span>WiFi 6 & 6E</span>
+                </div>
+                <div class="trust-item">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    <span>Multi-Gigabit</span>
+                </div>
+                <div class="trust-item">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    <span>Seguridad Avanzada</span>
+                </div>
+                <div class="trust-item">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    <span>Soporte Prioritario</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== SERVICIOS (FLIP CARDS) ========== -->
+    <section class="section" id="servicios">
+        <div class="container">
+            <div class="section-header scroll-reveal">
+                <span class="section-tag">⚙️ Lo que hacemos</span>
+                <h2 class="section-title">Servicios <span class="gradient-text">Profesionales</span></h2>
+                <p class="section-subtitle">Cobertura completa de IT para tu hogar. Desde reparaciones hasta infraestructura de red empresarial.</p>
+            </div>
+
+            <div class="services-grid">
+
+                <!-- Card 1: PC Repair -->
+                <div class="service-card-flip scroll-reveal" data-delay="0">
+                    <div class="service-card-inner">
+                        <div class="service-card-front">
+                            <div class="service-visual sv-1 sv-img">
+                                <img src="images/Reparacion y Optimizacion de PC.png" alt="Reparación de PCs" class="service-bg-img" onerror="this.style.display='none'">
+                                <svg class="service-icon-big service-icon-fallback" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect x="10" y="15" width="60" height="38" rx="4" stroke="currentColor" stroke-width="2.5"/>
+                                    <path d="M25 53l-5 10M55 53l5 10M15 63h50" stroke="currentColor" stroke-width="2.5"/>
+                                    <path d="M32 30l4 4 12-12" stroke="#3B82F6" stroke-width="3" stroke-linecap="round"/>
+                                    <circle cx="53" cy="30" r="8" stroke="currentColor" stroke-width="2"/>
+                                    <path d="M53 26v4l2.5 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                </svg>
+                                <div class="service-front-overlay">
+                                    <span class="service-num">01</span>
+                                    <h3>Reparación de PCs</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="service-card-back glass-card">
+                            <div class="back-icon">
+                                <svg width="32" height="32" viewBox="0 0 80 80" fill="none"><rect x="10" y="15" width="60" height="38" rx="4" stroke="#3B82F6" stroke-width="2.5"/><path d="M25 53l-5 10M55 53l5 10M15 63h50" stroke="#3B82F6" stroke-width="2.5"/><path d="M32 30l4 4 12-12" stroke="#3B82F6" stroke-width="3" stroke-linecap="round"/></svg>
+                            </div>
+                            <h3>Reparación de PCs & Soporte</h3>
+                            <p>Diagnóstico y reparación de hardware/software, limpieza profunda, actualización de componentes y soporte técnico presencial.</p>
+                            <div class="service-tags">
+                                <span class="tag">Hardware</span>
+                                <span class="tag">Software</span>
+                                <span class="tag">Diagnóstico</span>
+                            </div>
+                            <a href="#contacto" class="btn-card">Solicitar →</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Software -->
+                <div class="service-card-flip scroll-reveal" data-delay="100">
+                    <div class="service-card-inner">
+                        <div class="service-card-front">
+                            <div class="service-visual sv-2 sv-img">
+                                <img src="images/Instalación de software.png" alt="Instalación de Software" class="service-bg-img" onerror="this.style.display='none'">
+                                <svg class="service-icon-big service-icon-fallback" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect x="8" y="20" width="64" height="42" rx="6" stroke="currentColor" stroke-width="2.5"/>
+                                    <path d="M8 30h64" stroke="currentColor" stroke-width="2"/>
+                                    <circle cx="16" cy="25" r="2" fill="currentColor" opacity="0.5"/>
+                                    <circle cx="24" cy="25" r="2" fill="currentColor" opacity="0.5"/>
+                                    <circle cx="32" cy="25" r="2" fill="currentColor" opacity="0.5"/>
+                                    <path d="M20 45l8-8 6 6 10-10 8 8" stroke="#3B82F6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M20 55h12M38 55h22" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+                                </svg>
+                                <div class="service-front-overlay">
+                                    <span class="service-num">02</span>
+                                    <h3>Instalación de Software</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="service-card-back glass-card">
+                            <div class="back-icon">
+                                <svg width="32" height="32" viewBox="0 0 80 80" fill="none"><rect x="8" y="20" width="64" height="42" rx="6" stroke="#3B82F6" stroke-width="2.5"/><path d="M8 30h64" stroke="#3B82F6" stroke-width="2"/><path d="M20 45l8-8 6 6 10-10 8 8" stroke="#3B82F6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </div>
+                            <h3>Instalación de Software</h3>
+                            <p>Configuración de sistemas operativos, instalación de aplicaciones profesionales, licencias, optimización de rendimiento y actualizaciones.</p>
+                            <div class="service-tags">
+                                <span class="tag">Windows</span>
+                                <span class="tag">macOS</span>
+                                <span class="tag">Licencias</span>
+                            </div>
+                            <a href="#contacto" class="btn-card">Solicitar →</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Unifi WiFi -->
+                <div class="service-card-flip scroll-reveal" data-delay="200">
+                    <div class="service-card-inner">
+                        <div class="service-card-front">
+                            <div class="service-visual sv-3 sv-img">
+                                <img src="images/WiFi Profesional Unifi Diseño e instalación.png" alt="WiFi Profesional Unifi Mesh" class="service-bg-img" onerror="this.style.display='none'">
+                                <svg class="service-icon-big service-icon-fallback" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="40" cy="55" r="4" fill="#3B82F6"/>
+                                    <path d="M28 44a17 17 0 0 1 24 0" stroke="#3B82F6" stroke-width="3" stroke-linecap="round"/>
+                                    <path d="M20 36a27 27 0 0 1 40 0" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" opacity="0.7"/>
+                                    <path d="M12 28a37 37 0 0 1 56 0" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/>
+                                    <rect x="22" y="62" width="36" height="6" rx="3" fill="currentColor" opacity="0.2"/>
+                                </svg>
+                                <div class="service-front-overlay">
+                                    <span class="service-num">03</span>
+                                    <h3>WiFi Profesional Unifi</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="service-card-back glass-card">
+                            <div class="back-icon">
+                                <svg width="32" height="32" viewBox="0 0 80 80" fill="none"><circle cx="40" cy="55" r="4" fill="#3B82F6"/><path d="M28 44a17 17 0 0 1 24 0" stroke="#3B82F6" stroke-width="3" stroke-linecap="round"/><path d="M20 36a27 27 0 0 1 40 0" stroke="#3B82F6" stroke-width="2.5" stroke-linecap="round" opacity="0.7"/></svg>
+                            </div>
+                            <h3>WiFi Profesional Unifi</h3>
+                            <p>Diseño e instalación de redes Unifi para hogares. Cobertura total, sin puntos ciegos, con gestión centralizada y rendimiento empresarial.</p>
+                            <div class="service-tags">
+                                <span class="tag">WiFi 6E</span>
+                                <span class="tag">Unifi</span>
+                                <span class="tag">Mesh</span>
+                            </div>
+                            <a href="#contacto" class="btn-card">Solicitar →</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Coverage & Expansion -->
+                <div class="service-card-flip scroll-reveal" data-delay="0">
+                    <div class="service-card-inner">
+                        <div class="service-card-front">
+                            <div class="service-visual sv-4 sv-img">
+                                <img src="images/Mejora de Cobertura & Ampliación.png" alt="Ampliación de redes en hogar" class="service-bg-img" onerror="this.style.display='none'">
+                                <svg class="service-icon-big service-icon-fallback" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect x="10" y="35" width="20" height="30" rx="3" stroke="currentColor" stroke-width="2.5"/>
+                                    <rect x="30" y="25" width="20" height="40" rx="3" stroke="currentColor" stroke-width="2.5"/>
+                                    <rect x="50" y="15" width="20" height="50" rx="3" stroke="#3B82F6" stroke-width="2.5"/>
+                                    <path d="M15 30 Q25 10 40 20 Q55 5 65 10" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 4" fill="none"/>
+                                    <circle cx="65" cy="10" r="3" fill="#3B82F6"/>
+                                </svg>
+                                <div class="service-front-overlay">
+                                    <span class="service-num">04</span>
+                                    <h3>Mejora de Cobertura WiFi</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="service-card-back glass-card">
+                            <div class="back-icon">
+                                <svg width="32" height="32" viewBox="0 0 80 80" fill="none"><rect x="10" y="35" width="20" height="30" rx="3" stroke="#3B82F6" stroke-width="2.5"/><rect x="30" y="25" width="20" height="40" rx="3" stroke="#3B82F6" stroke-width="2.5"/><rect x="50" y="15" width="20" height="50" rx="3" stroke="#3B82F6" stroke-width="2.5"/></svg>
+                            </div>
+                            <h3>Mejora de Cobertura & Ampliación</h3>
+                            <p>Estudio de cobertura WiFi, eliminación de zonas muertas, ampliación de redes existentes y sustitución del equipo del operador.</p>
+                            <div class="service-tags">
+                                <span class="tag">Análisis</span>
+                                <span class="tag">Operador</span>
+                                <span class="tag">Ampliación</span>
+                            </div>
+                            <a href="#contacto" class="btn-card">Solicitar →</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: 2.5G/10G Migration -->
+                <div class="service-card-flip scroll-reveal" data-delay="100">
+                    <div class="service-card-inner">
+                        <div class="service-card-front">
+                            <div class="service-visual sv-5 sv-img">
+                                <img src="images/Migración de redes a 2.5Gb y 10Gb.png" alt="Migración 2.5Gb / 10Gb" class="service-bg-img" onerror="this.style.display='none'">
+                                <svg class="service-icon-big service-icon-fallback" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" transform="translate(20 20) scale(1.8)" stroke="#3B82F6" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M10 60h18M52 60h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+                                    <text x="40" y="64" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#3B82F6" font-weight="600">10Gb</text>
+                                    <path d="M35 30 L45 30" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 3"/>
+                                </svg>
+                                <div class="service-front-overlay">
+                                    <span class="service-num">05</span>
+                                    <h3>Migración 2.5Gb / 10Gb</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="service-card-back glass-card">
+                            <div class="back-icon">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                            </div>
+                            <h3>Migración a 2.5Gb y 10Gb</h3>
+                            <p>Actualización completa de infraestructura a redes multi-gigabit. Switches, cableado Cat6A/Cat8 y configuración de equipos 2.5G y 10G.</p>
+                            <div class="service-tags">
+                                <span class="tag">Cat6A/8</span>
+                                <span class="tag">2.5Gb</span>
+                                <span class="tag">10Gb</span>
+                            </div>
+                            <a href="#contacto" class="btn-card">Solicitar →</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: Security & Unifi Access/Protect -->
+                <div class="service-card-flip scroll-reveal" data-delay="200">
+                    <div class="service-card-inner">
+                        <div class="service-card-front">
+                            <div class="service-visual sv-6 sv-img">
+                                <img src="images/servicios IT para Hogares.png" alt="Control de acceso y seguridad Unifi" class="service-bg-img" onerror="this.style.display='none'">
+                                <svg class="service-icon-big service-icon-fallback" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M40 10L15 22v15c0 15 10.5 29 25 33 14.5-4 25-18 25-33V22L40 10z" stroke="#3B82F6" stroke-width="2.5" fill="rgba(59,130,246,0.1)"/>
+                                    <path d="M30 40l7 7 13-13" stroke="#3B82F6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <circle cx="58" cy="20" r="6" fill="rgba(59,130,246,0.2)" stroke="#3B82F6" stroke-width="1.5"/>
+                                    <path d="M58 17v3l2 1.5" stroke="#3B82F6" stroke-width="1.5" stroke-linecap="round"/>
+                                </svg>
+                                <div class="service-front-overlay">
+                                    <span class="service-num">06</span>
+                                    <h3>Seguridad &amp; Unifi Protect</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="service-card-back glass-card">
+                            <div class="back-icon">
+                                <svg width="32" height="32" viewBox="0 0 80 80" fill="none"><path d="M40 10L15 22v15c0 15 10.5 29 25 33 14.5-4 25-18 25-33V22L40 10z" stroke="#3B82F6" stroke-width="2.5"/><path d="M30 40l7 7 13-13" stroke="#3B82F6" stroke-width="3" stroke-linecap="round"/></svg>
+                            </div>
+                            <h3>Securización, Unifi Access & Protect</h3>
+                            <p>Seguridad de red avanzada, control de acceso inteligente con Unifi Access y videovigilancia profesional con Unifi Protect.</p>
+                            <div class="service-tags">
+                                <span class="tag">Firewall</span>
+                                <span class="tag">Acceso</span>
+                                <span class="tag">CCTV</span>
+                            </div>
+                            <a href="#contacto" class="btn-card">Solicitar →</a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== UNIFI ECOSYSTEM SECTION ========== -->
+    <section class="section section-alt" id="unifi">
+        <div class="container">
+            <div class="unifi-grid">
+                <div class="unifi-content scroll-reveal">
+                    <span class="section-tag">🔵 Ecosistema Premium</span>
+                    <h2 class="section-title">Especialistas en<br><span class="gradient-text">Ubiquiti Unifi</span></h2>
+                    <p class="section-subtitle-left">Somos instaladores certificados del ecosistema Unifi. La misma tecnología que usan empresas Fortune 500, ahora en tu hogar.</p>
+
+                    <div class="unifi-features">
+                        <div class="unifi-feature">
+                            <div class="feature-icon">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+                            </div>
+                            <div>
+                                <h4>UniFi Network</h4>
+                                <p>Switches, routers y APs de grado empresarial</p>
+                            </div>
+                        </div>
+                        <div class="unifi-feature">
+                            <div class="feature-icon">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            </div>
+                            <div>
+                                <h4>UniFi Access</h4>
+                                <p>Control de acceso inteligente y gestión de puertas</p>
+                            </div>
+                        </div>
+                        <div class="unifi-feature">
+                            <div class="feature-icon">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+                            </div>
+                            <div>
+                                <h4>UniFi Protect</h4>
+                                <p>Videovigilancia HD/4K con IA integrada</p>
+                            </div>
+                        </div>
+                        <div class="unifi-feature">
+                            <div class="feature-icon">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                            </div>
+                            <div>
+                                <h4>Consola de Gestión</h4>
+                                <p>Todo controlado desde una sola app</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <a href="#contacto" class="btn-primary" style="display:inline-flex; align-items:center; gap:8px;">
+                        Consulta Gratuita
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </a>
+                </div>
+
+                <div class="unifi-visual scroll-reveal">
+                    <div class="dashboard-card">
+                        <div class="dashboard-header">
+                            <div class="dashboard-dots">
+                                <span></span><span></span><span></span>
+                            </div>
+                            <span class="dashboard-title">UniFi Network Console</span>
+                        </div>
+                        <div class="dashboard-body">
+                            <div class="dash-stat-row">
+                                <div class="dash-stat">
+                                    <span class="ds-label">Clientes conectados</span>
+                                    <span class="ds-value">24</span>
+                                </div>
+                                <div class="dash-stat">
+                                    <span class="ds-label">WiFi activo</span>
+                                    <span class="ds-value good">100%</span>
+                                </div>
+                            </div>
+                            <div class="dash-network-map">
+                                <div class="net-node node-center" title="Dream Machine Pro">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                                </div>
+                                <div class="net-connection c1"></div>
+                                <div class="net-node node-switch" title="Switch 24 PoE">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.5"><rect x="2" y="8" width="20" height="8" rx="2"/><path d="M6 12h.01M10 12h.01"/></svg>
+                                </div>
+                                <div class="net-connection c2"></div>
+                                <div class="net-node node-ap1" title="AP U6 Lite">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.5"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M12 20h.01"/></svg>
+                                </div>
+                                <div class="net-connection c3"></div>
+                                <div class="net-node node-ap2" title="AP U6 Pro">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.5"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M12 20h.01"/></svg>
+                                </div>
+                                <div class="net-connection c4"></div>
+                                <div class="net-node node-cam" title="Protect G4">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="1.5"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                                </div>
+                            </div>
+                            <div class="dash-speeds">
+                                <div class="speed-bar">
+                                    <span class="speed-label">↓ Download</span>
+                                    <div class="speed-track"><div class="speed-fill" style="--w:82%"></div></div>
+                                    <span class="speed-val">820 Mbps</span>
+                                </div>
+                                <div class="speed-bar">
+                                    <span class="speed-label">↑ Upload</span>
+                                    <div class="speed-track"><div class="speed-fill" style="--w:65%"></div></div>
+                                    <span class="speed-val">650 Mbps</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== PROCESS ========== -->
+    <section class="section" id="proceso">
+        <div class="container">
+            <div class="section-header scroll-reveal">
+                <span class="section-tag">🚀 Nuestro proceso</span>
+                <h2 class="section-title">Simple, Rápido, <span class="gradient-text">Efectivo</span></h2>
+            </div>
+            <div class="process-steps">
+                <div class="process-step scroll-reveal" data-delay="0">
+                    <div class="step-number">01</div>
+                    <div class="step-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    </div>
+                    <h3>Contacto</h3>
+                    <p>Cuéntanos tu problema. Te respondemos en menos de 2 horas.</p>
+                </div>
+                <div class="process-connector"></div>
+                <div class="process-step scroll-reveal" data-delay="150">
+                    <div class="step-number">02</div>
+                    <div class="step-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35M11 8v6M8 11h6"/></svg>
+                    </div>
+                    <h3>Diagnóstico</h3>
+                    <p>Evaluamos tu situación y diseñamos la solución óptima.</p>
+                </div>
+                <div class="process-connector"></div>
+                <div class="process-step scroll-reveal" data-delay="300">
+                    <div class="step-number">03</div>
+                    <div class="step-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    </div>
+                    <h3>Instalación</h3>
+                    <p>Un técnico acude a tu domicilio y realiza la instalación.</p>
+                </div>
+                <div class="process-connector"></div>
+                <div class="process-step scroll-reveal" data-delay="450">
+                    <div class="step-number">04</div>
+                    <div class="step-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    </div>
+                    <h3>Listo</h3>
+                    <p>Verificamos que todo funciona perfectamente. Soporte post-instalación incluido.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== NOSOTROS ========== -->
+    <section class="section section-alt" id="nosotros">
+        <div class="container">
+            <div class="about-grid">
+                <div class="about-visual scroll-reveal">
+                    <div class="about-rack-photo">
+                        <img src="images/Servicio Premium a Domicilio.png" alt="Rack de red profesional AG IT Home Services"
+                             class="rack-img"
+                             onerror="this.closest('.about-rack-photo').classList.add('no-img')">
+                        <div class="rack-overlay">
+                            <span class="rack-badge">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                                Setup real de cliente
+                            </span>
+                        </div>
+                        <!-- Fallback orb when no image -->
+                        <div class="about-orb about-orb-fallback">
+                            <div class="about-inner-circle">
+                                <svg width="80" height="80" viewBox="0 0 38 38" fill="none">
+                                    <rect width="38" height="38" rx="10" fill="url(#about-grad)"/>
+                                    <path d="M19 7L7 14v10h6v-6h12v6h6V14L19 7z" fill="white" opacity="0.9"/>
+                                    <circle cx="19" cy="26" r="3" fill="white"/>
+                                    <defs>
+                                        <linearGradient id="about-grad" x1="0" y1="0" x2="38" y2="38">
+                                            <stop offset="0%" stop-color="#60a5fa"/>
+                                            <stop offset="100%" stop-color="#2563eb"/>
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                            </div>
+                            <div class="about-ring ar-1"></div>
+                            <div class="about-ring ar-2"></div>
+                        </div>
+                    </div>
+
+                    <div class="about-badges">
+                        <div class="about-badge">
+                            <span class="ab-num" data-target="5">0</span>+
+                            <span class="ab-label">Años exp.</span>
+                        </div>
+                        <div class="about-badge">
+                            <span class="ab-num" data-target="500">0</span>+
+                            <span class="ab-label">Clientes</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="about-content scroll-reveal">
+                    <span class="section-tag">👋 Sobre nosotros</span>
+                    <h2 class="section-title">Los expertos IT<br><span class="gradient-text">que vienen a ti</span></h2>
+                    <p class="about-text">En <strong>AG IT Home Services</strong> creemos que todos merecen tener una infraestructura de red profesional en casa. Combinamos el expertise de las grandes empresas con la cercanía y rapidez de un servicio a domicilio.</p>
+                    <p class="about-text">Instalamos la misma tecnología Ubiquiti Unifi que usan hoteles, oficinas y corporaciones — pero adaptada y optimizada para tu hogar, con una sola visita y sin complicaciones.</p>
+
+                    <div class="about-values">
+                        <div class="value-item">
+                            <span class="value-dot"></span>
+                            <span>Respuesta en menos de 24 horas</span>
+                        </div>
+                        <div class="value-item">
+                            <span class="value-dot"></span>
+                            <span>Instaladores certificados Ubiquiti</span>
+                        </div>
+                        <div class="value-item">
+                            <span class="value-dot"></span>
+                            <span>Garantía en todos los trabajos</span>
+                        </div>
+                        <div class="value-item">
+                            <span class="value-dot"></span>
+                            <span>Soporte post-instalación incluido</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== TESTIMONIOS ========== -->
+    <section class="section" id="testimonios">
+        <div class="container">
+            <div class="section-header scroll-reveal">
+                <span class="section-tag">⭐ Clientes felices</span>
+                <h2 class="section-title">Lo que dicen <span class="gradient-text">de nosotros</span></h2>
+            </div>
+
+            <div class="testimonials-grid">
+                <div class="testimonial-card glass-card scroll-reveal" data-delay="0">
+                    <div class="stars">★★★★★</div>
+                    <p class="testimonial-text">"Transformaron completamente mi red WiFi. De tener 3 bares en el salón a cobertura perfecta en toda la casa con Unifi. La diferencia es increíble."</p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">MR</div>
+                        <div>
+                            <strong>Miguel R.</strong>
+                            <span>Madrid</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="testimonial-card glass-card scroll-reveal" data-delay="150">
+                    <div class="stars">★★★★★</div>
+                    <p class="testimonial-text">"Migración a 10Gb impecable. En 3 horas tenía toda mi red doméstica a velocidades que no creía posibles. Profesionales de verdad."</p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">SL</div>
+                        <div>
+                            <strong>Sara L.</strong>
+                            <span>Barcelona</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="testimonial-card glass-card scroll-reveal" data-delay="300">
+                    <div class="stars">★★★★★</div>
+                    <p class="testimonial-text">"Instalaron Unifi Access y Protect en mi parcela. El sistema de cámaras y control de acceso funciona a la perfección desde la app."</p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">CP</div>
+                        <div>
+                            <strong>Carlos P.</strong>
+                            <span>Valencia</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== CTA FINAL ========== -->
+    <section class="section cta-section" id="contacto">
+        <div class="cta-bg-glow"></div>
+        <div class="container">
+            <div class="cta-content scroll-reveal">
+                <span class="section-tag">📞 Hablemos</span>
+                <h2 class="cta-title">¿Listo para una red<br><span class="gradient-text">que rinde al máximo?</span></h2>
+                <p class="cta-subtitle">Solicita tu consulta gratuita hoy. Un experto te contacta en menos de 2 horas.</p>
+
+                <form class="contact-form" id="contact-form" onsubmit="handleFormSubmit(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="name">Nombre</label>
+                            <input type="text" id="name" placeholder="Tu nombre" required autocomplete="name">
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" placeholder="tu@email.com" required autocomplete="email">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="service">Servicio de interés</label>
+                        <select id="service">
+                            <option value="">Selecciona un servicio...</option>
+                            <option value="wifi">WiFi Profesional Unifi</option>
+                            <option value="pc">Reparación de PC</option>
+                            <option value="software">Instalación de Software</option>
+                            <option value="cobertura">Mejora de Cobertura WiFi</option>
+                            <option value="10g">Migración 2.5Gb / 10Gb</option>
+                            <option value="seguridad">Securización & Unifi Protect</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="message">Mensaje</label>
+                        <textarea id="message" placeholder="Cuéntanos tu situación o problema..." rows="4"></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary btn-full btn-glow" id="submit-btn">
+                        <span id="btn-text">Enviar Consulta Gratuita</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </button>
+                </form>
+
+                <div class="contact-alternatives">
+                    <a href="tel:+34640152292" class="contact-alt">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.08 6.08l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                        640 152 292
+                    </a>
+                    <a href="https://wa.me/34640152292" class="contact-alt" target="_blank" rel="noopener">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                        WhatsApp
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== FOOTER ========== -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div class="footer-logo">
+                        <svg width="32" height="32" viewBox="0 0 38 38" fill="none">
+                            <rect width="38" height="38" rx="10" fill="url(#footer-logo-grad)"/>
+                            <path d="M19 7L7 14v10h6v-6h12v6h6V14L19 7z" fill="white" opacity="0.9"/>
+                            <circle cx="19" cy="26" r="3" fill="white"/>
+                            <path d="M13 26c0-3.31 2.69-6 6-6s6 2.69 6 6" stroke="white" stroke-width="1.5" fill="none" opacity="0.6"/>
+                            <defs>
+                                <linearGradient id="footer-logo-grad" x1="0" y1="0" x2="38" y2="38">
+                                    <stop offset="0%" stop-color="#60a5fa"/>
+                                    <stop offset="100%" stop-color="#2563eb"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                        <span>AG IT Home Services</span>
+                    </div>
+                    <p class="footer-tagline">Soluciones IT a domicilio en tiempo récord.</p>
+                    <div class="footer-social">
+                        <a href="#" class="social-link" aria-label="LinkedIn">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+                        </a>
+                        <a href="#" class="social-link" aria-label="Instagram">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>
+                        </a>
+                        <a href="#" class="social-link" aria-label="Twitter/X">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4l16 16M20 4L4 20"/></svg>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Servicios</h4>
+                    <ul>
+                        <li><a href="#servicios">Reparación de PCs</a></li>
+                        <li><a href="#servicios">WiFi Profesional Unifi</a></li>
+                        <li><a href="#servicios">Instalación de Software</a></li>
+                        <li><a href="#servicios">Migración 10Gb</a></li>
+                        <li><a href="#servicios">Securización de Redes</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Ecosistema Unifi</h4>
+                    <ul>
+                        <li><a href="#unifi">UniFi Network</a></li>
+                        <li><a href="#unifi">UniFi Access</a></li>
+                        <li><a href="#unifi">UniFi Protect</a></li>
+                        <li><a href="#unifi">Dream Machine</a></li>
+                        <li><a href="#unifi">AP U6 Series</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Contacto</h4>
+                    <ul>
+                        <li><a href="#contacto">Solicitar visita</a></li>
+                        <li><a href="tel:+34640152292">📞 640 152 292</a></li>
+                        <li><a href="mailto:info@labrazahome.es">✉️ info@labrazahome.es</a></li>
+                        <li><a href="https://wa.me/34640152292" target="_blank">💬 WhatsApp</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>© 2026 AG IT Home Services. Todos los derechos reservados.</p>
+                <div class="footer-legal">
+                    <a href="#">Privacidad</a>
+                    <a href="#">Términos</a>
+                    <a href="#">Cookies</a>
+                </div>
+            </div>
+
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

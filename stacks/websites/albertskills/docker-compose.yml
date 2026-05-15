@@ -1,0 +1,18 @@
+services:
+  albertskills:
+    image: nginx:alpine
+    container_name: albertskills
+    restart: unless-stopped
+    ports:
+      - "8099:80"
+    volumes:
+      - ./index.html:/usr/share/nginx/html/index.html:ro
+      - ./assets:/usr/share/nginx/html/assets:ro
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - default
+      - homelab-shared
+
+networks:
+  homelab-shared:
+    external: true

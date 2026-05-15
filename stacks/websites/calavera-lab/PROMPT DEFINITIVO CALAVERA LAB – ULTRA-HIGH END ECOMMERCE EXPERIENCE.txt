@@ -1,0 +1,28 @@
+Actúa como un Senior Creative Developer y experto en UX/UI de marcas de lujo. Crea una Single Page Application (SPA) para CALAVERA LAB utilizando React, Tailwind CSS y Framer Motion. La web debe tener una calidad visual HDR, estética Ultra-HD y una atmósfera inmersiva.
+1. DIRECCIÓN DE ARTE Y ESTÉTICA (VISUAL IDENTITY):
+Paleta de Colores: Negro Absoluto (#000000) de fondo con texturas de grano de película sutil. Tipografía en Blanco Hueso (#EDEAE5).
+Atmósfera: Estética 'Cyber-Occult' y 'Dark Minimalist'. Usa líneas de división ultra-finas (0.5px) que emulen circuitos.
+Efectos Espectaculares: Implementa un 'Smooth Scroll', efectos de 'Parallax' en imágenes de campaña y un cursor personalizado que sea un círculo con un resplandor (glow) tenue.
+2. ESTRUCTURA DE LA EXPERIENCIA (SECCIONES):
+HERO SECTION (The Ritual): Centra el logo horizontal (Calavera + Texto). Headline: 'NOT FOR EVERYONE' en Monument Extended. Subheadline: 'Streetwear oscuro. Edición limitada.'. Botón tipo píldora: 'ENTRAR AL RITUAL' con efecto invertido al hover.
+CAMPAIGN MANIFESTO (4 Columnas): Crea una sección editorial dividida en 4 paneles verticales interactivos que se expandan al pasar el ratón:
+'NO TE COMPARES' (Imagen Modelo Frontal)
+'CULTO URBANO' (Imagen Grupo)
+'CALIDAD SUPREMA' (Macro de bordado/etiqueta)
+'SÓLO PARA AUTÉNTICOS' (Imagen Editorial)
+PRODUCT VAULT (The Artifacts): Grid de productos con mockups de alta definición:
+'Ritual Core Tee': (Diseño frontal y espalda).
+'Serpent Hoodie': (Diseño detallado de serpientes).
+'Collector Pack': (Caja premium + Stickers + Parches).
+Cada producto debe mostrar el precio y un botón 'ADQUIRIR' solo en el hover.
+ANATOMY OF QUALITY: Sección de zoom a los detalles técnicos: Etiquetado 'OCCULT STREETWEAR', parches bordados y gramaje premium. Texto: 'INGENIERÍA OSCURA'.
+UNBOXING EXPERIENCE: Bloque de ancho completo mostrando el packaging negro mate. Texto: 'ESTA NO ES ROPA. ES IDENTIDAD.'
+3. FUNCIONALIDADES DE CONVERSIÓN (HIGH-CONVERSION):
+Sticky Navbar: Logo a la izquierda, Carrito a la derecha. Aparece suavemente al hacer scroll.
+Scarcity Signals: Etiquetas de 'STOCK BAJO' o 'DROP 01: LIMITADO' en cada producto.
+Footer: Minimalista extremo con el sello circular 'Occult Streetwear' rotando lentamente.
+4. ESPECIFICACIONES TÉCNICAS PARA ANTIGRAVITY:
+Renderizado en Ultra Alta Definición (UHD).
+Animaciones de entrada tipo 'Reveal' y 'Flicker' técnico.
+Optimización Mobile-First manteniendo la experiencia de lujo.
+Tipografía: Títulos en Sans Serif extendida, cuerpo en Monospace.

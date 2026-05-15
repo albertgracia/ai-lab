@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MUSQUERA RAW FACTORY™ — Plataforma B2B</title>
+  <link rel="icon" type="image/webp" href="/img/optimized/logo_industrial.webp">
+  <meta name="description" content="Proveedor B2B de estampado profesional: serigrafía, DTF y bordado para empresas, giras de música y festivales. Precios por volumen." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css?v=3" />
+  <!-- jsPDF for Technical Sheet Generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- ═══════════════ NAV ═══════════════ -->
+  <header id="navbar">
+    <div class="nav-inner">
+      <a href="#hero" class="logo" id="logo-link">
+        <span class="logo-mark">⚙</span>
+        <span class="logo-text">MUSQUERA <em>RAW FACTORY™</em></span>
+      </a>
+      <nav class="nav-links" id="nav-links">
+        <a href="#soluciones">Soluciones</a>
+        <a href="#lab">El Lab</a>
+        <a href="#tecnicas">Técnicas</a>
+        <a href="#calculadora">Presupuesto</a>
+        <a href="#portfolio">Portafolio</a>
+        <a href="#contacto">Contacto</a>
+      </nav>
+      <a href="#calculadora" class="btn-cta btn-sm">COTIZAR AHORA</a>
+      <button class="hamburger" id="hamburger" aria-label="Menú">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ═══════════════ HERO ═══════════════ -->
+  <section id="hero">
+    <div class="hero-bg">
+      <picture>
+        <source srcset="img/optimized/hero_factory_bg.webp" type="image/webp">
+        <img src="img/originals/hero_factory_bg.png" alt="Fábrica de estampado industrial" class="hero-img" />
+      </picture>
+      <div class="hero-overlay"></div>
+      <!-- Grid lines decorative -->
+      <div class="grid-lines"></div>
+    </div>
+    <div class="hero-content">
+      <div class="hero-tag animate-in">
+        <span class="gear-icon">⚙</span> PRODUCCIÓN B2B — VOLUMEN INDUSTRIAL
+      </div>
+      <h1 class="hero-title animate-in delay-1">
+        ESTAMPADO<br/>
+        <span class="accent">RAW.</span><br/>
+        SIN LÍMITES.
+      </h1>
+      <p class="hero-sub animate-in delay-2">
+        Serigrafía · DTF · Bordado<br />
+        Para empresas, giras y festivales que exigen calidad.
+      </p>
+      <div class="hero-actions animate-in delay-3">
+        <a href="#calculadora" class="btn-cta">CALCULAR MI PEDIDO</a>
+        <a href="#portfolio" class="btn-ghost">VER TRABAJOS</a>
+      </div>
+      <div class="hero-stats animate-in delay-4">
+        <div class="stat"><span class="stat-n">+500</span><span class="stat-l">Proyectos</span></div>
+        <div class="stat-div"></div>
+        <div class="stat"><span class="stat-n">12h</span><span class="stat-l">Entrega express</span></div>
+        <div class="stat-div"></div>
+        <div class="stat"><span class="stat-n">0%</span><span class="stat-l">Error garantizado</span></div>
+      </div>
+    </div>
+    <a href="#soluciones" class="scroll-arrow" aria-label="Scroll down">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    </a>
+  </section>
+
+  <section id="soluciones" class="parallax-section">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag"><span>⊞</span> PORTAL DE SOLUCIONES</div>
+        <h2 class="section-title">¿Para qué tipo de proyecto<br/> <span class="accent">produces</span>?</h2>
+        <p class="section-sub">Cada sector tiene sus propias demandas logísticas, plazos y acabados. Selecciona tu categoría.</p>
+      </div>
+
+      <div class="solutions-grid">
+
+        <div class="solution-card" id="sol-empresas" tabindex="0">
+          <div class="sol-icon">
+            <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="8" y="20" width="48" height="36" rx="2"/>
+              <path d="M20 20V14a4 4 0 0 1 4-4h16a4 4 0 0 1 4 4v6"/>
+              <line x1="32" y1="34" x2="32" y2="44"/>
+              <line x1="26" y1="38" x2="38" y2="38"/>
+            </svg>
+          </div>
+          <h3>Empresas &amp; Merch</h3>
+          <p>Uniformes corporativos, merchandise de marca, ropa de equipo y regalos de empresa. Acabados premium, bordado profesional.</p>
+          <ul class="sol-features">
+            <li>⊕ Mínimo desde 10 unidades</li>
+            <li>⊕ Colores Pantone exactos</li>
+            <li>⊕ Etiquetado personalizado</li>
+            <li>⊕ Gestor de cuenta dedicado</li>
+          </ul>
+          <a href="#calculadora" class="sol-cta">SOLICITAR COTIZACIÓN →</a>
+        </div>
+
+        <div class="solution-card featured" id="sol-musica" tabindex="0">
+          <div class="sol-badge">MÁS POPULAR</div>
+          <div class="sol-icon">
+            <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="32" cy="32" r="22"/>
+              <circle cx="32" cy="32" r="8"/>
+              <path d="M32 10 v8 M32 46 v8 M10 32 h8 M46 32 h8"/>
+              <path d="M17 17 l5.6 5.6 M41.4 41.4 l5.6 5.6 M17 47 l5.6-5.6 M41.4 22.6 l5.6-5.6"/>
+            </svg>
+          </div>
+          <h3>Giras de Música</h3>
+          <p>Merch oficial de gira para bandas, sellos y promotoras. Entrega en locaciones, express disponible 24/48h para fechas críticas.</p>
+          <ul class="sol-features">
+            <li>⊕ Stock por tramos según fechas</li>
+            <li>⊕ Entrega express garantizada</li>
+            <li>⊕ Diseño asistido 24/7</li>
+            <li>⊕ Facturación multi-entidad</li>
+          </ul>
+          <a href="#calculadora" class="sol-cta">SOLICITAR COTIZACIÓN →</a>
+        </div>
+
+        <div class="solution-card" id="sol-festivales" tabindex="0">
+          <div class="sol-icon">
+            <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5">
+              <polygon points="32,4 40,24 60,24 44,38 50,58 32,46 14,58 20,38 4,24 24,24"/>
+            </svg>
+          </div>
+          <h3>Festivales</h3>
+          <p>Producción masiva para festivales de música, arte y cultura. Gestión de pedidos de 500 a 50.000+ unidades con logística integrada.</p>
+          <ul class="sol-features">
+            <li>⊕ Pedidos desde 500 und.</li>
+            <li>⊕ Paletización y entrega en recinto</li>
+            <li>⊕ Merchandising exclusivo</li>
+            <li>⊕ Precio a medida por volumen</li>
+          </ul>
+          <a href="#calculadora" class="sol-cta">SOLICITAR COTIZACIÓN →</a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ EL LAB ═══════════════ -->
+  <section id="lab" class="parallax-section">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag"><span>⚗</span> EL LAB DE VOLUMEN</div>
+        <h2 class="section-title">Personalizador<br/><span class="accent">Industrial</span></h2>
+        <p class="section-sub">Configura tu pedido paso a paso. Selecciona prenda, sube tu arte y elige técnica.</p>
+      </div>
+
+      <div class="lab-wrapper">
+        <!-- Step indicators -->
+        <div class="lab-steps">
+          <div class="lab-step active" data-step="1" id="step-ind-1">
+            <span class="step-n">01</span>
+            <span class="step-label">Prenda</span>
+          </div>
+          <div class="step-connector"></div>
+          <div class="lab-step" data-step="2" id="step-ind-2">
+            <span class="step-n">02</span>
+            <span class="step-label">Logo / Arte</span>
+          </div>
+          <div class="step-connector"></div>
+          <div class="lab-step" data-step="3" id="step-ind-3">
+            <span class="step-n">03</span>
+            <span class="step-label">Técnica</span>
+          </div>
+          <div class="step-connector"></div>
+          <div class="lab-step" data-step="4" id="step-ind-4">
+            <span class="step-n">04</span>
+            <span class="step-label">Resumen</span>
+          </div>
+        </div>
+
+        <div class="lab-body">
+
+          <!-- PASO 1: PRENDA -->
+          <div class="lab-panel active" id="lab-panel-1">
+            <h3 class="panel-title">Selecciona tu prenda</h3>
+            <div class="garment-grid">
+              <div class="garment-card selected" data-garment="camiseta" id="g-camiseta" tabindex="0" role="button">
+                <div class="garment-icon">
+                  <svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M26 8 L8 24 L20 30 L20 68 L60 68 L60 30 L72 24 L54 8 C54 8 50 14 40 14 C30 14 26 8 26 8Z"/>
+                  </svg>
+                </div>
+                <span>Camiseta</span>
+              </div>
+              <div class="garment-card" data-garment="hoodie" id="g-hoodie" tabindex="0" role="button">
+                <div class="garment-icon">
+                  <svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M26 8 L8 28 L20 34 L20 68 L60 68 L60 34 L72 28 L54 8 C54 8 50 16 40 20 C30 16 26 8 26 8Z"/>
+                    <rect x="34" y="20" width="12" height="10" rx="2"/>
+                    <line x1="20" y1="48" x2="60" y2="48"/>
+                  </svg>
+                </div>
+                <span>Hoodie</span>
+              </div>
+              <div class="garment-card" data-garment="polo" id="g-polo" tabindex="0" role="button">
+                <div class="garment-icon">
+                  <svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M26 8 L8 24 L20 30 L20 68 L60 68 L60 30 L72 24 L54 8 C54 8 50 14 40 14 C30 14 26 8 26 8Z"/>
+                    <line x1="36" y1="14" x2="36" y2="26"/>
+                    <line x1="44" y1="14" x2="44" y2="26"/>
+                    <path d="M36 14 Q40 10 44 14"/>
+                  </svg>
+                </div>
+                <span>Polo</span>
+              </div>
+              <div class="garment-card" data-garment="chaqueta" id="g-chaqueta" tabindex="0" role="button">
+                <div class="garment-icon">
+                  <svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M26 8 L8 24 L20 30 L20 68 L60 68 L60 30 L72 24 L54 8 L46 20 L40 14 L34 20Z"/>
+                    <line x1="40" y1="14" x2="40" y2="68"/>
+                  </svg>
+                </div>
+                <span>Chaqueta</span>
+              </div>
+              <div class="garment-card" data-garment="gorra" id="g-gorra" tabindex="0" role="button">
+                <div class="garment-icon">
+                  <svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M12 44 Q12 20 40 16 Q68 20 68 44Z"/>
+                    <line x1="12" y1="44" x2="68" y2="44"/>
+                    <rect x="4" y="44" width="48" height="8" rx="2"/>
+                    <line x1="38" y1="16" x2="42" y2="44"/>
+                  </svg>
+                </div>
+                <span>Gorra</span>
+              </div>
+              <div class="garment-card" data-garment="bolsa" id="g-bolsa" tabindex="0" role="button">
+                <div class="garment-icon">
+                  <svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="12" y="30" width="56" height="40" rx="2"/>
+                    <path d="M26 30 Q26 14 40 14 Q54 14 54 30"/>
+                  </svg>
+                </div>
+                <span>Bolsa</span>
+              </div>
+            </div>
+            <button class="btn-cta btn-next" id="lab-next-1">SIGUIENTE: SUBIR ARTE →</button>
+          </div>
+
+          <!-- PASO 2: LOGO/ARTE -->
+          <div class="lab-panel" id="lab-panel-2">
+            <h3 class="panel-title">Sube tu logo o arte</h3>
+            <div class="upload-zone" id="upload-zone">
+              <div class="upload-icon">
+                <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="4" y="12" width="56" height="40" rx="3"/>
+                  <polyline points="32,22 32,42"/>
+                  <polyline points="22,32 32,22 42,32"/>
+                  <line x1="20" y1="48" x2="44" y2="48"/>
+                </svg>
+              </div>
+              <p class="upload-text">Arrastra tu archivo aquí<br/><span>o haz clic para seleccionar</span></p>
+              <p class="upload-hint">AI, EPS, PDF, PNG (transparente) — Mín. 300 DPI</p>
+              <input type="file" id="file-input" accept=".ai,.eps,.pdf,.png,.jpg,.svg" hidden />
+              <div class="upload-preview" id="upload-preview"></div>
+            </div>
+            <div class="upload-specs">
+              <div class="spec-item">
+                <span class="spec-icon">⊕</span>
+                <div><strong>Formatos vectoriales</strong><br/>AI, EPS, PDF, SVG preferidos</div>
+              </div>
+              <div class="spec-item">
+                <span class="spec-icon">⊕</span>
+                <div><strong>Alta resolución</strong><br/>Mínimo 300 DPI para impresión</div>
+              </div>
+              <div class="spec-item">
+                <span class="spec-icon">⊕</span>
+                <div><strong>Sin logo</strong><br/>Nuestro equipo puede ayudarte</div>
+              </div>
+            </div>
+            <div class="panel-nav">
+              <button class="btn-ghost btn-prev" id="lab-prev-2">← ATRÁS</button>
+              <button class="btn-cta btn-next" id="lab-next-2">SIGUIENTE: TÉCNICA →</button>
+            </div>
+          </div>
+
+          <!-- PASO 3: TÉCNICA -->
+          <div class="lab-panel" id="lab-panel-3">
+            <h3 class="panel-title">Elige tu técnica de impresión</h3>
+            <div class="technique-grid">
+
+              <div class="technique-card selected" data-tech="serigrafia" id="t-serigrafia" tabindex="0" role="button">
+                <div class="tech-img-wrap">
+                  <picture>
+                    <source srcset="img/optimized/serigrafia.webp" type="image/webp">
+                    <img src="img/originals/serigrafia.png" alt="Serigrafía Industrial" />
+                  </picture>
+                  <div class="tech-img-overlay"></div>
+                </div>
+                <div class="tech-info">
+                  <h4>Serigrafía</h4>
+                  <p>La reina del volumen. Tintas al agua o plastisol, colores sólidos y vibrantes. Ideal para 50+ unidades.</p>
+                  <div class="tech-tags">
+                    <span>Duradero</span>
+                    <span>Gran volumen</span>
+                    <span>Hasta 8 colores</span>
+                  </div>
+                </div>
+                <div class="tech-check">✓</div>
+              </div>
+
+              <div class="technique-card" data-tech="dtf" id="t-dtf" tabindex="0" role="button">
+                <div class="tech-img-wrap">
+                  <picture>
+                    <source srcset="img/optimized/dtf.webp" type="image/webp">
+                    <img src="img/originals/dtf.png" alt="DTF — Direct to Film" />
+                  </picture>
+                  <div class="tech-img-overlay"></div>
+                </div>
+                <div class="tech-info">
+                  <h4>DTF — Direct to Film</h4>
+                  <p>Full color fotográfico, degradados perfectos. Sin mínimos de color, ideal para diseños complejos.</p>
+                  <div class="tech-tags">
+                    <span>Full color</span>
+                    <span>Sin mínimos</span>
+                    <span>Pequeñas tiradas</span>
+                  </div>
+                </div>
+                <div class="tech-check">✓</div>
+              </div>
+
+              <div class="technique-card" data-tech="bordado" id="t-bordado" tabindex="0" role="button">
+                <div class="tech-img-wrap">
+                  <picture>
+                    <source srcset="img/optimized/bordado.webp" type="image/webp">
+                    <img src="img/originals/bordado.png" alt="Bordado Premium" />
+                  </picture>
+                  <div class="tech-img-overlay"></div>
+                </div>
+                <div class="tech-info">
+                  <h4>Bordado</h4>
+                  <p>Acabado premium con hilo. Textura y volumen únicos. Perfecto para logos corporativos en polos y gorras.</p>
+                  <div class="tech-tags">
+                    <span>Premium</span>
+                    <span>3D táctil</span>
+                    <span>Corporativo</span>
+                  </div>
+                </div>
+                <div class="tech-check">✓</div>
+              </div>
+
+            </div>
+            <div class="panel-nav">
+              <button class="btn-ghost btn-prev" id="lab-prev-3">← ATRÁS</button>
+              <button class="btn-cta btn-next" id="lab-next-3">VER RESUMEN →</button>
+            </div>
+          </div>
+
+          <!-- PASO 4: FICHA TÉCNICA & FIRMA -->
+          <div class="lab-panel" id="lab-panel-4">
+            <div class="summary-grid">
+              <div class="summary-info">
+                <div class="section-tag"><span>📑</span> FICHA TÉCNICA INDUSTRIAL</div>
+                <h3 class="panel-title">Validación de <span class="accent">Producción</span></h3>
+                
+                <div class="tech-table">
+                  <div class="tt-row"><span>PRENDA:</span> <strong id="sum-garment">—</strong></div>
+                  <div class="tt-row"><span>TÉCNICA:</span> <strong id="sum-tech">—</strong></div>
+                  <div class="tt-row"><span>ARTE:</span> <strong id="sum-art">—</strong></div>
+                  <div class="tt-row"><span>FECHA:</span> <strong id="sum-date">25/03/2026</strong></div>
+                </div>
+
+                <div class="legal-disclaimer">
+                  <p>Al firmar este documento, el cliente aprueba las especificaciones técnicas descritas. <strong>MUSQUERA RAW FACTORY™</strong> queda exenta de responsabilidad legal por errores en el diseño proporcionado una vez validada esta ficha.</p>
+                </div>
+              </div>
+
+              <div class="summary-action">
+                <label class="calc-label">FIRMA DIGITAL DEL CLIENTE</label>
+                <div class="signature-pad-wrap">
+                  <canvas id="signature-pad" width="400" height="150"></canvas>
+                  <button type="button" class="btn-clear-sig" id="btn-clear-sig">✕ Limpiar</button>
+                </div>
+
+                <div class="lab-btns-vertical">
+                  <button class="btn-cta btn-full" id="btn-generate-pdf" disabled>GENERAR FICHA TÉCNICA (.PDF) →</button>
+                  <button class="btn-nav" id="lab-prev-4">← VOLVER AL LAB</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ TÉCNICAS ═══════════════ -->
+  <section id="tecnicas" class="parallax-section">
+    <div class="tecnicas-bg"></div>
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag"><span>⊞</span> ARSENAL TÉCNICO</div>
+        <h2 class="section-title">Tres técnicas.<br/><span class="accent">Un estándar.</span></h2>
+      </div>
+      <div class="tecnicas-comparison">
+        <div class="comp-header">
+          <div class="comp-cell comp-label">Característica</div>
+          <div class="comp-cell comp-tech-head">
+            <span class="tech-dot serigrafia-dot"></span> Serigrafía
+          </div>
+          <div class="comp-cell comp-tech-head">
+            <span class="tech-dot dtf-dot"></span> DTF
+          </div>
+          <div class="comp-cell comp-tech-head">
+            <span class="tech-dot bordado-dot"></span> Bordado
+          </div>
+        </div>
+        <div class="comp-row">
+          <div class="comp-cell comp-label">Mínimo</div>
+          <div class="comp-cell">30 und.</div>
+          <div class="comp-cell">1 und.</div>
+          <div class="comp-cell">10 und.</div>
+        </div>
+        <div class="comp-row">
+          <div class="comp-cell comp-label">Colores</div>
+          <div class="comp-cell">Hasta 8 Pantone</div>
+          <div class="comp-cell">Ilimitados</div>
+          <div class="comp-cell">Ilimitados</div>
+        </div>
+        <div class="comp-row">
+          <div class="comp-cell comp-label">Durabilidad</div>
+          <div class="comp-cell">⚡⚡⚡⚡⚡</div>
+          <div class="comp-cell">⚡⚡⚡⚡</div>
+          <div class="comp-cell">⚡⚡⚡⚡⚡</div>
+        </div>
+        <div class="comp-row">
+          <div class="comp-cell comp-label">Tacto</div>
+          <div class="comp-cell">Liso / mate</div>
+          <div class="comp-cell">Flexible / suave</div>
+          <div class="comp-cell">Relieve 3D</div>
+        </div>
+        <div class="comp-row">
+          <div class="comp-cell comp-label">Ideal para</div>
+          <div class="comp-cell">Grandes tiradas, giras</div>
+          <div class="comp-cell">Diseños complejos</div>
+          <div class="comp-cell">Corporativo, gorras</div>
+        </div>
+        <div class="comp-row">
+          <div class="comp-cell comp-label">Precio/und</div>
+          <div class="comp-cell accent-cell">↓ Mejor a volumen</div>
+          <div class="comp-cell">Precio fijo</div>
+          <div class="comp-cell">Precio fijo</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ CALCULADORA ═══════════════ -->
+  <section id="calculadora" class="parallax-section">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag"><span>⊟</span> CALCULADORA DE PRESUPUESTO</div>
+        <h2 class="section-title">El volumen te<br/><span class="accent">premia.</span></h2>
+        <p class="section-sub">Precios dinámicos con descuento progresivo por cantidad. Mueve el slider y ve cómo baja el precio.</p>
+      </div>
+
+      <div class="calc-wrapper">
+        <div class="calc-controls">
+
+          <!-- Técnica selector -->
+          <div class="calc-group">
+            <label class="calc-label">TÉCNICA DE IMPRESIÓN</label>
+            <div class="calc-tech-tabs">
+              <button class="calc-tab active" data-ctab="serigrafia" id="ctab-s">Serigrafía</button>
+              <button class="calc-tab" data-ctab="dtf" id="ctab-d">DTF</button>
+              <button class="calc-tab" data-ctab="bordado" id="ctab-b">Bordado</button>
+            </div>
+          </div>
+
+          <!-- Prenda selector -->
+          <div class="calc-group">
+            <label class="calc-label">PRENDA B2B</label>
+            <select class="calc-select" id="calc-garment">
+              <optgroup label="Más Populares">
+                <option value="camiseta-evento">Camiseta Evento (Económica)</option>
+                <option value="hoodie-staff">Hoodie Staff (Premium)</option>
+              </optgroup>
+              <optgroup label="Catálogo Standard">
+                <option value="camiseta-premium">Camiseta Premium</option>
+                <option value="polo">Polo Corporativo</option>
+                <option value="chaqueta">Chaqueta Softshell</option>
+                <option value="gorra">Gorra Trucker</option>
+                <option value="bolsa">Bolsa Tote Algodón</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <!-- Cantidad slider -->
+          <div class="calc-group">
+            <label class="calc-label">CANTIDAD B2B: <span id="qty-display" class="accent">25 unidades</span></label>
+            <div class="slider-wrapper">
+              <input type="range" id="qty-slider" min="1" max="1000" value="25" class="qty-slider" />
+              <div class="slider-labels">
+                <span>1</span>
+                <span>100</span>
+                <span>250</span>
+                <span>500</span>
+                <span>1000+</span>
+              </div>
+            </div>
+            <div class="volume-tiers">
+              <div class="tier" id="tier-1">
+                <span class="tier-range">1–10 und.</span>
+                <span class="tier-price">Base</span>
+              </div>
+              <div class="tier" id="tier-2">
+                <span class="tier-range">11–50 und.</span>
+                <span class="tier-price">−15%</span>
+              </div>
+              <div class="tier" id="tier-3">
+                <span class="tier-range">51–200 und.</span>
+                <span class="tier-price">−30%</span>
+              </div>
+              <div class="tier" id="tier-4">
+                <span class="tier-range">200+ und.</span>
+                <span class="tier-price">Bulk</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Red Alert Service -->
+          <div class="calc-group">
+            <div class="priority-box" id="red-alert">
+              <label class="priority-toggle">
+                <input type="checkbox" id="priority-ship" />
+                <span class="priority-slider"></span>
+              </label>
+              <div class="priority-text">
+                <span class="p-title">PRIORITY_SHIP (48H)</span>
+                <span class="p-desc">Recargo +25% · Producción express para eventos</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Colores (serigrafia only) -->
+          <div class="calc-group" id="color-group">
+            <label class="calc-label">NÚMERO DE COLORES: <span id="colors-display" class="accent">2</span></label>
+            <input type="range" id="colors-slider" min="1" max="8" value="2" class="qty-slider" />
+          </div>
+
+          <!-- Caras -->
+          <div class="calc-group">
+            <label class="calc-label">POSICIÓN DE IMPRESIÓN</label>
+            <div class="position-options">
+              <label class="pos-opt"><input type="checkbox" id="pos-front" checked/> <span>Frontal</span></label>
+              <label class="pos-opt"><input type="checkbox" id="pos-back" /> <span>Trasera</span></label>
+              <label class="pos-opt"><input type="checkbox" id="pos-sleeve" /> <span>Manga</span></label>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Resultado -->
+        <div class="calc-result">
+          <div class="result-card">
+            <div class="result-top">
+              <div class="result-badge" id="result-tier-label">DESCUENTO NIVEL 2</div>
+              <div class="result-saving" id="result-saving">Ahorrando 15% vs. precio base</div>
+            </div>
+            <div class="result-price-block">
+              <div class="result-unit">
+                <span class="price-label">PRECIO / UNIDAD</span>
+                <span class="price-value" id="res-unit-price">15,00 €</span>
+              </div>
+              <div class="result-total-block">
+                <span class="price-label">TOTAL PEDIDO</span>
+                <span class="price-total" id="res-total-price">375,00 €</span>
+              </div>
+            </div>
+            <div class="result-breakdown" id="result-breakdown">
+              <div class="breakdown-row">
+                <span>Prenda base</span><span id="rb-garment">12,00 €</span>
+              </div>
+              <div class="breakdown-row">
+                <span>Impresión</span><span id="rb-print">5,00 €</span>
+              </div>
+              <div class="breakdown-row">
+                <span>Descuento volumen</span><span id="rb-discount" class="accent">−15%</span>
+              </div>
+            </div>
+            <div class="result-notes">
+              <p>⊕ Precios sin IVA · Envío calculado al confirmar</p>
+              <p>⊕ Muestras gratuitas en pedidos +100 und.</p>
+            </div>
+            <a href="#contacto" class="btn-cta btn-full" id="btn-request-quote">SOLICITAR PRESUPUESTO FORMAL</a>
+          </div>
+
+          <div class="price-chart">
+            <div class="chart-title">Precio/unidad según cantidad</div>
+            <div class="chart-bars" id="chart-bars">
+              <!-- JS injected -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ PORTFOLIO ═══════════════ -->
+  <section id="portfolio" class="parallax-section">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag"><span>⊞</span> PORTAFOLIO</div>
+        <h2 class="section-title">El muro de<br/><span class="accent">concreto.</span></h2>
+        <p class="section-sub">Trabajos reales para conciertos, festivales, empresas y giras internacionales.</p>
+      </div>
+
+      <div class="portfolio-filters">
+        <button class="pf-btn active" data-pf="all" id="pf-all">TODO</button>
+        <button class="pf-btn" data-pf="conciertos" id="pf-conciertos">CONCIERTOS</button>
+        <button class="pf-btn" data-pf="festivales" id="pf-festivales">FESTIVALES</button>
+        <button class="pf-btn" data-pf="empresas" id="pf-empresas">EMPRESAS</button>
+      </div>
+
+      <div class="portfolio-grid" id="portfolio-grid">
+
+        <div class="portfolio-item" data-cat="conciertos" style="--row:span 2">
+          <picture>
+            <source srcset="img/optimized/portfolio_concert.webp" type="image/webp">
+            <img src="img/originals/portfolio_concert.png" alt="Merch gira de música" loading="lazy" />
+          </picture>
+          <div class="portfolio-overlay">
+            <span class="po-tag">🎸 CONCIERTOS</span>
+            <h4>Merch Gira Nacional 2024</h4>
+            <p>2.400 camisetas · Serigrafía 6 colores</p>
+          </div>
+        </div>
+
+        <div class="portfolio-item" data-cat="festivales">
+          <picture>
+            <source srcset="img/optimized/portfolio_festival.webp" type="image/webp">
+            <img src="img/originals/portfolio_festival.png" alt="Merchandise festival" loading="lazy" />
+          </picture>
+          <div class="portfolio-overlay">
+            <span class="po-tag">⭐ FESTIVALES</span>
+            <h4>Festival de Verano</h4>
+            <p>800 hoodies · DTF full color</p>
+          </div>
+        </div>
+
+        <div class="portfolio-item" data-cat="empresas">
+          <div class="portfolio-placeholder corporate">
+            <div class="placeholder-icon">
+              <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.2">
+                <rect x="8" y="20" width="48" height="36" rx="2"/>
+                <path d="M20 20V14a4 4 0 0 1 4-4h16a4 4 0 0 1 4 4v6"/>
+              </svg>
+            </div>
+            <div class="placeholder-content">
+              <span class="po-tag">💼 EMPRESAS</span>
+              <h4>Uniformes Corporativos</h4>
+              <p>300 polos con bordado premium</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="portfolio-item" data-cat="conciertos">
+          <div class="portfolio-placeholder music">
+            <div class="placeholder-icon">
+              <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.2">
+                <circle cx="32" cy="32" r="22"/>
+                <circle cx="32" cy="32" r="8"/>
+              </svg>
+            </div>
+            <div class="placeholder-content">
+              <span class="po-tag">🎸 CONCIERTOS</span>
+              <h4>Banda Internacional</h4>
+              <p>1.200 artículos · Serigrafía + DTF</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="portfolio-item" data-cat="festivales" style="--row:span 2">
+          <picture>
+            <source srcset="img/optimized/portfolio_festival.webp" type="image/webp">
+            <img src="img/originals/portfolio_festival.png" alt="Merchandise festival grande" loading="lazy" style="filter:hue-rotate(30deg) saturate(0.8)" />
+          </picture>
+          <div class="portfolio-overlay">
+            <span class="po-tag">⭐ FESTIVALES</span>
+            <h4>Festival Electrónico</h4>
+            <p>5.000 und. · Producción intensiva 48h</p>
+          </div>
+        </div>
+
+        <div class="portfolio-item" data-cat="empresas">
+          <div class="portfolio-placeholder startup">
+            <div class="placeholder-icon">
+              <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.2">
+                <polygon points="32,4 40,24 60,24 44,38 50,58 32,46 14,58 20,38 4,24 24,24"/>
+              </svg>
+            </div>
+            <div class="placeholder-content">
+              <span class="po-tag">💼 EMPRESAS</span>
+              <h4>Startup Tech — Merch Pack</h4>
+              <p>Camisetas + gorras + bolsas</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="portfolio-item" data-cat="conciertos">
+          <div class="portfolio-placeholder concert2">
+            <div class="placeholder-icon">
+              <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.2">
+                <path d="M12 44 Q12 20 40 16 Q68 20 68 44Z" transform="scale(0.9) translate(3,3)"/>
+                <rect x="4" y="44" width="48" height="8" rx="2" transform="scale(0.9) translate(3,3)"/>
+              </svg>
+            </div>
+            <div class="placeholder-content">
+              <span class="po-tag">🎸 CONCIERTOS</span>
+              <h4>Metal Tour — Gorras Exclusivas</h4>
+              <p>600 gorras bordadas 5 colores</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="portfolio-cta">
+        <p>¿Quieres ver más proyectos similares al tuyo?</p>
+        <a href="#contacto" class="btn-ghost">VER PORTAFOLIO COMPLETO</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ LOGÍSTICA ═══════════════ -->
+  <section id="logistica" class="parallax-section">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag"><span>🚛</span> LOGÍSTICA RAW</div>
+        <h2 class="section-title">Producción → Entrega.<br/><span class="accent">Sin fricción.</span></h2>
+      </div>
+      <div class="logistics-track">
+        <div class="track-step">
+          <div class="track-icon">
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="6" y="10" width="36" height="28" rx="2"/>
+              <line x1="14" y1="20" x2="34" y2="20"/>
+              <line x1="14" y1="26" x2="28" y2="26"/>
+            </svg>
+          </div>
+          <div class="track-label">01 · BRIEF</div>
+          <div class="track-desc">Envías especificaciones y cantidad</div>
+        </div>
+        <div class="track-arrow">→</div>
+        <div class="track-step">
+          <div class="track-icon">
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="24" cy="24" r="16"/>
+              <path d="M24 14 v10 l6 6"/>
+            </svg>
+          </div>
+          <div class="track-label">02 · PRESUPUESTO</div>
+          <div class="track-desc">Cotización formal en menos de 2h</div>
+        </div>
+        <div class="track-arrow">→</div>
+        <div class="track-step">
+          <div class="track-icon">
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="8" y="8" width="32" height="32" rx="2"/>
+              <path d="M16 24 l6 6 12-12"/>
+            </svg>
+          </div>
+          <div class="track-label">03 · MUESTRA</div>
+          <div class="track-desc">Prueba digital o física para aprobación</div>
+        </div>
+        <div class="track-arrow">→</div>
+        <div class="track-step">
+          <div class="track-icon">
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M8 20 h28 l4 8 v12 H8Z"/>
+              <circle cx="16" cy="40" r="4"/>
+              <circle cx="32" cy="40" r="4"/>
+              <line x1="36" y1="20" x2="40" y2="36"/>
+            </svg>
+          </div>
+          <div class="track-label">04 · ENTREGA</div>
+          <div class="track-desc">Envío en paleta o paquetería con tracking</div>
+        </div>
+      </div>
+      <div class="logistics-badges">
+        <div class="log-badge"><span>⚙</span> Plazo standard: 7–10 días</div>
+        <div class="log-badge"><span>⚡</span> Express: 24–48h</div>
+        <div class="log-badge"><span>🚛</span> Entrega en recinto / almacén</div>
+        <div class="log-badge"><span>📦</span> Embalaje y etiquetado incluido</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ DASHBOARD PRO ═══════════════ -->
+  <section id="dashboard" class="parallax-section">
+    <div class="container">
+      <div class="dashboard-box">
+        <div class="dash-header">
+          <div class="section-tag"><span>📡</span> DASHBOARD CLIENTE PRO</div>
+          <h2 class="section-title">Estado de su <span class="accent">Producción</span></h2>
+          <p>Consulte el tiempo real de su pedido industrial. Use códigos como <strong>MRF-2024</strong> o <strong>STAGE-X</strong>.</p>
+        </div>
+        <div class="dash-search">
+          <input type="text" id="track-input" placeholder="ID DE PEDIDO (EJ: MRF-2024)" />
+          <div class="dash-search-btns">
+            <button id="track-btn" class="btn-cta">CONSULTAR STATUS</button>
+            <button id="btn-talk-production" class="btn-support">[TALK_TO_PRODUCTION]</button>
+          </div>
+        </div>
+        <div class="dash-content" id="track-result">
+          <div class="production-timeline">
+            <div class="status-step" id="step-recibido">
+              <div class="status-icon">📥</div>
+              <span class="status-label">Recibido</span>
+            </div>
+            <div class="status-connector"></div>
+            <div class="status-step" id="step-plancha">
+              <div class="status-icon">🔥</div>
+              <span class="status-label">En Plancha</span>
+            </div>
+            <div class="status-connector"></div>
+            <div class="status-step" id="step-calidad">
+              <div class="status-icon">🔍</div>
+              <span class="status-label">Control Calidad</span>
+            </div>
+            <div class="status-connector"></div>
+            <div class="status-step" id="step-enviado">
+              <div class="status-icon">🚛</div>
+              <span class="status-label">En Camino</span>
+            </div>
+          </div>
+          <div id="tracking-logistics" style="margin-top:30px; border-top:1px solid rgba(255,255,255,0.05); padding-top:20px; display:none;"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ GRANDES EVENTOS ═══════════════ -->
+  <section id="grandes-eventos" class="parallax-section">
+    <div class="container">
+      <div class="event-form-grid">
+        <div class="event-info">
+          <div class="section-tag"><span>🏟</span> GRANDES EVENTOS</div>
+          <h2 class="section-title">Producción Masiva<br/><span class="accent">Festivales y Giras.</span></h2>
+          <p>Gestión logística integral para pedidos de alto impacto. Fechas críticas garantizadas.</p>
+          <ul class="event-benefits">
+            <li style="font-family:var(--font-mono); font-size: 0.8rem; margin: 10px 0; color: var(--text-2);">⊕ Seguimiento personalizado 24/7</li>
+            <li style="font-family:var(--font-mono); font-size: 0.8rem; margin: 10px 0; color: var(--text-2);">⊕ Entrega directa en recinto/backstage</li>
+            <li style="font-family:var(--font-mono); font-size: 0.8rem; margin: 10px 0; color: var(--text-2);">⊕ Reposición express durante el evento</li>
+          </ul>
+        </div>
+        <div class="event-form-card">
+          <form id="event-bespoke-form" class="contact-form">
+            <div class="form-group">
+              <label>NOMBRE DEL EVENTO / EMPRESA *</label>
+              <input type="text" required placeholder="Ej: Rock Fest 2024" />
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>FECHA LÍMITE (CRÍTICA) *</label>
+                <input type="date" required />
+              </div>
+              <div class="form-group">
+                <label>TÉCNICA PREFERIDA</label>
+                <select>
+                  <option>Serigrafía Industrial</option>
+                  <option>DTF High Volume</option>
+                  <option>Bordado Premium</option>
+                  <option>Sublimación Full Print</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>ARCHIVOS VECTORIALES (.AI, .PDF, .EPS)</label>
+              <div class="mini-upload">
+                <span style="font-size: 0.8rem; color: var(--text-3);">📎 Seleccionar briefing técnico...</span>
+                <input type="file" accept=".ai,.pdf,.eps" />
+              </div>
+            </div>
+            <button type="submit" class="btn-cta btn-full">SOLICITAR LOGÍSTICA DE EVENTO</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ CONTACT ═══════════════ -->
+  <section id="contacto" class="parallax-section">
+    <div class="container">
+      <div class="contact-wrapper">
+        <div class="contact-info">
+          <div class="section-tag"><span>✉</span> CONTACTO</div>
+          <h2 class="section-title">Hablemos de<br/><span class="accent">tu proyecto.</span></h2>
+          <p class="contact-sub">Somos un equipo B2B. Sin tiendas online para consumidor final. Cotización seria en menos de 2 horas.</p>
+          <div class="contact-details">
+            <div class="contact-item">
+              <span class="ci-icon">✉</span>
+              <div>
+                <span class="ci-label">EMAIL</span>
+                <a href="mailto:info@musquerarawfactory.com" class="ci-value">info@musquerarawfactory.com</a>
+              </div>
+            </div>
+            <div class="contact-item">
+              <span class="ci-icon">📱</span>
+              <div>
+                <span class="ci-label">WHATSAPP B2B</span>
+                <a href="https://wa.me/34600000000" class="ci-value">+34 600 000 000</a>
+              </div>
+            </div>
+            <div class="contact-item">
+              <span class="ci-icon">📍</span>
+              <div>
+                <span class="ci-label">FÁBRICA</span>
+                <span class="ci-value">Barcelona, España · Envío Nacional e Internacional</span>
+              </div>
+            </div>
+            <div class="contact-item">
+              <span class="ci-icon">⏱</span>
+              <div>
+                <span class="ci-label">RESPUESTA GARANTIZADA</span>
+                <span class="ci-value">En menos de 2 horas (L–V, 8:00–20:00)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="contact-form-wrap">
+          <form class="contact-form" id="contact-form" novalidate>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="form-name">NOMBRE / EMPRESA</label>
+                <input type="text" id="form-name" placeholder="Tu nombre o empresa" required />
+              </div>
+              <div class="form-group">
+                <label for="form-email">EMAIL</label>
+                <input type="email" id="form-email" placeholder="tu@empresa.com" required />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="form-sol">TIPO DE PROYECTO</label>
+                <select id="form-sol">
+                  <option value="">Selecciona...</option>
+                  <option>Empresas &amp; Merch corporativo</option>
+                  <option>Gira de música</option>
+                  <option>Festival</option>
+                  <option>Otro</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="form-qty">CANTIDAD ESTIMADA</label>
+                <input type="number" id="form-qty" placeholder="Ej: 200 unidades" min="1" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="form-msg">CUÉNTANOS TU PROYECTO</label>
+              <textarea id="form-msg" rows="4" placeholder="Describe el tipo de prenda, colores, fechas de entrega..."></textarea>
+            </div>
+            <button type="submit" class="btn-cta btn-full" id="form-submit">
+              <span id="form-btn-text">ENVIAR BRIEFING →</span>
+            </button>
+            <div class="form-success" id="form-success">
+              ✓ Briefing recibido — Te respondemos en menos de 2h
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ FOOTER ═══════════════ -->
+  <footer id="footer" class="parallax-section">
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <div class="logo">
+            <span class="logo-mark">⚙</span>
+            <span class="logo-text">MUSQUERA <em>RAW FACTORY™</em></span>
+          </div>
+          <p>Producción textil industrial para marcas, artistas y eventos. Calidad sin compromisos.</p>
+        </div>
+        <div class="footer-links">
+          <div class="footer-col">
+            <span class="footer-col-title">SOLUCIONES</span>
+            <a href="#sol-empresas">Empresas &amp; Merch</a>
+            <a href="#sol-musica">Giras de Música</a>
+            <a href="#sol-festivales">Festivales</a>
+          </div>
+          <div class="footer-col">
+            <span class="footer-col-title">TÉCNICAS</span>
+            <a href="#tecnicas">Serigrafía</a>
+            <a href="#tecnicas">DTF</a>
+            <a href="#tecnicas">Bordado</a>
+          </div>
+          <div class="footer-col">
+            <span class="footer-col-title">EMPRESA</span>
+            <a href="#portfolio">Portafolio</a>
+            <a href="#logistica">Logística</a>
+            <a href="#contacto">Contacto</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2024 MUSQUERA RAW FACTORY™ — Todos los derechos reservados.</p>
+        <p>Fabricado en España 🇪🇸</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js?v=5"></script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+services:
+  # Base de Datos Relacional
+  db-lab:
+    image: postgres:15-alpine
+    container_name: raw_db_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: admin_raw
+      POSTGRES_PASSWORD: CHANGE_ME
+      POSTGRES_DB: raw_factory_db
+    volumes:
+      - ./db_data:/var/lib/postgresql/data
+
+  # Backend Node.js Server
+  raw-server:
+    build: .
+    container_name: musquerarawserver
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://admin_raw:CHANGE_ME@db-lab:5432/raw_factory_db
+      JWT_SECRET: CHANGE_ME_JWT_SECRET
+      PORT: 3000
+    depends_on:
+      - db-lab
+    volumes:
+      - ./uploads:/app/public/uploads
+      - ./img:/app/img
+    networks:
+      - default
+
+  # Sitio Web RAW FACTORY (Nginx)
+  raw-web:
+    image: nginx:alpine
+    container_name: musquerarawlab
+    restart: unless-stopped
+    ports:
+      - "92:80"
+    volumes:
+      - .:/usr/share/nginx/html
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - raw-server
+    networks:
+      - default
+      - homelab-shared
+
+networks:
+  homelab-shared:
+    external: true

@@ -1,0 +1,168 @@
+@import "tailwindcss";
+
+html {
+  scroll-behavior: smooth;
+}
+
+@theme {
+  --color-brand-orange: #ff6600;
+  --color-brand-red: #ff4d00;
+  --color-brand-blue: #00f3ff;
+  --color-brand-emerald: #10b981;
+  --color-brand-slate: #0f172a;
+  --color-brand-dark: #020617;
+  
+  --font-mono: "JetBrains Mono", monospace;
+  --font-sans: "Inter", sans-serif;
+  --font-retro: "VT323", monospace;
+  
+  --container-center: true;
+  --container-padding: 2rem;
+  --max-width-4k: 2400px;
+}
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: dark;
+  color: #e2e8f0;
+  background-color: #020617;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-color: #020617;
+}
+
+.container {
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  max-width: 1440px; /* Default Desktop */
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+@media (min-width: 1920px) {
+  .container {
+    max-width: 1800px;
+  }
+  :root {
+    font-size: 110%;
+  }
+}
+
+@media (min-width: 2560px) {
+  .container {
+    max-width: 2200px;
+  }
+  :root {
+    font-size: 120%;
+  }
+}
+
+@media (min-width: 3840px) {
+  .container {
+    max-width: 3200px;
+  }
+  :root {
+    font-size: 140%;
+  }
+}
+
+.glass-panel {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.scanline {
+  width: 100%;
+  height: 100px;
+  z-index: 99;
+  background: linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(255, 102, 0, 0.1) 50%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  opacity: 0.1;
+  position: absolute;
+  bottom: 0px;
+  animation: scanline 6s linear infinite;
+}
+
+.crt-overlay {
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  background-size: 100% 2px, 3px 100%;
+  pointer-events: none;
+}
+
+.pixel-text {
+  font-family: var(--font-retro);
+  image-rendering: pixelated;
+}
+
+.spectrum-border {
+  border: 4px solid #fff;
+  box-shadow: 4px 4px 0px #000, 8px 8px 0px #f00, 12px 12px 0px #0f0, 16px 16px 0px #00f;
+}
+
+@keyframes scanline {
+  0% { transform: translateY(-100vh); }
+  100% { transform: translateY(100vh); }
+}
+
+.glow-text {
+  text-shadow: 0 0 10px rgba(255, 102, 0, 0.5);
+}
+
+.cyber-border {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%);
+}
+
+/* --- Electric Effects --- */
+@keyframes electric-pulse {
+  0% { text-shadow: 0 0 5px rgba(255, 102, 0, 0.5), 0 0 10px rgba(255, 102, 0, 0.2); opacity: 1; }
+  50% { text-shadow: 0 0 15px rgba(255, 102, 0, 0.8), 0 0 25px rgba(255, 102, 0, 0.4), 0 0 5px #fff; opacity: 0.9; }
+  100% { text-shadow: 0 0 5px rgba(255, 102, 0, 0.5), 0 0 10px rgba(255, 102, 0, 0.2); opacity: 1; }
+}
+
+@keyframes electric-icon-pulse {
+  0% { filter: drop-shadow(0 0 2px rgba(255, 102, 0, 0.5)); transform: scale(1); }
+  50% { filter: drop-shadow(0 0 10px rgba(255, 102, 0, 0.9)) drop-shadow(0 0 20px rgba(0, 243, 255, 0.4)); transform: scale(1.05); }
+  100% { filter: drop-shadow(0 0 2px rgba(255, 102, 0, 0.5)); transform: scale(1); }
+}
+
+@keyframes border-arc {
+  0% { border-color: rgba(255, 102, 0, 0.2); box-shadow: 0 0 5px rgba(255, 102, 0, 0.1); }
+  50% { border-color: rgba(255, 102, 0, 0.6); box-shadow: 0 0 20px rgba(255, 102, 0, 0.3); }
+  100% { border-color: rgba(255, 102, 0, 0.2); box-shadow: 0 0 5px rgba(255, 102, 0, 0.1); }
+}
+
+.electric-text {
+  animation: electric-pulse 2s infinite ease-in-out;
+}
+
+.electric-icon {
+  animation: electric-icon-pulse 3s infinite ease-in-out;
+}
+
+.electric-border {
+  animation: border-arc 4s infinite ease-in-out;
+}
+
+.electric-hover:hover {
+  animation: electric-pulse 0.5s infinite alternate;
+  color: #fff !important;
+}

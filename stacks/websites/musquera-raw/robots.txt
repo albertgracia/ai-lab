@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin/ # Protegemos el panel de operaciones de miradas indiscretas
+Disallow: /api/
+
+Sitemap: https://musquera-lab.labrazahome.es

@@ -1,0 +1,16 @@
+services:
+  portfolio:
+    image: albertskillsamdmulti-portfolio:latest
+    container_name: skills-amd-multi
+    restart: unless-stopped
+    expose:
+      - "80"
+    networks:
+      - nginxproxymanager_default
+      - homelab-shared
+
+networks:
+  nginxproxymanager_default:
+    external: true
+  homelab-shared:
+    external: true

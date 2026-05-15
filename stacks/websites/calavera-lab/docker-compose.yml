@@ -1,0 +1,19 @@
+services:
+  calavera-lab-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: calavera-lab-web
+    ports:
+      - "91:80"
+    volumes:
+      - ./public/artifacts-carousel:/app/public/artifacts-carousel
+    env_file:
+      - .env.local
+    networks:
+      - homelab-shared
+    restart: unless-stopped
+
+networks:
+  homelab-shared:
+    external: true
