@@ -104,6 +104,34 @@ def _context_debug():
     except ImportError:
         return {"error": "cognitive module not available"}
 
+def _runtime_optimizer():
+    try:
+        from runtime.autonomous.runtime_optimizer import run_optimizer_cycle
+        return run_optimizer_cycle()
+    except ImportError:
+        return {"error": "autonomous module not available"}
+
+def _runtime_affinity():
+    try:
+        from runtime.autonomous.session_affinity import snapshot
+        return snapshot()
+    except ImportError:
+        return {"error": "session_affinity not available"}
+
+def _runtime_confidence():
+    try:
+        from runtime.autonomous.runtime_confidence import compute_confidence
+        return {"status": "ok", "note": "use /api/runtime-confidence?task=X&model=Y&session=Z"}
+    except ImportError:
+        return {"error": "runtime_confidence not available"}
+
+def _runtime_adjustments():
+    try:
+        from runtime.autonomous.optimizer_history import read_optimizer_history
+        return read_optimizer_history(20)
+    except ImportError:
+        return {"error": "optimizer_history not available"}
+
 class APIHandler(BaseHTTPRequestHandler):
     timeout = 10
     def do_GET(self):
@@ -121,6 +149,14 @@ class APIHandler(BaseHTTPRequestHandler):
             self._json(_cognitive_history())
         elif self.path == "/api/context-debug":
             self._json(_context_debug())
+        elif self.path == "/api/runtime-optimizer":
+            self._json(_runtime_optimizer())
+        elif self.path == "/api/runtime-affinity":
+            self._json(_runtime_affinity())
+        elif self.path == "/api/runtime-confidence":
+            self._json(_runtime_confidence())
+        elif self.path == "/api/runtime-adjustments":
+            self._json(_runtime_adjustments())
         elif self.path == "/api/events":
             self._sse()
         else: self._send_error(404)
