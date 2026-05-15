@@ -34,6 +34,9 @@ INTENT_RULES = {
             "fix",
             "code",
             "código",
+            "debug",
+            "refactor",
+            "optimiza",
         ],
         "mode": "build",
         "context_tags": [

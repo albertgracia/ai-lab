@@ -1,59 +1,73 @@
 {
-  "default_node": "local_default",
-
+  "default_node": "rx9070",
   "nodes": {
-    "local_default": {
-      "name": "NAS-N5 (Hyper-V Host)",
-      "host": "192.168.1.200",
-      "port": 12345,
-      "model": "qwen3.5-9b-deepseek-v4-flash",
-      "role": "general",
-      "enabled": false,
-      "priority": 10,
-      "note": "LM Studio bind a localhost, no accesible desde red. Habilitar solo si se cambia bind a 0.0.0.0"
-    },
-
-    "rx7900xt": {
-      "name": "Gaming PC RX7900XT",
-      "host": "192.168.1.60",
-      "port": 1234,
-      "model": "qwen2.5-coder-14b-instruct",
-      "role": "heavy",
-      "enabled": true,
-      "priority": 20
-    },
-
-    "rx9070xt": {
-      "name": "Gaming PC RX9070XT",
+    "rx9070": {
+      "name": "RX9070 - GPU Rapida",
       "host": "192.168.1.50",
       "port": 1234,
-      "model": "qwen3-14b-claude-sonnet-4.5-reasoning-distill",
-      "role": "fast",
+      "models": {
+        "fast": {
+          "name": "Llama 3.1 8B",
+          "model_id": "llama-3.1-8b-instruct"
+        },
+        "coding": {
+          "name": "Qwen 2.5 Coder 14B",
+          "model_id": "qwen2.5-coder-14b-instruct"
+        }
+      },
       "enabled": true,
-      "priority": 15
+      "priority": 10,
+      "vram_gb": 16,
+      "role": "coding, fast"
+    },
+    "rx7900xt": {
+      "name": "RX7900XT - GPU Pesada",
+      "host": "192.168.1.60",
+      "port": 1234,
+      "models": {
+        "reasoning": {
+          "name": "Qwen 2.5 Coder 32B",
+          "model_id": "qwen2.5-coder-32b-instruct"
+        },
+        "coding": {
+          "name": "Qwen 2.5 Coder 14B",
+          "model_id": "qwen2.5-coder-14b-instruct"
+        }
+      },
+      "enabled": true,
+      "priority": 20,
+      "vram_gb": 20,
+      "role": "reasoning, coding-heavy"
     }
   },
-
   "routing_rules": {
-    "heavy_keywords": [
-      "analyze",
-      "architecture",
-      "roadmap",
-      "generate",
-      "refactor",
-      "coding",
-      "debug",
-      "diagnose",
-      "long",
-      "complex"
-    ],
     "fast_keywords": [
       "quick",
       "summary",
-      "summarize",
       "status",
       "simple",
-      "short"
+      "short",
+      "help",
+      "hola",
+      "mantenimiento"
+    ],
+    "coding_keywords": [
+      "python",
+      "script",
+      "code",
+      "debug",
+      "fix",
+      "implementar",
+      "crear",
+      "refactor"
+    ],
+    "reasoning_keywords": [
+      "arquitectura",
+      "design",
+      "complex",
+      "analyze",
+      "optimizar",
+      "dise\u00f1ar"
     ]
   }
 }
