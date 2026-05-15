@@ -348,6 +348,14 @@ async def chat_completions(request: Request):
                     except Exception:
                         yield line + "\n"
 
+            try:
+                from runtime.routing.routing_history import record_route_result as _rrr
+                _rrr(task_type=node["capability"], model=node["model"],
+                     node=node["name"], host=node["host"],
+                     latency_ms=0, success=True, stream=True, failover=False)
+            except ImportError:
+                pass
+
             return StreamingResponse(
                 sanitize_stream(),
                 status_code=upstream.status_code,
@@ -373,6 +381,14 @@ async def chat_completions(request: Request):
                 if not msg.get("content"):
                     msg["content"] = rc
 
+        try:
+            from runtime.routing.routing_history import record_route_result as _rrr
+            _rrr(task_type=node["capability"], model=node["model"],
+                 node=node["name"], host=node["host"],
+                 latency_ms=0, success=True, stream=False, failover=False)
+        except ImportError:
+            pass
+
         return JSONResponse(
             status_code=upstream.status_code,
             content=content,
@@ -380,6 +396,16 @@ async def chat_completions(request: Request):
         )
 
     except Exception as exc:
+
+        try:
+            from runtime.routing.routing_history import record_route_result as _rrr
+            _rrr(task_type=node["capability"] if isinstance(node, dict) else "unknown",
+                 model=node.get("model", "unknown") if isinstance(node, dict) else "unknown",
+                 node=node.get("name", "unknown") if isinstance(node, dict) else "unknown",
+                 host=node.get("host", "unknown") if isinstance(node, dict) else "unknown",
+                 latency_ms=0, success=False, stream=False, failover=False, error=str(exc))
+        except ImportError:
+            pass
 
         return JSONResponse(
             status_code=502,

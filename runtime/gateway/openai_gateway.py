@@ -725,6 +725,14 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     self,
                 )
 
+                try:
+                    from runtime.routing.routing_history import record_route_result as _rrr
+                    _rrr(task_type=task_type, model=selected_model,
+                         node=get_active_backend()["name"], host=get_active_backend()["url"],
+                         latency_ms=latency_ms, success=True, stream=True, failover=False)
+                except ImportError:
+                    pass
+
                 return
 
             data = response.json()
@@ -736,33 +744,39 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 data,
             )
 
-        except requests.exceptions.RequestException as exc:
-            record_error(
-                self.path,
-                exc,
-            )
+            try:
+                from runtime.routing.routing_history import record_route_result as _rrr
+                _rrr(task_type=task_type, model=selected_model,
+                     node=get_active_backend()["name"], host=get_active_backend()["url"],
+                     latency_ms=latency_ms, success=True, stream=False, failover=False)
+            except ImportError:
+                pass
 
-            self._send_json(
-                502,
-                {
-                    "error": "backend_unreachable",
-                    "detail": str(exc),
-                },
-            )
+        except requests.exceptions.RequestException as exc:
+            latency_ms = int((time.time() - start_time) * 1000)
+            record_error(self.path, exc)
+            self._send_json(502, {"error": "backend_unreachable", "detail": str(exc)})
+            try:
+                from runtime.routing.routing_history import record_route_result as _rrr
+                _rrr(task_type=task_type, model=selected_model,
+                     node=get_active_backend()["name"], host=get_active_backend()["url"],
+                     latency_ms=latency_ms, success=False, stream=stream_enabled,
+                     failover=False, error=str(exc))
+            except ImportError:
+                pass
 
         except Exception as exc:
-            record_error(
-                self.path,
-                exc,
-            )
-
-            self._send_json(
-                500,
-                {
-                    "error": "gateway_error",
-                    "detail": str(exc),
-                },
-            )
+            latency_ms = int((time.time() - start_time) * 1000)
+            record_error(self.path, exc)
+            self._send_json(500, {"error": "gateway_error", "detail": str(exc)})
+            try:
+                from runtime.routing.routing_history import record_route_result as _rrr
+                _rrr(task_type=task_type, model=selected_model if 'selected_model' in locals() else "unknown",
+                     node=get_active_backend()["name"], host=get_active_backend()["url"],
+                     latency_ms=latency_ms, success=False, stream=False,
+                     failover=False, error=str(exc))
+            except ImportError:
+                pass
 
 
 def run():

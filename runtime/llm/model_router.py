@@ -16,6 +16,14 @@ try:
 except ImportError:
     pass
 
+# ---- try loading adaptive scoring ----------------------------------------
+_USE_ADAPTIVE = False
+try:
+    from runtime.routing.adaptive_scoring import hybrid_score
+    _USE_ADAPTIVE = True
+except ImportError:
+    pass
+
 
 def infer_task(request_text=None, capability=None):
     """Classify *request_text* into a task type.
@@ -59,8 +67,14 @@ def select_node(request_text, capability=None):
 
     selected = preferred          # sensible default
 
-    if _USE_REGISTRY and models_on_node:
-        # Pick the best model available on this node for the current task
+    if _USE_ADAPTIVE and models_on_node and _USE_REGISTRY:
+        # Hybrid scoring: capability + historical performance
+        ranked = [(m, hybrid_score(task, m)) for m in models_on_node if m in MODEL_REGISTRY]
+        ranked.sort(key=lambda x: x[1], reverse=True)
+        if ranked:
+            selected = ranked[0][0]
+    elif _USE_REGISTRY and models_on_node:
+        # Capability-only scoring
         best = best_for_task(task, models_on_node)
         if best:
             selected = best

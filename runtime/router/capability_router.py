@@ -22,13 +22,30 @@ try:
 except ImportError:
     pass
 
+# ---- try loading adaptive scoring (hybrid capability + performance) -----
+_USE_ADAPTIVE = False
+try:
+    from runtime.routing.adaptive_scoring import hybrid_score
+    _USE_ADAPTIVE = True
+except ImportError:
+    pass
+
 
 def choose_model(task_type="general"):
     """Return the best model_id (str) for *task_type*.
 
-    Uses multi-factor capability scoring when the model registry is
-    available; otherwise falls back to the original keyword‑based logic.
+    Priority:
+      1. Adaptive hybrid scoring (capability + historical performance)
+      2. Static capability scoring (model registry)
+      3. Original hardcoded fallback
     """
+    # ── adaptive path (best) ─────────────────────────────────────────
+    if _USE_ADAPTIVE and _USE_REGISTRY:
+        ranked = [(m, hybrid_score(task_type, m)) for m in MODEL_REGISTRY]
+        ranked.sort(key=lambda x: x[1], reverse=True)
+        if ranked and ranked[0][1] > 0:
+            return ranked[0][0]
+
     # ── registry path ────────────────────────────────────────────────
     if _USE_REGISTRY:
         model_id = best_for_task(task_type)
