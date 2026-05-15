@@ -30,27 +30,17 @@ TASK_FALLBACK_MAP = {
 
 
 NODE_CAPABILITIES = {
-    "nas-local": [
+    "rx9070-node": [
         "fast",
-        "fallback",
-        "lightweight",
+        "coding",
+        "general",
         "memory",
     ],
     "rx7900xt-node": [
         "reasoning",
         "coding",
-        "backend",
-        "orchestration",
         "large-context",
         "multi-agent",
-    ],
-    "rx9070-node": [
-        "vision",
-        "multimodal",
-        "frontend",
-        "embeddings",
-        "creative",
-        "memory",
     ],
 }
 

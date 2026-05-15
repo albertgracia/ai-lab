@@ -15,9 +15,8 @@ SKIP_AFTER_CONSECUTIVE = 5
 CONSECUTIVE_FAILURES: dict = {}
 
 NODES = [
-    {"name": "nas-local", "host": "192.168.1.250", "port": 1234, "type": "lmstudio"},
-    {"name": "rx7900xt-node", "host": "192.168.1.60", "port": 1234, "type": "lmstudio"},
-    {"name": "rx9070-node", "host": "192.168.1.50", "port": 1234, "type": "lmstudio"},
+    {"name": "rx9070-node", "host": "192.168.1.50", "port": 1234, "type": "lmstudio", "role": "fast+coding"},
+    {"name": "rx7900xt-node", "host": "192.168.1.60", "port": 1234, "type": "lmstudio", "role": "reasoning"},
 ]
 
 
