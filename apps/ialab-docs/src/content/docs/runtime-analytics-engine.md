@@ -92,3 +92,9 @@ systemctl is-active ailab-runner      # GitHub Actions runner
 ```
 
 Ademas, `cron @reboot` ejecuta `scripts/startup.sh` para verificar stacks Docker.
+
+---
+
+### Correccion de Metricas (2026-05-15)
+
+Ver [Runtime Analytics — Correccion](/docs/runtime-analytics-correccion/) para el diagnostico de los bugs de health score, nodos online y gateway health check.
