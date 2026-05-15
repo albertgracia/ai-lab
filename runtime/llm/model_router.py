@@ -26,17 +26,16 @@ except ImportError:
 
 
 def infer_task(request_text=None, capability=None):
-    """Classify *request_text* into a task type.
-    
-    Uses keyword matching.  The registry does not replace this yet —
-    task classification stays simple until we add intent-based scoring.
-    """
+    """Classify *request_text* into a task type."""
     if capability:
         return capability
     text = (request_text or "").lower()
-    if any(w in text for w in ["python", "code", "script", "bug", "api", "refactor"]):
+    # Long prompts are reasoning/analysis
+    if len(text) > 500:
+        return "reasoning"
+    if any(w in text for w in ["python", "code", "script", "bug", "api", "refactor", "debug", "fix"]):
         return "coding"
-    if any(w in text for w in ["arquitectura", "architecture", "complex", "analyze", "optimizar", "infraestructura", "infrastructure", "informe", "report", "analisis", "diagnostico"]):
+    if any(w in text for w in ["arquitectura", "architecture", "complex", "analyze", "optimizar", "infraestructura", "infrastructure", "informe", "report", "analisis", "diagnostico", "estado actual", "resumen"]):
         return "reasoning"
     return "fast"
 

@@ -312,7 +312,7 @@ async def chat_completions(request: Request):
 
     upstream_payload.setdefault(
         "temperature",
-        0.05 if capability == "fast" or node.get("capability") == "fast" else 0.2
+        0.1 if capability == "fast" or node.get("capability") == "fast" else 0.2
     )
 
     # Only set reasoning effort for non-reasoning models
