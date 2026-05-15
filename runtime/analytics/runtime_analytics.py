@@ -38,7 +38,8 @@ def get_aggregated():
     metrics = _get_gateway_metrics()
     state = _get_cluster_state()
     
-    nodes = state.get("nodes", [])
+    discovered = state.get("discovered_nodes", [])
+    nodes = discovered if discovered else state.get("nodes", [])
     online_nodes = len([n for n in nodes if n.get("online")])
     total_nodes = len(nodes)
     

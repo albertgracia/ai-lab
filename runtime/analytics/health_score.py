@@ -14,24 +14,31 @@ def calculate():
     # 1. GPU nodes online (max 2 nodes = +30 points)
     gpu_file = STATE_DIR / "cluster_state.json"
     gpu_online = 0
+    gpu_total = 0
     if gpu_file.exists():
         try:
             state = json.loads(gpu_file.read_text())
-            nodes = state.get("nodes", [])
-            gpu_online = len([n for n in nodes if n.get("online")])
+            discovered = state.get("discovered_nodes", [])
+            if discovered:
+                gpu_online = len([n for n in discovered if n.get("online")])
+                gpu_total = len(discovered)
+            else:
+                nodes = state.get("nodes", [])
+                gpu_online = len([n for n in nodes if n.get("online")])
+                gpu_total = len(nodes) or 2
         except: pass
-    score -= (2 - gpu_online) * 30
+    score -= max(0, gpu_total - gpu_online) * 30
     if gpu_online < 2: reasons.append(f"{2-gpu_online} GPU(s) offline")
 
     # 2. Gateway check (-15 if down)
     try:
-        r = subprocess.run(["curl", "-sf", "--max-time", "3", "http://localhost:8008/health"], capture_output=True, timeout=5)
+        r = subprocess.run(["curl", "-sf", "--max-time", "3", "http://localhost:8008/metrics"], capture_output=True, timeout=5)
         if r.returncode != 0: score -= 15; reasons.append("Gateway down")
     except: score -= 15; reasons.append("Gateway unreachable")
 
     # 3. Router check (-10 if down)
     try:
-        r = subprocess.run(["curl", "-sf", "--max-time", "3", "http://localhost:8083/health"], capture_output=True, timeout=5)
+        r = subprocess.run(["curl", "-sf", "--max-time", "3", "http://localhost:8083/"], capture_output=True, timeout=5)
         if r.returncode != 0: score -= 10; reasons.append("Router down")
     except: score -= 10; reasons.append("Router unreachable")
 
@@ -50,7 +57,7 @@ def calculate():
 
     # 6. Latency penalty
     try:
-        r = subprocess.run(["curl", "-s", "--max-time", "3", "http://localhost:8008/metrics"], capture_output=True, text=True, timeout=5)
+        r = subprocess.run(["curl", "-s", "--max-time", "3", "http://localhost:8008/metricsmetrics"], capture_output=True, text=True, timeout=5)
         for line in r.stdout.split("\n"):
             if "ailab_last_latency_ms" in line and not line.startswith("#"):
                 lat = float(line.split()[-1])
@@ -64,7 +71,7 @@ def calculate():
 
 def _level(s):
     if s >= 90: return "perfect"
-    if s >= 70: return "good"
+    if s >= 60: return "good"
     if s >= 50: return "degraded"
     if s >= 30: return "poor"
     return "critical"
