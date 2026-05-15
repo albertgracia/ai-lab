@@ -1,0 +1,23 @@
+name: Update Public Metrics
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch analytics
+        run: |
+          mkdir -p apps/ialab-docs/public/api
+          curl -s http://localhost:8084/api/analytics > apps/ialab-docs/public/api/analytics.json
+          curl -s http://localhost:8084/api/status.json > apps/ialab-docs/public/api/status.json
+      - name: Commit
+        run: |
+          git config user.name 'AI-LAB Bot'
+          git config user.email 'bot@ai-lab.local'
+          git add -f apps/ialab-docs/public/api/
+          git diff --cached --quiet || git commit -m 'chore: update metrics [skip ci]'
+          git push origin main
