@@ -1,105 +1,108 @@
----
-import Layout from "../../../layouts/Layout.astro";
----
-
-<Layout title="Historical Analytics · AI-LAB">
-  <section class="mx-auto max-w-7xl px-6 py-16 space-y-10">
-    <header class="rounded-3xl border border-cyan-500/30 bg-zinc-950 p-10">
-      <h1 class="text-5xl font-black text-white">Runtime Historical Analytics</h1>
-      <p class="mt-4 max-w-4xl text-lg text-zinc-400">
-        Evolucion temporal del runtime cognitivo. Datos agregados desde Prometheus, event bus y gateway metrics.
-      </p>
-    </header>
-
-    <section class="grid gap-5 md:grid-cols-4" id="hist-cards">
-      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-6">
-        <p class="text-xs text-zinc-500">Total Requests</p>
-        <p class="mt-2 text-4xl font-black text-cyan-400" id="h-req">--</p>
-      </div>
-      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-6">
-        <p class="text-xs text-zinc-500">Sesiones Creadas</p>
-        <p class="mt-2 text-4xl font-black text-emerald-400" id="h-ses">--</p>
-      </div>
-      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-6">
-        <p class="text-xs text-zinc-500">Total Errores</p>
-        <p class="mt-2 text-4xl font-black text-red-400" id="h-err">--</p>
-      </div>
-      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-6">
-        <p class="text-xs text-zinc-500">Routing Decisions</p>
-        <p class="mt-2 text-4xl font-black text-yellow-400" id="h-rout">--</p>
-      </div>
-    </section>
-
-    <section class="rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
-      <h2 class="text-xl font-bold text-cyan-400 mb-6">Metricas Detalladas</h2>
-      <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <div><p class="text-xs text-zinc-500">Streams</p><p class="text-2xl font-bold text-white" id="h-str">--</p></div>
-        <div><p class="text-xs text-zinc-500">Latencia Media</p><p class="text-2xl font-bold text-purple-400" id="h-lat">--</p></div>
-        <div><p class="text-xs text-zinc-500">Nodos Online</p><p class="text-2xl font-bold text-emerald-400" id="h-nod">--</p></div>
-        <div><p class="text-xs text-zinc-500">Eventos Bus</p><p class="text-2xl font-bold text-white" id="h-ev">--</p></div>
-      </div>
-    </section>
-
-    <section class="rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
-      <h2 class="text-xl font-bold text-cyan-400 mb-4">Health Score</h2>
-      <div class="flex items-center gap-8">
-        <div id="health-gauge" class="w-36 h-36 rounded-full border-4 border-zinc-700 flex items-center justify-center">
-          <span id="health-number" class="text-5xl font-black text-white">--</span>
-        </div>
-        <div>
-          <p class="text-xs text-zinc-500" id="health-level">--</p>
-          <div id="health-reasons" class="mt-2 text-sm text-zinc-400 space-y-1">
-            <p class="italic">Esperando datos...</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
-      <h2 class="text-xl font-bold text-cyan-400 mb-4">Acceso Directo</h2>
-      <div class="flex flex-wrap gap-3">
-        <a href="/ops" class="px-4 py-2 rounded-lg bg-zinc-800 text-zinc-200 hover:bg-cyan-900/50 text-sm">Operations Center</a>
-        <a href="/status/gpus" class="px-4 py-2 rounded-lg bg-zinc-800 text-zinc-200 hover:bg-cyan-900/50 text-sm">GPU Telemetry</a>
-        <a href="/status/models" class="px-4 py-2 rounded-lg bg-zinc-800 text-zinc-200 hover:bg-cyan-900/50 text-sm">Modelos</a>
-        <a href="/experiments" class="px-4 py-2 rounded-lg bg-zinc-800 text-zinc-200 hover:bg-cyan-900/50 text-sm">Experiments Lab</a>
-      </div>
-    </section>
-  </section>
-</Layout>
-
-<script>
-  async function load() {
-    try {
-      const r = await fetch("/api/analytics", { cache: "no-store" });
-      const d = await r.json();
-      const m = d.metrics || {};
-      const s = d.sessions || {};
-      const h = d.health || {};
-      const eb = d.event_bus || {};
-
-      document.getElementById("h-req").textContent = m.requests_total || 0;
-      document.getElementById("h-ses").textContent = s.total_sessions || 0;
-      document.getElementById("h-err").textContent = m.errors_total || 0;
-      document.getElementById("h-rout").textContent = m.routing_decisions_total || 0;
-      document.getElementById("h-str").textContent = m.streams_total || 0;
-      document.getElementById("h-lat").textContent = (m.last_latency_ms || 0).toFixed(0) + "ms";
-      document.getElementById("h-nod").textContent = (m.online_nodes || 0) + "/" + (m.total_nodes || 0);
-      document.getElementById("h-ev").textContent = eb.total_events || 0;
-
-      const score = h.score || 0;
-      document.getElementById("health-number").textContent = score;
-      document.getElementById("health-number").className = "text-5xl font-black " + (score >= 80 ? "text-emerald-400" : score >= 60 ? "text-yellow-400" : score >= 40 ? "text-orange-400" : "text-red-400");
-      document.getElementById("health-gauge").className = "w-36 h-36 rounded-full border-4 flex items-center justify-center " + (score >= 80 ? "border-emerald-500" : score >= 60 ? "border-yellow-500" : score >= 40 ? "border-orange-500" : "border-red-500");
-      document.getElementById("health-level").textContent = h.level || "--";
-
-      const reasons = document.getElementById("health-reasons");
-      if (h.reasons && h.reasons.length) {
-        reasons.innerHTML = h.reasons.map(r => "<div>\u2022 " + r + "</div>").join("");
-      } else {
-        reasons.innerHTML = "<div class='text-emerald-400'>Sistema saludable</div>";
-      }
-    } catch {}
-  }
-  load();
-  setInterval(load, 15000);
-</script>
+ cat /opt/ai-lab/apps/ialab-docs/src/pages/status/history/index.astro
+[?2004l]3008;start=0834cff5-ff3e-4200-b3fd-4b9c8fba10c4;machineid=20aaf5bfa7584e8fb6c0264046eebecd;user=albert;hostname=ubuntu-ialab;bootid=1fc818c4-677f-4c57-b21b-3a4b2a5c6134;pid=00000000000000199116;type=command;cwd=/home/albert\ cat /opt/ai-lab/apps/ialab-docs/src/pages/status/history/index.astro
+[?2004l]3008;start=af901f1e-997d-4654-a9be-38be8e2f4256;machineid=20aaf5bfa7584e8fb6c0264046eebecd;user=albert;hostname=ubuntu-ialab;bootid=1fc818c4-677f-4c57-b21b-3a4b2a5c6134;pid=00000000000000196559;type=command;cwd=/home/albert\---
+import Layout from "../../../layouts/Layout.astro";
+---
+
+<Layout title="Historical Analytics · AI-LAB">
+  <section class="mx-auto max-w-7xl px-6 py-16 space-y-10">
+    <header class="rounded-3xl border border-cyan-500/30 bg-zinc-950 p-10">
+      <h1 class="text-5xl font-black text-white">Runtime Historical Analytics</h1>
+      <p class="mt-4 max-w-4xl text-lg text-zinc-400">
+        Evolucion temporal del runtime cognitivo. Datos agregados desde Prometheus, event bus y gateway metrics.
+      </p>
+    </header>
+
+    <section class="grid gap-5 md:grid-cols-4" id="hist-cards">
+      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-6">
+        <p class="text-xs text-zinc-500">Total Requests</p>
+        <p class="mt-2 text-4xl font-black text-cyan-400" id="h-req">--</p>
+      </div>
+      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-6">
+        <p class="text-xs text-zinc-500">Sesiones Creadas</p>
+        <p class="mt-2 text-4xl font-black text-emerald-400" id="h-ses">--</p>
+      </div>
+      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-6">
+        <p class="text-xs text-zinc-500">Total Errores</p>
+        <p class="mt-2 text-4xl font-black text-red-400" id="h-err">--</p>
+      </div>
+      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-6">
+        <p class="text-xs text-zinc-500">Routing Decisions</p>
+        <p class="mt-2 text-4xl font-black text-yellow-400" id="h-rout">--</p>
+      </div>
+    </section>
+
+    <section class="rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
+      <h2 class="text-xl font-bold text-cyan-400 mb-6">Metricas Detalladas</h2>
+      <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div><p class="text-xs text-zinc-500">Streams</p><p class="text-2xl font-bold text-white" id="h-str">--</p></div>
+        <div><p class="text-xs text-zinc-500">Latencia Media</p><p class="text-2xl font-bold text-purple-400" id="h-lat">--</p></div>
+        <div><p class="text-xs text-zinc-500">Nodos Online</p><p class="text-2xl font-bold text-emerald-400" id="h-nod">--</p></div>
+        <div><p class="text-xs text-zinc-500">Eventos Bus</p><p class="text-2xl font-bold text-white" id="h-ev">--</p></div>
+      </div>
+    </section>
+
+    <section class="rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
+      <h2 class="text-xl font-bold text-cyan-400 mb-4">Health Score</h2>
+      <div class="flex items-center gap-8">
+        <div id="health-gauge" class="w-36 h-36 rounded-full border-4 border-zinc-700 flex items-center justify-center">
+          <span id="health-number" class="text-5xl font-black text-white">--</span>
+        </div>
+        <div>
+          <p class="text-xs text-zinc-500" id="health-level">--</p>
+          <div id="health-reasons" class="mt-2 text-sm text-zinc-400 space-y-1">
+            <p class="italic">Esperando datos...</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
+      <h2 class="text-xl font-bold text-cyan-400 mb-4">Acceso Directo</h2>
+      <div class="flex flex-wrap gap-3">
+        <a href="/ops" class="px-4 py-2 rounded-lg bg-zinc-800 text-zinc-200 hover:bg-cyan-900/50 text-sm">Operations Center</a>
+        <a href="/status/gpus" class="px-4 py-2 rounded-lg bg-zinc-800 text-zinc-200 hover:bg-cyan-900/50 text-sm">GPU Telemetry</a>
+        <a href="/status/models" class="px-4 py-2 rounded-lg bg-zinc-800 text-zinc-200 hover:bg-cyan-900/50 text-sm">Modelos</a>
+        <a href="/experiments" class="px-4 py-2 rounded-lg bg-zinc-800 text-zinc-200 hover:bg-cyan-900/50 text-sm">Experiments Lab</a>
+      </div>
+    </section>
+  </section>
+</Layout>
+
+<script>
+  async function load() {
+    try {
+      const r = await fetch("/api/analytics", { cache: "no-store" });
+      const d = await r.json();
+      const m = d.metrics || {};
+      const s = d.sessions || {};
+      const h = d.health || {};
+      const eb = d.event_bus || {};
+
+      document.getElementById("h-req").textContent = m.requests_total || 0;
+      document.getElementById("h-ses").textContent = s.total_sessions || 0;
+      document.getElementById("h-err").textContent = m.errors_total || 0;
+      document.getElementById("h-rout").textContent = m.routing_decisions_total || 0;
+      document.getElementById("h-str").textContent = m.streams_total || 0;
+      document.getElementById("h-lat").textContent = (m.last_latency_ms || 0).toFixed(0) + "ms";
+      document.getElementById("h-nod").textContent = (m.online_nodes || 0) + "/" + (m.total_nodes || 0);
+      document.getElementById("h-ev").textContent = eb.total_events || 0;
+
+      const score = h.score || 0;
+      document.getElementById("health-number").textContent = score;
+      document.getElementById("health-number").className = "text-5xl font-black " + (score >= 80 ? "text-emerald-400" : score >= 60 ? "text-yellow-400" : score >= 40 ? "text-orange-400" : "text-red-400");
+      document.getElementById("health-gauge").className = "w-36 h-36 rounded-full border-4 flex items-center justify-center " + (score >= 80 ? "border-emerald-500" : score >= 60 ? "border-yellow-500" : score >= 40 ? "border-orange-500" : "border-red-500");
+      document.getElementById("health-level").textContent = h.level || "--";
+
+      const reasons = document.getElementById("health-reasons");
+      if (h.reasons && h.reasons.length) {
+        reasons.innerHTML = h.reasons.map(r => "<div>\u2022 " + r + "</div>").join("");
+      } else {
+        reasons.innerHTML = "<div class='text-emerald-400'>Sistema saludable</div>";
+      }
+    } catch {}
+  }
+  load();
+  setInterval(load, 15000);
+</script>
+]3008;end=af901f1e-997d-4654-a9be-38be8e2f4256;exit=success\]3008;start=abcd44d7-cecc-4f04-a9ed-f749924260e6;machineid=20aaf5bfa7584e8fb6c0264046eebecd;user=albert;hostname=ubuntu-ialab;bootid=1fc818c4-677f-4c57-b21b-3a4b2a5c6134;pid=00000000000000196559;type=shell;cwd=/home/albert\[?2004h]0;albert@ubuntu-ialab: ~[01;32malbert@ubuntu-ialab[00m:[01;34m~[00m]3008;end=0834cff5-ff3e-4200-b3fd-4b9c8fba10c4;exit=success\]3008;start=01185c25-4ab7-4255-83ed-5b8f9dd6f038;machineid=20aaf5bfa7584e8fb6c0264046eebecd;user=albert;hostname=ubuntu-ialab;bootid=1fc818c4-677f-4c57-b21b-3a4b2a5c6134;pid=00000000000000199116;type=shell;cwd=/home/albert\[?2004h]0;albert@ubuntu-ialab: ~[01;32malbert@ubuntu-ialab[00m:[01;34m~[00m

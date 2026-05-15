@@ -1,0 +1,25 @@
+http:
+  routers:
+    ai-lab-docs:
+      rule: "Host(`blog-ai-lab.labrazahome.com`)"
+      entryPoints:
+        - web
+      service: ai-lab-docs
+
+    ai-lab-docs-api:
+      rule: "Host(`blog-ai-lab.labrazahome.com`) && PathPrefix(`/api/`)"
+      entryPoints:
+        - web
+      service: ai-lab-docs-api
+      priority: 100
+
+  services:
+    ai-lab-docs:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:4322"
+
+    ai-lab-docs-api:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.30:8084"
