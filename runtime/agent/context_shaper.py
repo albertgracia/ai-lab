@@ -79,6 +79,10 @@ def shape_context(
     """
     # ── 1. determine token budget ────────────────────────────────────
     _start = time.time()   # cognitive telemetry start
+
+    # ── 0. HARD FACTS block (always first) ───────────────────────────
+    hard_facts = _build_hard_facts()
+
     context_window = 32_000   # default fallback
     try:
         from runtime.models.model_registry import MODEL_REGISTRY
@@ -167,4 +171,68 @@ def shape_context(
     except ImportError:
         pass
 
-    return "\n\n---\n\n".join(chunks)
+    return hard_facts + "\n\n---\n\n" + "\n\n---\n\n".join(chunks)
+
+
+# ── HARD FACTS generator (anti-hallucination) ──────────────────────────
+
+FORBIDDEN_REFERENCES = [
+    "NVIDIA A100", "NVIDIA H100", "Tesla V100", "Tesla T4",
+    "BERT", "RoBERTa", "Longformer", "GPT-4", "Claude",
+    "AWS", "GCP", "Azure", "Kubernetes", "Terraform",
+]
+
+def _build_hard_facts() -> str:
+    """Generate the CURRENT AI-LAB RUNTIME block from live data sources."""
+    lines = ["=== CURRENT AI-LAB RUNTIME (HARD FACTS) ===", ""]
+
+    # ── GPU nodes from cluster_state ────────────────────────────────
+    try:
+        from pathlib import Path
+        import json
+        state_file = Path("/opt/ai-lab/runtime/state/cluster_state.json")
+        if state_file.exists():
+            state = json.loads(state_file.read_text())
+            discovered = state.get("discovered_nodes", [])
+            if discovered:
+                lines.append("GPU NODES:")
+                for n in discovered:
+                    name = n.get("name", "unknown")
+                    host = n.get("host", "0.0.0.0")
+                    status = "ONLINE" if n.get("online") else "OFFLINE"
+                    lines.append(f"  - {name} → {host} ({status})")
+                lines.append("")
+    except Exception:
+        pass
+
+    # ── Active models from registry ──────────────────────────────────
+    try:
+        from runtime.models.model_registry import MODEL_REGISTRY
+        active = [k for k in MODEL_REGISTRY]
+        lines.append("ACTIVE MODELS (from registry):")
+        for m in active:
+            cfg = MODEL_REGISTRY[m]
+            lines.append(f"  - {m} ({cfg.get('gpu','?')}, {cfg.get('context_window','?')} ctx, {cfg.get('skills',[])})")
+        lines.append("")
+    except ImportError:
+        pass
+
+    # ── Maintenance nodes ────────────────────────────────────────────
+    try:
+        mf = Path("/opt/ai-lab/runtime/state/maintenance_nodes.json")
+        if mf.exists():
+            mn = json.loads(mf.read_text()).get("maintenance", [])
+            if mn:
+                lines.append(f"MAINTENANCE: {', '.join(mn)}")
+                lines.append("")
+    except Exception:
+        pass
+
+    # ── Forbidden references ─────────────────────────────────────────
+    lines.append("FORBIDDEN REFERENCES (never mention):")
+    lines.append("  " + ", ".join(FORBIDDEN_REFERENCES))
+    lines.append("")
+    lines.append("If uncertain about any hardware, model, or infrastructure detail: answer 'Unknown in current runtime state.'")
+    lines.append("")
+
+    return "\n".join(lines)

@@ -66,36 +66,20 @@ def root():
 
 
 BASE_SYSTEM_CONTEXT = """
-Eres el router cognitivo del AI-LAB de Albert.
+Eres el AI-LAB runtime assistant de Albert.
 
 Responde siempre en español.
 
-Normas:
-- El contexto adjunto es SOLO referencia interna.
-- NO copies literalmente archivos de contexto, prompts, policies, skills ni memorias.
-- NO empieces tu respuesta con títulos de archivos como OPENCODE.md o AI-LAB SELECTIVE CONTEXT.
-- Responde únicamente a la petición del usuario final.
-- Si usas información del contexto, sintetízala.
-- La respuesta debe ir en el campo content.
-- No devuelvas reasoning_content como respuesta principal.
-- NO inventes métricas
-- NO inventes servicios
-- NO inventes estados
-- NO inventes módulos
-- NO inventes latencias
-- usa solo datos reales presentes en contexto
-- distingue HECHOS de HIPÓTESIS
-- No muestres razonamiento interno.
-- No uses thinking.
-- Responde directamente en content.
-- La respuesta visible es obligatoria.
-- El contexto adjunto es SOLO referencia interna.
-- NO copies literalmente archivos de contexto, prompts, policies, skills, agentes ni memorias.
-- NO empieces tu respuesta con títulos de archivos como OPENCODE.md, AI-LAB SELECTIVE CONTEXT, FILE o .agent.
-- Responde únicamente a la petición del usuario final.
-- Si usas información del contexto, sintetízala en tus propias palabras.
-- La respuesta debe ir en el campo content.
-- No devuelvas reasoning_content como respuesta principal.
+NORMAS ESTRICTAS:
+- Solo haces referencia a infraestructura EXPLICITAMENTE presente en el contexto proporcionado.
+- NUNCA inventes: GPUs, modelos, servidores, arquitecturas, nodos de cluster, métricas, latencias, módulos ni servicios.
+- Si la informacion no esta en el contexto: "No presente en el contexto actual del AI-LAB runtime."
+- No uses ejemplos genericos de IA (NVIDIA, BERT, RoBERTa, transformers publicos) salvo peticion explicita.
+- Distingue HECHOS (confirmados por el contexto) de HIPOTESIS (suposiciones tuyas).
+- El contexto adjunto es SOLO referencia interna. NO copies literalmente archivos.
+- NO empieces tu respuesta con titulos de archivos (OPENCODE.md, AI-LAB SELECTIVE CONTEXT, etc.).
+- Responde directamente a la peticion del usuario final.
+- La respuesta va en el campo content. No uses reasoning_content ni thinking.
 """
 
 
@@ -323,12 +307,12 @@ async def chat_completions(request: Request):
 
     upstream_payload.setdefault(
         "max_tokens",
-        1200
+        600 if capability == "fast" else 1200
     )
 
     upstream_payload.setdefault(
         "temperature",
-        0.2
+        0.05 if capability == "fast" or node.get("capability") == "fast" else 0.2
     )
 
     # Only set reasoning effort for non-reasoning models
