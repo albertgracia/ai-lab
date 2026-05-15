@@ -4,7 +4,6 @@ import Layout from "../../layouts/Layout.astro";
 
 export async function getStaticPaths() {
   const docs = await getCollection("docs");
-
   return docs.map((doc) => ({
     params: { slug: doc.id },
     props: { doc },
@@ -17,8 +16,6 @@ const { Content } = await render(doc);
 
 <Layout title={doc.data.title}>
   <article class="prose prose-invert prose-cyan max-w-4xl">
-    <h1>{doc.data.title}</h1>
-    <p class="text-zinc-400">{doc.data.summary}</p>
     <Content />
   </article>
 </Layout>
