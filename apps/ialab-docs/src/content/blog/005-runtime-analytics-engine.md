@@ -1,6 +1,7 @@
 ---
 title: "Implementing a Real-Time Runtime Analytics Engine for Local AI Infrastructure"
 description: "Como implemente un motor de analiticas en tiempo real para el AI-LAB con health score, metricas de gateway y visualizacion en Astro. Incluye solucion a problemas de routing con Traefik."
+summary: "Motor de analiticas en tiempo real con health score, metricas de gateway y visualizacion."
 date: "2026-05-15"
 tags:
   - analytics

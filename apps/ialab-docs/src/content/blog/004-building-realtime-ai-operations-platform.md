@@ -1,6 +1,7 @@
 ---
 title: "Building a Realtime AI Operations Platform with Astro, Grafana and SSE"
 description: "Como construi el centro de operaciones en tiempo real del AI-LAB usando Astro, Server-Sent Events, Prometheus y Grafana para monitorizar un cluster de inferencia distribuido con GPUs AMD."
+summary: "Centro de operaciones en tiempo real con Astro, SSE, Prometheus y Grafana."
 date: "2026-05-15"
 tags:
   - astro
