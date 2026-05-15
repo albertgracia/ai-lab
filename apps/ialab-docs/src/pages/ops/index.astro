@@ -124,27 +124,7 @@ import EventStream from "../../components/EventStream.astro";
       </div>
     </section>
 
-    <section class="rounded-2xl border border-purple-500/30 bg-zinc-950 p-6">
-      <h2 class="text-xl font-bold text-purple-400 mb-4">Cognitive Runtime (FASE 8.9)</h2>
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div class="rounded-xl border border-zinc-800 p-4">
-          <span class="text-xs text-zinc-500">Shaping Latency</span>
-          <p class="text-2xl font-bold text-cyan-400" id="cog-latency">--ms</p>
-        </div>
-        <div class="rounded-xl border border-zinc-800 p-4">
-          <span class="text-xs text-zinc-500">Context Budget</span>
-          <p class="text-2xl font-bold text-yellow-400" id="cog-budget">--%</p>
-        </div>
-        <div class="rounded-xl border border-zinc-800 p-4">
-          <span class="text-xs text-zinc-500">Working Sessions</span>
-          <p class="text-2xl font-bold text-emerald-400" id="cog-sessions">--</p>
-        </div>
-        <div class="rounded-xl border border-zinc-800 p-4">
-          <span class="text-xs text-zinc-500">Files Used</span>
-          <p class="text-2xl font-bold text-orange-400" id="cog-files">--</p>
-        </div>
-      </div>
-    </section>
+    
   </section>
 </Layout>
 <script>
@@ -159,120 +139,18 @@ import EventStream from "../../components/EventStream.astro";
       const d = await res.json();
       const h = d.health || {};
       const m = d.metrics || {};
-      const s = d.sessions || {};
-      const eb = d.event_bus || {};
       const score = h.score || 0;
-      const el = document.getElementById("health-value");
-      el.textContent = score;
-      el.className = "mt-1 text-5xl font-black " + (score >= 80 ? "text-emerald-400" : score >= 60 ? "text-yellow-400" : score >= 40 ? "text-orange-400" : "text-red-400");
+      document.getElementById("health-value").textContent = score;
       document.getElementById("health-level").textContent = h.level || "--";
-      document.getElementById("health-badge").className = "rounded-2xl border px-6 py-5 text-center min-w-[140px] " + (score >= 80 ? "border-emerald-500/30 bg-emerald-500/10" : score >= 60 ? "border-yellow-500/30 bg-yellow-500/10" : score >= 40 ? "border-orange-500/30 bg-orange-500/10" : "border-red-500/30 bg-red-500/10");
+      document.getElementById("health-reasons").innerHTML = (h.reasons || []).map(r => "<div>• " + r + "</div>").join("") || "<div class='text-emerald-400'>Sin problemas</div>";
+      document.getElementById("stat-nodes").textContent = (m.online_nodes || 0) + "/" + (m.total_nodes || 0);
       document.getElementById("stat-gpus").textContent = (m.online_nodes || 0) + "/" + (m.total_nodes || 0);
       document.getElementById("stat-requests").textContent = m.requests_total || 0;
-      document.getElementById("stat-sessions").textContent = s.active_sessions || 0;
-      document.getElementById("stat-nodes").textContent = (m.online_nodes || 0) + "/" + (m.total_nodes || 0);
-      document.getElementById("stat-latency").textContent = (m.last_latency_ms || 0).toFixed(0) + "ms";
-      document.getElementById("stat-routing").textContent = m.routing_decisions_total || 0;
-      document.getElementById("stat-streams").textContent = m.active_streams || 0;
+      document.getElementById("stat-streams").textContent = m.streams_total || 0;
+      document.getElementById("stat-latency").textContent = Math.round(m.last_latency_ms || 0) + "ms";
       document.getElementById("stat-errors").textContent = m.errors_total || 0;
-      const reasons = document.getElementById("health-reasons");
-      if (h.reasons && h.reasons.length) {
-        reasons.innerHTML = h.reasons.map(r => 
-          '<div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-red-400 shrink-0"></span>' + r + '</div>'
-        ).join("");
-      } else {
-        reasons.innerHTML = '<div class="text-emerald-400">Todos los sistemas operativos</div>';
-      }
-      const errList = document.getElementById("error-list");
-      if (m.recent_errors && m.recent_errors.length) {
-        errList.innerHTML = m.recent_errors.slice(-10).reverse().map(e =>
-          '<div class="text-red-400">[' + new Date(e.ts * 1000).toLocaleTimeString() + '] ' + (e.error || "?") + '</div>'
-        ).join("");
-      } else {
-        errList.innerHTML = '<div class="text-emerald-400">Sin errores recientes</div>';
-      }
     } catch {}
   }
   refresh();
   setInterval(refresh, 8000);
-
-  async function loadCognitive() {
-    try {
-      const r = await fetch("/api/cognitive");
-      const d = await r.json();
-      const s = d.latest_shaping || {};
-      document.getElementById("cog-latency").textContent = (s.shaping_latency_ms || 0) + "ms";
-      document.getElementById("cog-budget").textContent = Math.round((s.budget_used || 0) * 100) + "%";
-      document.getElementById("cog-files").textContent = s.files_used || "--";
-      const wm = d.working_memory || {};
-      document.getElementById("cog-sessions").textContent = wm.sessions || 0;
-    } catch {}
-  }
-  loadCognitive();
-  setInterval(loadCognitive, 15000);
-
-  async function loadAutonomous() {
-    try {
-      const [opt, aff, adj, conf] = await Promise.all([
-        fetch("/api/runtime-optimizer").then(r => r.json()),
-        fetch("/api/runtime-affinity").then(r => r.json()),
-        fetch("/api/runtime-adjustments").then(r => r.json()),
-        fetch("/api/runtime-confidence").then(r => r.json()),
-      ]);
-      document.getElementById("auto-recs").textContent = (opt.recommendations || []).length;
-      document.getElementById("auto-affinity").textContent = (aff.total_sessions || 0);
-      document.getElementById("auto-actions").textContent = Array.isArray(adj) ? adj.length : 0;
-      const models = (conf.models || {});
-      const vals = Object.values(models).map(m => m.confidence || 0);
-      document.getElementById("auto-conf-avg").textContent = vals.length ? Math.round((vals.reduce((a,b)=>a+b,0)/vals.length)*100) + "%" : "--";
-
-      const pend = await fetch("/api/runtime-pending-actions").then(r => r.json());
-      const pl = document.getElementById("pending-list");
-      const actions = pend.actions || [];
-      if (!actions.length) {
-        pl.innerHTML = '<span class="text-xs text-zinc-500">Sin acciones pendientes</span><button onclick="rollbackAction()" class="text-xs text-orange-400 hover:text-orange-300 ml-4">↩ Rollback</button>';
-      } else {
-        pl.innerHTML = '<span class="text-xs text-emerald-400 mb-2 block">' + actions.length + ' pendiente(s)</span>' +
-          actions.map(a => '<div class="flex items-center justify-between py-1 border-b border-zinc-800 text-xs"><span class="text-yellow-400">' + a.action + '</span><span class="text-zinc-500">' + (a.target || a.task || '--') + '</span><span class="text-zinc-400">' + Math.round(a.confidence*100) + '%</span></div>').join("");
-      }
-    } catch {}
-  }
-  loadAutonomous();
-  setInterval(loadAutonomous, 60000);
-
-  async function loadWatchdog() {
-    try {
-      const r = await fetch("/api/watchdog");
-      const d = await r.json();
-      const checks = d.checks || {};
-      for (const [key, ok] of Object.entries(checks)) {
-        const el = document.getElementById("wd-" + key);
-        if (el) {
-          el.textContent = ok ? "🟢" : "🔴";
-          el.className = "text-sm font-bold " + (ok ? "text-emerald-400" : "text-red-400");
-        }
-      }
-    } catch {}
-  }
-  loadWatchdog();
-  setInterval(loadWatchdog, 30000);
-</script>
-
-  async function approveAction(id) {
-    await fetch("/api/runtime-actions/approve?id=" + id, {method: "POST"});
-    loadAutonomous();
-  }
-  async function rejectAction(id) {
-    await fetch("/api/runtime-actions/reject?id=" + id, {method: "POST"});
-    loadAutonomous();
-  }
-  async function applyAction(id) {
-    await fetch("/api/runtime-actions/apply-single?id=" + id, {method: "POST"});
-    loadAutonomous();
-  }
-  async function rollbackAction() {
-    if (!confirm("Restaurar ultimo snapshot de pesos?")) return;
-    await fetch("/api/runtime-actions/rollback", {method: "POST"});
-    loadAutonomous();
-  }
 </script>
