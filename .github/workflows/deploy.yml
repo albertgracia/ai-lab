@@ -1,9 +1,16 @@
-name: AI-LAB Validate
+name: AI-LAB Deploy
 
 on:
   push:
     branches: [main]
+    paths:
+      - 'apps/ialab-docs/**'
+      - '.github/workflows/**'
   workflow_dispatch:
+
+concurrency:
+  group: ialab-docs-deploy
+  cancel-in-progress: true
 
 jobs:
   validate:
@@ -14,4 +21,18 @@ jobs:
         run: |
           python3 -m py_compile runtime/gateway/openai_gateway.py 2>/dev/null || true
           python3 -m py_compile runtime/llm/router_api.py 2>/dev/null || true
-          echo "Validation complete"
+
+  deploy-local:
+    needs: validate
+    if: github.repository == 'albertgracia/ai-lab'
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        working-directory: apps/ialab-docs
+        run: npm ci
+      - name: Build Astro
+        working-directory: apps/ialab-docs
+        run: npm run build
+      - name: Restart docs service
+        run: sudo systemctl restart ailab-docs.service

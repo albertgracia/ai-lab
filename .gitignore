@@ -76,3 +76,4 @@ data/
 .agent/
 docs/system_snapshot.json
 
+actions-runner/
