@@ -1,24 +1,111 @@
 ---
 import Layout from "../../../layouts/Layout.astro";
-import HistoryCharts from "../../../components/HistoryCharts.jsx";
 ---
 
-<Layout title="AI-LAB History">
+<Layout title="Historical Telemetry · AI-LAB">
+  <section class="mx-auto max-w-7xl px-6 py-16 space-y-10">
 
-  <div class="space-y-8">
-
-    <div>
-      <h1 class="text-4xl font-bold">
-        AI-LAB Historical Telemetry
-      </h1>
-
-      <p class="text-zinc-400 mt-2">
-        Observabilidad histórica del laboratorio.
+    <header class="rounded-3xl border border-cyan-500/30 bg-zinc-950 p-10">
+      <h1 class="text-5xl font-black text-white">Runtime Historical Analytics</h1>
+      <p class="mt-4 max-w-4xl text-lg text-zinc-400">
+        Evolucion temporal del runtime cognitivo. Datos agregados desde Prometheus y el event bus.
       </p>
+    </header>
+
+    <section id="history-cards" class="grid gap-5 md:grid-cols-3">
+      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-6">
+        <p class="text-sm text-zinc-500">Requests Totales</p>
+        <p class="mt-2 text-4xl font-black text-cyan-400" id="hist-requests">--</p>
+      </div>
+      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-6">
+        <p class="text-sm text-zinc-500">Errores</p>
+        <p class="mt-2 text-4xl font-black text-red-400" id="hist-errors">--</p>
+      </div>
+      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-6">
+        <p class="text-sm text-zinc-500">Sesiones Creadas</p>
+        <p class="mt-2 text-4xl font-black text-emerald-400" id="hist-sessions">--</p>
+      </div>
+    </section>
+
+    <section class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+      <h2 class="text-xl font-bold text-cyan-400 mb-4">Metricas Agregadas</h2>
+      <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div>
+          <p class="text-sm text-zinc-500">Streams</p>
+          <p class="text-2xl font-bold text-white" id="hist-streams">--</p>
+        </div>
+        <div>
+          <p class="text-sm text-zinc-500">Routing Decisions</p>
+          <p class="text-2xl font-bold text-white" id="hist-routing">--</p>
+        </div>
+        <div>
+          <p class="text-sm text-zinc-500">Latencia Media</p>
+          <p class="text-2xl font-bold text-white" id="hist-latency">--</p>
+        </div>
+        <div>
+          <p class="text-sm text-zinc-500">Nodos Online</p>
+          <p class="text-2xl font-bold text-white" id="hist-nodes">--</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+      <h2 class="text-xl font-bold text-cyan-400 mb-4">Health Score</h2>
+      <div class="flex items-center gap-6">
+        <div id="health-gauge" class="w-32 h-32 rounded-full border-4 border-zinc-700 flex items-center justify-center">
+          <span id="health-number" class="text-4xl font-black text-white">--</span>
+        </div>
+        <div id="health-reasons-list" class="text-sm text-zinc-400">
+          <p class="italic">Esperando datos...</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+      <h2 class="text-xl font-bold text-cyan-400 mb-4">Accesos Directos</h2>
+      <div class="flex flex-wrap gap-4">
+        <a href="/ops" class="px-4 py-2 rounded-lg bg-zinc-800 text-zinc-200 hover:bg-cyan-900/50">Operations Center</a>
+        <a href="/status/live" class="px-4 py-2 rounded-lg bg-zinc-800 text-zinc-200 hover:bg-cyan-900/50">Estado Vivo</a>
+        <a href="/runbooks" class="px-4 py-2 rounded-lg bg-zinc-800 text-zinc-200 hover:bg-cyan-900/50">Runbooks</a>
+      </div>
     </div>
 
-    <HistoryCharts client:load />
-
-  </div>
-
+  </section>
 </Layout>
+
+<script>
+  async function loadHistory() {
+    try {
+      const res = await fetch("/api/analytics", { cache: "no-store" });
+      const data = await res.json();
+      const m = data.metrics || {};
+      const s = data.sessions || {};
+      const h = data.health || {};
+
+      document.getElementById("hist-requests").textContent = m.requests_total || 0;
+      document.getElementById("hist-errors").textContent = m.errors_total || 0;
+      document.getElementById("hist-sessions").textContent = s.total_sessions || 0;
+      document.getElementById("hist-streams").textContent = m.streams_total || 0;
+      document.getElementById("hist-routing").textContent = m.routing_decisions_total || 0;
+      document.getElementById("hist-latency").textContent = (m.last_latency_ms || 0) + "ms";
+      document.getElementById("hist-nodes").textContent = (m.online_nodes || 0) + "/" + (m.total_nodes || 0);
+
+      const score = h.score || 0;
+      document.getElementById("health-number").textContent = score;
+      const gauge = document.getElementById("health-gauge");
+      gauge.className = "w-32 h-32 rounded-full border-4 flex items-center justify-center " + (
+        score >= 80 ? "border-emerald-500" : score >= 60 ? "border-yellow-500" :
+        score >= 40 ? "border-orange-500" : "border-red-500"
+      );
+
+      const reasons = document.getElementById("health-reasons-list");
+      if (h.reasons && h.reasons.length) {
+        reasons.innerHTML = h.reasons.map(r => `<div>• ${r}</div>`).join("");
+      } else {
+        reasons.innerHTML = "<p class='text-emerald-400'>Sistema saludable</p>";
+      }
+    } catch {}
+  }
+  loadHistory();
+  setInterval(loadHistory, 15000);
+</script>

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""AI-LAB Live API v2 - Status, Topology, SSE Events."""
+"""AI-LAB Live API v3 - Status, Topology, SSE Events, Analytics."""
 import json, subprocess
 from pathlib import Path
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
@@ -56,6 +56,19 @@ def get_docker():
         return {"containers": [json.loads(l) for l in lines]} if lines else {"containers": []}
     except: return {"containers": []}
 
+def get_analytics_data():
+    try:
+        from runtime.analytics.runtime_analytics import get_aggregated
+        from runtime.analytics.health_score import calculate
+        from runtime.analytics.session_metrics import get_session_metrics
+        from runtime.analytics.routing_metrics import get_routing_metrics
+        from runtime.event_bus import get_stats
+        h = calculate() or {"score":0,"level":"unknown","reasons":["error"]}
+        return {"health": h, "metrics": get_aggregated(), "sessions": get_session_metrics(),
+                "routing": get_routing_metrics(), "event_bus": get_stats(), "timestamp": _time.time()}
+    except Exception as e:
+        return {"health": {"score": 0, "level": "error", "reasons": [str(e)]}, "error": str(e)}
+
 class APIHandler(BaseHTTPRequestHandler):
     timeout = 10
     def do_GET(self):
@@ -63,6 +76,8 @@ class APIHandler(BaseHTTPRequestHandler):
             self._json({"docker": get_docker(), "gpu": get_gpu()})
         elif self.path == "/api/topology":
             self._json(get_cluster_topology())
+        elif self.path == "/api/analytics":
+            self._json(get_analytics_data())
         elif self.path == "/api/events":
             self._sse()
         else: self._send_error(404)
@@ -96,7 +111,7 @@ class APIHandler(BaseHTTPRequestHandler):
 
 def run():
     server = ThreadingHTTPServer((HOST, PORT), APIHandler)
-    print(f"AI-LAB Live API v2 on :{PORT}")
+    print(f"AI-LAB Live API v3 on :{PORT}")
     server.serve_forever()
 
 if __name__ == "__main__": run()
