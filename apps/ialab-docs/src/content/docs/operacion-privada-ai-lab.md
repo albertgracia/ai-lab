@@ -1,7 +1,7 @@
 ---
 title: "Operación Privada AI-LAB"
 summary: "Runbook operativo interno del laboratorio AI-LAB."
-order: 20
+order: 27
 ---
 
 > Documento interno operativo del laboratorio AI-LAB.
