@@ -1,0 +1,25 @@
+http:
+  routers:
+    ai-lab-metrics:
+      rule: "Host(`metricas.labrazahome.com`)"
+      entryPoints:
+        - web
+      service: ai-lab-metrics
+
+    ai-lab-metrics-api:
+      rule: "Host(`metricas.labrazahome.com`) && PathPrefix(`/api/`)"
+      entryPoints:
+        - web
+      service: ai-lab-metrics-api
+      priority: 100
+
+  services:
+    ai-lab-metrics:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:3010"
+
+    ai-lab-metrics-api:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.30:8084"

@@ -78,3 +78,4 @@ docs/system_snapshot.json
 
 actions-runner/
 actions-runner/
+apps/metrics-dashboard/node_modules
