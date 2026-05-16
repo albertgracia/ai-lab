@@ -42,14 +42,14 @@ export const GET: APIRoute = async () => {
     {
       title: "Live Status",
       category: "telemetry",
-      href: "/status/live",
+      href: "https://metricas.labrazahome.com",
       description: "Estado vivo del laboratorio.",
     },
 
     {
       title: "Historical Telemetry",
       category: "telemetry",
-      href: "/status/history",
+      href: "https://metricas.labrazahome.com/runtime",
       description: "Histórico GPU/VRAM y observabilidad.",
     },
 

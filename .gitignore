@@ -68,6 +68,8 @@ backups/
 
 # Local runtime
 runtime/
+!apps/metrics-dashboard/src/app/runtime/
+!apps/metrics-dashboard/src/app/runtime/page.tsx
 sessions/
 
 

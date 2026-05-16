@@ -11,7 +11,7 @@ export async function RuntimeStatus() {
         <CardTitle className="text-sm text-emerald-400">Autonomous Runtime</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid gap-4 sm:grid-cols-5">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
           <div className="rounded-xl border border-zinc-800 p-4 text-center">
             <p className="text-xs text-zinc-500">Optimizer</p>
             <p className="text-2xl font-bold text-emerald-400">active</p>
@@ -31,6 +31,10 @@ export async function RuntimeStatus() {
           <div className="rounded-xl border border-zinc-800 p-4 text-center">
             <p className="text-xs text-zinc-500">History Actions</p>
             <p className="text-2xl font-bold text-yellow-400">{runtime.historyActions}</p>
+          </div>
+          <div className="rounded-xl border border-zinc-800 p-4 text-center">
+            <p className="text-xs text-zinc-500">Active Streams</p>
+            <p className="text-2xl font-bold text-emerald-400">{runtime.activeStreams}</p>
           </div>
         </div>
         {runtime.pendingActions > 0 && (
