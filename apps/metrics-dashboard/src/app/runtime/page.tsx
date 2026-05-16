@@ -1,6 +1,7 @@
 import { MetricsShell } from "@/components/metrics-shell";
 import { MetricCard } from "@/components/metric-card";
 import { RuntimeStatus } from "@/components/runtime-status";
+import { SectionHeading } from "@/components/section-heading";
 import { TelemetryChart } from "@/components/telemetry-chart";
 import { getRuntime, getRuntimeHistory } from "@/lib/api";
 
@@ -13,10 +14,10 @@ export default async function RuntimePage() {
   return (
     <MetricsShell>
       <div className="space-y-8">
-        <section className="rounded-3xl border border-purple-400/20 bg-zinc-950/70 p-8">
-          <p className="text-xs font-bold uppercase tracking-[0.35em] text-purple-300">Cognitive Runtime</p>
-          <h2 className="mt-3 text-4xl font-black text-white">Gateway, router y aprendizaje supervisado</h2>
-          <p className="mt-3 max-w-3xl text-zinc-400">
+        <section className="lab-panel rounded-[2rem] p-8 sm:p-10">
+          <p className="font-mono text-[0.7rem] font-bold uppercase tracking-[0.38em] text-purple-200">Cognitive Runtime</p>
+          <h2 className="mt-4 max-w-4xl text-5xl font-bold leading-[0.95] tracking-[-0.07em] text-white sm:text-6xl">Gateway, router y aprendizaje supervisado</h2>
+          <p className="mt-5 max-w-3xl text-base leading-7 text-zinc-400">
             Vista operacional del runtime OpenAI-compatible: inferencias, decisiones de routing, latencia, failovers y cola autónoma supervisada.
           </p>
         </section>
@@ -32,14 +33,8 @@ export default async function RuntimePage() {
 
         <RuntimeStatus />
 
-        <section className="rounded-3xl border border-zinc-800 bg-zinc-950/80 p-6">
-          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">Última hora</p>
-              <h3 className="text-2xl font-black text-white">Actividad del runtime</h3>
-            </div>
-            <p className="font-mono text-xs text-zinc-500">Prometheus query_range · step 60s</p>
-          </div>
+        <section className="lab-panel rounded-[2rem] p-6">
+          <SectionHeading eyebrow="Última hora" title="Actividad del runtime" description="Prometheus query_range · step 60s" />
           <TelemetryChart data={history} labels={["requests/min", "routing/min", "errors/min", "latency ms"]} />
         </section>
       </div>

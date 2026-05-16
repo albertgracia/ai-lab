@@ -27,16 +27,19 @@ export async function GpuTelemetry() {
         const maxTemp = Math.max(gpu.temp, gpu.memTemp, gpu.hotSpot);
         const healthColor = maxTemp > 80 ? "text-red-400" : maxTemp > 60 ? "text-yellow-400" : "text-emerald-400";
         return (
-          <Card key={gpu.name} className="border-zinc-800 bg-zinc-950">
+          <Card key={gpu.name} className="lab-panel rounded-[2rem] border-zinc-800/80">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-mono text-cyan-400">{gpu.name.replace(/_/g, " ")}</CardTitle>
-                <Badge variant="outline" className={healthColor + " border-current"}>
+                <div>
+                  <p className="font-mono text-[0.65rem] uppercase tracking-[0.24em] text-zinc-500">Inference node</p>
+                  <CardTitle className="mt-1 text-xl font-bold tracking-[-0.04em] text-cyan-100">{gpu.name.replace(/_/g, " ")}</CardTitle>
+                </div>
+                <Badge variant="outline" className={healthColor + " h-7 border-current bg-black/20 px-3 font-mono"}>
                   {maxTemp}°C
                 </Badge>
               </div>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-4">
               <GpuBar label="GPU Core" value={gpu.temp} max={100} color="bg-gradient-to-r from-emerald-500 to-emerald-400" />
               <GpuBar label="GPU Memory" value={gpu.memTemp} max={100} color="bg-gradient-to-r from-cyan-500 to-cyan-400" />
               <GpuBar label="Hot Spot" value={gpu.hotSpot} max={110} color="bg-gradient-to-r from-orange-500 to-red-400" />
@@ -51,15 +54,15 @@ export async function GpuTelemetry() {
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-2 pt-2 text-center text-xs">
-                <div className="rounded bg-zinc-900 p-2">
+                <div className="rounded-2xl border border-zinc-800 bg-black/30 p-3">
                   <p className="text-zinc-500">Power</p>
                   <p className="font-mono text-yellow-400 font-bold">{gpu.power.toFixed(0)}W</p>
                 </div>
-                <div className="rounded bg-zinc-900 p-2">
+                <div className="rounded-2xl border border-zinc-800 bg-black/30 p-3">
                   <p className="text-zinc-500">Core Clock</p>
                   <p className="font-mono text-cyan-400 font-bold">{gpu.coreClock.toFixed(0)} MHz</p>
                 </div>
-                <div className="rounded bg-zinc-900 p-2">
+                <div className="rounded-2xl border border-zinc-800 bg-black/30 p-3">
                   <p className="text-zinc-500">Mem Clock</p>
                   <p className="font-mono text-purple-400 font-bold">{gpu.memClock.toFixed(0)} MHz</p>
                 </div>

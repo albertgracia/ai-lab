@@ -5,6 +5,7 @@ import { ClusterHealth } from "@/components/cluster-health";
 import { RuntimeStatus } from "@/components/runtime-status";
 import { MetricsShell } from "@/components/metrics-shell";
 import { MetricCard } from "@/components/metric-card";
+import { SectionHeading } from "@/components/section-heading";
 import { getTargets } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
@@ -17,18 +18,21 @@ export default async function Home() {
   return (
     <MetricsShell>
       <div className="space-y-8">
-        <section className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
-          <div className="rounded-3xl border border-cyan-400/20 bg-zinc-950/70 p-8 shadow-2xl shadow-cyan-950/10">
-            <p className="text-xs font-bold uppercase tracking-[0.35em] text-cyan-300">Telemetry Command Surface</p>
-            <h2 className="mt-4 max-w-3xl text-4xl font-black leading-tight text-white sm:text-5xl">
+        <section className="grid gap-6 lg:grid-cols-[1.55fr_0.9fr]">
+          <div className="lab-panel relative overflow-hidden rounded-[2rem] p-8 sm:p-10">
+            <div className="absolute right-8 top-8 hidden rounded-full border border-cyan-300/20 px-3 py-1 font-mono text-[0.65rem] uppercase tracking-[0.24em] text-cyan-200/70 sm:block">
+              Prometheus Live
+            </div>
+            <p className="font-mono text-[0.7rem] font-bold uppercase tracking-[0.38em] text-cyan-200">Telemetry Command Surface</p>
+            <h2 className="mt-5 max-w-3xl text-5xl font-bold leading-[0.95] tracking-[-0.07em] text-white sm:text-6xl">
               Operación viva del runtime, GPUs e infraestructura AI-LAB.
             </h2>
-            <p className="mt-5 max-w-3xl text-zinc-400">
+            <p className="mt-6 max-w-3xl text-base leading-7 text-zinc-400">
               Portal SSR local para datos live de Prometheus y Live API. Grafana queda como profundidad técnica; esta web resume el estado operativo navegable.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
-              <Link href="/gpus" className="rounded-xl bg-cyan-300 px-5 py-3 text-sm font-black text-zinc-950 hover:bg-cyan-200">Ver GPUs</Link>
-              <Link href="/runtime" className="rounded-xl border border-zinc-700 px-5 py-3 text-sm font-black text-zinc-200 hover:border-purple-400 hover:text-purple-300">Ver Runtime</Link>
+              <Link href="/gpus" className="rounded-2xl bg-cyan-200 px-5 py-3 text-sm font-bold text-slate-950 shadow-[0_0_30px_rgba(34,211,238,0.18)] hover:bg-cyan-100">Ver GPUs</Link>
+              <Link href="/runtime" className="rounded-2xl border border-purple-300/30 bg-purple-300/5 px-5 py-3 text-sm font-bold text-purple-100 hover:border-purple-300/60">Ver Runtime</Link>
             </div>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
@@ -42,7 +46,7 @@ export default async function Home() {
         </Suspense>
 
         <section>
-          <h2 className="text-lg font-bold text-cyan-400 mb-4">GPU Telemetry</h2>
+          <SectionHeading eyebrow="GPU mesh" title="GPU Telemetry" description="Lectura rápida de temperatura, VRAM, potencia y clocks por nodo." />
           <Suspense fallback={<p className="text-zinc-500 italic">Cargando GPUs...</p>}>
             <GpuTelemetry />
           </Suspense>
@@ -52,14 +56,14 @@ export default async function Home() {
           <RuntimeStatus />
         </Suspense>
 
-        <section className="rounded-3xl border border-zinc-800 bg-zinc-950/70 p-6">
-          <h2 className="text-lg font-black text-white">Prometheus Targets</h2>
+        <section className="lab-panel rounded-[2rem] p-6">
+          <SectionHeading eyebrow="Scrape matrix" title="Prometheus Targets" description="Estado de exporters, sensores GPU, gateway, Docker y túneles." />
           <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {targets.map((target) => (
-              <div key={`${target.job}-${target.instance}`} className="rounded-xl border border-zinc-800 bg-black/30 p-3">
+              <div key={`${target.job}-${target.instance}`} className="rounded-2xl border border-zinc-800/80 bg-black/30 p-3 transition hover:border-cyan-300/30">
                 <div className="flex items-center justify-between gap-3">
                   <p className="truncate text-sm font-bold text-zinc-200">{target.job}</p>
-                  <span className={target.health === "up" ? "text-xs font-black text-emerald-300" : "text-xs font-black text-red-300"}>{target.health}</span>
+                  <span className={target.health === "up" ? "font-mono text-xs font-bold text-emerald-300" : "font-mono text-xs font-bold text-red-300"}>{target.health}</span>
                 </div>
                 <p className="mt-1 truncate font-mono text-xs text-zinc-500">{target.instance}</p>
               </div>

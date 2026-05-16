@@ -1,6 +1,7 @@
 import { MetricsShell } from "@/components/metrics-shell";
 import { GpuTelemetry } from "@/components/gpu-telemetry";
 import { MetricCard } from "@/components/metric-card";
+import { SectionHeading } from "@/components/section-heading";
 import { TelemetryChart } from "@/components/telemetry-chart";
 import { getGpuData, getGpuHistory } from "@/lib/api";
 
@@ -17,10 +18,10 @@ export default async function GpusPage() {
   return (
     <MetricsShell>
       <div className="space-y-8">
-        <section className="rounded-3xl border border-cyan-400/20 bg-zinc-950/70 p-8">
-          <p className="text-xs font-bold uppercase tracking-[0.35em] text-cyan-300">GPU Telemetry</p>
-          <h2 className="mt-3 text-4xl font-black text-white">RX9070 + RX7900XT</h2>
-          <p className="mt-3 max-w-3xl text-zinc-400">
+        <section className="lab-panel rounded-[2rem] p-8 sm:p-10">
+          <p className="font-mono text-[0.7rem] font-bold uppercase tracking-[0.38em] text-cyan-200">GPU Telemetry</p>
+          <h2 className="mt-4 text-5xl font-bold tracking-[-0.07em] text-white sm:text-6xl">RX9070 + RX7900XT</h2>
+          <p className="mt-4 max-w-3xl text-base leading-7 text-zinc-400">
             Sensores PowerShell/LibreHWMonitor en `:9183` combinados con windows_exporter para VRAM, procesos y capacidad de inferencia.
           </p>
         </section>
@@ -34,14 +35,8 @@ export default async function GpusPage() {
 
         <GpuTelemetry />
 
-        <section className="rounded-3xl border border-zinc-800 bg-zinc-950/80 p-6">
-          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">Última hora</p>
-              <h3 className="text-2xl font-black text-white">Temperatura y potencia</h3>
-            </div>
-            <p className="font-mono text-xs text-zinc-500">Prometheus query_range · step 60s</p>
-          </div>
+        <section className="lab-panel rounded-[2rem] p-6">
+          <SectionHeading eyebrow="Última hora" title="Temperatura y potencia" description="Prometheus query_range · step 60s" />
           <TelemetryChart data={history} labels={["RX9070 temp", "RX7900XT temp", "RX9070 power", "RX7900XT power"]} />
         </section>
       </div>

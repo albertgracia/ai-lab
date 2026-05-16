@@ -7,7 +7,7 @@ export const GET: APIRoute = async () => {
     {
       title: "Operations Center",
       category: "operations",
-      href: "/ops",
+      href: "https://metricas.labrazahome.com/ops",
       description: "Centro operacional principal del AI-LAB.",
     },
 

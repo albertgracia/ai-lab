@@ -1,208 +1,29 @@
 ---
-
 import Layout from "../../layouts/Layout.astro";
 
-import EventStream from "../../components/EventStream.astro";
-
+const target = "https://metricas.labrazahome.com/ops";
 ---
+
 <Layout title="Operations Center · AI-LAB">
-  <section class="mx-auto max-w-7xl px-6 py-16 space-y-10">
-    <header class="rounded-3xl border border-cyan-500/30 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black p-10">
-      <div class="flex items-start justify-between gap-6">
-        <div>
-          <p class="text-sm uppercase tracking-[0.35em] text-cyan-400">AI-LAB COMMAND CENTER</p>
-          <h1 class="mt-3 text-5xl font-black text-white">AI Operations Center</h1>
-          <p class="mt-4 max-w-4xl text-lg text-zinc-300">
-            Centro de operaciones en tiempo real. Health score, metricas de inferencia, estado del cluster y eventos cognitivos.
-          </p>
-        </div>
-        <div id="health-badge" class="rounded-2xl border border-zinc-700 bg-zinc-900 px-6 py-5 text-center min-w-[140px]">
-          <p class="text-xs uppercase tracking-[0.25em] text-zinc-500">Health Score</p>
-          <p class="mt-1 text-5xl font-black" id="health-value">--</p>
-          <p class="text-xs text-zinc-500" id="health-level">--</p>
-        </div>
-      </div>
-    </header>
-    <section class="grid gap-5 md:grid-cols-2 lg:grid-cols-4" id="cluster-stats">
-      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
-        <p class="text-xs text-zinc-500">GPU Cluster</p>
-        <p class="mt-1 text-2xl font-black text-cyan-400" id="stat-gpus">--</p>
-      </div>
-      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
-        <p class="text-xs text-zinc-500">Requests</p>
-        <p class="mt-1 text-2xl font-black text-white" id="stat-requests">--</p>
-      </div>
-      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
-        <p class="text-xs text-zinc-500">Sesiones Activas</p>
-        <p class="mt-1 text-2xl font-black text-emerald-400" id="stat-sessions">--</p>
-      </div>
-      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
-        <p class="text-xs text-zinc-500">Nodos Online</p>
-        <p class="mt-1 text-2xl font-black text-emerald-400" id="stat-nodes">--</p>
-      </div>
-      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
-        <p class="text-xs text-zinc-500">Latencia Media</p>
-        <p class="mt-1 text-2xl font-black text-purple-400" id="stat-latency">--</p>
-      </div>
-      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
-        <p class="text-xs text-zinc-500">Routing Decisions</p>
-        <p class="mt-1 text-2xl font-black text-yellow-400" id="stat-routing">--</p>
-      </div>
-      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
-        <p class="text-xs text-zinc-500">Streams Activos</p>
-        <p class="mt-1 text-2xl font-black text-cyan-400" id="stat-streams">--</p>
-      </div>
-      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
-        <p class="text-xs text-zinc-500">Errores</p>
-        <p class="mt-1 text-2xl font-black text-red-400" id="stat-errors">--</p>
-      </div>
-    </section>
-    <section class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
-      <h3 class="text-lg font-bold text-cyan-400 mb-3">Health Score — Factores</h3>
-      <div id="health-reasons" class="grid gap-2 text-sm">
-        <p class="text-zinc-500 italic">Esperando datos...</p>
-      </div>
-    </section>
-    <div class="grid gap-6 lg:grid-cols-2">
-      <EventStream />
-      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
-        <h3 class="text-lg font-bold text-red-400 mb-3">Ultimos Errores</h3>
-        <div id="error-list" class="space-y-2 text-xs font-mono max-h-60 overflow-y-auto">
-          <p class="text-zinc-500 italic">Esperando datos...</p>
-        </div>
-      </div>
+  <Fragment slot="head">
+    <meta http-equiv="refresh" content={`0; url=${target}`} />
+    <link rel="canonical" href={target} />
+  </Fragment>
+
+  <section class="mx-auto max-w-4xl px-6 py-20">
+    <div class="rounded-3xl border border-cyan-500/30 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black p-10 text-center">
+      <p class="text-sm uppercase tracking-[0.35em] text-cyan-400">AI-LAB COMMAND CENTER</p>
+      <h1 class="mt-4 text-5xl font-black text-white">Operations Center movido a metricas</h1>
+      <p class="mx-auto mt-4 max-w-2xl text-lg leading-8 text-zinc-300">
+        La telemetria live ahora se sirve desde Next.js SSR para evitar paginas publicas vacias y mantener datos reales en runtime.
+      </p>
+      <a href={target} class="mt-8 inline-flex rounded-xl bg-cyan-400 px-6 py-3 text-sm font-black text-zinc-950 hover:bg-cyan-300">
+        Abrir metricas.labrazahome.com/ops
+      </a>
     </div>
-    <section class="grid gap-5 md:grid-cols-4">
-      <a href="/status/live" class="rounded-xl border border-cyan-500/20 bg-zinc-950 p-5 text-cyan-300 hover:border-cyan-400 text-sm font-bold">Estado Vivo</a>
-      <a href="/status/history" class="rounded-xl border border-cyan-500/20 bg-zinc-950 p-5 text-cyan-300 hover:border-cyan-400 text-sm font-bold">Historico</a>
-      <a href="/status/gpus" class="rounded-xl border border-cyan-500/20 bg-zinc-950 p-5 text-cyan-300 hover:border-cyan-400 text-sm font-bold">GPU Telemetry</a>
-      <a href="/status/models" class="rounded-xl border border-cyan-500/20 bg-zinc-950 p-5 text-cyan-300 hover:border-cyan-400 text-sm font-bold">Modelos</a>
-    </section>
   </section>
 
-    <section class="rounded-2xl border border-orange-500/30 bg-zinc-950 p-6">
-      <h2 class="text-xl font-bold text-orange-400 mb-4">Runtime Watchdog</h2>
-      <div class="grid gap-3 sm:grid-cols-3 lg:grid-cols-6" id="watchdog-cards">
-        <div class="rounded-lg border border-zinc-800 p-3 text-center"><span class="text-xs text-zinc-500">Gateway</span><p class="text-sm font-bold text-zinc-400" id="wd-gateway">--</p></div>
-        <div class="rounded-lg border border-zinc-800 p-3 text-center"><span class="text-xs text-zinc-500">Router</span><p class="text-sm font-bold text-zinc-400" id="wd-router">--</p></div>
-        <div class="rounded-lg border border-zinc-800 p-3 text-center"><span class="text-xs text-zinc-500">Live API</span><p class="text-sm font-bold text-zinc-400" id="wd-live-api">--</p></div>
-        <div class="rounded-lg border border-zinc-800 p-3 text-center"><span class="text-xs text-zinc-500">Docs</span><p class="text-sm font-bold text-zinc-400" id="wd-docs">--</p></div>
-        <div class="rounded-lg border border-zinc-800 p-3 text-center"><span class="text-xs text-zinc-500">Docker</span><p class="text-sm font-bold text-zinc-400" id="wd-docker">--</p></div>
-        <div class="rounded-lg border border-zinc-800 p-3 text-center"><span class="text-xs text-zinc-500">GPU Telemetry</span><p class="text-sm font-bold text-zinc-400" id="wd-gpu_telemetry">--</p></div>
-      </div>
-    </section>
-
-    <section class="rounded-2xl border border-emerald-500/30 bg-zinc-950 p-6">
-      <h2 class="text-xl font-bold text-emerald-400 mb-4">Autonomous Runtime (FASE 9.0)</h2>
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div class="rounded-xl border border-zinc-800 p-4">
-          <span class="text-xs text-zinc-500">Optimizer State</span>
-          <p class="text-2xl font-bold text-emerald-400" id="auto-state">active</p>
-        </div>
-        <div class="rounded-xl border border-zinc-800 p-4">
-          <span class="text-xs text-zinc-500">Confidence (avg)</span>
-          <p class="text-2xl font-bold text-cyan-400" id="auto-conf-avg">--</p>
-        </div>
-        <div class="rounded-xl border border-zinc-800 p-4">
-          <span class="text-xs text-zinc-500">Recent Recs</span>
-          <p class="text-2xl font-bold text-yellow-400" id="auto-recs">0</p>
-        <div class="rounded-xl border border-zinc-800 p-4">
-          <span class="text-xs text-zinc-500">Session Affinity</span>
-          <p class="text-2xl font-bold text-purple-400" id="auto-affinity">0</p>
-        </div>
-        <div class="rounded-xl border border-zinc-800 p-4">
-          <span class="text-xs text-zinc-500">Session Affinity</span>
-          <p class="text-2xl font-bold text-purple-400" id="auto-affinity">0</p>
-        </div>
-        <div class="rounded-xl border border-zinc-800 p-4">
-          <span class="text-xs text-zinc-500">Optimizer Actions</span>
-          <p class="text-2xl font-bold text-yellow-400" id="auto-actions">0</p>
-        </div>
-      </div>
-      <div class="mt-4 rounded-xl border border-zinc-800 p-3" id="pending-list">
-        <span class="text-xs text-zinc-500">Sin acciones pendientes</span>
-      </div>
-    </section>
-
-    
-  </section>
+  <script define:vars={{ target }}>
+    window.location.replace(target);
+  </script>
 </Layout>
-<script>
-  const API_HOST = window.location.hostname === "ai-lab.labrazahome.com" || window.location.hostname.includes("pages.dev")
-    ? ""
-    : "https://blog-ai-lab.labrazahome.com";
-
-  const CF_HEADERS = API_HOST
-    ? {"CF-Access-Client-Id": "3093bf6c93d1c8dbb6ab65db21941ac0.access", "CF-Access-Client-Secret": "e54c05bb3496e0ff55c55b6af63c456aa6b7d5171a74f42aeebd3facefe30a1c"}
-    : {};
-
-  async function api(path) {
-    try {
-      const url = API_HOST ? API_HOST + path : path;
-      const res = await fetch(url, { cache: "no-store", headers: CF_HEADERS });
-      if (!res.ok) return null;
-      return await res.json();
-    } catch { return null; }
-  }
-
-  function $(id, val) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = val ?? "--";
-  }
-
-  async function refreshAnalytics() {
-    const d = await api("/api/analytics");
-    if (!d) return;
-    const h = d.health || {};
-    const m = d.metrics || {};
-    $("health-value", h.score || 0);
-    $("health-level", h.level || "--");
-    document.getElementById("health-reasons").innerHTML = (h.reasons || []).map(r => "<div>• " + r + "</div>").join("") || "<div class='text-emerald-400'>Sin problemas</div>";
-    $("stat-nodes", (m.online_nodes || 0) + "/" + (m.total_nodes || 0));
-    $("stat-gpus", m.gpu_count + " GPUs" || (m.total_nodes || 0) + " nodes");
-    $("stat-requests", m.requests_total || 0);
-    $("stat-streams", m.streams_total || 0);
-    $("stat-latency", Math.round(m.last_latency_ms || 0) + "ms");
-    $("stat-errors", m.errors_total || 0);
-    $("stat-sessions", d.sessions?.active_sessions || 0);
-    $("stat-routing", d.routing?.total_routes || 0);
-  }
-
-  async function refreshWatchdog() {
-    const d = await api("/api/watchdog");
-    if (!d || !d.checks) return;
-    for (const [key, val] of Object.entries(d.checks)) {
-      $(key === "live_api" ? "wd-live-api" : "wd-" + key, val ? "ok" : "fail");
-    }
-  }
-
-  async function refreshRuntime() {
-    const [opt, conf, pending, aff, adj] = await Promise.all([
-      api("/api/runtime-optimizer"),
-      api("/api/runtime-confidence"),
-      api("/api/runtime-pending-actions"),
-      api("/api/runtime-affinity"),
-      api("/api/runtime-adjustments"),
-    ]);
-    if (opt) $("auto-recs", opt.recommendations_count || 0);
-    if (conf && conf.models) {
-      const vals = Object.values(conf.models).map(m => m.confidence || 0);
-      $("auto-conf-avg", vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2) : "--");
-    }
-    if (pending) {
-      $("pending-list", pending.pending + " acciones pendientes");
-      document.getElementById("pending-list").className = pending.pending > 0
-        ? "mt-4 rounded-xl border border-orange-500/50 bg-zinc-900 p-3 text-orange-300"
-        : "mt-4 rounded-xl border border-zinc-800 p-3 text-zinc-500";
-    }
-    if (aff) $("auto-affinity", aff.total_sessions || 0);
-    if (adj) $("auto-actions", adj.length || 0);
-  }
-
-  refreshAnalytics();
-  refreshWatchdog();
-  refreshRuntime();
-  setInterval(refreshAnalytics, 8000);
-  setInterval(refreshWatchdog, 15000);
-  setInterval(refreshRuntime, 30000);
-</script>
