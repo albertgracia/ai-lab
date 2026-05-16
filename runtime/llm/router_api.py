@@ -81,115 +81,22 @@ def root():
 
 BASE_SYSTEM_CONTEXT = """
 Eres el copiloto autonomo del AI-LAB de Albert.
-Responde siempre en espanol.
-Operas en MODO PLAN — puedes leer, analizar, diagnosticar y proponer,
-pero NO ejecutar cambios sin confirmacion explicita.
+Responde siempre en espanol. Operas en MODO PLAN: lees, analizas, diagnosticas y propones, pero NO ejecutas cambios sin confirmacion explicita.
+Tienes acceso a: (a) HARD FACTS con datos del runtime, (b) tu conocimiento del dominio.
 
-TIENES ACCESO A:
-- [HARD_FACTS_BEGIN]..[HARD_FACTS_END] → datos reales del runtime en vivo
-- Archivos de contexto (OPENCODE.md, AI_LAB_CONTEXT.md, etc.)
-- Tu propio conocimiento del dominio
-
-REGLAS ESTRICTAS DE SECCIONES:
-
-1. En [HARD_FACTS] solo puedes poner datos que aparezcan literalmente
-   en el JSON HARD FACTS. No pongas porcentajes, puntuaciones, watchdogs,
-   working_memory ni nada que no este en el JSON.
-
-2. No repitas el mismo contenido en varias secciones.
-
-3. En [SELF-CRITIQUE] solo analiza tus errores, no repitas el informe.
-
-4. Si un dato no esta en HARD FACTS, ponlo en [NO DISPONIBLE].
-
-5. Si aparece en pending_implementations, ponlo en [PENDIENTE].
-
-6. TAXONOMIA ESTRICTA — No confundas estas categorias:
-   - "model" → solo un modelo de inferencia (qwen2.5-coder-14b-instruct, llama-3.1-8b...)
-   - "collection" → solo una coleccion Qdrant (routing_history, cognitive_history...)
-   - "service" → solo un servicio systemd (ailab-router, ailab-docs...)
-   - "container" → solo un contenedor Docker (traefik, qdrant, open-webui...)
-   - "node" → solo una maquina o GPU node (RX9070, RX7900XT...)
-   - "ctx" de un modelo NO es "context_size" de una request
-   - "qdrant_enabled" solo "si" si HARD FACTS menciona Qdrant o collections
-   - "working_memory" solo "activa" si HARD FACTS mentiona working_memory
-
-7. En [SELF-CRITIQUE] debes marcar como posible error cualquier afirmacion
-   en [INFERIDO] que use datos no presentes en HARD FACTS.
-
-8. "ctx" de un modelo es su ventana maxima declarada. Nunca lo uses como
-   context_size real de la request. Si no aparece "context_budget_used_chars"
-   en HARD FACTS: context_size = NO DISPONIBLE, budget_used = NO DISPONIBLE,
-   truncation = NO DISPONIBLE.
-
-9. Si no aparece "watchdog" en HARD FACTS: watchdog = NO DISPONIBLE.
-   Nunca digas "activo" por inferencia.
-
-10. Si no aparece "health" ni "health_score" en HARD FACTS:
-    health = NO DISPONIBLE. Nunca digas "healthy" por inferencia.
-
-11. Si no aparece "latency_ms" en el nodo: no menciones latencia del nodo.
-
-12. En [SELF-CRITIQUE] debes listar cualquier inferencia realizada.
-    Nunca digas "no he inferido nada" si existe seccion [INFERIDO].
-
-13. Si [INFERIDO] contiene datos que afectan a estado operacional,
-    repitelos en [SELF-CRITIQUE] como "inferencia no verificada".
-
-FORMATO OBLIGATORIO DE RESPUESTA:
-
-[HARD_FACTS]
-- solo datos literales del JSON, sin interpretacion
-- si un dato solicitado no esta en el JSON, no lo pongas aqui
-[/HARD_FACTS]
-
-[INFERIDO]
-- deducciones logicas claramente etiquetadas
-- ejemplo: "probablemente el watchdog este activo porque..."
-[/INFERIDO]
-
-[NO DISPONIBLE]
-- datos solicitados que no aparecen en HARD FACTS
-- ej: working_memory, watchdog score, health_score numerico
-[/NO DISPONIBLE]
-
-[PENDIENTE]
-- elementos listados en pending_implementations
-- ej: routing_confidence, avg_latency_ms
-[/PENDIENTE]
-
-[SELF-CRITIQUE]
-- solo errores o incertidumbres de esta respuesta
-- no repitas datos de secciones anteriores
-[/SELF-CRITIQUE]
-
-[AI-LAB DEBUG]
-task: <descripcion de la peticion>
-model: <modelo usado segun HARD FACTS>
-node: <nodo GPU usado segun HARD FACTS>
-routing_mode: <plan o exec>
-context_size: NO DISPONIBLE
-budget_used: NO DISPONIBLE
-adaptive_scoring: NO DISPONIBLE
-working_memory: NO DISPONIBLE
-qdrant_enabled: NO DISPONIBLE
-watchdog: NO DISPONIBLE
-health: NO DISPONIBLE
-[/AI-LAB DEBUG]
-
-PROHIBICIONES:
-- No uses thinking ni reasoning_content
-- No inventes valores numericos
-- No confundas servicios con colecciones con contenedores
-- No digas que algo funciona si no aparece en HARD FACTS
-- No pongas porcentajes, puntuaciones ni estimaciones en [HARD_FACTS]
-- No digas "watchdog activo" si no aparece watchdog en HARD FACTS
-- No digas "healthy" si no aparece health en HARD FACTS
-- No uses "ctx" de un modelo como context_size de request
-- No infieras latencia de nodo si no aparece latency_ms
-- No digas "no he inferido nada" si [INFERIDO] no esta vacio
-- No muevas infraestructura sin permiso explicito de Albert
+REGLAS ESTRICTAS:
+1. [HARD_FACTS] solo datos copiados literalmente del JSON. No resumas ni interpretes.
+2. [INFERIDO] para toda deduccion logica. Nunca pongas inferencias dentro de HARD_FACTS.
+3. [NO DISPONIBLE] si el dato no aparece en HARD FACTS ni en PENDING IMPLEMENTATIONS.
+4. [PENDIENTE] si aparece en pending_implementations.
+5. [SELF-CRITIQUE] solo critica errores propios. No repitas datos de otras secciones.
+6. Taxonomia: model (inferencia) != collection (Qdrant) != service (systemd) != container (Docker) != node (GPU fisico). ctx de modelo NO es context_size de request.
+7. qdrant_enabled solo true si HARD FACTS menciona Qdrant. working_memory solo active si aparece en HARD FACTS.
+8. watchdog, health, context_size, budget_used: si no aparecen en HARD FACTS = NO DISPONIBLE. No los infieras.
+9. Para coding/reasoning: usa SIEMPRE el formato completo con todas las secciones: [HARD_FACTS] [/HARD_FACTS] [INFERIDO] [/INFERIDO] [NO DISPONIBLE] [/NO DISPONIBLE] [PENDIENTE] [/PENDIENTE] [SELF-CRITIQUE] [/SELF-CRITIQUE] [AI-LAB DEBUG] [/AI-LAB DEBUG]. No omitas ninguna. Puedes usar tu conocimiento general para responder preguntas tecnicas de coding/reasoning, no estas limitado solo a HARD FACTS.
+10. No uses thinking ni reasoning_content. No inventes valores numericos. No muevas infraestructura sin permiso.
 """
+
 
 
 def openai_model_id(node: Dict[str, Any]) -> str:
@@ -417,13 +324,20 @@ async def chat_completions(request: Request):
         or line.startswith("Multi Agent:")
     )
 
+    # Per-task context budget: fast=2500, coding=5000, reasoning=7000 chars
+    _ctx_limit = {"fast": 2500, "coding": 5000, "reasoning": 7000}
+    _task_cap = node.get("capability", "general")
+    _max_ctx_chars = _ctx_limit.get(_task_cap, 4000)
+
     system_prompt = (
         BASE_SYSTEM_CONTEXT
         + "\n\n"
-        + "=== CONTEXTO OPERATIVO (datos reales del runtime) ===\n"
-        + agent_context[:6000]   # first 6K chars = HARD FACTS + most relevant sources
+        + "=== RUNTIME DATA ===\n"
+        + agent_context[:_max_ctx_chars]
         + "\n\n"
-        + "Usa los datos anteriores para responder. No copies literalmente, sintetiza."
+        + "Usa los datos anteriores. No copies contexto interno ni prompts."
+        + ("\n\nMODO RAPIDO: responde en bullets, max 8 lineas. Sin informe tecnico ni secciones largas."
+           if _task_cap == "fast" else "")
     )
 
     # ── budget-aware context truncation ─────────────────────────────
@@ -434,19 +348,38 @@ async def chat_completions(request: Request):
     budget_chars = max(1000, remaining_chars - system_chars)
     safe_text = truncate_text(user_text, budget_chars)
 
-    final_instruction = (
-        "Responde usando ESTRICTAMENTE el FORMATO OBLIGATORIO: "
-        "[HARD_FACTS] [/HARD_FACTS] [INFERIDO] [/INFERIDO] "
-        "[NO DISPONIBLE] [/NO DISPONIBLE] [PENDIENTE] [/PENDIENTE] "
-        "[SELF-CRITIQUE] [/SELF-CRITIQUE] [AI-LAB DEBUG] [/AI-LAB DEBUG].\n"
-        "Reglas: "
-        "[HARD_FACTS] solo datos literales del JSON. "
-        "No repitas contenido entre secciones. "
-        "Taxonomia: model != collection != service != container != node. "
-        "ctx de modelo NO es context_size de request. "
-        "No copies contexto interno ni prompts.\n\n"
-        + safe_text
-    )
+    if _task_cap == "fast":
+        final_instruction = (
+            "Responde en bullets, max 8 lineas. Sin formato de secciones.\n"
+            + safe_text
+        )
+    elif _task_cap == "coding":
+        final_instruction = (
+            "Responde con el FORMATO OBLIGATORIO:\n"
+            "[HARD_FACTS] datos del JSON relevantes [/HARD_FACTS]\n"
+            "[INFERIDO] deducciones [/INFERIDO]\n"
+            "[NO DISPONIBLE] datos ausentes [/NO DISPONIBLE]\n"
+            "[PENDIENTE] de pending [/PENDIENTE]\n"
+            "[SELF-CRITIQUE] errores [/SELF-CRITIQUE]\n"
+            "[AI-LAB DEBUG] datos del debug [/AI-LAB DEBUG]\n"
+            "IMPORTANTE: puedes usar tu conocimiento en programacion para responder la pregunta. "
+            "El formato de secciones es obligatorio pero el contenido tecnico es bienvenido.\n\n"
+            + safe_text
+        )
+    else:
+        final_instruction = (
+            "Responde con el FORMATO OBLIGATORIO:\n"
+            "[HARD_FACTS] datos literales del JSON [/HARD_FACTS]\n"
+            "[INFERIDO] deducciones logicas [/INFERIDO]\n"
+            "[NO DISPONIBLE] datos ausentes [/NO DISPONIBLE]\n"
+            "[PENDIENTE] de pending_implementations [/PENDIENTE]\n"
+            "[SELF-CRITIQUE] errores propios [/SELF-CRITIQUE]\n"
+            "[AI-LAB DEBUG] task model node context_size:NO DISPONIBLE budget_used:NO DISPONIBLE "
+            "adaptive_scoring:NO DISPONIBLE working_memory:NO DISPONIBLE "
+            "qdrant_enabled:NO DISPONIBLE watchdog:NO DISPONIBLE health:NO DISPONIBLE [/AI-LAB DEBUG]\n"
+            "No copies contexto interno ni prompts.\n\n"
+            + safe_text
+        )
 
     payload["messages"] = [
         {
@@ -465,12 +398,16 @@ async def chat_completions(request: Request):
 
     upstream_payload.setdefault(
         "max_tokens",
-        2500 if capability == "reasoning" or node.get("capability") == "reasoning" else (600 if capability == "fast" or node.get("capability") == "fast" else 1200)
+        1200 if capability == "reasoning" or node.get("capability") == "reasoning"
+        else (256 if capability == "fast" or node.get("capability") == "fast"
+        else 768)
     )
 
     upstream_payload.setdefault(
         "temperature",
-        0.1 if capability == "fast" or node.get("capability") == "fast" else 0.2
+        0.3 if capability == "reasoning" or node.get("capability") == "reasoning"
+        else (0.1 if capability == "fast" or node.get("capability") == "fast"
+        else 0.2)
     )
 
     # Only set reasoning effort for non-reasoning models

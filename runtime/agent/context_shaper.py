@@ -260,26 +260,22 @@ def _build_hard_facts() -> str:
                 _raw_latency = _n.get("latency_ms")
                 _latency = f"{_raw_latency:.0f}" if _raw_latency is not None else None
                 _models_raw = _n.get("models", [])
-                _status_icon = "🟢" if _online else "🔴"
-                _status_str = "ONLINE" if _online else "OFFLINE"
-                text_lines.append(f"  {_status_icon} {_friendly} → {_host} ({_status_str}, {_vram}GB VRAM, {_latency or '?'}ms)")
+                _status_str = "ON" if _online else "OFF"
+                _models_str = ", ".join(_models_raw) if _models_raw and _online else "(no models)"
+                text_lines.append(f"  {_friendly} ({_host}) {_status_str} {_vram}GB {_latency or '?'}ms models=[{_models_str}]")
 
                 _node_models = []
                 if _models_raw and _online:
                     from runtime.models.model_registry import MODEL_REGISTRY
-                    text_lines.append("     Models:")
                     for _m in _models_raw:
                         _mcfg = MODEL_REGISTRY.get(_m, {})
-                        _skills = _mcfg.get("skills", [])
-                        _ctx = _mcfg.get("context_window", "?")
-                        text_lines.append(f"       · {_m} ({_ctx} ctx, {_skills})")
                         _node_models.append({
                             "id": _m,
-                            "ctx": _ctx if isinstance(_ctx, int) else 0,
-                            "skills": _skills,
+                            "ctx": _mcfg.get("context_window", 0) if isinstance(_mcfg.get("context_window"), int) else 0,
+                            "skills": _mcfg.get("skills", []),
                         })
-                else:
-                    text_lines.append("     No models available (node offline)")
+                elif _online:
+                    _node_models = [{"id": m, "ctx": 0, "skills": []} for m in _models_raw]
 
                 data["gpu_nodes"].append({
                     "name": _n.get("name", "unknown"),
@@ -306,13 +302,7 @@ def _build_hard_facts() -> str:
         _load_str = " ".join(_load_raw[:3]) if _load_raw else "?"
         _docker_count = len(_sp.run(["docker", "ps", "-q"], capture_output=True, text=True, timeout=5).stdout.strip().split())
 
-        text_lines.append("SYSTEM RESOURCES (192.168.1.30):")
-        text_lines.append(f"  · RAM: {_mem_parts[1]} total / {_mem_parts[2]} used / {_mem_parts[6]} available")
-        text_lines.append(f"  · Disk: {_disk_parts[1]} total / {_disk_parts[2]} used ({_disk_parts[4]})")
-        text_lines.append(f"  · Uptime: {_uptime_raw}")
-        text_lines.append(f"  · Load: {_load_str}")
-        text_lines.append(f"  · Docker: {_docker_count} containers running")
-        text_lines.append("")
+        text_lines.append(f"SYS: {_mem_parts[1]}RAM/{_mem_parts[2]}used/{_mem_parts[6]}avail DISK:{_disk_parts[1]}/{_disk_parts[2]} ({_disk_parts[4]}) DOCKER:{_docker_count} LOAD:{_load_str}")
 
         def _parse_gib(s: str) -> float:
             s = s.upper().replace(",", ".")
@@ -363,24 +353,17 @@ def _build_hard_facts() -> str:
         if _containers_list:
             _nginx_sites = []
             _main_names = []
-            _docker_items = []
             for _c in _containers_list:
                 _name = _c.get("Names", "?")
                 _image = _c.get("Image", "?")
                 _ports = _c.get("Ports", "")
-                _status = _c.get("Status", "?")
                 if "nginx:alpine" in _image or "nginx" in _image.lower():
                     _nginx_sites.append(_name)
                 else:
-                    _port_str = _ports.split(",")[0].strip() if _ports and _ports != "" else ""
                     _main_names.append(_name)
-                    _docker_items.append(f"  · {_name} ({_image}) → {_port_str} [{_status.split()[0]}]")
-
-            text_lines.append("DOCKER CONTAINERS:")
-            text_lines.extend(_docker_items)
+            text_lines.append(f"DOCKER: {len(_containers_list)} running. Main: {', '.join(_main_names[:6])}")
             if _nginx_sites:
-                text_lines.append(f"  · {len(_nginx_sites)} nginx websites: {', '.join(_nginx_sites)}")
-            text_lines.append("")
+                text_lines.append(f"NGINX: {', '.join(_nginx_sites)}")
 
             data["docker"] = {
                 "total": len(_containers_list),
@@ -405,16 +388,14 @@ def _build_hard_facts() -> str:
                 _svcs.append((_name, _active, _sub))
 
         if _svcs:
-            text_lines.append("SYSTEMD SERVICES (live — 192.168.1.30):")
+            _svc_strs = [f"{_name}={_active}/{_sub}" for _name, _active, _sub in _svcs]
+            text_lines.append(f"SERVICES: {' '.join(_svc_strs)}")
             for _name, _active, _sub in _svcs:
-                _icon = "🟢" if _active == "active" else "🔴"
-                text_lines.append(f"  {_icon} {_name} → {_active} ({_sub})")
                 data["services"].append({
                     "name": _name,
                     "active": _active == "active",
                     "running": _sub == "running",
                 })
-            text_lines.append("")
     except Exception:
         pass
 
@@ -430,17 +411,10 @@ def _build_hard_facts() -> str:
             _level = _health.get("level", "?")
             _reasons = _health.get("reasons", [])
 
-            text_lines.append("CLUSTER HEALTH:")
-            text_lines.append(f"  · Score: {_score}/100 ({_level})")
-            for _r in _reasons:
-                text_lines.append(f"    → {_r}")
-            text_lines.append(f"  · Requests: {_metrics.get('requests_total', '?')} total, "
-                         f"{_metrics.get('streams_total', '?')} streaming, "
-                         f"{_metrics.get('errors_total', '?')} errors")
-            text_lines.append(f"  · Nodes: {_metrics.get('online_nodes', '?')}/{_metrics.get('total_nodes', '?')} online")
-            _active_sessions = _metrics.get('active_sessions', '?')
-            text_lines.append(f"  · Active sessions: {_active_sessions}")
-            text_lines.append("")
+            text_lines.append(f"HEALTH: score={_score} level={_level} reqs={_metrics.get('requests_total','?')} "
+                         f"streams={_metrics.get('streams_total','?')} "
+                         f"nodes={_metrics.get('online_nodes','?')}/{_metrics.get('total_nodes','?')} "
+                         f"sessions={_metrics.get('active_sessions','?')}")
 
             data["health"] = {
                 "score": _score if _score != "?" else None,
@@ -466,12 +440,7 @@ def _build_hard_facts() -> str:
             _checks = _wd.get("checks", {})
             _ok = sum(1 for _v in _checks.values() if _v)
             _total = len(_checks)
-            text_lines.append("WATCHDOG:")
-            text_lines.append(f"  · Status: {_wd_status} ({_ok}/{_total} checks pass)")
-            for _name, _passed in _checks.items():
-                _icon = "🟢" if _passed else "🔴"
-                text_lines.append(f"  {_icon} {_name}")
-            text_lines.append("")
+            text_lines.append(f"WATCHDOG: {_wd_status} ({_ok}/{_total})")
 
             if "watchdog" not in data["health"] or not data["health"].get("watchdog"):
                 data["health"]["watchdog"] = {}
@@ -490,21 +459,21 @@ def _build_hard_facts() -> str:
         _resp = _req.get("http://127.0.0.1:8084/api/model-performance", timeout=3)
         if _resp.status_code == 200:
             _perf = _resp.json()
-            text_lines.append("MODEL PERFORMANCE:")
+            _perf_strs = []
             for _mid, _mdata in _perf.items():
                 if isinstance(_mdata, dict) and "error" not in _mdata:
                     _reqs = _mdata.get("total_requests", 0)
                     _succ = _mdata.get("success_rate", 0)
                     _pi = _mdata.get("performance_index", 0)
-                    _fail = _mdata.get("failover_rate", 0)
-                    text_lines.append(f"  · {_mid}: {_reqs} req, {_succ*100:.0f}% success, PI {_pi:.0f}, failover {_fail*100:.0f}%")
+                    _perf_strs.append(f"{_mid}:{_reqs}rq/{_succ*100:.0f}%/PI{_pi:.0f}")
                     data["routing"]["model_performance"][_mid] = {
                         "requests": _reqs,
                         "success_rate": _succ,
                         "performance_index": _pi,
-                        "failover_rate": _fail,
+                        "failover_rate": _mdata.get("failover_rate", 0),
                     }
-            text_lines.append("")
+            if _perf_strs:
+                text_lines.append("MODELS: " + " ".join(_perf_strs))
     except Exception:
         pass
 
@@ -514,28 +483,13 @@ def _build_hard_facts() -> str:
         _ch = Path("/opt/ai-lab/runtime/state/cognitive_history.jsonl")
         _rh_count = len(_rh.read_text().strip().splitlines()) if _rh.exists() else 0
         _ch_count = len(_ch.read_text().strip().splitlines()) if _ch.exists() else 0
-        text_lines.append("HISTORY:")
-        text_lines.append(f"  · Routing events: {_rh_count}")
-        text_lines.append(f"  · Cognitive snapshots: {_ch_count}")
-        text_lines.append("")
         data["routing"]["total_events"] = _rh_count
         data["routing"]["cognitive_snapshots"] = _ch_count
+        text_lines.append(f"HISTORY: {_rh_count}routing {_ch_count}cognitive")
     except Exception:
         pass
 
-    # ── 9. ROUTER MODELS ────────────────────────────────────────────
-    text_lines.append("ROUTER MODELS (available via :8083/v1/models):")
-    text_lines.append("  · ailab-router/auto       → automatic capability-based routing")
-    text_lines.append("  · ailab-router/fast       → fast responses (Llama 3.1 8B)")
-    text_lines.append("  · ailab-router/coding     → code generation (Qwen 2.5 Coder)")
-    text_lines.append("  · ailab-router/reasoning  → heavy reasoning (Qwen 2.5 Coder)")
-    text_lines.append("")
-
-    # ── 10. SITES ───────────────────────────────────────────────────
-    text_lines.append("SITES:")
-    text_lines.append("  · ai-lab.labrazahome.com       → Público (Astro portal :4322 via Traefik)")
-    text_lines.append("  · blog-ai-lab.labrazahome.com  → Privado (Cloudflare Tunnel + Traefik)")
-    text_lines.append("")
+    # ── 9. SITES ───────────────────────────────────────────────────
     data["sites"] = [
         {"url": "ai-lab.labrazahome.com", "access": "public", "tech": "Cloudflare Pages + Astro"},
         {"url": "blog-ai-lab.labrazahome.com", "access": "private", "tech": "Cloudflare Tunnel + Traefik"},
@@ -553,27 +507,7 @@ def _build_hard_facts() -> str:
         pass
 
     # ── 12. PENDING IMPLEMENTATIONS ────────────────────────────────
-    text_lines.append("PENDING IMPLEMENTATIONS (funcionalidades no cubiertas aún en runtime):")
-    text_lines.append("  · routing_confidence: PENDIENTE — métrica no implementada en runtime")
-    text_lines.append("  · latencia por request: PENDIENTE — no se mide individualmente")
-    text_lines.append("  · Puppet/Ansible: NO IMPLEMENTADO — infraestructura se gestiona manualmente")
-    text_lines.append("  · Gateway/NAS-N5 Hyper-V: solo lectura SSH (sin API write)")
-    text_lines.append("  · RX7900XT (192.168.1.60): nodo OFFLINE, pendiente diagnosis")
-    text_lines.append("  · CI/CD automático: esqueletos YAML preparados, no activos")
-    text_lines.append("  · Auto-escalado de workers: NO IMPLEMENTADO")
-    text_lines.append("")
-
-    # ── 13. FORBIDDEN REFERENCES ────────────────────────────────────
-    text_lines.append("FORBIDDEN REFERENCES (never mention):")
-    text_lines.append("  " + ", ".join(FORBIDDEN_REFERENCES))
-    text_lines.append("")
-    text_lines.append("[HARD_FACTS_END]")
-    text_lines.append("")
-    text_lines.append("REGLAS:")
-    text_lines.append("1. Los datos entre [HARD_FACTS_BEGIN] y [HARD_FACTS_END] son la fuente de verdad del runtime.")
-    text_lines.append("2. Si un campo no aparece aquí y NO está en PENDING IMPLEMENTATIONS, di '[no disponible en runtime]'.")
-    text_lines.append("3. Si un campo aparece en PENDING IMPLEMENTATIONS, menciónalo como 'pendiente de implementar'.")
-    text_lines.append("4. No infieras valores de campos no listados — el runtime no los expone.")
+    text_lines.append("PENDING: routing_confidence latency_per_request puppet_ansible gateway_api_write rx7900xt_diagnosis ci_cd_automation auto_scaling")
 
     # ── Serialize JSON block ────────────────────────────────────────
     try:
@@ -589,5 +523,6 @@ def _build_hard_facts() -> str:
         + "\n\n"
         + "=== DETALLE (texto) ===\n"
         + "\n".join(text_lines)
+        + "\n[HARD_FACTS_END]\n"
     )
     return result
