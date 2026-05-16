@@ -58,7 +58,7 @@ export default async function OpsPage() {
           <MetricCard label="Requests" value={(health?.requestsTotal || 0).toLocaleString()} hint={`${runtime?.requestsPerMinute.toFixed(2) || "0.00"} req/min`} tone="zinc" />
           <MetricCard label="Active Sessions" value={health?.activeSessions || 0} hint={`${runtime?.activeStreams || 0} active streams`} tone="emerald" />
           <MetricCard label="Prometheus" value={`${upTargets}/${targets.length}`} hint="targets up" tone={upTargets === targets.length ? "emerald" : "yellow"} />
-          <MetricCard label="Latency" value={`${runtime?.latencyMs.toFixed(0) || 0} ms`} hint="gateway last latency" tone={(runtime?.latencyMs || 0) > 2000 ? "red" : "purple"} />
+          <MetricCard label="Latency" value={`${runtime?.latencyMs.toFixed(0) || 0} ms`} hint="gateway live" tone={(runtime?.latencyMs || 0) > 2000 ? "red" : "purple"} />
           <MetricCard label="Routing" value={health?.totalRoutes || 0} hint={`${runtime?.routingPerMinute.toFixed(2) || "0.00"} decisions/min`} tone="yellow" />
           <MetricCard label="Errors" value={health?.errorsTotal || 0} hint={`${runtime?.errorsPerMinute.toFixed(2) || "0.00"} errors/min`} tone={(health?.errorsTotal || 0) > 0 ? "red" : "emerald"} />
           <MetricCard label="Pending Actions" value={pendingActions} hint="human approval queue" tone={pendingActions > 0 ? "yellow" : "emerald"} />

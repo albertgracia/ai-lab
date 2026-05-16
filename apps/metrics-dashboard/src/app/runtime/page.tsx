@@ -28,10 +28,12 @@ export default async function RuntimePage() {
             <MetricCard label="Routing" value={`${runtime.routingPerMinute.toFixed(2)}/min`} hint="decisiones recientes" tone="yellow" />
             <MetricCard label="Latency" value={`${runtime.latencyMs.toFixed(0)} ms`} hint="última latencia gateway" tone={runtime.latencyMs > 2000 ? "red" : "emerald"} />
             <MetricCard label="Failovers" value={runtime.failovers.toLocaleString()} hint="vida del gateway" tone={runtime.failovers > 0 ? "yellow" : "emerald"} />
+            <MetricCard label="Confidence" value={runtime.confidence.toFixed(2)} hint="avg model confidence" tone="purple" />
+            <MetricCard label="Pending Actions" value={runtime.pendingActions.toLocaleString()} hint="human approval queue" tone={runtime.pendingActions > 0 ? "yellow" : "emerald"} />
           </section>
         )}
 
-        <RuntimeStatus />
+        <RuntimeStatus runtime={runtime} />
 
         <section className="lab-panel rounded-[2rem] p-6">
           <SectionHeading eyebrow="Última hora" title="Actividad del runtime" description="Prometheus query_range · step 60s" />

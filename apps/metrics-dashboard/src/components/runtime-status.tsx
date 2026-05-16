@@ -1,47 +1,57 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getRuntime } from "@/lib/api";
+import type { RuntimeData } from "@/lib/api";
 
-export async function RuntimeStatus() {
-  const runtime = await getRuntime();
+export function RuntimeStatus({ runtime }: { runtime: RuntimeData | null }) {
   if (!runtime) return <p className="text-zinc-500 italic">Esperando datos...</p>;
+  const pendingTone = runtime.pendingActions > 0 ? "border-orange-500/50 bg-orange-500/10 text-orange-200" : "border-emerald-500/50 bg-emerald-500/10 text-emerald-200";
 
   return (
-    <Card className="border-zinc-800 bg-zinc-950">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm text-emerald-400">Autonomous Runtime</CardTitle>
+    <Card className="lab-panel rounded-[2rem] border-zinc-800/80">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-sm text-emerald-300">Autonomous Runtime</CardTitle>
+        <p className="font-mono text-[0.65rem] uppercase tracking-[0.24em] text-zinc-500">supervised optimizer · policy gated</p>
       </CardHeader>
       <CardContent>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
-          <div className="rounded-xl border border-zinc-800 p-4 text-center">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
+          <div className="rounded-2xl border border-zinc-800 bg-black/25 p-4 text-center">
             <p className="text-xs text-zinc-500">Optimizer</p>
             <p className="text-2xl font-bold text-emerald-400">active</p>
           </div>
-          <div className="rounded-xl border border-zinc-800 p-4 text-center">
+          <div className="rounded-2xl border border-zinc-800 bg-black/25 p-4 text-center">
             <p className="text-xs text-zinc-500">Confidence</p>
             <p className="text-2xl font-bold text-cyan-400">{runtime.confidence.toFixed(2)}</p>
           </div>
-          <div className="rounded-xl border border-zinc-800 p-4 text-center">
+          <div className="rounded-2xl border border-zinc-800 bg-black/25 p-4 text-center">
             <p className="text-xs text-zinc-500">Recommendations</p>
             <p className="text-2xl font-bold text-yellow-400">{runtime.recommendations}</p>
           </div>
-          <div className="rounded-xl border border-zinc-800 p-4 text-center">
+          <div className="rounded-2xl border border-zinc-800 bg-black/25 p-4 text-center">
             <p className="text-xs text-zinc-500">Session Affinity</p>
             <p className="text-2xl font-bold text-purple-400">{runtime.sessionAffinity}</p>
           </div>
-          <div className="rounded-xl border border-zinc-800 p-4 text-center">
+          <div className="rounded-2xl border border-zinc-800 bg-black/25 p-4 text-center">
             <p className="text-xs text-zinc-500">History Actions</p>
             <p className="text-2xl font-bold text-yellow-400">{runtime.historyActions}</p>
           </div>
-          <div className="rounded-xl border border-zinc-800 p-4 text-center">
+          <div className="rounded-2xl border border-zinc-800 bg-black/25 p-4 text-center">
             <p className="text-xs text-zinc-500">Active Streams</p>
             <p className="text-2xl font-bold text-emerald-400">{runtime.activeStreams}</p>
           </div>
         </div>
-        {runtime.pendingActions > 0 && (
-          <div className="mt-4 rounded-xl border border-orange-500/50 bg-zinc-900 p-3 text-orange-300 text-sm text-center">
-            {runtime.pendingActions} accione{runtime.pendingActions > 1 ? "s" : ""} pendiente{runtime.pendingActions > 1 ? "s" : ""} de aprobación
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-2xl border border-zinc-800/80 bg-black/20 p-4">
+            <p className="font-mono text-[0.65rem] uppercase tracking-[0.22em] text-zinc-500">Requests</p>
+            <p className="mt-2 text-2xl font-bold text-white">{runtime.requestsTotal.toLocaleString()}</p>
           </div>
-        )}
+          <div className="rounded-2xl border border-zinc-800/80 bg-black/20 p-4">
+            <p className="font-mono text-[0.65rem] uppercase tracking-[0.22em] text-zinc-500">Routing / min</p>
+            <p className="mt-2 text-2xl font-bold text-yellow-300">{runtime.routingPerMinute.toFixed(2)}</p>
+          </div>
+          <div className={`rounded-2xl border p-4 text-center ${pendingTone}`}>
+            <p className="font-mono text-[0.65rem] uppercase tracking-[0.22em]">Approval queue</p>
+            <p className="mt-2 text-2xl font-bold">{runtime.pendingActions}</p>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

@@ -26,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="es"
       className={`${display.variable} ${mono.variable} h-full antialiased dark`}
     >
       <body className="min-h-full flex flex-col selection:bg-cyan-300 selection:text-slate-950">{children}</body>

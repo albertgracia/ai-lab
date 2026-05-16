@@ -33,7 +33,7 @@ export default async function GpusPage() {
           <MetricCard label="Max Temp" value={`${maxTemp.toFixed(0)} °C`} hint="core/memory/hotspot" tone={maxTemp > 80 ? "red" : maxTemp > 60 ? "yellow" : "emerald"} />
         </section>
 
-        <GpuTelemetry />
+        <GpuTelemetry gpus={gpus} />
 
         <section className="lab-panel rounded-[2rem] p-6">
           <SectionHeading eyebrow="Última hora" title="Temperatura y potencia" description="Prometheus query_range · step 60s" />

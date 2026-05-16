@@ -6,14 +6,21 @@ import { RuntimeStatus } from "@/components/runtime-status";
 import { MetricsShell } from "@/components/metrics-shell";
 import { MetricCard } from "@/components/metric-card";
 import { SectionHeading } from "@/components/section-heading";
-import { getTargets } from "@/lib/api";
+import { getGpuData, getHealth, getRuntime, getTargets, getWatchdog } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function Home() {
-  const targets = await getTargets();
+  const [targets, health, watchdog, runtime, gpus] = await Promise.all([
+    getTargets(),
+    getHealth(),
+    getWatchdog(),
+    getRuntime(),
+    getGpuData(),
+  ]);
   const upTargets = targets.filter((target) => target.health === "up").length;
+  const snapshotTime = new Date().toISOString().slice(11, 19);
 
   return (
     <MetricsShell>
@@ -37,23 +44,23 @@ export default async function Home() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
             <MetricCard label="Prometheus Targets" value={`${upTargets}/${targets.length}`} hint="targets activos" tone={upTargets === targets.length ? "emerald" : "yellow"} />
-            <MetricCard label="SSR Timestamp" value={new Date().toISOString().slice(11, 19)} hint="UTC · no-store" tone="cyan" />
+            <MetricCard label="Live Snapshot" value={snapshotTime} hint="UTC · no-store" tone="purple" />
           </div>
         </section>
 
         <Suspense fallback={<p className="text-zinc-500 italic">Cargando health...</p>}>
-          <ClusterHealth />
+          <ClusterHealth health={health} watchdog={watchdog} latencyMs={runtime?.latencyMs} />
         </Suspense>
 
         <section>
           <SectionHeading eyebrow="GPU mesh" title="GPU Telemetry" description="Lectura rápida de temperatura, VRAM, potencia y clocks por nodo." />
           <Suspense fallback={<p className="text-zinc-500 italic">Cargando GPUs...</p>}>
-            <GpuTelemetry />
+            <GpuTelemetry gpus={gpus} />
           </Suspense>
         </section>
 
         <Suspense fallback={<p className="text-zinc-500 italic">Cargando runtime...</p>}>
-          <RuntimeStatus />
+          <RuntimeStatus runtime={runtime} />
         </Suspense>
 
         <section className="lab-panel rounded-[2rem] p-6">

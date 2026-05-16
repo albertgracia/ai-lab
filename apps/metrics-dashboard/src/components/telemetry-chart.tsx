@@ -22,7 +22,15 @@ export function TelemetryChart({ data, labels }: { data: SeriesPoint[]; labels: 
   }
 
   return (
-    <div className="h-72 w-full min-w-0">
+    <div className="h-72 w-full min-w-0 rounded-2xl border border-zinc-800/80 bg-black/20 p-3">
+      <div className="mb-3 flex flex-wrap gap-2">
+        {labels.map((label, index) => (
+          <span key={label} className="rounded-full border border-zinc-800 bg-zinc-950 px-3 py-1 text-[11px] font-mono text-zinc-300">
+            <span className="mr-2 inline-block h-2 w-2 rounded-full" style={{ background: palette[index % palette.length] }} />
+            {label}
+          </span>
+        ))}
+      </div>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ left: 0, right: 12, top: 8, bottom: 0 }}>
           <XAxis dataKey="time" stroke="#71717a" tickLine={false} axisLine={false} fontSize={12} />
