@@ -23,4 +23,6 @@ if [ $BUILD_EXIT -ne 0 ]; then
     exit 1
 fi
 
-echo "✅ Astro build OK — commit permitido."
+echo "🔄 Restarting ailab-docs service..."
+echo 19682507 | sudo -S systemctl restart ailab-docs 2>&1
+echo "✅ Astro build OK + service restarted — commit permitido."
