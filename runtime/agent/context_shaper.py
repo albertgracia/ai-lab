@@ -62,6 +62,7 @@ def shape_context(
     model_id: str = "",
     working_memory=None,
     query_text: str = "",
+    routing_mode: str = "primary",
 ) -> str:
     """Return a context string optimised for *task_type* and *model_id*.
 
@@ -83,7 +84,10 @@ def shape_context(
     _start = time.time()   # cognitive telemetry start
 
     # ── 0. HARD FACTS block (always first) ───────────────────────────
-    hard_facts = _build_hard_facts()
+    _hard_extra: dict = {}
+    if routing_mode != "primary":
+        _hard_extra["routing"] = {"mode": routing_mode}
+    hard_facts = _build_hard_facts(extra_json=_hard_extra if _hard_extra else None)
 
     context_window = 32_000   # default fallback
     try:
@@ -196,9 +200,10 @@ def shape_context(
         except ImportError:
             pass
 
-    # Rebuild HARD FACTS with recall stats if available
+    # Merge with recall stats & rebuild HARD FACTS
     if recall_stats:
-        hard_facts = _build_hard_facts(extra_json=recall_stats)
+        _hard_extra.update(recall_stats)
+        hard_facts = _build_hard_facts(extra_json=_hard_extra)
 
     budget_info = f"BUDGET: budget={budget} chars, used={used}/{budget} ({used/max(budget,1)*100:.0f}%) [HARD_FACTS]"
     parts = [hard_facts, budget_info]

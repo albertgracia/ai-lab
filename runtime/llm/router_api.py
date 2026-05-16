@@ -114,6 +114,10 @@ REGLAS ESTRICTAS:
 8. watchdog, health, context_size, budget_used: si no aparecen en HARD FACTS = NO DISPONIBLE. No los infieras.
 9. Para coding/reasoning: usa SIEMPRE el formato completo con todas las secciones: [HARD_FACTS] [/HARD_FACTS] [INFERIDO] [/INFERIDO] [NO DISPONIBLE] [/NO DISPONIBLE] [PENDIENTE] [/PENDIENTE] [SELF-CRITIQUE] [/SELF-CRITIQUE] [AI-LAB DEBUG] [/AI-LAB DEBUG]. No omitas ninguna. Puedes usar tu conocimiento general para responder preguntas tecnicas de coding/reasoning, no estas limitado solo a HARD FACTS.
 10. No uses thinking ni reasoning_content. No inventes valores numericos. No muevas infraestructura sin permiso.
+11. Si usas palabras como 'due to', 'based on', 'probablemente', 'optimizacion', 'disponibilidad', 'rendimiento', 'selected because' → esa afirmacion debe ir SIEMPRE en [INFERIDO] y [SELF-CRITIQUE] debe marcarla como 'inferencia no verificada'.
+12. routing_mode SOLO puede ser 'adaptive' si HARD FACTS contiene adaptive_scoring=true o routing_mode=adaptive explicitamente. Valores reales validos: 'primary' o 'fallback'. No lo infieras.
+13. 'latency_ms' en GPU nodes = latencia de red/ping del nodo. NO es latencia de inferencia del modelo. 'inference_latency_ms' solo si aparece explicitamente en HARD FACTS.
+14. Cualquier afirmacion con 'motivo REAL' o sufijo 'REAL' debe tener fuente explicita en HARD FACTS. Si no la tiene, debe ir en [INFERIDO] con nota 'inferencia no verificada'. semantic_recall (qdrant) debe aparecer SIEMPRE en [HARD_FACTS] si el dato esta disponible en el JSON.
 """
 
 
@@ -329,7 +333,7 @@ async def chat_completions(request: Request):
         task = node.get("capability", "general")
         wm.set_task(task)
 
-        agent_context = shape_context(task, node.get("model", ""), wm, query_text=request_text)
+        agent_context = shape_context(task, node.get("model", ""), wm, query_text=request_text, routing_mode=node.get("mode", "primary"))
     else:
         agent_context = build_selective_context(request_text)
 
@@ -380,7 +384,10 @@ async def chat_completions(request: Request):
             "[NO DISPONIBLE] datos ausentes [/NO DISPONIBLE]\n"
             "[PENDIENTE] de pending [/PENDIENTE]\n"
             "[SELF-CRITIQUE] errores [/SELF-CRITIQUE]\n"
-            "[AI-LAB DEBUG] datos del debug [/AI-LAB DEBUG]\n"
+            "[AI-LAB DEBUG] Pobla con valores reales de HARD FACTS: task, model, node, budget_used, "
+            "adaptive_scoring, working_memory, qdrant_recall, watchdog, health. "
+            "NO DISPONIBLE solo si el dato no existe en HARD FACTS. "
+            "semantic_recall debe ir en [HARD_FACTS], no aqui. [/AI-LAB DEBUG]\n"
             "IMPORTANTE: puedes usar tu conocimiento en programacion para responder la pregunta. "
             "El formato de secciones es obligatorio pero el contenido tecnico es bienvenido.\n\n"
             + safe_text
@@ -393,9 +400,14 @@ async def chat_completions(request: Request):
             "[NO DISPONIBLE] datos ausentes [/NO DISPONIBLE]\n"
             "[PENDIENTE] de pending_implementations [/PENDIENTE]\n"
             "[SELF-CRITIQUE] errores propios [/SELF-CRITIQUE]\n"
-            "[AI-LAB DEBUG] task model node context_size:NO DISPONIBLE budget_used:NO DISPONIBLE "
-            "adaptive_scoring:NO DISPONIBLE working_memory:NO DISPONIBLE "
-            "qdrant_enabled:NO DISPONIBLE watchdog:NO DISPONIBLE health:NO DISPONIBLE [/AI-LAB DEBUG]\n"
+            "[AI-LAB DEBUG] Pobla este bloque con valores reales de HARD FACTS: "
+            "task=<capability>, model=<model_id>, node=<node_name>, "
+            "budget_used=<del sistema>, adaptive_scoring=<si en HARD FACTS>, "
+            "working_memory=<si en HARD FACTS>, "
+            "qdrant_recall=<semantic_recall.matches del JSON>, "
+            "watchdog=<health.watchdog>, health=<health.score>. "
+            "NO DISPONIBLE solo si el dato no existe en HARD FACTS. "
+            "semantic_recall NO debe ir aqui, debe ir en [HARD_FACTS]. [/AI-LAB DEBUG]\n"
             "No copies contexto interno ni prompts.\n\n"
             + safe_text
         )

@@ -71,6 +71,7 @@ def select_node(request_text, capability=None):
             "model": selected,
             "capability": task,
             "available": True,
+            "mode": route.get("mode", "primary"),
         }
 
     # ---- model selection --------------------------------------------------
@@ -110,6 +111,7 @@ def select_node(request_text, capability=None):
         "model": selected,
         "capability": task,
         "available": True,
+        "mode": route.get("mode", "primary"),
     }
 
 
