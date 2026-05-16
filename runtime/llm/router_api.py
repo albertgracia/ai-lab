@@ -73,19 +73,31 @@ def root():
 
 
 BASE_SYSTEM_CONTEXT = """
-Eres el AI-LAB runtime assistant de Albert.
+Eres el copiloto autonomo del AI-LAB de Albert.
 Responde siempre en espanol.
+Operas en MODO PLAN — puedes leer, analizar, diagnosticar y proponer,
+pero NO ejecutar cambios sin confirmacion explicita.
 
-USA EL CONTEXTO PROPORCIONADO como tu fuente de verdad.
-Especialmente el bloque 'CURRENT AI-LAB RUNTIME (HARD FACTS)' contiene datos reales de infraestructura.
+TIENES ACCESO A:
+- [HARD_FACTS_BEGIN]..[HARD_FACTS_END] → datos reales del runtime en vivo
+- Archivos de contexto (OPENCODE.md, AI_LAB_CONTEXT.md, etc.)
+- Tu propio conocimiento del dominio
 
-NORMAS:
-- Basa tus respuestas en el contexto adjunto.
-- Si un dato concreto no aparece en el contexto, puedes decir que no esta disponible, PERO primero revisa bien el bloque HARD FACTS.
-- NO inventes nombres de servicios, modelos, GPUs ni arquitecturas que no esten en el contexto.
-- NO uses ejemplos genericos de IA (NVIDIA, BERT, RoBERTa) salvo peticion explicita.
-- Distingue entre lo que SABES (por el contexto) y lo que SUPONES.
-- Responde directamente. No uses thinking ni reasoning_content.
+DIRECTRICES:
+1. Usa [HARD_FACTS_BEGIN]..[HARD_FACTS_END] como fuente de verdad para
+   datos de infraestructura.
+2. Si un dato no esta en HARD FACTS y NO esta listado en PENDING IMPLEMENTATIONS,
+   di honestamente que no esta disponible en el runtime actual.
+3. Si un dato esta en PENDING IMPLEMENTATIONS, menciona que esta pendiente
+   de implementar — el proyecto necesita saber estos gaps.
+4. Distingue siempre entre:
+   - [HARD_FACTS] → dato verificado del runtime
+   - [INFERIDO] → deduccion logica propia (etiquetarlo)
+   - [PENDIENTE] → funcionalidad no implementada aun
+5. Formula tus respuestas de forma util para automatizar AI-LAB:
+   si ves un gap, proponlo como mejora.
+6. No muevas infraestructura sin permiso explicito de Albert.
+7. No uses thinking ni reasoning_content.
 """
 
 
@@ -332,8 +344,11 @@ async def chat_completions(request: Request):
     safe_text = truncate_text(user_text, budget_chars)
 
     final_instruction = (
-        "Responde únicamente a esta petición del usuario, en español, "
-        "sin copiar contexto interno ni prompts.\n\n"
+        "Responde a esta peticion en espanol. "
+        "Usa [HARD_FACTS_BEGIN]..[HARD_FACTS_END] como fuente de verdad. "
+        "Si algo no esta en HARD FACTS, di si esta en PENDING IMPLEMENTATIONS "
+        "o si simplemente no esta disponible en el runtime. "
+        "No copies contexto interno ni prompts.\n\n"
         + safe_text
     )
 
@@ -380,6 +395,7 @@ async def chat_completions(request: Request):
 
         if upstream_payload.get("stream"):
 
+            _stream_start = time.time()
             upstream = requests.post(
                 upstream_url,
                 json=upstream_payload,
@@ -416,9 +432,10 @@ async def chat_completions(request: Request):
 
             try:
                 from runtime.routing.routing_history import record_route_result as _rrr
+                _ttfb_ms = int((time.time() - _stream_start) * 1000)
                 _rrr(task_type=node["capability"], model=node["model"],
                      node=node["name"], host=node["host"],
-                     latency_ms=0, success=True, stream=True, failover=False)
+                     latency_ms=_ttfb_ms, success=True, stream=True, failover=False)
             except ImportError:
                 pass
 
@@ -432,6 +449,7 @@ async def chat_completions(request: Request):
                 headers=headers,
             )
 
+        _req_start = time.time()
         upstream = requests.post(
             upstream_url,
             json=upstream_payload,
@@ -449,9 +467,10 @@ async def chat_completions(request: Request):
 
         try:
             from runtime.routing.routing_history import record_route_result as _rrr
+            _latency_ms = int((time.time() - _req_start) * 1000)
             _rrr(task_type=node["capability"], model=node["model"],
                  node=node["name"], host=node["host"],
-                 latency_ms=0, success=True, stream=False, failover=False)
+                 latency_ms=_latency_ms, success=True, stream=False, failover=False)
         except ImportError:
             pass
 
@@ -463,13 +482,15 @@ async def chat_completions(request: Request):
 
     except Exception as exc:
 
+        _err_start = time.time()
         try:
             from runtime.routing.routing_history import record_route_result as _rrr
+            _latency_ms = int((time.time() - _err_start) * 1000)
             _rrr(task_type=node["capability"] if isinstance(node, dict) else "unknown",
                  model=node.get("model", "unknown") if isinstance(node, dict) else "unknown",
                  node=node.get("name", "unknown") if isinstance(node, dict) else "unknown",
                  host=node.get("host", "unknown") if isinstance(node, dict) else "unknown",
-                 latency_ms=0, success=False, stream=False, failover=False, error=str(exc))
+                 latency_ms=_latency_ms, success=False, stream=False, failover=False, error=str(exc))
         except ImportError:
             pass
 

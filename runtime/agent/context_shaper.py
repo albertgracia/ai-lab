@@ -174,7 +174,8 @@ def shape_context(
     except ImportError:
         pass
 
-    return hard_facts + "\n\n---\n\n" + "\n\n---\n\n".join(chunks)
+    budget_info = f"BUDGET: budget={budget} chars, used={used}/{budget} ({used/max(budget,1)*100:.0f}%) [HARD_FACTS]"
+    return hard_facts + "\n\n" + budget_info + "\n\n---\n\n" + "\n\n---\n\n".join(chunks)
 
 
 # ── HARD FACTS generator (anti-hallucination) ──────────────────────────
@@ -191,7 +192,7 @@ def _build_hard_facts() -> str:
     Cada sección va dentro de try/except para que fallos parciales
     no impidan que el resto del contexto se genere.
     """
-    lines = ["=== CURRENT AI-LAB RUNTIME (HARD FACTS) ===", ""]
+    lines = ["[HARD_FACTS_BEGIN]", "=== AI-LAB RUNTIME (HARD FACTS) ===", ""]
 
     # ── helper: load inference_nodes config ─────────────────────────
     _host_to_node_info: dict[str, dict] = {}
@@ -421,10 +422,27 @@ def _build_hard_facts() -> str:
     except Exception:
         pass
 
-    # ── 12. FORBIDDEN REFERENCES ────────────────────────────────────
+    # ── 12. PENDING IMPLEMENTATIONS ────────────────────────────────
+    lines.append("PENDING IMPLEMENTATIONS (funcionalidades no cubiertas aún en runtime):")
+    lines.append("  · routing_confidence: PENDIENTE — métrica no implementada en runtime")
+    lines.append("  · latencia por request: PENDIENTE — no se mide individualmente")
+    lines.append("  · Puppet/Ansible: NO IMPLEMENTADO — infraestructura se gestiona manualmente")
+    lines.append("  · Gateway/NAS-N5 Hyper-V: solo lectura SSH (sin API write)")
+    lines.append("  · RX7900XT (192.168.1.60): nodo OFFLINE, pendiente diagnosis")
+    lines.append("  · CI/CD automático: esqueletos YAML preparados, no activos")
+    lines.append("  · Auto-escalado de workers: NO IMPLEMENTADO")
+    lines.append("")
+
+    # ── 13. FORBIDDEN REFERENCES ────────────────────────────────────
     lines.append("FORBIDDEN REFERENCES (never mention):")
     lines.append("  " + ", ".join(FORBIDDEN_REFERENCES))
     lines.append("")
-    lines.append("Use the data above as authoritative. If a detail is not listed, say so without inventing.")
+    lines.append("[HARD_FACTS_END]")
+    lines.append("")
+    lines.append("REGLAS:")
+    lines.append("1. Los datos entre [HARD_FACTS_BEGIN] y [HARD_FACTS_END] son la fuente de verdad del runtime.")
+    lines.append("2. Si un campo no aparece aquí y NO está en PENDING IMPLEMENTATIONS, di '[no disponible en runtime]'.")
+    lines.append("3. Si un campo aparece en PENDING IMPLEMENTATIONS, menciónalo como 'pendiente de implementar'.")
+    lines.append("4. No infieras valores de campos no listados — el runtime no los expone.")
 
     return "\n".join(lines)
