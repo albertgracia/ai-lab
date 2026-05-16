@@ -135,6 +135,87 @@ TEST_QUERIES = {
 }
 
 
+def optimize_recall_threshold(
+    results: list[dict],
+    current_threshold: float = 0.0,
+    precision_target: float = 0.7,
+) -> dict:
+    """Suggest optimal score threshold for a search result set.
+
+    Analyzes score distribution to find the threshold that best balances
+    precision vs recall, targeting *precision_target* as a minimum.
+
+    Args:
+        results: list of {score, payload} from search_collection
+        current_threshold: the threshold currently in use
+        precision_target: desired minimum precision (0.0-1.0)
+
+    Returns:
+        dict with suggested_threshold, current_threshold, expected_precision,
+        expected_noise, contamination_at_current, and score_gaps
+    """
+    scores = sorted([r["score"] for r in results], reverse=True) if results else []
+
+    if not scores:
+        return {
+            "suggested_threshold": current_threshold,
+            "current_threshold": current_threshold,
+            "expected_precision": 0.0,
+            "expected_noise": 0.0,
+            "contamination_at_current": 0.0,
+            "score_gaps": [],
+            "note": "no results to analyze",
+        }
+
+    # Find natural gaps (score differences > 0.05)
+    gaps = []
+    for i in range(len(scores) - 1):
+        gap = scores[i] - scores[i + 1]
+        if gap > 0.05:
+            gaps.append({
+                "above": round(scores[i], 4),
+                "below": round(scores[i + 1], 4),
+                "gap": round(gap, 4),
+            })
+
+    # Simulate different thresholds and pick the best
+    candidates = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    # Add natural gap boundaries
+    for g in gaps:
+        candidates.append(g["above"])
+        candidates.append(g["below"])
+
+    best = {"threshold": current_threshold, "precision": 0.0, "noise": 1.0}
+    for t in sorted(set(candidates)):
+        above = [s for s in scores if s >= t]
+        below = [s for s in scores if s < t]
+        if not above:
+            continue
+        precision = len(above) / max(len(scores), 1) if t > 0 else 1.0
+        noise = len(below) / max(len(scores), 1)
+        # Prefer thresholds that meet precision_target while minimizing noise
+        if precision >= precision_target and noise < best["noise"]:
+            best = {"threshold": t, "precision": round(precision, 4), "noise": round(noise, 4)}
+        # If no threshold meets target, pick the one with highest precision
+        elif precision > best["precision"]:
+            best = {"threshold": t, "precision": round(precision, 4), "noise": round(noise, 4)}
+
+    # Evaluate current threshold
+    below_current = [s for s in scores if s < current_threshold]
+    contamination_at_current = len(below_current) / max(len(scores), 1)
+
+    return {
+        "suggested_threshold": best["threshold"],
+        "current_threshold": current_threshold,
+        "expected_precision": best["precision"],
+        "expected_noise": best["noise"],
+        "contamination_at_current": round(contamination_at_current, 4),
+        "score_gaps": gaps[:5],
+        "total_scores": len(scores),
+        "score_range": {"min": round(min(scores), 4), "max": round(max(scores), 4)},
+    }
+
+
 def run_batch(collection: str, search_fn: callable, limit: int = 5) -> dict:
     """Run quality assessment across predefined test queries.
 

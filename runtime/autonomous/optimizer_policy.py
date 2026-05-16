@@ -4,27 +4,32 @@ Every recommendation from runtime_optimizer.py must pass this policy
 before it can become a pending adjustment.  The policy is deliberately
 conservative: only metric-level tweaks are permitted; infrastructure,
 code, and configuration changes are forbidden.
-
-Allowed actions:
-  boost_model_weight       – increase a model's capability weight
-  penalize_model_weight    – decrease a model's capability weight
-  increase_speed_bias      – raise the 'speed' dimension global bias
-  decrease_context_budget  – reduce the token budget for context shaping
-  mark_node_degraded       – flag a GPU node as degraded
-  prefer_session_model     – set a session-scoped model preference
-
-Forbidden actions (hard block):
-  restart_service, modify_code, modify_prompt, delete_memory,
-  change_traefik, change_cloudflare, change_systemd
 """
 
+from runtime.autonomous.action_types import (
+    BOOST_MODEL_WEIGHT,
+    PENALIZE_MODEL_WEIGHT,
+    INCREASE_SPEED_BIAS,
+    DECREASE_CONTEXT_BUDGET,
+    MARK_NODE_DEGRADED,
+    PREFER_SESSION_MODEL,
+    TUNE_PROFILE_MAX_TOKENS,
+    TUNE_RECALL_CHARS,
+    TUNE_RECALL_SCORE,
+    TUNE_RECALL_MEMORIES,
+)
+
 ALLOWED_ACTIONS = frozenset({
-    "boost_model_weight",
-    "penalize_model_weight",
-    "increase_speed_bias",
-    "decrease_context_budget",
-    "mark_node_degraded",
-    "prefer_session_model",
+    BOOST_MODEL_WEIGHT,
+    PENALIZE_MODEL_WEIGHT,
+    INCREASE_SPEED_BIAS,
+    DECREASE_CONTEXT_BUDGET,
+    MARK_NODE_DEGRADED,
+    PREFER_SESSION_MODEL,
+    TUNE_PROFILE_MAX_TOKENS,
+    TUNE_RECALL_CHARS,
+    TUNE_RECALL_SCORE,
+    TUNE_RECALL_MEMORIES,
 })
 
 FORBIDDEN_ACTIONS = frozenset({

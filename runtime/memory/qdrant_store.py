@@ -295,7 +295,7 @@ def search_collection(collection: str, query_text: str, limit: int = 5, threshol
     return []
 
 
-def recall(query_text: str, limit: int = 3) -> list[dict]:
+def recall(query_text: str, limit: int = 3, threshold: float = 0.0) -> list[dict]:
     """Cross-collection cognitive recall.
 
     Searches routing_history, cognitive_history, and incidents.
@@ -303,7 +303,7 @@ def recall(query_text: str, limit: int = 3) -> list[dict]:
     """
     results = []
     for coll in ("routing_history", "cognitive_history", "incidents"):
-        hits = search_collection(coll, query_text, limit=limit)
+        hits = search_collection(coll, query_text, limit=limit, threshold=threshold)
         for h in hits:
             h["collection"] = coll
             results.append(h)

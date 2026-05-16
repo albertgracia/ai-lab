@@ -1,0 +1,199 @@
+---
+import Layout from "../../layouts/Layout.astro";
+const LOCAL_API = "http://127.0.0.1:8083";
+const PUBLIC_API = "https://blog-ai-lab.labrazahome.com";
+const AUTH_HEADERS = {
+  "CF-Access-Client-Id": "3093bf6c93d1c8dbb6ab65db21941ac0.access",
+  "CF-Access-Client-Secret": "e54c05bb3496e0ff55c55b6af63c456aa6b7d5171a74f42aeebd3facefe30a1c"
+};
+---
+<Layout title="Learning & Self-Optimization · AI-LAB">
+  <section class="mx-auto max-w-7xl px-6 py-16 space-y-10">
+    <header class="rounded-3xl border border-sky-500/30 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black p-10">
+      <div class="flex items-start justify-between gap-6">
+        <div>
+          <p class="text-sm uppercase tracking-[0.35em] text-sky-400">AI-LAB ADAPTIVE LEARNING</p>
+          <h1 class="mt-3 text-5xl font-black text-white">Learning & Self-Optimization</h1>
+          <p class="mt-4 max-w-4xl text-lg text-zinc-300">
+            Patrones detectados, recomendaciones generadas, eficiencia de contexto y ajustes de perfil propuestos.
+          </p>
+        </div>
+        <div class="rounded-2xl border border-zinc-700 bg-zinc-900 px-6 py-5 text-center min-w-[140px]">
+          <p class="text-xs uppercase tracking-[0.25em] text-zinc-500">Recomendaciones</p>
+          <p class="mt-1 text-3xl font-black text-sky-400" id="rec-count">--</p>
+          <p class="text-xs text-zinc-500" id="patterns-count">cargando...</p>
+        </div>
+      </div>
+    </header>
+
+    <div class="grid gap-6 lg:grid-cols-2">
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6 lg:col-span-2">
+        <h3 class="text-md font-bold text-amber-400 mb-4">Patrones Detectados</h3>
+        <div id="patterns-section" class="space-y-3">
+          <p class="text-zinc-500 italic">Cargando patrones...</p>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6 lg:col-span-2">
+        <h3 class="text-md font-bold text-emerald-400 mb-4">Recomendaciones</h3>
+        <div id="recommendations-section" class="space-y-3">
+          <p class="text-zinc-500 italic">Cargando recomendaciones...</p>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+        <h3 class="text-md font-bold text-purple-400 mb-4">Eficiencia de Contexto</h3>
+        <div id="efficiency-section">
+          <p class="text-zinc-500 italic">Cargando...</p>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+        <h3 class="text-md font-bold text-sky-400 mb-4">Recall Threshold</h3>
+        <div id="threshold-section">
+          <p class="text-zinc-500 italic">Cargando...</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<script>
+  const LOCAL_API = "http://127.0.0.1:8083";
+  const PUBLIC_API = "https://blog-ai-lab.labrazahome.com";
+  const AUTH_HEADERS = {
+    "CF-Access-Client-Id": "3093bf6c93d1c8dbb6ab65db21941ac0.access",
+    "CF-Access-Client-Secret": "e54c05bb3496e0ff55c55b6af63c456aa6b7d5171a74f42aeebd3facefe30a1c"
+  };
+
+  function isPublic() {
+    const h = window.location.hostname;
+    return h === "ai-lab.labrazahome.com" || h.includes("pages.dev") || h.includes("cloudflare");
+  }
+
+  function apiBase() {
+    return isPublic() ? PUBLIC_API : LOCAL_API;
+  }
+
+  async function apiGet(path) {
+    const base = apiBase();
+    const headers = isPublic() ? {} : AUTH_HEADERS;
+    const url = base + path;
+    const res = await fetch(url, { cache: "no-store", headers });
+    return await res.json();
+  }
+
+  const SEV_COLORS = { critical: "text-red-400", warning: "text-yellow-400", info: "text-blue-400" };
+  const SEV_BG = { critical: "bg-red-950/40 border-red-900/50", warning: "bg-yellow-950/40 border-yellow-900/50", info: "bg-zinc-900 border-zinc-800" };
+  const RISK_COLORS = { high: "text-red-400", medium: "text-yellow-400", low: "text-emerald-400" };
+
+  function renderPatterns(patterns) {
+    const el = document.getElementById("patterns-section");
+    document.getElementById("patterns-count").textContent = patterns.length + " patrones";
+    if (!patterns.length) {
+      el.innerHTML = '<p class="text-zinc-500 italic">Sin patrones detectados</p>';
+      return;
+    }
+    el.innerHTML = patterns.map(p => {
+      const sc = SEV_COLORS[p.severity] || "text-zinc-400";
+      const sb = SEV_BG[p.severity] || "bg-zinc-900 border-zinc-800";
+      return `<div class="rounded-xl border ${sb} p-4 text-sm">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <span class="${sc} text-xs font-mono uppercase">${p.severity}</span>
+            <span class="text-zinc-300 font-medium">${p.type}</span>
+            <span class="text-zinc-500">→ ${p.target || ""}</span>
+          </div>
+          <span class="text-zinc-500 text-xs">${(p.confidence * 100).toFixed(0)}%</span>
+        </div>
+        <p class="text-zinc-400 text-xs">${p.evidence || ""}</p>
+        ${p.recommendation ? `<p class="text-sky-400 text-xs mt-1">💡 ${p.recommendation}</p>` : ""}
+      </div>`;
+    }).join("");
+  }
+
+  function renderRecommendations(recs) {
+    const el = document.getElementById("recommendations-section");
+    document.getElementById("rec-count").textContent = recs.length;
+    if (!recs.length) {
+      el.innerHTML = '<p class="text-zinc-500 italic">Sin recomendaciones activas</p>';
+      return;
+    }
+    el.innerHTML = recs.map(r => {
+      const rc = RISK_COLORS[r.risk] || "text-zinc-400";
+      return `<div class="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <span class="text-emerald-400 text-xs font-mono">${r.action}</span>
+            <span class="text-zinc-300">→ ${r.target}</span>
+            <span class="${rc} text-xs">${r.risk}</span>
+          </div>
+          <span class="text-zinc-500 text-xs">${(r.confidence * 100).toFixed(0)}%</span>
+        </div>
+        <p class="text-zinc-400 text-xs">${r.reason || ""}</p>
+        ${r.evidence ? r.evidence.map(e => `<p class="text-zinc-500 text-xs ml-2">• ${e}</p>`).join("") : ""}
+        <div class="mt-2 flex gap-4 text-xs">
+          <span class="text-zinc-600">Impacto: ${r.expected_impact || "?"}</span>
+          <span class="text-zinc-600">Rollback: ${r.rollback || "?"}</span>
+        </div>
+        <div class="mt-2 flex gap-2">
+          <a href="/ops/commands" class="text-sky-400 text-xs hover:underline">Ver en Command Pipeline →</a>
+        </div>
+      </div>`;
+    }).join("");
+  }
+
+  function renderEfficiency(data) {
+    const el = document.getElementById("efficiency-section");
+    if (!data || !data.summary) {
+      el.innerHTML = '<p class="text-zinc-500 italic">Sin datos de eficiencia</p>';
+      return;
+    }
+    const s = data.summary;
+    el.innerHTML = `<div class="space-y-2 text-sm">
+      <div class="flex justify-between"><span class="text-zinc-500">Avg Efficiency:</span><span class="text-zinc-300">${s.avg_efficiency}</span></div>
+      <div class="flex justify-between"><span class="text-zinc-500">Avg Cost:</span><span class="text-zinc-300">${s.avg_cost}</span></div>
+      <div class="flex justify-between"><span class="text-zinc-500">Avg Utility:</span><span class="text-zinc-300">${s.avg_utility}</span></div>
+      <div class="flex justify-between"><span class="text-zinc-500">Good:</span><span class="text-emerald-400">${s.pct_good}%</span></div>
+      <div class="flex justify-between"><span class="text-zinc-500">Poor:</span><span class="text-red-400">${s.pct_poor}%</span></div>
+      <div class="border-t border-zinc-800 pt-2 mt-2">
+        <span class="text-zinc-500 text-xs">Detections:</span>
+        <div class="flex flex-wrap gap-1 mt-1">
+          ${Object.entries(s.detections || {}).map(([k, v]) => `<span class="px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 text-xs">${k}: ${v}</span>`).join("")}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function renderThreshold(data) {
+    const el = document.getElementById("threshold-section");
+    if (!data || !data.threshold_optimization) {
+      el.innerHTML = '<p class="text-zinc-500 italic">Sin datos de threshold</p>';
+      return;
+    }
+    const t = data.threshold_optimization;
+    const q = data.quality || {};
+    el.innerHTML = `<div class="space-y-2 text-sm">
+      <div class="flex justify-between"><span class="text-zinc-500">Current:</span><span class="text-zinc-300">${t.current_threshold}</span></div>
+      <div class="flex justify-between"><span class="text-zinc-500">Suggested:</span><span class="text-sky-400 font-bold">${t.suggested_threshold}</span></div>
+      <div class="flex justify-between"><span class="text-zinc-500">Expected Precision:</span><span class="text-zinc-300">${t.expected_precision}</span></div>
+      <div class="flex justify-between"><span class="text-zinc-500">Contamination:</span><span class="${t.contamination_at_current > 0.2 ? 'text-red-400' : 'text-zinc-300'}">${t.contamination_at_current}</span></div>
+      <div class="border-t border-zinc-800 pt-2 mt-2">
+        <span class="text-zinc-500 text-xs">Collection: </span><span class="text-zinc-400">${data.collection}</span>
+      </div>
+    </div>`;
+  }
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    const [patternsData, recsData, efficiencyData, thresholdData] = await Promise.all([
+      apiGet("/api/learning/patterns"),
+      apiGet("/api/learning/recommendations"),
+      apiGet("/api/learning/context-efficiency"),
+      apiGet("/api/learning/recall-threshold?collection=incidents&q=node+failure&limit=20"),
+    ]);
+    renderPatterns(patternsData.patterns || []);
+    renderRecommendations(recsData.recommendations || []);
+    renderEfficiency(efficiencyData);
+    renderThreshold(thresholdData);
+  });
+</script>

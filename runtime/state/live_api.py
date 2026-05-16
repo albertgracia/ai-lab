@@ -196,6 +196,16 @@ class APIHandler(BaseHTTPRequestHandler):
             self._handle_pending_commands()
         elif self.path == "/api/commands/history":
             self._handle_commands_history()
+        elif self.path == "/api/learning/patterns":
+            self._handle_learning_patterns()
+        elif self.path == "/api/learning/recommendations":
+            self._handle_learning_recommendations()
+        elif self.path == "/api/learning/model-performance":
+            self._json(_model_performance())
+        elif self.path == "/api/learning/context-efficiency":
+            self._handle_learning_context_efficiency()
+        elif self.path.startswith("/api/learning/recall-threshold"):
+            self._handle_learning_recall_threshold()
         else: self._send_error(404)
     def do_POST(self):
         parsed = urllib.parse.urlparse(self.path)
@@ -460,6 +470,70 @@ class APIHandler(BaseHTTPRequestHandler):
         _save_proposals(proposals)
         _audit("command_rejected", {"id": adj_id, "command": found["command"]})
         self._json({"success": True, "id": adj_id, "status": "rejected"})
+
+    # ── Learning handlers (FASE 12) ───────────────────────────────────
+
+    def _handle_learning_patterns(self):
+        try:
+            from runtime.memory.pattern_learner import run_all
+            patterns = run_all(days=7)
+            self._json({"count": len(patterns), "patterns": patterns})
+        except ImportError as e:
+            self._json({"error": f"pattern_learner not available: {e}"})
+
+    def _handle_learning_recommendations(self):
+        try:
+            from runtime.memory.pattern_learner import run_all
+            from runtime.learning.context_efficiency import batch_evaluate
+            from runtime.learning.recommendation_engine import generate_recommendations
+            from runtime.routing.model_performance import get_model_performance
+            from runtime.cognitive.cognitive_history import read_history
+
+            patterns = run_all(days=7)
+            cognitive = read_history(20) if read_history else []
+            efficiency = batch_evaluate(cognitive) if cognitive else None
+            perf = get_model_performance()
+            recs = generate_recommendations(patterns, efficiency, perf)
+            self._json({"count": len(recs), "recommendations": recs})
+        except ImportError as e:
+            self._json({"error": f"recommendation engine not available: {e}"})
+
+    def _handle_learning_context_efficiency(self):
+        try:
+            from runtime.learning.context_efficiency import batch_evaluate, summarize_efficiency
+            from runtime.cognitive.cognitive_history import read_history
+            cognitive = read_history(30)
+            if not cognitive:
+                self._json({"samples": 0, "avg_efficiency": 0, "error": "no cognitive records"})
+                return
+            results = batch_evaluate(cognitive)
+            summary = summarize_efficiency(results)
+            self._json({"summary": summary, "details": results[:20]})
+        except ImportError as e:
+            self._json({"error": f"context_efficiency not available: {e}"})
+
+    def _handle_learning_recall_threshold(self):
+        try:
+            qs = self._parse_qs()
+            collection = qs.get("collection", ["incidents"])[0]
+            query = qs.get("q", ["node failure"])[0]
+            limit = int(qs.get("limit", [20])[0])
+
+            from runtime.memory.qdrant_store import search_collection
+            from runtime.memory.quality_assessment import assess_query, optimize_recall_threshold
+
+            results = search_collection(collection, query, limit=limit)
+            quality = assess_query(query, results)
+            threshold = optimize_recall_threshold(results)
+
+            self._json({
+                "collection": collection,
+                "query": query,
+                "quality": quality,
+                "threshold_optimization": threshold,
+            })
+        except ImportError as e:
+            self._json({"error": f"quality assessment not available: {e}"})
 
     # ─────────────────────────────────────────────────────────────────
 
