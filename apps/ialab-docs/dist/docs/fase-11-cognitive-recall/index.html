@@ -1,0 +1,326 @@
+<!DOCTYPE html><html lang="es" class="dark"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>FASE 11 — Cognitive Recall &amp; Supervised Execution</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"><link rel="stylesheet" href="/_astro/Layout.D-eG25OE.css"><script type="module" src="/_astro/page.BUhsnfhG.js"></script></head> <body class="bg-black text-white font-[Inter] overflow-x-hidden"> <div class="min-h-screen flex"> <!-- SIDEBAR --> <aside class="w-[320px] border-r border-zinc-900 bg-black/90 backdrop-blur sticky top-0 h-screen flex flex-col justify-between"> <div> <!-- LOGO --> <div class="p-10 border-b border-zinc-900"> <a href="/" class="flex justify-center"> <img src="/images/ai-lab-logo.png" alt="AI-LAB" class="w-64 h-auto object-contain"> </a> </div> <!-- NAVIGATION --> <nav class="p-5 space-y-2"> <a href="/" class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200
+  text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400"> <div class="opacity-80 group-hover:opacity-100"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-house h-5 w-5"> <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>  </svg> </div> <span class="font-medium tracking-tight"> Inicio </span> </a> <a href="/architecture" class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200
+  text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400"> <div class="opacity-80 group-hover:opacity-100"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-cpu h-5 w-5"> <path d="M12 20v2"></path><path d="M12 2v2"></path><path d="M17 20v2"></path><path d="M17 2v2"></path><path d="M2 12h2"></path><path d="M2 17h2"></path><path d="M2 7h2"></path><path d="M20 12h2"></path><path d="M20 17h2"></path><path d="M20 7h2"></path><path d="M7 20v2"></path><path d="M7 2v2"></path><rect x="4" y="4" width="16" height="16" rx="2"></rect><rect x="8" y="8" width="8" height="8" rx="1"></rect>  </svg> </div> <span class="font-medium tracking-tight"> Arquitectura </span> </a> <a href="/research" class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200
+  text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400"> <div class="opacity-80 group-hover:opacity-100"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-book-open h-5 w-5"> <path d="M12 7v14"></path><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"></path>  </svg> </div> <span class="font-medium tracking-tight"> Research </span> </a> <a href="/hardware-lab" class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200
+  text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400"> <div class="opacity-80 group-hover:opacity-100"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-server h-5 w-5"> <rect width="20" height="8" x="2" y="2" rx="2" ry="2"></rect><rect width="20" height="8" x="2" y="14" rx="2" ry="2"></rect><line x1="6" x2="6.01" y1="6" y2="6"></line><line x1="6" x2="6.01" y1="18" y2="18"></line>  </svg> </div> <span class="font-medium tracking-tight"> Hardware Lab </span> </a> <a href="/observability" class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200
+  text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400"> <div class="opacity-80 group-hover:opacity-100"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-activity h-5 w-5"> <path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"></path>  </svg> </div> <span class="font-medium tracking-tight"> Observability </span> </a> <a href="/ai-infrastructure" class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200
+  text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400"> <div class="opacity-80 group-hover:opacity-100"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-cpu h-5 w-5"> <path d="M12 20v2"></path><path d="M12 2v2"></path><path d="M17 20v2"></path><path d="M17 2v2"></path><path d="M2 12h2"></path><path d="M2 17h2"></path><path d="M2 7h2"></path><path d="M20 12h2"></path><path d="M20 17h2"></path><path d="M20 7h2"></path><path d="M7 20v2"></path><path d="M7 2v2"></path><rect x="4" y="4" width="16" height="16" rx="2"></rect><rect x="8" y="8" width="8" height="8" rx="1"></rect>  </svg> </div> <span class="font-medium tracking-tight"> AI Infrastructure </span> </a> <a href="/experiments" class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200
+  text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400"> <div class="opacity-80 group-hover:opacity-100"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-wrench h-5 w-5"> <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"></path>  </svg> </div> <span class="font-medium tracking-tight"> Experiments </span> </a> <a href="/projects" class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200
+  text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400"> <div class="opacity-80 group-hover:opacity-100"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-folder-kanban h-5 w-5"> <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path><path d="M8 10v4"></path><path d="M12 10v2"></path><path d="M16 10v6"></path>  </svg> </div> <span class="font-medium tracking-tight"> Proyectos </span> </a> <a href="/skills/" class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200
+  text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400"> <div class="opacity-80 group-hover:opacity-100"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-shield-check h-5 w-5"> <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path><path d="m9 12 2 2 4-4"></path>  </svg> </div> <span class="font-medium tracking-tight"> Skills </span> </a> <a href="/docs" class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200
+  bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 shadow-[0_0_25px_rgba(34,211,238,0.12)]"> <div class="opacity-80 group-hover:opacity-100"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-book-open h-5 w-5"> <path d="M12 7v14"></path><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"></path>  </svg> </div> <span class="font-medium tracking-tight"> Documentación </span> </a> <a href="/blog" class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200
+  text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400"> <div class="opacity-80 group-hover:opacity-100"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-newspaper h-5 w-5"> <path d="M15 18h-5"></path><path d="M18 14h-8"></path><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-4 0v-9a2 2 0 0 1 2-2h2"></path><rect width="8" height="4" x="10" y="6" rx="1"></rect>  </svg> </div> <span class="font-medium tracking-tight"> Blog Técnico </span> </a> <a href="/runbooks" class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200
+  text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400"> <div class="opacity-80 group-hover:opacity-100"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-wrench h-5 w-5"> <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"></path>  </svg> </div> <span class="font-medium tracking-tight"> Runbooks </span> </a> <a href="/services" class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200
+  text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400"> <div class="opacity-80 group-hover:opacity-100"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-server h-5 w-5"> <rect width="20" height="8" x="2" y="2" rx="2" ry="2"></rect><rect width="20" height="8" x="2" y="14" rx="2" ry="2"></rect><line x1="6" x2="6.01" y1="6" y2="6"></line><line x1="6" x2="6.01" y1="18" y2="18"></line>  </svg> </div> <span class="font-medium tracking-tight"> Servicios </span> </a> <a href="/ops" class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200
+  text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400"> <div class="opacity-80 group-hover:opacity-100"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-monitor-smartphone h-5 w-5"> <path d="M18 8V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8"></path><path d="M10 19v-3.96 3.15"></path><path d="M7 19h5"></path><rect width="6" height="10" x="16" y="12" rx="2"></rect>  </svg> </div> <span class="font-medium tracking-tight"> Operations Center </span> </a> <a href="/status" class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200
+  text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400"> <div class="opacity-80 group-hover:opacity-100"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-activity h-5 w-5"> <path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"></path>  </svg> </div> <span class="font-medium tracking-tight"> Estado Vivo </span> </a> <a href="/status/history" class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200
+  text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400"> <div class="opacity-80 group-hover:opacity-100"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-chart-column h-5 w-5"> <path d="M3 3v16a2 2 0 0 0 2 2h16"></path><path d="M18 17V9"></path><path d="M13 17V5"></path><path d="M8 17v-3"></path>  </svg> </div> <span class="font-medium tracking-tight"> Historical Telemetry </span> </a> </nav> </div> <!-- FOOTER --> <div class="p-5"> <div class="rounded-3xl border border-cyan-500/20 bg-zinc-950 p-5 shadow-[0_0_35px_rgba(34,211,238,0.08)]"> <div class="flex items-center justify-between"> <div> <p class="text-xs uppercase tracking-[0.3em] text-zinc-500">
+Runtime
+</p> <div class="mt-3 text-lg font-semibold text-white">
+AI-LAB Operational
+</div> </div> <div class="flex items-center gap-2 text-green-400"> <div class="h-3 w-3 rounded-full bg-green-400 animate-pulse"></div> <span class="text-sm">
+LIVE
+</span> </div> </div> <div class="mt-5 space-y-2 text-sm text-zinc-500"> <div>
+Router · OpenCode · GPUs
+</div> <div>
+Traefik · Qdrant · LM Studio
+</div> </div> </div> </div> </aside> <!-- CONTENT --> <main class="flex-1 overflow-x-hidden"> <div class="mx-auto max-w-7xl px-10 py-10">  <article class="prose prose-invert prose-cyan max-w-4xl"> <p>FASE 11 transforma el AI-LAB de “homelab con LLMs” a <strong>cognitive operations runtime</strong>. Introduce memoria semántica controlada por política, modo operativo persistente, pipeline de comandos supervisados y una capa de seguridad EXECUTE v1.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="110--controlled-cognitive-recall">11.0 — Controlled Cognitive Recall</h2><a class="sl-anchor-link" href="#110--controlled-cognitive-recall"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “11.0 — Controlled Cognitive Recall”</span></a></div>
+<p><code dir="auto">runtime/memory/recall_policy.py</code></p>
+<p>El recall ya no es “Auto-RAG mágico” sino una <strong>decisión cognitiva</strong>:</p>
+<div class="expressive-code"><link rel="stylesheet" href="/_astro/ec.v4551.css"><script type="module" src="/_astro/ec.0vx5m.js"></script><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">query → should_recall() → search sources (ordered) → quality gate → advisory block</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="query → should_recall() → search sources (ordered) → quality gate → advisory block"><div></div></button></div></figure></div>
+<div class="sl-heading-wrapper level-h3"><h3 id="should_recalltask_type-query">should_recall(task_type, query)</h3><a class="sl-anchor-link" href="#should_recalltask_type-query"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “should_recall(task_type, query)”</span></a></div>
+<p>Decide si merece la pena buscar. Retorna <code dir="auto">False</code> si:</p>
+<ul>
+<li>Query vacía o menor de 10 caracteres</li>
+<li>Query es trivial (saludo, “ok”, “gracias”)</li>
+<li>El perfil no tiene fuentes configuradas</li>
+</ul>
+<div class="sl-heading-wrapper level-h3"><h3 id="retrieval-budget-por-perfil">Retrieval budget por perfil</h3><a class="sl-anchor-link" href="#retrieval-budget-por-perfil"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Retrieval budget por perfil”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Profile</th><th>Max memories</th><th>Max chars</th><th>Score mínimo</th><th>Fuentes</th></tr></thead><tbody><tr><td><strong>fast</strong></td><td>1</td><td>500</td><td>0.65</td><td>incidents</td></tr><tr><td><strong>coding</strong></td><td>3</td><td>1500</td><td>0.55</td><td>incidents, routing_history</td></tr><tr><td><strong>reasoning</strong></td><td>5</td><td>3000</td><td>0.45</td><td>incidents, routing_history, cognitive_history</td></tr><tr><td><strong>general</strong></td><td>2</td><td>1000</td><td>0.50</td><td>incidents, routing_history</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h3"><h3 id="strict-source-ordering">Strict source ordering</h3><a class="sl-anchor-link" href="#strict-source-ordering"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Strict source ordering”</span></a></div>
+<ol>
+<li><strong>incidents</strong> — prioridad máxima (eventos operacionales)</li>
+<li><strong>routing_history</strong> — histórico de inferencias</li>
+<li><strong>cognitive_history</strong> — snapshots cognitivos</li>
+<li><del>working_memory</del> — reservado para futuro</li>
+</ol>
+<p>Esto prioriza <strong>relevancia operacional</strong> sobre similitud vectorial pura.</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="recall-quality-gate-1106">Recall Quality Gate (11.0.6)</h3><a class="sl-anchor-link" href="#recall-quality-gate-1106"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Recall Quality Gate (11.0.6)”</span></a></div>
+<p>Antes de inyectar el bloque de recall, se ejecuta <code dir="auto">assess_query()</code> sobre los hits. Si <code dir="auto">contamination_risk > 0.2</code>, se descarta el recall completamente.</p>
+<p>Esto protege contra:</p>
+<ul>
+<li>Drift semántico en embeddings</li>
+<li>Prompt inflation por resultados irrelevantes</li>
+<li>Contaminación por low-score hits</li>
+</ul>
+<div class="sl-heading-wrapper level-h3"><h3 id="advisory-format">Advisory format</h3><a class="sl-anchor-link" href="#advisory-format"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Advisory format”</span></a></div>
+<p>El bloque inyectado usa tono <strong>advisory</strong>, no autoritario:</p>
+<div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">[SEMANTIC_RECALL_BEGIN]</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">Experiencias pasadas relevantes (advisory, no verificadas):</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">  </span></span><span style="--0:#d6deeb;--1:#403f53">• (incidents) service down rl7900xt ...</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">  </span></span><span style="--0:#d6deeb;--1:#403f53">• (routing_history) failover rx9070 ...</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">[/SEMANTIC_RECALL_END]</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="[SEMANTIC_RECALL_BEGIN]Experiencias pasadas relevantes (advisory, no verificadas):  • (incidents) service down rl7900xt ...  • (routing_history) failover rx9070 ...[/SEMANTIC_RECALL_END]"><div></div></button></div></figure></div>
+<p>El LLM trata el recall como <strong>pista</strong>, no como <strong>hecho</strong>.</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="stats-en-hard-facts">Stats en HARD FACTS</h3><a class="sl-anchor-link" href="#stats-en-hard-facts"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Stats en HARD FACTS”</span></a></div>
+<div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="json"><code><div class="ec-line"><div class="code"><span style="--0:#D9F5DD;--1:#111111">"</span><span style="--0:#ECC48D;--1:#984E4D">semantic_recall</span><span style="--0:#D9F5DD;--1:#111111">"</span><span style="--0:#D6DEEB;--1:#403F53">: {</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#096E72">"enabled"</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#FF6A83;--1:#A24848">true</span><span style="--0:#D6DEEB;--1:#403F53">,</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#096E72">"collections_used"</span><span style="--0:#D6DEEB;--1:#403F53">: [</span><span style="--0:#D9F5DD;--1:#111111">"</span><span style="--0:#C789D6;--1:#7C5686">incidents</span><span style="--0:#D9F5DD;--1:#111111">"</span><span style="--0:#D6DEEB;--1:#403F53">, </span><span style="--0:#D9F5DD;--1:#111111">"</span><span style="--0:#C789D6;--1:#7C5686">routing_history</span><span style="--0:#D9F5DD;--1:#111111">"</span><span style="--0:#D6DEEB;--1:#403F53">],</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#096E72">"matches"</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#F78C6C;--1:#AA0982">3</span><span style="--0:#D6DEEB;--1:#403F53">,</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#096E72">"avg_score"</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#F78C6C;--1:#AA0982">0.72</span><span style="--0:#D6DEEB;--1:#403F53">,</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#096E72">"chars_injected"</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#F78C6C;--1:#AA0982">420</span></div></div><div class="ec-line"><div class="code"><span style="--0:#D6DEEB;--1:#403F53">}</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="&#x22;semantic_recall&#x22;: {  &#x22;enabled&#x22;: true,  &#x22;collections_used&#x22;: [&#x22;incidents&#x22;, &#x22;routing_history&#x22;],  &#x22;matches&#x22;: 3,  &#x22;avg_score&#x22;: 0.72,  &#x22;chars_injected&#x22;: 420}"><div></div></button></div></figure></div>
+<div class="sl-heading-wrapper level-h2"><h2 id="101--memory-recall-api">10.1 — Memory Recall API</h2><a class="sl-anchor-link" href="#101--memory-recall-api"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “10.1 — Memory Recall API”</span></a></div>
+<p>Endpoints READ-ONLY en Live API (<code dir="auto">:8084</code>):</p>
+<ul>
+<li><code dir="auto">GET /api/memory/search?q=&#x26;collection=&#x26;limit=</code> — búsqueda semántica en cualquier colección</li>
+<li><code dir="auto">GET /api/runtime/recall?q=&#x26;limit=</code> — recall cruzado multi-colección</li>
+<li><code dir="auto">GET /api/incidents/search?q=&#x26;severity=&#x26;limit=</code> — búsqueda filtrada de incidentes</li>
+</ul>
+<p>Backfill inicial: 14 incidents desde <code dir="auto">cluster_state</code> + <code dir="auto">routing_history</code>.</p>
+<p>Watchdog hook: <code dir="auto">watchdog_incident_hook.py</code> registra <code dir="auto">service_down</code>, <code dir="auto">degraded</code>, <code dir="auto">recovered</code> automáticamente en cada ciclo.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="102--incident-intelligence">10.2 — Incident Intelligence</h2><a class="sl-anchor-link" href="#102--incident-intelligence"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “10.2 — Incident Intelligence”</span></a></div>
+<ul>
+<li><code dir="auto">GET /api/incidents/analytics?days=</code> — agregación por tipo, severidad, nodo, timeline</li>
+<li><code dir="auto">GET /api/incidents/timeline?days=&#x26;bucket=</code> — series temporales (bucket=day/hour)</li>
+</ul>
+<p>Hooks automáticos:</p>
+<ul>
+<li><code dir="auto">routing_history.py</code>: failures/failovers → incident</li>
+<li><code dir="auto">cognitive_history.py</code>: budget > 90% → <code dir="auto">context_overflow</code></li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="103--semantic-search-quality">10.3 — Semantic Search Quality</h2><a class="sl-anchor-link" href="#103--semantic-search-quality"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “10.3 — Semantic Search Quality”</span></a></div>
+<p><code dir="auto">runtime/memory/quality_assessment.py</code></p>
+<ul>
+<li><code dir="auto">GET /api/memory/quality?q=&#x26;collection=&#x26;limit=</code> — precision, noise, contamination_risk</li>
+<li><code dir="auto">GET /api/memory/quality/batch?collection=&#x26;limit=</code> — 10 test queries automáticos por colección</li>
+</ul>
+<p>Resultados batch (incidents): <code dir="auto">avg_precision=0.78</code>, <code dir="auto">noise=0.0</code>.</p>
+<p>Threshold suggestion: analiza score distribution gaps para encontrar cutoff points naturales.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="104--pattern-learning">10.4 — Pattern Learning</h2><a class="sl-anchor-link" href="#104--pattern-learning"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “10.4 — Pattern Learning”</span></a></div>
+<p><code dir="auto">runtime/memory/pattern_learner.py</code></p>
+<p>Detección de patrones en incidents:</p>
+<ul>
+<li>Fallos repetidos en mismo nodo</li>
+<li>Horas pico de incidentes</li>
+<li>Tendencias de latencia (empeorando/mejorando/estable)</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="111--persistent-mode-state">11.1 — Persistent Mode State</h2><a class="sl-anchor-link" href="#111--persistent-mode-state"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “11.1 — Persistent Mode State”</span></a></div>
+<p><code dir="auto">runtime/modes/mode_manager.py</code> + <code dir="auto">runtime/state/current_mode.json</code></p>
+<p>Separa <strong>runtime cognition</strong> de <strong>runtime authority</strong>:</p>
+<ul>
+<li><code dir="auto">read_mode()</code>, <code dir="auto">write_mode()</code>, <code dir="auto">can_transition()</code>, <code dir="auto">requires_reason()</code></li>
+<li>Transiciones válidas: <code dir="auto">readonly → plan → build → execute</code></li>
+<li><code dir="auto">plan → execute</code> permitido directamente (con <code dir="auto">reason</code>)</li>
+<li><code dir="auto">GET /api/mode</code>, <code dir="auto">POST /api/mode/switch?mode=&#x26;reason=</code></li>
+</ul>
+<p>System prompt dinámico: <code dir="auto">router_api.py::build_system_context()</code> lee <code dir="auto">current_mode.json</code> y ajusta el prompt. <code dir="auto">context_shaper.py</code> inyecta el modo actual en HARD FACTS.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="112--command-proposal-pipeline">11.2 — Command Proposal Pipeline</h2><a class="sl-anchor-link" href="#112--command-proposal-pipeline"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “11.2 — Command Proposal Pipeline”</span></a></div>
+<p>Pipeline completo de comandos supervisados:</p>
+<ol>
+<li><strong>Proponer</strong>: <code dir="auto">POST /api/commands/propose</code> — command + reason + risk</li>
+<li><strong>Listar pendientes</strong>: <code dir="auto">GET /api/commands/pending</code></li>
+<li><strong>Aprobar</strong>: <code dir="auto">POST /api/commands/approve?id=</code> — ejecuta vía <code dir="auto">sandbox_runner</code></li>
+<li><strong>Rechazar</strong>: <code dir="auto">POST /api/commands/reject?id=</code></li>
+</ol>
+<p>Proposals almacenadas en <code dir="auto">runtime/state/command_proposals.jsonl</code>.</p>
+<p>Audit dual: Qdrant incidents + <code dir="auto">governance_audit.jsonl</code>.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="116--execute-v1-security-policy">11.6 — EXECUTE v1 Security Policy</h2><a class="sl-anchor-link" href="#116--execute-v1-security-policy"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “11.6 — EXECUTE v1 Security Policy”</span></a></div>
+<p><code dir="auto">runtime/execution/execute_v1_policy.py</code></p>
+<p>EXECUTE v1 SOLO permite:</p>
+<ul>
+<li>Archivos temporales (<code dir="auto">/tmp/ai-lab/</code>)</li>
+<li>Scripts sandbox</li>
+<li>Dry-run</li>
+<li>Comandos readonly</li>
+<li>Análisis y validación</li>
+<li>Generación de planes</li>
+</ul>
+<p><strong>PROHIBIDO:</strong></p>
+<ul>
+<li>❌ Docker</li>
+<li>❌ systemctl (except status)</li>
+<li>❌ Network (curl solo localhost/health)</li>
+<li>❌ Filesystem fuera de <code dir="auto">/tmp/ai-lab/</code> y <code dir="auto">/opt/ai-lab/</code></li>
+<li>❌ Hyper-V, UniFi, Cloudflare</li>
+<li>❌ sudo, chmod, mount, dd, iptables, virsh</li>
+<li>❌ git push/commit, ssh, scp, kill, apt, pip/npm install</li>
+<li>❌ <code dir="auto">shell=True</code> (nunca)</li>
+</ul>
+<p><strong>Whitelist:</strong> <code dir="auto">ls</code>, <code dir="auto">cat</code>, <code dir="auto">echo</code>, <code dir="auto">head</code>, <code dir="auto">tail</code>, <code dir="auto">wc</code>, <code dir="auto">grep</code>, <code dir="auto">find</code>, <code dir="auto">pwd</code>, <code dir="auto">date</code>, <code dir="auto">whoami</code>, <code dir="auto">id</code>, <code dir="auto">df -h</code>, <code dir="auto">free -h</code>, <code dir="auto">ps aux</code>, <code dir="auto">uname</code>, <code dir="auto">uptime</code>, <code dir="auto">env</code>. <code dir="auto">python3</code> solo en dry-run.</p>
+<p>Validación en dos capas: <code dir="auto">sandbox_runner.py</code> y <code dir="auto">live_api.py</code> approve handler.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="arquitectura-general">Arquitectura General</h2><a class="sl-anchor-link" href="#arquitectura-general"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Arquitectura General”</span></a></div>
+<div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">FASE 11: Cognitive Operations Runtime</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">  </span></span><span style="--0:#d6deeb;--1:#403f53">LLM ──→ router_api.py</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">              </span></span><span style="--0:#d6deeb;--1:#403f53">│</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">              </span></span><span style="--0:#d6deeb;--1:#403f53">├── build_system_context() → mode dinámico</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">              </span></span><span style="--0:#d6deeb;--1:#403f53">│</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">              </span></span><span style="--0:#d6deeb;--1:#403f53">└── context_shaper.py</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                      </span></span><span style="--0:#d6deeb;--1:#403f53">│</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                      </span></span><span style="--0:#d6deeb;--1:#403f53">├── HARD FACTS (JSON + texto)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                      </span></span><span style="--0:#d6deeb;--1:#403f53">│     └── semantic_recall stats</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                      </span></span><span style="--0:#d6deeb;--1:#403f53">│</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                      </span></span><span style="--0:#d6deeb;--1:#403f53">└── execute_recall() ← recall_policy.py</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                              </span></span><span style="--0:#d6deeb;--1:#403f53">├── should_recall() gate</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                              </span></span><span style="--0:#d6deeb;--1:#403f53">├── search sources (ordered)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                              </span></span><span style="--0:#d6deeb;--1:#403f53">├── quality gate (contamination)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                              </span></span><span style="--0:#d6deeb;--1:#403f53">└── advisory block</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">  </span></span><span style="--0:#d6deeb;--1:#403f53">Live API (:8084)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">      </span></span><span style="--0:#d6deeb;--1:#403f53">├── /api/mode/switch        ← mode_manager.py</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">      </span></span><span style="--0:#d6deeb;--1:#403f53">├── /api/commands/propose   ← JSONL pipeline</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">      </span></span><span style="--0:#d6deeb;--1:#403f53">├── /api/commands/approve   ← sandbox_runner.py</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">      </span></span><span style="--0:#d6deeb;--1:#403f53">│                              └── execute_v1_policy.py</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">      </span></span><span style="--0:#d6deeb;--1:#403f53">└── /api/commands/reject</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">  </span></span><span style="--0:#d6deeb;--1:#403f53">Seguridad:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">      </span></span><span style="--0:#d6deeb;--1:#403f53">├── execute_v1_policy.py    (global whitelist)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">      </span></span><span style="--0:#d6deeb;--1:#403f53">├── capability_guard.py     (mode check)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">      </span></span><span style="--0:#d6deeb;--1:#403f53">└── profile loader          (per-user allow_shell)</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="FASE 11: Cognitive Operations Runtime  LLM ──→ router_api.py              │              ├── build_system_context() → mode dinámico              │              └── context_shaper.py                      │                      ├── HARD FACTS (JSON + texto)                      │     └── semantic_recall stats                      │                      └── execute_recall() ← recall_policy.py                              ├── should_recall() gate                              ├── search sources (ordered)                              ├── quality gate (contamination)                              └── advisory block  Live API (:8084)      ├── /api/mode/switch        ← mode_manager.py      ├── /api/commands/propose   ← JSONL pipeline      ├── /api/commands/approve   ← sandbox_runner.py      │                              └── execute_v1_policy.py      └── /api/commands/reject  Seguridad:      ├── execute_v1_policy.py    (global whitelist)      ├── capability_guard.py     (mode check)      └── profile loader          (per-user allow_shell)"><div></div></button></div></figure></div>
+<div class="sl-heading-wrapper level-h2"><h2 id="archivos-creados">Archivos creados</h2><a class="sl-anchor-link" href="#archivos-creados"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Archivos creados”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Archivo</th><th>Propósito</th></tr></thead><tbody><tr><td><code dir="auto">runtime/memory/recall_policy.py</code></td><td>Controlled recall engine (policy, budgets, quality gate)</td></tr><tr><td><code dir="auto">runtime/memory/quality_assessment.py</code></td><td>Precision, noise, contamination_risk metrics</td></tr><tr><td><code dir="auto">runtime/memory/backfill_incidents.py</code></td><td>Seed incidents from cluster_state + routing_history</td></tr><tr><td><code dir="auto">runtime/memory/watchdog_incident_hook.py</code></td><td>Auto-record incidents from watchdog checks</td></tr><tr><td><code dir="auto">runtime/memory/pattern_learner.py</code></td><td>Pattern detection (repeated failures, peak hours, trends)</td></tr><tr><td><code dir="auto">runtime/modes/mode_manager.py</code></td><td>Persistent mode state with transition validation</td></tr><tr><td><code dir="auto">runtime/execution/execute_v1_policy.py</code></td><td>EXECUTE v1 whitelist, blocked commands, dry-run rules</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h2"><h2 id="119--command-history--audit-dashboard">11.9 — Command History &#x26; Audit Dashboard</h2><a class="sl-anchor-link" href="#119--command-history--audit-dashboard"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “11.9 — Command History &#x26; Audit Dashboard”</span></a></div>
+<p><code dir="auto">GET /api/commands/history</code> en Live API (<code dir="auto">:8084</code>) + <code dir="auto">/ops/commands</code></p>
+<p>Endpoint que retorna <strong>todas</strong> las propuestas de comandos (no solo pendientes), ordenadas por fecha descendente:</p>
+<div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">GET /api/commands/history?status=executed&#x26;status=failed&#x26;limit=50</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="GET /api/commands/history?status=executed&#x26;status=failed&#x26;limit=50"><div></div></button></div></figure></div>
+<p>Parámetros opcionales:</p>
+<ul>
+<li><code dir="auto">status</code> — filtro por estado (admite múltiples: <code dir="auto">?status=executed&#x26;status=failed</code>)</li>
+<li><code dir="auto">limit</code> — máximo de resultados (default 100)</li>
+</ul>
+<div class="sl-heading-wrapper level-h3"><h3 id="estados-granularizados">Estados granularizados</h3><a class="sl-anchor-link" href="#estados-granularizados"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Estados granularizados”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Estado</th><th>Significado</th></tr></thead><tbody><tr><td><code dir="auto">pending</code></td><td>Propuesto por el LLM, pendiente de aprobación</td></tr><tr><td><code dir="auto">executed</code></td><td>Aprobado y ejecutado con éxito (exit code 0)</td></tr><tr><td><code dir="auto">failed</code></td><td>Aprobado pero falló en ejecución (exit code ≠ 0)</td></tr><tr><td><code dir="auto">rejected</code></td><td>Rechazado por el operador</td></tr><tr><td><code dir="auto">rolled_back</code></td><td>Reservado para futura capacidad de rollback</td></tr></tbody></table>
+<p>El approve handler ahora distingue <code dir="auto">executed</code> vs <code dir="auto">failed</code> según <code dir="auto">returncode</code>.</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="dashboard-visual">Dashboard visual</h3><a class="sl-anchor-link" href="#dashboard-visual"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Dashboard visual”</span></a></div>
+<p><code dir="auto">/ops/commands</code> — misma línea visual que <code dir="auto">/ops/memory</code>:</p>
+<ul>
+<li>Tabs de filtro: Todas / Pendientes / Ejecutadas / Falladas / Rechazadas</li>
+<li>Tabla expandible: cada fila muestra estado, comando, riesgo, fecha</li>
+<li>Click para ver detalle: comando completo, resultado (stdout/stderr), timestamps</li>
+<li>Badge de resumen: total + desglose por estado</li>
+</ul>
+<div class="sl-heading-wrapper level-h3"><h3 id="dual-audit">Dual audit</h3><a class="sl-anchor-link" href="#dual-audit"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Dual audit”</span></a></div>
+<p>Cada operación se registra en:</p>
+<ul>
+<li><code dir="auto">runtime/state/command_proposals.jsonl</code> — fuente de datos del dashboard</li>
+<li>Qdrant <code dir="auto">incidents</code> collection — para búsqueda semántica</li>
+<li><code dir="auto">governance_audit.jsonl</code> — compliance trail</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="tools--pre-commit-hook-astro-build-check">Tools — Pre-commit Hook (Astro build check)</h2><a class="sl-anchor-link" href="#tools--pre-commit-hook-astro-build-check"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Tools — Pre-commit Hook (Astro build check)”</span></a></div>
+<p><code dir="auto">scripts/pre-commit.sh</code></p>
+<p>Para evitar errores tontos (como romper el template HTML de una página Astro), cada commit que toque <code dir="auto">apps/ialab-docs/</code> ejecuta automáticamente <code dir="auto">npm run build</code>. Si el build falla, el commit se bloquea.</p>
+<div class="expressive-code"><figure class="frame is-terminal not-content"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#919F9F;--1:#5F636F"># Instalación (una vez por clon):</span></div></div><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">ln</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#82AAFF;--1:#3B61B0">-sf</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">../../scripts/pre-commit.sh</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">.git/hooks/pre-commit</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#919F9F;--1:#5F636F"># Bypass (emergencia):</span></div></div><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">git</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">commit</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#82AAFF;--1:#3B61B0">--no-verify</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="ln -sf ../../scripts/pre-commit.sh .git/hooks/pre-commitgit commit --no-verify"><div></div></button></div></figure></div>
+<p>El hook está versionado en <code dir="auto">scripts/pre-commit.sh</code> y documentado en <code dir="auto">AGENTS.md</code>.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="archivos-modificados">Archivos modificados</h2><a class="sl-anchor-link" href="#archivos-modificados"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Archivos modificados”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Archivo</th><th>Cambio</th></tr></thead><tbody><tr><td><code dir="auto">runtime/memory/qdrant_store.py</code></td><td>search, recall, store_embedding, search_collection</td></tr><tr><td><code dir="auto">runtime/state/live_api.py</code></td><td>Mode switch + command proposal/approve/reject endpoints</td></tr><tr><td><code dir="auto">runtime/llm/router_api.py</code></td><td>Dynamic system prompt via build_system_context()</td></tr><tr><td><code dir="auto">runtime/agent/context_shaper.py</code></td><td>HARD FACTS mode key + semantic_recall stats injection</td></tr><tr><td><code dir="auto">runtime/execution/sandbox_runner.py</code></td><td>EXECUTE v1 policy validation</td></tr><tr><td><code dir="auto">runtime/cognitive/cognitive_history.py</code></td><td>Hook: budget > 90% → incident</td></tr><tr><td><code dir="auto">runtime/routing/routing_history.py</code></td><td>Hook: failures/failovers → incident</td></tr></tbody></table> </article>  </div> </main> </div> </body></html>

@@ -1,0 +1,380 @@
+<!DOCTYPE html><html lang="es" class="dark"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>FASE 12 — Adaptive Learning &amp; Self-Optimization</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"><link rel="stylesheet" href="/_astro/Layout.D-eG25OE.css"><script type="module" src="/_astro/page.BUhsnfhG.js"></script></head> <body class="bg-black text-white font-[Inter] overflow-x-hidden"> <div class="min-h-screen flex"> <!-- SIDEBAR --> <aside class="w-[320px] border-r border-zinc-900 bg-black/90 backdrop-blur sticky top-0 h-screen flex flex-col justify-between"> <div> <!-- LOGO --> <div class="p-10 border-b border-zinc-900"> <a href="/" class="flex justify-center"> <img src="/images/ai-lab-logo.png" alt="AI-LAB" class="w-64 h-auto object-contain"> </a> </div> <!-- NAVIGATION --> <nav class="p-5 space-y-2"> <a href="/" class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200
+  text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400"> <div class="opacity-80 group-hover:opacity-100"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-house h-5 w-5"> <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>  </svg> </div> <span class="font-medium tracking-tight"> Inicio </span> </a> <a href="/architecture" class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200
+  text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400"> <div class="opacity-80 group-hover:opacity-100"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-cpu h-5 w-5"> <path d="M12 20v2"></path><path d="M12 2v2"></path><path d="M17 20v2"></path><path d="M17 2v2"></path><path d="M2 12h2"></path><path d="M2 17h2"></path><path d="M2 7h2"></path><path d="M20 12h2"></path><path d="M20 17h2"></path><path d="M20 7h2"></path><path d="M7 20v2"></path><path d="M7 2v2"></path><rect x="4" y="4" width="16" height="16" rx="2"></rect><rect x="8" y="8" width="8" height="8" rx="1"></rect>  </svg> </div> <span class="font-medium tracking-tight"> Arquitectura </span> </a> <a href="/research" class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200
+  text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400"> <div class="opacity-80 group-hover:opacity-100"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-book-open h-5 w-5"> <path d="M12 7v14"></path><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"></path>  </svg> </div> <span class="font-medium tracking-tight"> Research </span> </a> <a href="/hardware-lab" class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200
+  text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400"> <div class="opacity-80 group-hover:opacity-100"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-server h-5 w-5"> <rect width="20" height="8" x="2" y="2" rx="2" ry="2"></rect><rect width="20" height="8" x="2" y="14" rx="2" ry="2"></rect><line x1="6" x2="6.01" y1="6" y2="6"></line><line x1="6" x2="6.01" y1="18" y2="18"></line>  </svg> </div> <span class="font-medium tracking-tight"> Hardware Lab </span> </a> <a href="/observability" class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200
+  text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400"> <div class="opacity-80 group-hover:opacity-100"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-activity h-5 w-5"> <path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"></path>  </svg> </div> <span class="font-medium tracking-tight"> Observability </span> </a> <a href="/ai-infrastructure" class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200
+  text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400"> <div class="opacity-80 group-hover:opacity-100"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-cpu h-5 w-5"> <path d="M12 20v2"></path><path d="M12 2v2"></path><path d="M17 20v2"></path><path d="M17 2v2"></path><path d="M2 12h2"></path><path d="M2 17h2"></path><path d="M2 7h2"></path><path d="M20 12h2"></path><path d="M20 17h2"></path><path d="M20 7h2"></path><path d="M7 20v2"></path><path d="M7 2v2"></path><rect x="4" y="4" width="16" height="16" rx="2"></rect><rect x="8" y="8" width="8" height="8" rx="1"></rect>  </svg> </div> <span class="font-medium tracking-tight"> AI Infrastructure </span> </a> <a href="/experiments" class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200
+  text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400"> <div class="opacity-80 group-hover:opacity-100"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-wrench h-5 w-5"> <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"></path>  </svg> </div> <span class="font-medium tracking-tight"> Experiments </span> </a> <a href="/projects" class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200
+  text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400"> <div class="opacity-80 group-hover:opacity-100"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-folder-kanban h-5 w-5"> <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path><path d="M8 10v4"></path><path d="M12 10v2"></path><path d="M16 10v6"></path>  </svg> </div> <span class="font-medium tracking-tight"> Proyectos </span> </a> <a href="/skills/" class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200
+  text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400"> <div class="opacity-80 group-hover:opacity-100"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-shield-check h-5 w-5"> <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path><path d="m9 12 2 2 4-4"></path>  </svg> </div> <span class="font-medium tracking-tight"> Skills </span> </a> <a href="/docs" class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200
+  bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 shadow-[0_0_25px_rgba(34,211,238,0.12)]"> <div class="opacity-80 group-hover:opacity-100"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-book-open h-5 w-5"> <path d="M12 7v14"></path><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"></path>  </svg> </div> <span class="font-medium tracking-tight"> Documentación </span> </a> <a href="/blog" class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200
+  text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400"> <div class="opacity-80 group-hover:opacity-100"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-newspaper h-5 w-5"> <path d="M15 18h-5"></path><path d="M18 14h-8"></path><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-4 0v-9a2 2 0 0 1 2-2h2"></path><rect width="8" height="4" x="10" y="6" rx="1"></rect>  </svg> </div> <span class="font-medium tracking-tight"> Blog Técnico </span> </a> <a href="/runbooks" class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200
+  text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400"> <div class="opacity-80 group-hover:opacity-100"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-wrench h-5 w-5"> <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"></path>  </svg> </div> <span class="font-medium tracking-tight"> Runbooks </span> </a> <a href="/services" class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200
+  text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400"> <div class="opacity-80 group-hover:opacity-100"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-server h-5 w-5"> <rect width="20" height="8" x="2" y="2" rx="2" ry="2"></rect><rect width="20" height="8" x="2" y="14" rx="2" ry="2"></rect><line x1="6" x2="6.01" y1="6" y2="6"></line><line x1="6" x2="6.01" y1="18" y2="18"></line>  </svg> </div> <span class="font-medium tracking-tight"> Servicios </span> </a> <a href="/ops" class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200
+  text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400"> <div class="opacity-80 group-hover:opacity-100"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-monitor-smartphone h-5 w-5"> <path d="M18 8V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8"></path><path d="M10 19v-3.96 3.15"></path><path d="M7 19h5"></path><rect width="6" height="10" x="16" y="12" rx="2"></rect>  </svg> </div> <span class="font-medium tracking-tight"> Operations Center </span> </a> <a href="/status" class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200
+  text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400"> <div class="opacity-80 group-hover:opacity-100"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-activity h-5 w-5"> <path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"></path>  </svg> </div> <span class="font-medium tracking-tight"> Estado Vivo </span> </a> <a href="/status/history" class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200
+  text-zinc-300 hover:bg-zinc-900 hover:text-cyan-400"> <div class="opacity-80 group-hover:opacity-100"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-chart-column h-5 w-5"> <path d="M3 3v16a2 2 0 0 0 2 2h16"></path><path d="M18 17V9"></path><path d="M13 17V5"></path><path d="M8 17v-3"></path>  </svg> </div> <span class="font-medium tracking-tight"> Historical Telemetry </span> </a> </nav> </div> <!-- FOOTER --> <div class="p-5"> <div class="rounded-3xl border border-cyan-500/20 bg-zinc-950 p-5 shadow-[0_0_35px_rgba(34,211,238,0.08)]"> <div class="flex items-center justify-between"> <div> <p class="text-xs uppercase tracking-[0.3em] text-zinc-500">
+Runtime
+</p> <div class="mt-3 text-lg font-semibold text-white">
+AI-LAB Operational
+</div> </div> <div class="flex items-center gap-2 text-green-400"> <div class="h-3 w-3 rounded-full bg-green-400 animate-pulse"></div> <span class="text-sm">
+LIVE
+</span> </div> </div> <div class="mt-5 space-y-2 text-sm text-zinc-500"> <div>
+Router · OpenCode · GPUs
+</div> <div>
+Traefik · Qdrant · LM Studio
+</div> </div> </div> </div> </aside> <!-- CONTENT --> <main class="flex-1 overflow-x-hidden"> <div class="mx-auto max-w-7xl px-10 py-10">  <article class="prose prose-invert prose-cyan max-w-4xl"> <p>FASE 12 transforma AI-LAB de un runtime que recuerda y ejecuta bajo control a un
+<strong>sistema que aprende patrones operativos y propone mejoras reales</strong>.</p>
+<p>Regla sagrada: <strong>NO autoejecuta cambios críticos</strong>. Aprende → propone → policy
+valida → Albert aprueba.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="arquitectura">Arquitectura</h2><a class="sl-anchor-link" href="#arquitectura"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Arquitectura”</span></a></div>
+<div class="expressive-code"><link rel="stylesheet" href="/_astro/ec.v4551.css"><script type="module" src="/_astro/ec.0vx5m.js"></script><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">Pattern Learner ──→ Recommendation Engine ──→ Policy Gate ──→ Pending Queue</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">      </span></span><span style="--0:#d6deeb;--1:#403f53">↑                      ↑                      ↑               │</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">  </span></span><span style="--0:#d6deeb;--1:#403f53">Qdrant + JSONL      Context Efficiency    optimizer_policy       │</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                                                              </span></span><span style="--0:#d6deeb;--1:#403f53">Approve/Reject</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                                                                   </span></span><span style="--0:#d6deeb;--1:#403f53">│</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                                                              </span></span><span style="--0:#d6deeb;--1:#403f53">Sandbox Runner</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                                                                   </span></span><span style="--0:#d6deeb;--1:#403f53">│</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                                                              </span></span><span style="--0:#d6deeb;--1:#403f53">Audit Trail</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="Pattern Learner ──→ Recommendation Engine ──→ Policy Gate ──→ Pending Queue      ↑                      ↑                      ↑               │  Qdrant + JSONL      Context Efficiency    optimizer_policy       │                                                              Approve/Reject                                                                   │                                                              Sandbox Runner                                                                   │                                                              Audit Trail"><div></div></button></div></figure></div>
+<div class="sl-heading-wrapper level-h2"><h2 id="120--action-types-bug-fix">12.0 — Action Types (bug fix)</h2><a class="sl-anchor-link" href="#120--action-types-bug-fix"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “12.0 — Action Types (bug fix)”</span></a></div>
+<p><code dir="auto">runtime/autonomous/action_types.py</code></p>
+<p>Constantes compartidas para evitar errores de nombres hardcodeados:</p>
+<div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="python"><code><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">BOOST_MODEL_WEIGHT</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C792EA;--1:#8844AE">=</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">"</span><span style="--0:#ECC48D;--1:#984E4D">boost_model_weight</span><span style="--0:#D9F5DD;--1:#111111">"</span></div></div><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">PENALIZE_MODEL_WEIGHT</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C792EA;--1:#8844AE">=</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">"</span><span style="--0:#ECC48D;--1:#984E4D">penalize_model_weight</span><span style="--0:#D9F5DD;--1:#111111">"</span></div></div><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">INCREASE_SPEED_BIAS</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C792EA;--1:#8844AE">=</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">"</span><span style="--0:#ECC48D;--1:#984E4D">increase_speed_bias</span><span style="--0:#D9F5DD;--1:#111111">"</span></div></div><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">DECREASE_CONTEXT_BUDGET</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C792EA;--1:#8844AE">=</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">"</span><span style="--0:#ECC48D;--1:#984E4D">decrease_context_budget</span><span style="--0:#D9F5DD;--1:#111111">"</span></div></div><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">TUNE_RECALL_CHARS</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C792EA;--1:#8844AE">=</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">"</span><span style="--0:#ECC48D;--1:#984E4D">tune_recall_chars</span><span style="--0:#D9F5DD;--1:#111111">"</span></div></div><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">TUNE_RECALL_SCORE</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C792EA;--1:#8844AE">=</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">"</span><span style="--0:#ECC48D;--1:#984E4D">tune_recall_score</span><span style="--0:#D9F5DD;--1:#111111">"</span></div></div><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">TUNE_RECALL_MEMORIES</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C792EA;--1:#8844AE">=</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">"</span><span style="--0:#ECC48D;--1:#984E4D">tune_recall_memories</span><span style="--0:#D9F5DD;--1:#111111">"</span></div></div><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">TUNE_PROFILE_MAX_TOKENS</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C792EA;--1:#8844AE">=</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">"</span><span style="--0:#ECC48D;--1:#984E4D">tune_profile_max_tokens</span><span style="--0:#D9F5DD;--1:#111111">"</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="BOOST_MODEL_WEIGHT = &#x22;boost_model_weight&#x22;PENALIZE_MODEL_WEIGHT = &#x22;penalize_model_weight&#x22;INCREASE_SPEED_BIAS = &#x22;increase_speed_bias&#x22;DECREASE_CONTEXT_BUDGET = &#x22;decrease_context_budget&#x22;TUNE_RECALL_CHARS = &#x22;tune_recall_chars&#x22;TUNE_RECALL_SCORE = &#x22;tune_recall_score&#x22;TUNE_RECALL_MEMORIES = &#x22;tune_recall_memories&#x22;TUNE_PROFILE_MAX_TOKENS = &#x22;tune_profile_max_tokens&#x22;"><div></div></button></div></figure></div>
+<p><code dir="auto">optimizer_policy.py</code> y <code dir="auto">runtime_optimizer.py</code> ahora importan desde aquí,
+eliminando el bug donde <code dir="auto">boost_speed_weight</code> → <code dir="auto">boost_model_weight</code>.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="121--pattern-learning-engine">12.1 — Pattern Learning Engine</h2><a class="sl-anchor-link" href="#121--pattern-learning-engine"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “12.1 — Pattern Learning Engine”</span></a></div>
+<p><code dir="auto">runtime/memory/pattern_learner.py</code></p>
+<div class="sl-heading-wrapper level-h3"><h3 id="detectores-existentes-mejorados">Detectores existentes (mejorados)</h3><a class="sl-anchor-link" href="#detectores-existentes-mejorados"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Detectores existentes (mejorados)”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Patrón</th><th>Fuente</th><th>Dispara cuando…</th></tr></thead><tbody><tr><td><code dir="auto">repeated_node_failure</code></td><td>Qdrant incidents</td><td>≥2 fallos críticos en mismo nodo</td></tr><tr><td><code dir="auto">high_critical_ratio</code></td><td>Qdrant incidents</td><td>>30% de incidents son critical</td></tr><tr><td><code dir="auto">peak_failure_hour</code></td><td>Qdrant incidents</td><td>Una hora UTC concentra >20%</td></tr><tr><td><code dir="auto">latency_trends</code></td><td>routing_history</td><td>Deriva >10% en latencia reciente</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h3"><h3 id="nuevos-detectores-fase-12">Nuevos detectores FASE 12</h3><a class="sl-anchor-link" href="#nuevos-detectores-fase-12"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Nuevos detectores FASE 12”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Patrón</th><th>Fuente</th><th>Dispara cuando…</th></tr></thead><tbody><tr><td><code dir="auto">high_budget_recurring</code></td><td>cognitive_history.jsonl</td><td>budget_used > 80% en ≥3 de últimas 10 entradas</td></tr><tr><td><code dir="auto">recall_bloat</code></td><td>cognitive_history.jsonl</td><td>recall_chars medio > 2000</td></tr><tr><td><code dir="auto">degrading_model</code></td><td>routing_history.jsonl</td><td>success_rate reciente cae >10% vs global</td></tr><tr><td><code dir="auto">high_latency_model</code></td><td>routing_history.jsonl</td><td>latencia reciente > 20s y sube >15%</td></tr><tr><td><code dir="auto">recurring_low_recall_quality</code></td><td>cognitive_history + incidents</td><td>quality_score &#x3C; 0.5 recurrente</td></tr><tr><td><code dir="auto">noisy_incidents</code></td><td>Qdrant incidents</td><td>>50% de incidents son severidad info</td></tr></tbody></table>
+<p>Entry point: <code dir="auto">run_all(days=7)</code> → lista de patrones.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="122--learning-metrics-api">12.2 — Learning Metrics API</h2><a class="sl-anchor-link" href="#122--learning-metrics-api"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “12.2 — Learning Metrics API”</span></a></div>
+<p>Endpoints en Live API (<code dir="auto">:8084</code>):</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Endpoint</th><th>Descripción</th></tr></thead><tbody><tr><td><code dir="auto">GET /api/learning/patterns</code></td><td>Patrones detectados (run_all)</td></tr><tr><td><code dir="auto">GET /api/learning/recommendations</code></td><td>Recomendaciones generadas</td></tr><tr><td><code dir="auto">GET /api/learning/model-performance</code></td><td>Rendimiento por modelo</td></tr><tr><td><code dir="auto">GET /api/learning/context-efficiency</code></td><td>Eficiencia de contexto</td></tr><tr><td><code dir="auto">GET /api/learning/recall-threshold?collection=&#x26;q=&#x26;limit=</code></td><td>Threshold óptimo de recall</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h2"><h2 id="123--recommendation-engine">12.3 — Recommendation Engine</h2><a class="sl-anchor-link" href="#123--recommendation-engine"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “12.3 — Recommendation Engine”</span></a></div>
+<p><code dir="auto">runtime/learning/recommendation_engine.py</code></p>
+<p>Convierte patrones + eficiencia en acciones propuestas:</p>
+<div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="python"><code><div class="ec-line"><div class="code"><span style="--0:#B2CCD6;--1:#096E72">generate_recommendations</span><span style="--0:#D6DEEB;--1:#403F53">(</span><span style="--0:#82AAFF;--1:#3B61B0">patterns</span><span style="--0:#D9F5DD;--1:#111111">,</span><span style="--0:#82AAFF;--1:#3B61B0"> efficiency_results</span><span style="--0:#D9F5DD;--1:#111111">,</span><span style="--0:#82AAFF;--1:#3B61B0"> model_performance</span><span style="--0:#D6DEEB;--1:#403F53">)</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="generate_recommendations(patterns, efficiency_results, model_performance)"><div></div></button></div></figure></div>
+<p>Cada recomendación incluye:</p>
+<ul>
+<li><code dir="auto">evidence</code> — fuentes concretas (routing_history: 7 requests > 60s)</li>
+<li><code dir="auto">confidence</code> — 0-1 basado en datos observados</li>
+<li><code dir="auto">risk</code> — low / medium / high</li>
+<li><code dir="auto">expected_impact</code> — estimación cualitativa</li>
+<li><code dir="auto">rollback</code> — cómo deshacer el cambio</li>
+</ul>
+<p>Mapeo patrón → acción:</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Patrón</th><th>Acción propuesta</th></tr></thead><tbody><tr><td><code dir="auto">high_budget_recurring</code></td><td><code dir="auto">tune_recall_chars</code> — reducir max_chars</td></tr><tr><td><code dir="auto">recall_bloat</code></td><td><code dir="auto">tune_recall_chars</code> — reducir chars</td></tr><tr><td><code dir="auto">degrading_model</code></td><td><code dir="auto">penalize_model_weight</code> — bajar peso</td></tr><tr><td><code dir="auto">high_latency_model</code></td><td><code dir="auto">penalize_model_weight</code> — bajar peso</td></tr><tr><td><code dir="auto">repeated_node_failure</code></td><td><code dir="auto">increase_speed_bias</code> — evitar nodo</td></tr><tr><td><code dir="auto">high_critical_ratio</code></td><td><code dir="auto">decrease_context_budget</code> — reducir carga</td></tr><tr><td><code dir="auto">fast_bloat</code> (eficiencia)</td><td><code dir="auto">tune_profile_max_tokens</code> — compactar fast</td></tr><tr><td><code dir="auto">reasoning_starved</code> (eficiencia)</td><td><code dir="auto">tune_recall_memories</code> — ampliar reasoning</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h2"><h2 id="124--queue-integration">12.4 — Queue Integration</h2><a class="sl-anchor-link" href="#124--queue-integration"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “12.4 — Queue Integration”</span></a></div>
+<p><code dir="auto">runtime_optimizer.py</code> actualizado con pipeline completo:</p>
+<ol>
+<li><code dir="auto">_read_sources()</code> → routing + cognitive + model perf</li>
+<li><code dir="auto">pattern_learner.run_all()</code> → patrones</li>
+<li><code dir="auto">context_efficiency.batch_evaluate()</code> → scores</li>
+<li><code dir="auto">recommendation_engine.generate_recommendations()</code> → propuestas</li>
+<li><code dir="auto">_queue_recommendations()</code> → policy gate + pending queue</li>
+<li><code dir="auto">_evaluate_outcomes()</code> → revisar ajustes aplicados hace >1h</li>
+</ol>
+<div class="sl-heading-wrapper level-h2"><h2 id="125--adaptive-profile-tuning">12.5 — Adaptive Profile Tuning</h2><a class="sl-anchor-link" href="#125--adaptive-profile-tuning"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “12.5 — Adaptive Profile Tuning”</span></a></div>
+<p>Ajustes permitidos (inicialmente):</p>
+<ul>
+<li><code dir="auto">max_tokens</code> por perfil (fast/coding/reasoning/general)</li>
+<li><code dir="auto">recall max_chars</code> — chars de recall inyectados</li>
+<li><code dir="auto">recall min_score</code> — umbral de similitud</li>
+<li><code dir="auto">recall max_memories</code> — número máximo de memorias</li>
+</ul>
+<p>No permitido todavía: temperatura, modelo principal, systemd, Docker, red, Cloudflare.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="126--context-efficiency-scoring">12.6 — Context Efficiency Scoring</h2><a class="sl-anchor-link" href="#126--context-efficiency-scoring"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “12.6 — Context Efficiency Scoring”</span></a></div>
+<p><code dir="auto">runtime/learning/context_efficiency.py</code></p>
+<p>Mide si el contexto inyectado aporta valor:</p>
+<div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">efficiency = utility / cost</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="efficiency = utility / cost"><div></div></button></div></figure></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Etiqueta</th><th>Significado</th></tr></thead><tbody><tr><td><code dir="auto">good</code></td><td>efficiency ≥ 0.5</td></tr><tr><td><code dir="auto">fair</code></td><td>efficiency ≥ 0.2</td></tr><tr><td><code dir="auto">poor</code></td><td>efficiency &#x3C; 0.2</td></tr><tr><td><code dir="auto">failed</code></td><td>request fallida</td></tr></tbody></table>
+<p>Casos detectables:</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Detección</th><th>Qué significa</th><th>Recomendación</th></tr></thead><tbody><tr><td><code dir="auto">overcontext</code></td><td>Mucho contexto + mala calidad</td><td>Reducir recall chars o subir min_score</td></tr><tr><td><code dir="auto">undercontext</code></td><td>Poco contexto + fallo</td><td>Ampliar recall limit</td></tr><tr><td><code dir="auto">fast_bloat</code></td><td>Fast con contexto excesivo</td><td>Compactar perfil fast</td></tr><tr><td><code dir="auto">reasoning_starved</code></td><td>Reasoning con baja calidad</td><td>Subir budget de recall</td></tr><tr><td><code dir="auto">wasted_context</code></td><td>Budget alto + calidad baja</td><td>Reducir contexto total</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h2"><h2 id="127--recall-threshold-optimizer">12.7 — Recall Threshold Optimizer</h2><a class="sl-anchor-link" href="#127--recall-threshold-optimizer"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “12.7 — Recall Threshold Optimizer”</span></a></div>
+<p>Funciones en <code dir="auto">quality_assessment.py</code>:</p>
+<div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="python"><code><div class="ec-line"><div class="code"><span style="--0:#B2CCD6;--1:#096E72">optimize_recall_threshold</span><span style="--0:#D6DEEB;--1:#403F53">(</span><span style="--0:#82AAFF;--1:#3B61B0">results</span><span style="--0:#D9F5DD;--1:#111111">,</span><span style="--0:#82AAFF;--1:#3B61B0"> current_threshold</span><span style="--0:#D9F5DD;--1:#111111">,</span><span style="--0:#82AAFF;--1:#3B61B0"> </span><span style="--0:#D7DBE0;--1:#403F53">precision_target</span><span style="--0:#C792EA;--1:#8844AE">=</span><span style="--0:#F78C6C;--1:#AA0982">0.7</span><span style="--0:#D6DEEB;--1:#403F53">)</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="optimize_recall_threshold(results, current_threshold, precision_target=0.7)"><div></div></button></div></figure></div>
+<p>Analiza la distribución de scores para encontrar el threshold óptimo que
+maximiza precisión mientras minimiza ruido.</p>
+<ul>
+<li>Evalúa thresholds candidatos incluyendo puntos de corte naturales (score gaps > 0.05)</li>
+<li>Retorna <code dir="auto">suggested_threshold</code>, <code dir="auto">expected_precision</code>, <code dir="auto">expected_noise</code></li>
+<li>Se puede consultar vía <code dir="auto">GET /api/learning/recall-threshold</code></li>
+</ul>
+<p>Además, <code dir="auto">qdrant_store.recall()</code> ahora acepta parámetro <code dir="auto">threshold</code> (default 0.0)
+que se propaga a <code dir="auto">search_collection()</code>.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="128--learning-dashboard">12.8 — Learning Dashboard</h2><a class="sl-anchor-link" href="#128--learning-dashboard"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “12.8 — Learning Dashboard”</span></a></div>
+<p><code dir="auto">/ops/learning</code> — mismo estilo visual que <code dir="auto">/ops/memory</code> y <code dir="auto">/ops/commands</code>:</p>
+<ul>
+<li><strong>Patrones Detectados</strong> — tarjetas por severidad con evidencia y recomendación</li>
+<li><strong>Recomendaciones</strong> — tabla con acción, target, riesgo, confianza, impacto esperado y rollback</li>
+<li><strong>Eficiencia de Contexto</strong> — promedio de efficiency, cost, utility, detecciones</li>
+<li><strong>Recall Threshold</strong> — threshold actual vs sugerido, precisión esperada, contaminación</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="129--audit--explainability">12.9 — Audit &#x26; Explainability</h2><a class="sl-anchor-link" href="#129--audit--explainability"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “12.9 — Audit &#x26; Explainability”</span></a></div>
+<p>Cada recomendación incluye:</p>
+<div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="json"><code><div class="ec-line"><div class="code"><span style="--0:#D6DEEB;--1:#403F53">{</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#096E72">"evidence"</span><span style="--0:#D6DEEB;--1:#403F53">: [</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#D9F5DD;--1:#111111">"</span><span style="--0:#C789D6;--1:#7C5686">routing_history: 7 fast requests > 60s</span><span style="--0:#D9F5DD;--1:#111111">"</span><span style="--0:#D6DEEB;--1:#403F53">,</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#D9F5DD;--1:#111111">"</span><span style="--0:#C789D6;--1:#7C5686">cognitive_history: avg prompt_tokens 1275</span><span style="--0:#D9F5DD;--1:#111111">"</span><span style="--0:#D6DEEB;--1:#403F53">,</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#D9F5DD;--1:#111111">"</span><span style="--0:#C789D6;--1:#7C5686">incidents: 3 high_latency</span><span style="--0:#D9F5DD;--1:#111111">"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">  </span></span><span style="--0:#D6DEEB;--1:#403F53">],</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#096E72">"expected_impact"</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#D9F5DD;--1:#111111">"</span><span style="--0:#C789D6;--1:#7C5686">reduce latency 10-20%</span><span style="--0:#D9F5DD;--1:#111111">"</span><span style="--0:#D6DEEB;--1:#403F53">,</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#096E72">"rollback"</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#D9F5DD;--1:#111111">"</span><span style="--0:#C789D6;--1:#7C5686">restore previous profile config</span><span style="--0:#D9F5DD;--1:#111111">"</span></div></div><div class="ec-line"><div class="code"><span style="--0:#D6DEEB;--1:#403F53">}</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="{  &#x22;evidence&#x22;: [    &#x22;routing_history: 7 fast requests > 60s&#x22;,    &#x22;cognitive_history: avg prompt_tokens 1275&#x22;,    &#x22;incidents: 3 high_latency&#x22;  ],  &#x22;expected_impact&#x22;: &#x22;reduce latency 10-20%&#x22;,  &#x22;rollback&#x22;: &#x22;restore previous profile config&#x22;}"><div></div></button></div></figure></div>
+<p>Todas las recomendaciones pasan por:</p>
+<ol>
+<li><code dir="auto">optimizer_policy.validate_action()</code> — policy gate</li>
+<li><code dir="auto">pending_adjustments.create_pending()</code> — cola de aprobación</li>
+<li><code dir="auto">governance_audit.jsonl</code> — compliance trail</li>
+<li>Qdrant incidents — trazabilidad semántica</li>
+</ol>
+<div class="sl-heading-wrapper level-h2"><h2 id="archivos-nuevos">Archivos nuevos</h2><a class="sl-anchor-link" href="#archivos-nuevos"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Archivos nuevos”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Archivo</th><th>Propósito</th></tr></thead><tbody><tr><td><code dir="auto">runtime/autonomous/action_types.py</code></td><td>Constantes de acciones (evita bugs)</td></tr><tr><td><code dir="auto">runtime/learning/context_efficiency.py</code></td><td>Context efficiency scoring</td></tr><tr><td><code dir="auto">runtime/learning/recommendation_engine.py</code></td><td>Patrones → recomendaciones</td></tr><tr><td><code dir="auto">apps/ialab-docs/src/pages/ops/learning.astro</code></td><td>Learning dashboard</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h2"><h2 id="archivos-modificados">Archivos modificados</h2><a class="sl-anchor-link" href="#archivos-modificados"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Archivos modificados”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Archivo</th><th>Cambio</th></tr></thead><tbody><tr><td><code dir="auto">runtime/autonomous/optimizer_policy.py</code></td><td>Usar action_types en vez de strings</td></tr><tr><td><code dir="auto">runtime/autonomous/runtime_optimizer.py</code></td><td>Pipeline completo + evaluate_outcomes</td></tr><tr><td><code dir="auto">runtime/memory/pattern_learner.py</code></td><td>+6 nuevos detectores + run_all()</td></tr><tr><td><code dir="auto">runtime/memory/quality_assessment.py</code></td><td>+optimize_recall_threshold()</td></tr><tr><td><code dir="auto">runtime/memory/qdrant_store.py</code></td><td>+threshold param en recall()</td></tr><tr><td><code dir="auto">runtime/state/live_api.py</code></td><td>+5 endpoints learning API</td></tr></tbody></table> </article>  </div> </main> </div> </body></html>
