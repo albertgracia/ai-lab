@@ -214,6 +214,22 @@ FASE 11: Cognitive Operations Runtime
 | `runtime/modes/mode_manager.py` | Persistent mode state with transition validation |
 | `runtime/execution/execute_v1_policy.py` | EXECUTE v1 whitelist, blocked commands, dry-run rules |
 
+## Tools — Pre-commit Hook (Astro build check)
+
+`scripts/pre-commit.sh`
+
+Para evitar errores tontos (como romper el template HTML de una página Astro), cada commit que toque `apps/ialab-docs/` ejecuta automáticamente `npm run build`. Si el build falla, el commit se bloquea.
+
+```bash
+# Instalación (una vez por clon):
+ln -sf ../../scripts/pre-commit.sh .git/hooks/pre-commit
+
+# Bypass (emergencia):
+git commit --no-verify
+```
+
+El hook está versionado en `scripts/pre-commit.sh` y documentado en `AGENTS.md`.
+
 ## Archivos modificados
 
 | Archivo | Cambio |
