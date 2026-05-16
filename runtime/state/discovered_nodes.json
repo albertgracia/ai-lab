@@ -1,5 +1,5 @@
 {
-  "updated_at": 1778881232,
+  "updated_at": 1778933723,
   "backend": "lmstudio",
   "nodes": [
     {
@@ -7,7 +7,7 @@
       "port": 1234,
       "backend": "lmstudio",
       "online": true,
-      "latency_ms": 2.94,
+      "latency_ms": 2.0,
       "models": [
         "qwen2.5-coder-14b-instruct",
         "llama-3.1-8b-instruct",
@@ -21,36 +21,20 @@
         "memory",
         "reasoning"
       ],
-      "discovered_at": 1778881227,
+      "discovered_at": 1778933716,
       "status": "online"
     },
     {
       "host": "192.168.1.60",
       "port": 1234,
       "backend": "lmstudio",
-      "online": true,
-      "latency_ms": 1.86,
-      "models": [
-        "qwen2.5-coder-32b-instruct",
-        "qwen3-14b-claude-sonnet-4.5-reasoning-distill",
-        "moondream2-20250414",
-        "qwen2.5-coder-14b-instruct",
-        "text-embedding-nomic-embed-text-v2-moe",
-        "text-embedding-nomic-embed-text-v1.5"
-      ],
-      "capabilities": [
-        "backend",
-        "coding",
-        "embeddings",
-        "fast",
-        "large-context",
-        "memory",
-        "multimodal",
-        "reasoning",
-        "vision"
-      ],
-      "discovered_at": 1778881227,
-      "status": "online"
+      "online": false,
+      "latency_ms": null,
+      "models": [],
+      "capabilities": [],
+      "discovered_at": 1778933716,
+      "status": "offline",
+      "error": "HTTPConnectionPool(host='192.168.1.60', port=1234): Max retries exceeded with url: /v1/models (Caused by NewConnectionError(\"HTTPConnection(host='192.168.1.60', port=1234): Failed to establish a new connection: [Errno 113] No route to host\"))"
     },
     {
       "host": "192.168.1.250",
@@ -60,9 +44,9 @@
       "latency_ms": null,
       "models": [],
       "capabilities": [],
-      "discovered_at": 1778881227,
+      "discovered_at": 1778933718,
       "status": "offline",
-      "error": "HTTPConnectionPool(host='192.168.1.250', port=1234): Max retries exceeded with url: /v1/models (Caused by ConnectTimeoutError(<HTTPConnection(host='192.168.1.250', port=1234) at 0x7e4ab48a2360>, 'Connection to 192.168.1.250 timed out. (connect timeout=5)'))"
+      "error": "HTTPConnectionPool(host='192.168.1.250', port=1234): Max retries exceeded with url: /v1/models (Caused by ConnectTimeoutError(<HTTPConnection(host='192.168.1.250', port=1234) at 0x7fb25a7767a0>, 'Connection to 192.168.1.250 timed out. (connect timeout=5)'))"
     }
   ]
 }
