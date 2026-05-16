@@ -128,29 +128,81 @@ import EventStream from "../../components/EventStream.astro";
   </section>
 </Layout>
 <script>
-  async function refresh() {
+  const API_HOST = window.location.hostname === "ai-lab.labrazahome.com" || window.location.hostname.includes("pages.dev")
+    ? ""
+    : "https://blog-ai-lab.labrazahome.com";
+
+  const CF_HEADERS = API_HOST
+    ? {"CF-Access-Client-Id": "3093bf6c93d1c8dbb6ab65db21941ac0.access", "CF-Access-Client-Secret": "e54c05bb3496e0ff55c55b6af63c456aa6b7d5171a74f42aeebd3facefe30a1c"}
+    : {};
+
+  async function api(path) {
     try {
-      const isPublic = window.location.hostname === "ai-lab.labrazahome.com" || window.location.hostname.includes("pages.dev");
-      const apiUrl = isPublic ? "/api/analytics.json" : "https://blog-ai-lab.labrazahome.com/api/analytics";
-      const res = await fetch(apiUrl, {
-        cache: "no-store",
-        headers: isPublic ? {} : {"CF-Access-Client-Id": "3093bf6c93d1c8dbb6ab65db21941ac0.access", "CF-Access-Client-Secret": "e54c05bb3496e0ff55c55b6af63c456aa6b7d5171a74f42aeebd3facefe30a1c"}
-      });
-      const d = await res.json();
-      const h = d.health || {};
-      const m = d.metrics || {};
-      const score = h.score || 0;
-      document.getElementById("health-value").textContent = score;
-      document.getElementById("health-level").textContent = h.level || "--";
-      document.getElementById("health-reasons").innerHTML = (h.reasons || []).map(r => "<div>• " + r + "</div>").join("") || "<div class='text-emerald-400'>Sin problemas</div>";
-      document.getElementById("stat-nodes").textContent = (m.online_nodes || 0) + "/" + (m.total_nodes || 0);
-      document.getElementById("stat-gpus").textContent = (m.online_nodes || 0) + "/" + (m.total_nodes || 0);
-      document.getElementById("stat-requests").textContent = m.requests_total || 0;
-      document.getElementById("stat-streams").textContent = m.streams_total || 0;
-      document.getElementById("stat-latency").textContent = Math.round(m.last_latency_ms || 0) + "ms";
-      document.getElementById("stat-errors").textContent = m.errors_total || 0;
-    } catch {}
+      const url = API_HOST ? API_HOST + path : path;
+      const res = await fetch(url, { cache: "no-store", headers: CF_HEADERS });
+      if (!res.ok) return null;
+      return await res.json();
+    } catch { return null; }
   }
-  refresh();
-  setInterval(refresh, 8000);
+
+  function $(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val ?? "--";
+  }
+
+  async function refreshAnalytics() {
+    const d = await api("/api/analytics");
+    if (!d) return;
+    const h = d.health || {};
+    const m = d.metrics || {};
+    $("health-value", h.score || 0);
+    $("health-level", h.level || "--");
+    document.getElementById("health-reasons").innerHTML = (h.reasons || []).map(r => "<div>• " + r + "</div>").join("") || "<div class='text-emerald-400'>Sin problemas</div>";
+    $("stat-nodes", (m.online_nodes || 0) + "/" + (m.total_nodes || 0));
+    $("stat-gpus", m.gpu_count + " GPUs" || (m.total_nodes || 0) + " nodes");
+    $("stat-requests", m.requests_total || 0);
+    $("stat-streams", m.streams_total || 0);
+    $("stat-latency", Math.round(m.last_latency_ms || 0) + "ms");
+    $("stat-errors", m.errors_total || 0);
+    $("stat-sessions", d.sessions?.active_sessions || 0);
+    $("stat-routing", d.routing?.total_routes || 0);
+  }
+
+  async function refreshWatchdog() {
+    const d = await api("/api/watchdog");
+    if (!d || !d.checks) return;
+    for (const [key, val] of Object.entries(d.checks)) {
+      $(key === "live_api" ? "wd-live-api" : "wd-" + key, val ? "ok" : "fail");
+    }
+  }
+
+  async function refreshRuntime() {
+    const [opt, conf, pending, aff, adj] = await Promise.all([
+      api("/api/runtime-optimizer"),
+      api("/api/runtime-confidence"),
+      api("/api/runtime-pending-actions"),
+      api("/api/runtime-affinity"),
+      api("/api/runtime-adjustments"),
+    ]);
+    if (opt) $("auto-recs", opt.recommendations_count || 0);
+    if (conf && conf.models) {
+      const vals = Object.values(conf.models).map(m => m.confidence || 0);
+      $("auto-conf-avg", vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2) : "--");
+    }
+    if (pending) {
+      $("pending-list", pending.pending + " acciones pendientes");
+      document.getElementById("pending-list").className = pending.pending > 0
+        ? "mt-4 rounded-xl border border-orange-500/50 bg-zinc-900 p-3 text-orange-300"
+        : "mt-4 rounded-xl border border-zinc-800 p-3 text-zinc-500";
+    }
+    if (aff) $("auto-affinity", aff.total_sessions || 0);
+    if (adj) $("auto-actions", adj.length || 0);
+  }
+
+  refreshAnalytics();
+  refreshWatchdog();
+  refreshRuntime();
+  setInterval(refreshAnalytics, 8000);
+  setInterval(refreshWatchdog, 15000);
+  setInterval(refreshRuntime, 30000);
 </script>
