@@ -601,3 +601,65 @@ async def chat_completions(request: Request):
             },
             headers=headers,
         )
+
+
+# ═══════════════════════════════════════════════════════════════════
+# DIA 3 — Cognitive Memory Recall API
+# ═══════════════════════════════════════════════════════════════════
+
+@app.get("/api/memory/search")
+async def api_memory_search(collection: str = "routing_history", q: str = "", limit: int = 5):
+    """Semantic search across a Qdrant collection.
+
+    Args:
+        collection: one of routing_history, cognitive_history, optimizer_history,
+                    incidents, runtime_snapshots, working_memory
+        q: search query text
+        limit: max results (default 5)
+    """
+    from runtime.memory.qdrant_store import search_collection as _sc
+    from runtime.memory.qdrant_collections import COLLECTION_SCHEMAS
+
+    valid = set(COLLECTION_SCHEMAS.keys())
+    if collection not in valid:
+        return JSONResponse({
+            "error": f"Invalid collection. Valid: {sorted(valid)}"
+        }, status_code=400)
+
+    results = _sc(collection, q, limit=limit) if q else []
+    return {
+        "collection": collection,
+        "query": q,
+        "results": results,
+        "count": len(results),
+    }
+
+
+@app.get("/api/incidents/search")
+async def api_incidents_search(q: str = "", limit: int = 10, severity: str = ""):
+    """Search incidents collection, optionally filtered by severity."""
+    from runtime.memory.qdrant_store import search_collection as _sc
+
+    results = _sc("incidents", q, limit=limit) if q else []
+    if severity and results:
+        results = [r for r in results if r.get("payload", {}).get("severity") == severity]
+    return {
+        "collection": "incidents",
+        "query": q,
+        "severity_filter": severity,
+        "results": results,
+        "count": len(results),
+    }
+
+
+@app.get("/api/runtime/recall")
+async def api_runtime_recall(q: str = "", limit: int = 3):
+    """Cross-collection cognitive recall across routing, cognitive, incidents."""
+    from runtime.memory.qdrant_store import recall as _recall
+
+    results = _recall(q, limit=limit) if q else []
+    return {
+        "query": q,
+        "results": results,
+        "count": len(results),
+    }

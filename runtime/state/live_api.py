@@ -178,6 +178,12 @@ class APIHandler(BaseHTTPRequestHandler):
             self._json(_watchdog())
         elif self.path == "/api/events":
             self._sse()
+        elif self.path.startswith("/api/memory/search"):
+            self._handle_memory_search()
+        elif self.path.startswith("/api/incidents/search"):
+            self._handle_incidents_search()
+        elif self.path.startswith("/api/runtime/recall"):
+            self._handle_runtime_recall()
         else: self._send_error(404)
     def do_POST(self):
         parsed = urllib.parse.urlparse(self.path)
@@ -261,6 +267,56 @@ class APIHandler(BaseHTTPRequestHandler):
     def _send_error(self, code, msg="Not Found"):
         self.send_response(code); self.end_headers(); self.wfile.write(json.dumps({"error":msg}).encode())
     def log_message(self, fmt, *args): pass
+
+    # ── Memory Recall handlers (DIA 3) ──────────────────────────────
+
+    def _parse_qs(self) -> dict:
+        parsed = urllib.parse.urlparse(self.path)
+        return urllib.parse.parse_qs(parsed.query)
+
+    def _handle_memory_search(self):
+        try:
+            from runtime.memory.qdrant_store import search_collection as _sc
+            from runtime.memory.qdrant_collections import COLLECTION_SCHEMAS
+            qs = self._parse_qs()
+            collection = qs.get("collection", ["routing_history"])[0]
+            query = qs.get("q", [""])[0]
+            limit = int(qs.get("limit", ["5"])[0])
+            valid = set(COLLECTION_SCHEMAS.keys())
+            if collection not in valid:
+                self._json({"error": f"Invalid collection. Valid: {sorted(valid)}"})
+                return
+            results = _sc(collection, query, limit=limit) if query else []
+            self._json({"collection": collection, "query": query, "results": results, "count": len(results)})
+        except ImportError:
+            self._json({"error": "qdrant_store not available"})
+
+    def _handle_incidents_search(self):
+        try:
+            from runtime.memory.qdrant_store import search_collection as _sc
+            qs = self._parse_qs()
+            query = qs.get("q", [""])[0]
+            limit = int(qs.get("limit", ["10"])[0])
+            severity = qs.get("severity", [""])[0]
+            results = _sc("incidents", query, limit=limit) if query else []
+            if severity and results:
+                results = [r for r in results if r.get("payload", {}).get("severity") == severity]
+            self._json({"collection": "incidents", "query": query, "severity_filter": severity, "results": results, "count": len(results)})
+        except ImportError:
+            self._json({"error": "qdrant_store not available"})
+
+    def _handle_runtime_recall(self):
+        try:
+            from runtime.memory.qdrant_store import recall as _recall
+            qs = self._parse_qs()
+            query = qs.get("q", [""])[0]
+            limit = int(qs.get("limit", ["3"])[0])
+            results = _recall(query, limit=limit) if query else []
+            self._json({"query": query, "results": results, "count": len(results)})
+        except ImportError:
+            self._json({"error": "qdrant_store not available"})
+
+    # ─────────────────────────────────────────────────────────────────
 
 def run():
     server = ThreadingHTTPServer((HOST, PORT), APIHandler)
