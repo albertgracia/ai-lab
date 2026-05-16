@@ -194,6 +194,8 @@ class APIHandler(BaseHTTPRequestHandler):
             self._handle_get_mode()
         elif self.path == "/api/commands/pending":
             self._handle_pending_commands()
+        elif self.path == "/api/commands/history":
+            self._handle_commands_history()
         else: self._send_error(404)
     def do_POST(self):
         parsed = urllib.parse.urlparse(self.path)
@@ -371,6 +373,16 @@ class APIHandler(BaseHTTPRequestHandler):
         pending = [p for p in proposals if p.get("status") == "pending"]
         self._json({"total": len(pending), "proposals": pending})
 
+    def _handle_commands_history(self):
+        qs = self._parse_qs()
+        status_filter = qs.get("status", [])
+        limit = int(qs.get("limit", [100])[0])
+        proposals = _load_proposals()
+        proposals.sort(key=lambda p: p.get("created_at", 0), reverse=True)
+        if status_filter:
+            proposals = [p for p in proposals if p.get("status") in status_filter]
+        self._json({"total": len(proposals), "limit": limit, "proposals": proposals[:limit]})
+
     def _handle_propose_command(self):
         length = int(self.headers.get("Content-Length", 0))
         if length == 0:
@@ -418,11 +430,12 @@ class APIHandler(BaseHTTPRequestHandler):
                 self._json({"error": f"EXECUTE v1 policy blocked: {reason}", "proposal_id": adj_id})
                 return
             result = run_safe_command(mode, found["command"], "pilot")
-            found["status"] = "executed"
+            exit_code = result.get("returncode", -1)
+            found["status"] = "failed" if exit_code != 0 else "executed"
             found["approved_at"] = int(_time.time())
             found["result"] = {
-                "success": result.get("returncode", -1) == 0,
-                "exit_code": result.get("returncode"),
+                "success": exit_code == 0,
+                "exit_code": exit_code,
                 "output": result.get("stdout", "")[:2000],
                 "errors": result.get("stderr", "")[:500],
             }

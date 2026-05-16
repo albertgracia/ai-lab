@@ -214,6 +214,47 @@ FASE 11: Cognitive Operations Runtime
 | `runtime/modes/mode_manager.py` | Persistent mode state with transition validation |
 | `runtime/execution/execute_v1_policy.py` | EXECUTE v1 whitelist, blocked commands, dry-run rules |
 
+## 11.9 — Command History & Audit Dashboard
+
+`GET /api/commands/history` en Live API (`:8084`) + `/ops/commands`
+
+Endpoint que retorna **todas** las propuestas de comandos (no solo pendientes), ordenadas por fecha descendente:
+
+```
+GET /api/commands/history?status=executed&status=failed&limit=50
+```
+
+Parámetros opcionales:
+- `status` — filtro por estado (admite múltiples: `?status=executed&status=failed`)
+- `limit` — máximo de resultados (default 100)
+
+### Estados granularizados
+
+| Estado | Significado |
+|---|---|
+| `pending` | Propuesto por el LLM, pendiente de aprobación |
+| `executed` | Aprobado y ejecutado con éxito (exit code 0) |
+| `failed` | Aprobado pero falló en ejecución (exit code ≠ 0) |
+| `rejected` | Rechazado por el operador |
+| `rolled_back` | Reservado para futura capacidad de rollback |
+
+El approve handler ahora distingue `executed` vs `failed` según `returncode`.
+
+### Dashboard visual
+
+`/ops/commands` — misma línea visual que `/ops/memory`:
+- Tabs de filtro: Todas / Pendientes / Ejecutadas / Falladas / Rechazadas
+- Tabla expandible: cada fila muestra estado, comando, riesgo, fecha
+- Click para ver detalle: comando completo, resultado (stdout/stderr), timestamps
+- Badge de resumen: total + desglose por estado
+
+### Dual audit
+
+Cada operación se registra en:
+- `runtime/state/command_proposals.jsonl` — fuente de datos del dashboard
+- Qdrant `incidents` collection — para búsqueda semántica
+- `governance_audit.jsonl` — compliance trail
+
 ## Tools — Pre-commit Hook (Astro build check)
 
 `scripts/pre-commit.sh`
