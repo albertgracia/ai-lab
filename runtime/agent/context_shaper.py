@@ -187,262 +187,407 @@ FORBIDDEN_REFERENCES = [
 ]
 
 def _build_hard_facts() -> str:
-    """Generate the CURRENT AI-LAB RUNTIME block from live data sources.
-    
+    """Generate structured JSON + text HARD FACTS block from live sources.
+
+    Returns a hybrid block:
+      JSON (machine-parseable, authoritative)
+      + text detail (human-readable, narrative)
+
     Cada sección va dentro de try/except para que fallos parciales
     no impidan que el resto del contexto se genere.
     """
-    lines = ["[HARD_FACTS_BEGIN]", "=== AI-LAB RUNTIME (HARD FACTS) ===", ""]
-
     # ── helper: load inference_nodes config ─────────────────────────
     _host_to_node_info: dict[str, dict] = {}
     _node_vram: dict[str, int] = {}
     try:
-        import json
-        cfg_file = Path("/opt/ai-lab/config/inference_nodes.json")
-        if cfg_file.exists():
-            cfg = json.loads(cfg_file.read_text())
-            for nid, nd in cfg.get("nodes", {}).items():
-                host = nd.get("host", "")
-                _host_to_node_info[host] = nd
-                _node_vram[host] = nd.get("vram_gb", 0)
+        import json as _json
+        _cfg_file = Path("/opt/ai-lab/config/inference_nodes.json")
+        if _cfg_file.exists():
+            _cfg = _json.loads(_cfg_file.read_text())
+            for _nid, _nd in _cfg.get("nodes", {}).items():
+                _host = _nd.get("host", "")
+                _host_to_node_info[_host] = _nd
+                _node_vram[_host] = _nd.get("vram_gb", 0)
     except Exception:
         pass
 
+    import json as _json
+
+    # ── initialize output parts ────────────────────────────────────
+    text_lines: list[str] = []
+    data: dict = {
+        "schema_version": "1.0",
+        "runtime": {
+            "mode": "plan",
+            "version": "1.1.0",
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "uptime_hours": 0.0,
+        },
+        "gpu_nodes": [],
+        "system": {},
+        "services": [],
+        "docker": {"total": 0, "main": [], "nginx_sites": []},
+        "routing": {"total_events": 0, "cognitive_snapshots": 0, "model_performance": {}},
+        "health": {},
+        "pending_implementations": [
+            "routing_confidence",
+            "latency_per_request",
+            "puppet_ansible",
+            "gateway_api_write",
+            "rx7900xt_diagnosis",
+            "ci_cd_automation",
+            "auto_scaling",
+        ],
+        "sites": [],
+    }
+
     # ── 1. GPU NODES + MODELS PER NODE (combined) ───────────────────
     try:
-        import json
-        state_file = Path("/opt/ai-lab/runtime/state/cluster_state.json")
-        discovered = []
-        if state_file.exists():
-            state = json.loads(state_file.read_text())
-            discovered = state.get("discovered_nodes", [])
+        import json as _json
+        _state_file = Path("/opt/ai-lab/runtime/state/cluster_state.json")
+        _discovered = []
+        if _state_file.exists():
+            _state = _json.loads(_state_file.read_text())
+            _discovered = _state.get("discovered_nodes", [])
 
-        if discovered:
-            lines.append("GPU NODES:")
-            for n in discovered:
-                host = n.get("host", "0.0.0.0")
-                friendly = _host_to_node_info.get(host, {}).get("name", n.get("name", "unknown"))
-                vram = _node_vram.get(host, 0)
-                status = "ONLINE" if n.get("online") else "OFFLINE"
-                raw_latency = n.get("latency_ms")
-                latency = f"{raw_latency:.0f}" if raw_latency is not None else "?"
-                models = n.get("models", [])
-                status_icon = "🟢" if n.get("online") else "🔴"
-                lines.append(f"  {status_icon} {friendly} → {host} ({status}, {vram}GB VRAM, {latency}ms)")
-                if models and n.get("online"):
+        if _discovered:
+            text_lines.append("GPU NODES:")
+            for _n in _discovered:
+                _host = _n.get("host", "0.0.0.0")
+                _friendly = _host_to_node_info.get(_host, {}).get("name", _n.get("name", "unknown"))
+                _vram = _node_vram.get(_host, 0)
+                _online = _n.get("online", False)
+                _raw_latency = _n.get("latency_ms")
+                _latency = f"{_raw_latency:.0f}" if _raw_latency is not None else None
+                _models_raw = _n.get("models", [])
+                _status_icon = "🟢" if _online else "🔴"
+                _status_str = "ONLINE" if _online else "OFFLINE"
+                text_lines.append(f"  {_status_icon} {_friendly} → {_host} ({_status_str}, {_vram}GB VRAM, {_latency or '?'}ms)")
+
+                _node_models = []
+                if _models_raw and _online:
                     from runtime.models.model_registry import MODEL_REGISTRY
-                    lines.append("     Models:")
-                    for m in models:
-                        cfg = MODEL_REGISTRY.get(m, {})
-                        skills = cfg.get("skills", [])
-                        ctx = cfg.get("context_window", "?")
-                        lines.append(f"       · {m} ({ctx} ctx, {skills})")
+                    text_lines.append("     Models:")
+                    for _m in _models_raw:
+                        _mcfg = MODEL_REGISTRY.get(_m, {})
+                        _skills = _mcfg.get("skills", [])
+                        _ctx = _mcfg.get("context_window", "?")
+                        text_lines.append(f"       · {_m} ({_ctx} ctx, {_skills})")
+                        _node_models.append({
+                            "id": _m,
+                            "ctx": _ctx if isinstance(_ctx, int) else 0,
+                            "skills": _skills,
+                        })
                 else:
-                    lines.append("     No models available (node offline)")
-            lines.append("")
+                    text_lines.append("     No models available (node offline)")
+
+                data["gpu_nodes"].append({
+                    "name": _n.get("name", "unknown"),
+                    "host": _host,
+                    "friendly_name": _friendly,
+                    "online": _online,
+                    "vram_gb": _vram,
+                    "latency_ms": _raw_latency,
+                    "models": _node_models,
+                })
+            text_lines.append("")
     except Exception:
         pass
 
     # ── 2. SYSTEM RESOURCES (192.168.1.30) ──────────────────────────
     try:
-        import subprocess
-        mem_raw = subprocess.run(["free", "-h"], capture_output=True, text=True, timeout=3).stdout.splitlines()
-        mem_parts = mem_raw[1].split() if len(mem_raw) >= 2 else ["?", "?", "?", "?", "?", "?", "?"]
-        disk_raw = subprocess.run(["df", "-h", "/"], capture_output=True, text=True, timeout=3).stdout.splitlines()
-        disk_parts = disk_raw[1].split() if len(disk_raw) >= 2 else ["?", "?", "?", "?", "?", "?"]
-        uptime_raw = subprocess.run(["uptime", "-p"], capture_output=True, text=True, timeout=3).stdout.strip()
-        load_raw = Path("/proc/loadavg").read_text().strip().split()
-        load_str = " ".join(load_raw[:3]) if load_raw else "?"
-        docker_count = len(subprocess.run(["docker", "ps", "-q"], capture_output=True, text=True, timeout=5).stdout.strip().split())
+        import subprocess as _sp
+        _mem_raw = _sp.run(["free", "-h"], capture_output=True, text=True, timeout=3).stdout.splitlines()
+        _mem_parts = _mem_raw[1].split() if len(_mem_raw) >= 2 else ["?", "?", "?", "?", "?", "?", "?"]
+        _disk_raw = _sp.run(["df", "-h", "/"], capture_output=True, text=True, timeout=3).stdout.splitlines()
+        _disk_parts = _disk_raw[1].split() if len(_disk_raw) >= 2 else ["?", "?", "?", "?", "?", "?"]
+        _uptime_raw = _sp.run(["uptime", "-p"], capture_output=True, text=True, timeout=3).stdout.strip()
+        _load_raw = Path("/proc/loadavg").read_text().strip().split()
+        _load_str = " ".join(_load_raw[:3]) if _load_raw else "?"
+        _docker_count = len(_sp.run(["docker", "ps", "-q"], capture_output=True, text=True, timeout=5).stdout.strip().split())
 
-        lines.append("SYSTEM RESOURCES (192.168.1.30):")
-        lines.append(f"  · RAM: {mem_parts[1]} total / {mem_parts[2]} used / {mem_parts[6]} available")
-        lines.append(f"  · Disk: {disk_parts[1]} total / {disk_parts[2]} used ({disk_parts[4]})")
-        lines.append(f"  · Uptime: {uptime_raw}")
-        lines.append(f"  · Load: {load_str}")
-        lines.append(f"  · Docker: {docker_count} containers running")
-        lines.append("")
+        text_lines.append("SYSTEM RESOURCES (192.168.1.30):")
+        text_lines.append(f"  · RAM: {_mem_parts[1]} total / {_mem_parts[2]} used / {_mem_parts[6]} available")
+        text_lines.append(f"  · Disk: {_disk_parts[1]} total / {_disk_parts[2]} used ({_disk_parts[4]})")
+        text_lines.append(f"  · Uptime: {_uptime_raw}")
+        text_lines.append(f"  · Load: {_load_str}")
+        text_lines.append(f"  · Docker: {_docker_count} containers running")
+        text_lines.append("")
+
+        def _parse_gib(s: str) -> float:
+            s = s.upper().replace(",", ".")
+            if "G" in s or "GI" in s:
+                return float(s.replace("G", "").replace("I", "").strip())
+            if "M" in s or "MI" in s:
+                return float(s.replace("M", "").replace("I", "").strip()) / 1024
+            return 0.0
+
+        data["system"] = {
+            "hostname": "ubuntu-ialab",
+            "ram": {
+                "total_gib": _parse_gib(_mem_parts[1]),
+                "used_gib": _parse_gib(_mem_parts[2]),
+                "available_gib": _parse_gib(_mem_parts[6]),
+            },
+            "disk": {
+                "total_g": _parse_gib(_disk_parts[1]),
+                "used_g": _parse_gib(_disk_parts[2]),
+                "pct": int(_disk_parts[4].replace("%", "")) if len(_disk_parts) >= 5 else 0,
+            },
+            "docker_containers": _docker_count,
+            "load": [float(x) for x in _load_raw[:3]] if len(_load_raw) >= 3 else [],
+        }
+
+        # uptime hours
+        import re
+        _hm = re.findall(r"(\d+)\s+(hour|minute)", _uptime_raw)
+        _hours = 0.0
+        for val, unit in _hm:
+            if "hour" in unit:
+                _hours += float(val)
+            elif "minute" in unit:
+                _hours += float(val) / 60
+        data["runtime"]["uptime_hours"] = round(_hours, 1)
     except Exception:
         pass
 
     # ── 3. DOCKER CONTAINERS ────────────────────────────────────────
     try:
-        import subprocess, json
-        raw = subprocess.run(["docker", "ps", "--format", "json"], capture_output=True, text=True, timeout=5)
-        containers = []
-        for line in raw.stdout.strip().splitlines():
-            if line:
-                containers.append(json.loads(line))
+        import subprocess as _sp, json as _json
+        _raw = _sp.run(["docker", "ps", "--format", "json"], capture_output=True, text=True, timeout=5)
+        _containers_list = []
+        for _line in _raw.stdout.strip().splitlines():
+            if _line:
+                _containers_list.append(_json.loads(_line))
 
-        if containers:
-            # Agrupar nginx sites
-            nginx_sites = []
-            main_containers = []
-            for c in containers:
-                name = c.get("Names", "?")
-                image = c.get("Image", "?")
-                ports = c.get("Ports", "")
-                status = c.get("Status", "?")
-                if "nginx:alpine" in image or "nginx" in image.lower():
-                    nginx_sites.append(name)
+        if _containers_list:
+            _nginx_sites = []
+            _main_names = []
+            _docker_items = []
+            for _c in _containers_list:
+                _name = _c.get("Names", "?")
+                _image = _c.get("Image", "?")
+                _ports = _c.get("Ports", "")
+                _status = _c.get("Status", "?")
+                if "nginx:alpine" in _image or "nginx" in _image.lower():
+                    _nginx_sites.append(_name)
                 else:
-                    port_str = ports.split(",")[0].strip() if ports and ports != "" else ""
-                    main_containers.append(f"  · {name} ({image}) → {port_str} [{status.split()[0]}]")
+                    _port_str = _ports.split(",")[0].strip() if _ports and _ports != "" else ""
+                    _main_names.append(_name)
+                    _docker_items.append(f"  · {_name} ({_image}) → {_port_str} [{_status.split()[0]}]")
 
-            lines.append("DOCKER CONTAINERS:")
-            for c in main_containers:
-                lines.append(c)
-            if nginx_sites:
-                lines.append(f"  · {len(nginx_sites)} nginx websites: {', '.join(nginx_sites)}")
-            lines.append("")
+            text_lines.append("DOCKER CONTAINERS:")
+            text_lines.extend(_docker_items)
+            if _nginx_sites:
+                text_lines.append(f"  · {len(_nginx_sites)} nginx websites: {', '.join(_nginx_sites)}")
+            text_lines.append("")
+
+            data["docker"] = {
+                "total": len(_containers_list),
+                "main": _main_names,
+                "nginx_sites": _nginx_sites,
+            }
     except Exception:
         pass
 
     # ── 4. SYSTEMD SERVICES (live) ──────────────────────────────────
     try:
-        import subprocess
-        raw = subprocess.run(["systemctl", "list-units", "--type=service", "ailab-*",
-                              "--no-pager", "--no-legend"], capture_output=True, text=True, timeout=3)
-        services = []
-        for line in raw.stdout.strip().splitlines():
-            parts = line.split()
-            if len(parts) >= 4:
-                name = parts[0].replace(".service", "")
-                active = parts[2]  # active / inactive / failed
-                sub = parts[3]     # running / exited / dead
-                services.append((name, active, sub))
+        import subprocess as _sp
+        _raw = _sp.run(["systemctl", "list-units", "--type=service", "ailab-*",
+                        "--no-pager", "--no-legend"], capture_output=True, text=True, timeout=3)
+        _svcs = []
+        for _line in _raw.stdout.strip().splitlines():
+            _parts = _line.split()
+            if len(_parts) >= 4:
+                _name = _parts[0].replace(".service", "")
+                _active = _parts[2]
+                _sub = _parts[3]
+                _svcs.append((_name, _active, _sub))
 
-        if services:
-            lines.append("SYSTEMD SERVICES (live — 192.168.1.30):")
-            for name, active, sub in services:
-                icon = "🟢" if active == "active" else "🔴"
-                lines.append(f"  {icon} {name} → {active} ({sub})")
-            lines.append("")
+        if _svcs:
+            text_lines.append("SYSTEMD SERVICES (live — 192.168.1.30):")
+            for _name, _active, _sub in _svcs:
+                _icon = "🟢" if _active == "active" else "🔴"
+                text_lines.append(f"  {_icon} {_name} → {_active} ({_sub})")
+                data["services"].append({
+                    "name": _name,
+                    "active": _active == "active",
+                    "running": _sub == "running",
+                })
+            text_lines.append("")
     except Exception:
         pass
 
     # ── 5. CLUSTER HEALTH + METRICS (from live API) ─────────────────
     try:
         import requests as _req
-        resp = _req.get("http://127.0.0.1:8084/api/analytics", timeout=3)
-        if resp.status_code == 200:
-            data = resp.json()
-            health = data.get("health", {})
-            metrics = data.get("metrics", {})
-            score = health.get("score", "?")
-            level = health.get("level", "?")
-            reasons = health.get("reasons", [])
+        _resp = _req.get("http://127.0.0.1:8084/api/analytics", timeout=3)
+        if _resp.status_code == 200:
+            _jb = _resp.json()
+            _health = _jb.get("health", {})
+            _metrics = _jb.get("metrics", {})
+            _score = _health.get("score", "?")
+            _level = _health.get("level", "?")
+            _reasons = _health.get("reasons", [])
 
-            lines.append("CLUSTER HEALTH:")
-            lines.append(f"  · Score: {score}/100 ({level})")
-            for r in reasons:
-                lines.append(f"    → {r}")
-            lines.append(f"  · Requests: {metrics.get('requests_total', '?')} total, "
-                         f"{metrics.get('streams_total', '?')} streaming, "
-                         f"{metrics.get('errors_total', '?')} errors")
-            lines.append(f"  · Nodes: {metrics.get('online_nodes', '?')}/{metrics.get('total_nodes', '?')} online")
-            lines.append(f"  · Active sessions: {metrics.get('active_sessions', '?')}")
-            lines.append("")
+            text_lines.append("CLUSTER HEALTH:")
+            text_lines.append(f"  · Score: {_score}/100 ({_level})")
+            for _r in _reasons:
+                text_lines.append(f"    → {_r}")
+            text_lines.append(f"  · Requests: {_metrics.get('requests_total', '?')} total, "
+                         f"{_metrics.get('streams_total', '?')} streaming, "
+                         f"{_metrics.get('errors_total', '?')} errors")
+            text_lines.append(f"  · Nodes: {_metrics.get('online_nodes', '?')}/{_metrics.get('total_nodes', '?')} online")
+            _active_sessions = _metrics.get('active_sessions', '?')
+            text_lines.append(f"  · Active sessions: {_active_sessions}")
+            text_lines.append("")
+
+            data["health"] = {
+                "score": _score if _score != "?" else None,
+                "level": _level if _level != "?" else None,
+                "reasons": _reasons,
+                "requests_total": _metrics.get("requests_total", 0),
+                "streams_total": _metrics.get("streams_total", 0),
+                "errors_total": _metrics.get("errors_total", 0),
+                "online_nodes": _metrics.get("online_nodes", 0),
+                "total_nodes": _metrics.get("total_nodes", 0),
+                "active_sessions": _active_sessions if _active_sessions != "?" else None,
+            }
     except Exception:
         pass
 
     # ── 6. WATCHDOG ─────────────────────────────────────────────────
     try:
         import requests as _req
-        resp = _req.get("http://127.0.0.1:8084/api/watchdog", timeout=3)
-        if resp.status_code == 200:
-            wd = resp.json()
-            status = wd.get("status", "?")
-            checks = wd.get("checks", {})
-            ok = sum(1 for v in checks.values() if v)
-            total = len(checks)
-            lines.append("WATCHDOG:")
-            lines.append(f"  · Status: {status} ({ok}/{total} checks pass)")
-            for name, passed in checks.items():
-                icon = "🟢" if passed else "🔴"
-                lines.append(f"  {icon} {name}")
-            lines.append("")
+        _resp = _req.get("http://127.0.0.1:8084/api/watchdog", timeout=3)
+        if _resp.status_code == 200:
+            _wd = _resp.json()
+            _wd_status = _wd.get("status", "?")
+            _checks = _wd.get("checks", {})
+            _ok = sum(1 for _v in _checks.values() if _v)
+            _total = len(_checks)
+            text_lines.append("WATCHDOG:")
+            text_lines.append(f"  · Status: {_wd_status} ({_ok}/{_total} checks pass)")
+            for _name, _passed in _checks.items():
+                _icon = "🟢" if _passed else "🔴"
+                text_lines.append(f"  {_icon} {_name}")
+            text_lines.append("")
+
+            if "watchdog" not in data["health"] or not data["health"].get("watchdog"):
+                data["health"]["watchdog"] = {}
+            data["health"]["watchdog"] = {
+                "status": _wd_status,
+                "ok": _ok,
+                "total": _total,
+                "checks": _checks,
+            }
     except Exception:
         pass
 
     # ── 7. MODEL PERFORMANCE (from live API) ────────────────────────
     try:
         import requests as _req
-        resp = _req.get("http://127.0.0.1:8084/api/model-performance", timeout=3)
-        if resp.status_code == 200:
-            perf = resp.json()
-            lines.append("MODEL PERFORMANCE:")
-            for mid, mdata in perf.items():
-                if isinstance(mdata, dict) and "error" not in mdata:
-                    reqs = mdata.get("total_requests", 0)
-                    succ = mdata.get("success_rate", 0)
-                    pi = mdata.get("performance_index", 0)
-                    fail = mdata.get("failover_rate", 0)
-                    lines.append(f"  · {mid}: {reqs} req, {succ*100:.0f}% success, PI {pi:.0f}, failover {fail*100:.0f}%")
-            lines.append("")
+        _resp = _req.get("http://127.0.0.1:8084/api/model-performance", timeout=3)
+        if _resp.status_code == 200:
+            _perf = _resp.json()
+            text_lines.append("MODEL PERFORMANCE:")
+            for _mid, _mdata in _perf.items():
+                if isinstance(_mdata, dict) and "error" not in _mdata:
+                    _reqs = _mdata.get("total_requests", 0)
+                    _succ = _mdata.get("success_rate", 0)
+                    _pi = _mdata.get("performance_index", 0)
+                    _fail = _mdata.get("failover_rate", 0)
+                    text_lines.append(f"  · {_mid}: {_reqs} req, {_succ*100:.0f}% success, PI {_pi:.0f}, failover {_fail*100:.0f}%")
+                    data["routing"]["model_performance"][_mid] = {
+                        "requests": _reqs,
+                        "success_rate": _succ,
+                        "performance_index": _pi,
+                        "failover_rate": _fail,
+                    }
+            text_lines.append("")
     except Exception:
         pass
 
     # ── 8. ROUTING HISTORY ──────────────────────────────────────────
     try:
-        rh = Path("/opt/ai-lab/runtime/state/routing_history.jsonl")
-        ch = Path("/opt/ai-lab/runtime/state/cognitive_history.jsonl")
-        rh_count = len(rh.read_text().strip().splitlines()) if rh.exists() else 0
-        ch_count = len(ch.read_text().strip().splitlines()) if ch.exists() else 0
-        lines.append("HISTORY:")
-        lines.append(f"  · Routing events: {rh_count}")
-        lines.append(f"  · Cognitive snapshots: {ch_count}")
-        lines.append("")
+        _rh = Path("/opt/ai-lab/runtime/state/routing_history.jsonl")
+        _ch = Path("/opt/ai-lab/runtime/state/cognitive_history.jsonl")
+        _rh_count = len(_rh.read_text().strip().splitlines()) if _rh.exists() else 0
+        _ch_count = len(_ch.read_text().strip().splitlines()) if _ch.exists() else 0
+        text_lines.append("HISTORY:")
+        text_lines.append(f"  · Routing events: {_rh_count}")
+        text_lines.append(f"  · Cognitive snapshots: {_ch_count}")
+        text_lines.append("")
+        data["routing"]["total_events"] = _rh_count
+        data["routing"]["cognitive_snapshots"] = _ch_count
     except Exception:
         pass
 
     # ── 9. ROUTER MODELS ────────────────────────────────────────────
-    lines.append("ROUTER MODELS (available via :8083/v1/models):")
-    lines.append("  · ailab-router/auto       → automatic capability-based routing")
-    lines.append("  · ailab-router/fast       → fast responses (Llama 3.1 8B)")
-    lines.append("  · ailab-router/coding     → code generation (Qwen 2.5 Coder)")
-    lines.append("  · ailab-router/reasoning  → heavy reasoning (Qwen 2.5 Coder)")
-    lines.append("")
+    text_lines.append("ROUTER MODELS (available via :8083/v1/models):")
+    text_lines.append("  · ailab-router/auto       → automatic capability-based routing")
+    text_lines.append("  · ailab-router/fast       → fast responses (Llama 3.1 8B)")
+    text_lines.append("  · ailab-router/coding     → code generation (Qwen 2.5 Coder)")
+    text_lines.append("  · ailab-router/reasoning  → heavy reasoning (Qwen 2.5 Coder)")
+    text_lines.append("")
 
     # ── 10. SITES ───────────────────────────────────────────────────
-    lines.append("SITES:")
-    lines.append("  · ai-lab.labrazahome.com       → Público (Astro portal :4322 via Traefik)")
-    lines.append("  · blog-ai-lab.labrazahome.com  → Privado (Cloudflare Tunnel + Traefik)")
-    lines.append("")
+    text_lines.append("SITES:")
+    text_lines.append("  · ai-lab.labrazahome.com       → Público (Astro portal :4322 via Traefik)")
+    text_lines.append("  · blog-ai-lab.labrazahome.com  → Privado (Cloudflare Tunnel + Traefik)")
+    text_lines.append("")
+    data["sites"] = [
+        {"url": "ai-lab.labrazahome.com", "access": "public", "tech": "Cloudflare Pages + Astro"},
+        {"url": "blog-ai-lab.labrazahome.com", "access": "private", "tech": "Cloudflare Tunnel + Traefik"},
+    ]
 
     # ── 11. MAINTENANCE ──────────────────────────────────────────────
     try:
-        mf = Path("/opt/ai-lab/runtime/state/maintenance_nodes.json")
-        if mf.exists():
-            mn = json.loads(mf.read_text()).get("maintenance", [])
-            if mn:
-                lines.append(f"MAINTENANCE: {', '.join(mn)}")
-                lines.append("")
+        _mf = Path("/opt/ai-lab/runtime/state/maintenance_nodes.json")
+        if _mf.exists():
+            _mn = _json.loads(_mf.read_text()).get("maintenance", [])
+            if _mn:
+                text_lines.append(f"MAINTENANCE: {', '.join(_mn)}")
+                text_lines.append("")
     except Exception:
         pass
 
     # ── 12. PENDING IMPLEMENTATIONS ────────────────────────────────
-    lines.append("PENDING IMPLEMENTATIONS (funcionalidades no cubiertas aún en runtime):")
-    lines.append("  · routing_confidence: PENDIENTE — métrica no implementada en runtime")
-    lines.append("  · latencia por request: PENDIENTE — no se mide individualmente")
-    lines.append("  · Puppet/Ansible: NO IMPLEMENTADO — infraestructura se gestiona manualmente")
-    lines.append("  · Gateway/NAS-N5 Hyper-V: solo lectura SSH (sin API write)")
-    lines.append("  · RX7900XT (192.168.1.60): nodo OFFLINE, pendiente diagnosis")
-    lines.append("  · CI/CD automático: esqueletos YAML preparados, no activos")
-    lines.append("  · Auto-escalado de workers: NO IMPLEMENTADO")
-    lines.append("")
+    text_lines.append("PENDING IMPLEMENTATIONS (funcionalidades no cubiertas aún en runtime):")
+    text_lines.append("  · routing_confidence: PENDIENTE — métrica no implementada en runtime")
+    text_lines.append("  · latencia por request: PENDIENTE — no se mide individualmente")
+    text_lines.append("  · Puppet/Ansible: NO IMPLEMENTADO — infraestructura se gestiona manualmente")
+    text_lines.append("  · Gateway/NAS-N5 Hyper-V: solo lectura SSH (sin API write)")
+    text_lines.append("  · RX7900XT (192.168.1.60): nodo OFFLINE, pendiente diagnosis")
+    text_lines.append("  · CI/CD automático: esqueletos YAML preparados, no activos")
+    text_lines.append("  · Auto-escalado de workers: NO IMPLEMENTADO")
+    text_lines.append("")
 
     # ── 13. FORBIDDEN REFERENCES ────────────────────────────────────
-    lines.append("FORBIDDEN REFERENCES (never mention):")
-    lines.append("  " + ", ".join(FORBIDDEN_REFERENCES))
-    lines.append("")
-    lines.append("[HARD_FACTS_END]")
-    lines.append("")
-    lines.append("REGLAS:")
-    lines.append("1. Los datos entre [HARD_FACTS_BEGIN] y [HARD_FACTS_END] son la fuente de verdad del runtime.")
-    lines.append("2. Si un campo no aparece aquí y NO está en PENDING IMPLEMENTATIONS, di '[no disponible en runtime]'.")
-    lines.append("3. Si un campo aparece en PENDING IMPLEMENTATIONS, menciónalo como 'pendiente de implementar'.")
-    lines.append("4. No infieras valores de campos no listados — el runtime no los expone.")
+    text_lines.append("FORBIDDEN REFERENCES (never mention):")
+    text_lines.append("  " + ", ".join(FORBIDDEN_REFERENCES))
+    text_lines.append("")
+    text_lines.append("[HARD_FACTS_END]")
+    text_lines.append("")
+    text_lines.append("REGLAS:")
+    text_lines.append("1. Los datos entre [HARD_FACTS_BEGIN] y [HARD_FACTS_END] son la fuente de verdad del runtime.")
+    text_lines.append("2. Si un campo no aparece aquí y NO está en PENDING IMPLEMENTATIONS, di '[no disponible en runtime]'.")
+    text_lines.append("3. Si un campo aparece en PENDING IMPLEMENTATIONS, menciónalo como 'pendiente de implementar'.")
+    text_lines.append("4. No infieras valores de campos no listados — el runtime no los expone.")
 
-    return "\n".join(lines)
+    # ── Serialize JSON block ────────────────────────────────────────
+    try:
+        _json_str = _json.dumps(data, indent=2, ensure_ascii=False)
+    except Exception:
+        _json_str = "{}"
+
+    result = (
+        "[HARD_FACTS_BEGIN]\n"
+        "=== AI-LAB RUNTIME (HARD FACTS) ===\n"
+        "\n"
+        + _json_str
+        + "\n\n"
+        + "=== DETALLE (texto) ===\n"
+        + "\n".join(text_lines)
+    )
+    return result
