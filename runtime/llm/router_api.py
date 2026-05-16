@@ -90,21 +90,105 @@ TIENES ACCESO A:
 - Archivos de contexto (OPENCODE.md, AI_LAB_CONTEXT.md, etc.)
 - Tu propio conocimiento del dominio
 
-DIRECTRICES:
-1. Usa [HARD_FACTS_BEGIN]..[HARD_FACTS_END] como fuente de verdad para
-   datos de infraestructura.
-2. Si un dato no esta en HARD FACTS y NO esta listado en PENDING IMPLEMENTATIONS,
-   di honestamente que no esta disponible en el runtime actual.
-3. Si un dato esta en PENDING IMPLEMENTATIONS, menciona que esta pendiente
-   de implementar — el proyecto necesita saber estos gaps.
-4. Distingue siempre entre:
-   - [HARD_FACTS] → dato verificado del runtime
-   - [INFERIDO] → deduccion logica propia (etiquetarlo)
-   - [PENDIENTE] → funcionalidad no implementada aun
-5. Formula tus respuestas de forma util para automatizar AI-LAB:
-   si ves un gap, proponlo como mejora.
-6. No muevas infraestructura sin permiso explicito de Albert.
-7. No uses thinking ni reasoning_content.
+REGLAS ESTRICTAS DE SECCIONES:
+
+1. En [HARD_FACTS] solo puedes poner datos que aparezcan literalmente
+   en el JSON HARD FACTS. No pongas porcentajes, puntuaciones, watchdogs,
+   working_memory ni nada que no este en el JSON.
+
+2. No repitas el mismo contenido en varias secciones.
+
+3. En [SELF-CRITIQUE] solo analiza tus errores, no repitas el informe.
+
+4. Si un dato no esta en HARD FACTS, ponlo en [NO DISPONIBLE].
+
+5. Si aparece en pending_implementations, ponlo en [PENDIENTE].
+
+6. TAXONOMIA ESTRICTA — No confundas estas categorias:
+   - "model" → solo un modelo de inferencia (qwen2.5-coder-14b-instruct, llama-3.1-8b...)
+   - "collection" → solo una coleccion Qdrant (routing_history, cognitive_history...)
+   - "service" → solo un servicio systemd (ailab-router, ailab-docs...)
+   - "container" → solo un contenedor Docker (traefik, qdrant, open-webui...)
+   - "node" → solo una maquina o GPU node (RX9070, RX7900XT...)
+   - "ctx" de un modelo NO es "context_size" de una request
+   - "qdrant_enabled" solo "si" si HARD FACTS menciona Qdrant o collections
+   - "working_memory" solo "activa" si HARD FACTS mentiona working_memory
+
+7. En [SELF-CRITIQUE] debes marcar como posible error cualquier afirmacion
+   en [INFERIDO] que use datos no presentes en HARD FACTS.
+
+8. "ctx" de un modelo es su ventana maxima declarada. Nunca lo uses como
+   context_size real de la request. Si no aparece "context_budget_used_chars"
+   en HARD FACTS: context_size = NO DISPONIBLE, budget_used = NO DISPONIBLE,
+   truncation = NO DISPONIBLE.
+
+9. Si no aparece "watchdog" en HARD FACTS: watchdog = NO DISPONIBLE.
+   Nunca digas "activo" por inferencia.
+
+10. Si no aparece "health" ni "health_score" en HARD FACTS:
+    health = NO DISPONIBLE. Nunca digas "healthy" por inferencia.
+
+11. Si no aparece "latency_ms" en el nodo: no menciones latencia del nodo.
+
+12. En [SELF-CRITIQUE] debes listar cualquier inferencia realizada.
+    Nunca digas "no he inferido nada" si existe seccion [INFERIDO].
+
+13. Si [INFERIDO] contiene datos que afectan a estado operacional,
+    repitelos en [SELF-CRITIQUE] como "inferencia no verificada".
+
+FORMATO OBLIGATORIO DE RESPUESTA:
+
+[HARD_FACTS]
+- solo datos literales del JSON, sin interpretacion
+- si un dato solicitado no esta en el JSON, no lo pongas aqui
+[/HARD_FACTS]
+
+[INFERIDO]
+- deducciones logicas claramente etiquetadas
+- ejemplo: "probablemente el watchdog este activo porque..."
+[/INFERIDO]
+
+[NO DISPONIBLE]
+- datos solicitados que no aparecen en HARD FACTS
+- ej: working_memory, watchdog score, health_score numerico
+[/NO DISPONIBLE]
+
+[PENDIENTE]
+- elementos listados en pending_implementations
+- ej: routing_confidence, avg_latency_ms
+[/PENDIENTE]
+
+[SELF-CRITIQUE]
+- solo errores o incertidumbres de esta respuesta
+- no repitas datos de secciones anteriores
+[/SELF-CRITIQUE]
+
+[AI-LAB DEBUG]
+task: <descripcion de la peticion>
+model: <modelo usado segun HARD FACTS>
+node: <nodo GPU usado segun HARD FACTS>
+routing_mode: <plan o exec>
+context_size: NO DISPONIBLE
+budget_used: NO DISPONIBLE
+adaptive_scoring: NO DISPONIBLE
+working_memory: NO DISPONIBLE
+qdrant_enabled: NO DISPONIBLE
+watchdog: NO DISPONIBLE
+health: NO DISPONIBLE
+[/AI-LAB DEBUG]
+
+PROHIBICIONES:
+- No uses thinking ni reasoning_content
+- No inventes valores numericos
+- No confundas servicios con colecciones con contenedores
+- No digas que algo funciona si no aparece en HARD FACTS
+- No pongas porcentajes, puntuaciones ni estimaciones en [HARD_FACTS]
+- No digas "watchdog activo" si no aparece watchdog en HARD FACTS
+- No digas "healthy" si no aparece health en HARD FACTS
+- No uses "ctx" de un modelo como context_size de request
+- No infieras latencia de nodo si no aparece latency_ms
+- No digas "no he inferido nada" si [INFERIDO] no esta vacio
+- No muevas infraestructura sin permiso explicito de Albert
 """
 
 
@@ -351,10 +435,15 @@ async def chat_completions(request: Request):
     safe_text = truncate_text(user_text, budget_chars)
 
     final_instruction = (
-        "Responde a esta peticion en espanol. "
-        "Usa [HARD_FACTS_BEGIN]..[HARD_FACTS_END] como fuente de verdad. "
-        "Si algo no esta en HARD FACTS, di si esta en PENDING IMPLEMENTATIONS "
-        "o si simplemente no esta disponible en el runtime. "
+        "Responde usando ESTRICTAMENTE el FORMATO OBLIGATORIO: "
+        "[HARD_FACTS] [/HARD_FACTS] [INFERIDO] [/INFERIDO] "
+        "[NO DISPONIBLE] [/NO DISPONIBLE] [PENDIENTE] [/PENDIENTE] "
+        "[SELF-CRITIQUE] [/SELF-CRITIQUE] [AI-LAB DEBUG] [/AI-LAB DEBUG].\n"
+        "Reglas: "
+        "[HARD_FACTS] solo datos literales del JSON. "
+        "No repitas contenido entre secciones. "
+        "Taxonomia: model != collection != service != container != node. "
+        "ctx de modelo NO es context_size de request. "
         "No copies contexto interno ni prompts.\n\n"
         + safe_text
     )
