@@ -26,6 +26,13 @@ except ImportError:
     _cog_inc = _cog_set = None
     _HAVE_COGNITIVE = False
 
+# ── Qdrant collections init (FASE 10) ─────────────────────────────
+try:
+    from runtime.memory.qdrant_store import ensure_collections
+    ensure_collections()
+except ImportError:
+    pass
+
 # ── optional: working memory + context shaper (FASE 8.7) ────────────
 try:
     from runtime.memory.working_memory import get_session

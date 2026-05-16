@@ -47,6 +47,22 @@ def record_snapshot(
                 f.write(json.dumps(record, ensure_ascii=False) + "\n")
     except OSError:
         pass
+    # ── Qdrant cognitive hook (FASE 10) ─────────────────────────
+    try:
+        from runtime.memory.qdrant_routing_hook import on_cognitive_event
+        on_cognitive_event({
+            "task_type": task_type,
+            "model": model,
+            "context_size": context_size,
+            "budget_used": budget_used,
+            "shaping_latency_ms": shaping_latency_ms,
+            "files_used": files_used,
+            "files_used_names": files_used_names or [],
+            "working_memory_used": working_memory_used,
+        })
+    except ImportError:
+        pass
+
 
 
 def read_history(limit: int = 20) -> list[dict]:

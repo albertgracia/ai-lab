@@ -79,6 +79,13 @@ def record_route_result(
     except ImportError:
         pass
 
+    # ── Qdrant cognitive hook (FASE 10) ───────────────────────────────
+    try:
+        from runtime.memory.qdrant_routing_hook import on_routing_event
+        on_routing_event(record)
+    except ImportError:
+        pass
+
 
 def read_route_history(limit: int = 500, from_disk: bool = False):
     """Return the last *limit* route records (newest first)."""
