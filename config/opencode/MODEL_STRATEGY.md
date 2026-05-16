@@ -1,27 +1,25 @@
 # MODEL STRATEGY
 
-Default fast model:
-- google/gemma-4-e4b
+Los modelos realmente cargados en cada nodo GPU se listan en el bloque
+**HARD FACTS** (sección GPU NODES → Models). Las puntuaciones de
+capacidad (0-100) se definen en `runtime/models/model_registry.py`.
 
-Reasoning model:
-- qwen3-14b-claude-sonnet-4.5-reasoning-distill
+## Routing
 
-Coding model:
-- qwen2.5-coder-14b-instruct
-- qwen2.5-coder-32b-instruct if enough VRAM
+El router (`runtime/llm/model_router.py`) selecciona modelo según:
+1. Nodos online primero.
+2. Modelos realmente cargados en LM Studio.
+3. Puntuación de capacidad (capability scoring) + rendimiento histórico
+   (adaptive scoring).
+4. Disponibilidad de VRAM.
+5. Fallback al primer modelo disponible del nodo online.
 
-Embedding model:
-- text-embedding-nomic-embed-text-v1.5
+## Router API (:8083)
 
-Vision:
-- moondream2
+- ailab-router/auto       → routing automático por capacidad
+- ailab-router/fast       → prioriza velocidad (ajuste de temperatura)
+- ailab-router/coding     → prioriza generación de código
+- ailab-router/reasoning  → prioriza razonamiento profundo
 
-Image:
-- flux.2-klein-9b
-
-Routing priorities:
-1. Prefer online nodes.
-2. Prefer models already loaded.
-3. Prefer node with enough VRAM.
-4. Prefer lower GPU usage.
-5. Fallback to Main LM Studio.
+Consulta **HARD FACTS → MODELS PER NODE** para ver qué modelos están
+realmente activos en cada GPU.

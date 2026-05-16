@@ -41,6 +41,13 @@ except ImportError:
     shape_context = None  # type: ignore[assignment]
     _HAVE_CONTEXT_SHAPER = False
 
+# ── LM Studio context limits ──────────────────────────────────────────
+# LM Studio en RX9070 (192.168.1.50) carga modelos con n_ctx=16384
+# Ajusta LM_STUDIO_MAX_CONTEXT si cambias n_ctx en LM Studio
+LM_STUDIO_MAX_CONTEXT = 16384
+CHARS_PER_TOKEN = 2.8
+CONTEXT_OVERHEAD_TOKENS = 500
+
 app = FastAPI(title="AI-LAB Router API", servers=[{"url": "http://192.168.1.30:8083", "description": "AI-LAB Router API"}], version="1.0.0", description="Router cognitivo del AI-LAB. Proporciona enrutamiento capability-aware a nodos de inferencia GPU.")
 
 app.add_middleware(
@@ -170,6 +177,37 @@ def extract_request_text(payload: Dict[str, Any]) -> str:
     return "\n".join(parts)
 
 
+def get_last_user_message(payload: Dict[str, Any]) -> str:
+    """Extrae solo el último mensaje con role='user' del payload.
+
+    Ignora mensajes de assistant, tool, system — evita inflar
+    el prompt con historial completo que OpenCode ya maneja.
+    """
+    messages = payload.get("messages", [])
+    for msg in reversed(messages):
+        if msg.get("role") != "user":
+            continue
+        content = msg.get("content", "")
+        if isinstance(content, str):
+            return content
+        elif isinstance(content, list):
+            return "\n".join(
+                item.get("text", "") for item in content
+                if isinstance(item, dict) and item.get("type") == "text"
+            )
+    return ""
+
+
+def truncate_text(text: str, max_chars: int) -> str:
+    """Corta *text* en *max_chars* caracteres, sin romper palabras."""
+    if len(text) <= max_chars:
+        return text
+    truncated = text[:max_chars]
+    last_space = truncated.rfind(" ")
+    if last_space > int(max_chars * 0.8):
+        truncated = truncated[:last_space]
+    return truncated + "\n\n[Contexto truncado para ajustarse a los límites del modelo LM Studio]"
+
 
 
 @app.get("/api/v1/tools")
@@ -235,6 +273,7 @@ async def chat_completions(request: Request):
     )
 
     request_text = extract_request_text(payload)
+    user_text = get_last_user_message(payload)
 
     capability = capability_from_model(
         requested_model
@@ -284,10 +323,18 @@ async def chat_completions(request: Request):
         + "Usa los datos anteriores para responder. No copies literalmente, sintetiza."
     )
 
+    # ── budget-aware context truncation ─────────────────────────────
+    # Garantiza que system_prompt + final_instruction nunca exceda
+    # LM_STUDIO_MAX_CONTEXT tokens (16384 actual).
+    system_chars = len(system_prompt)
+    remaining_chars = int((LM_STUDIO_MAX_CONTEXT - CONTEXT_OVERHEAD_TOKENS) * CHARS_PER_TOKEN)
+    budget_chars = max(1000, remaining_chars - system_chars)
+    safe_text = truncate_text(user_text, budget_chars)
+
     final_instruction = (
         "Responde únicamente a esta petición del usuario, en español, "
-        "sin copiar contexto interno ni prompts.\\n\\n"
-        + request_text
+        "sin copiar contexto interno ni prompts.\n\n"
+        + safe_text
     )
 
     payload["messages"] = [
