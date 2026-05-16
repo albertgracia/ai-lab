@@ -118,6 +118,7 @@ REGLAS ESTRICTAS:
 12. routing_mode SOLO puede ser 'adaptive' si HARD FACTS contiene adaptive_scoring=true o routing_mode=adaptive explicitamente. Valores reales validos: 'primary' o 'fallback'. No lo infieras.
 13. 'latency_ms' en GPU nodes = latencia de red/ping del nodo. NO es latencia de inferencia del modelo. 'inference_latency_ms' solo si aparece explicitamente en HARD FACTS.
 14. Cualquier afirmacion con 'motivo REAL' o sufijo 'REAL' debe tener fuente explicita en HARD FACTS. Si no la tiene, debe ir en [INFERIDO] con nota 'inferencia no verificada'. semantic_recall (qdrant) debe aparecer SIEMPRE en [HARD_FACTS] si el dato esta disponible en el JSON.
+15. La palabra 'REAL' solo puede usarse si el campo existe literalmente en HARD FACTS o viene de routing.reason_codes. Si es inferido, no puede llamarse REAL.
 """
 
 
@@ -384,8 +385,9 @@ async def chat_completions(request: Request):
             "[NO DISPONIBLE] datos ausentes [/NO DISPONIBLE]\n"
             "[PENDIENTE] de pending [/PENDIENTE]\n"
             "[SELF-CRITIQUE] errores [/SELF-CRITIQUE]\n"
-            "[AI-LAB DEBUG] Pobla con valores reales de HARD FACTS: task, model, node, budget_used, "
-            "adaptive_scoring, working_memory, qdrant_recall, watchdog, health. "
+            "[AI-LAB DEBUG] Pobla con valores reales de HARD FACTS: profile, task, model, node, budget_used, "
+            "adaptive_scoring, working_memory, "
+            "qdrant_recall (matches, collections, chars del JSON), watchdog, health. "
             "NO DISPONIBLE solo si el dato no existe en HARD FACTS. "
             "semantic_recall debe ir en [HARD_FACTS], no aqui. [/AI-LAB DEBUG]\n"
             "IMPORTANTE: puedes usar tu conocimiento en programacion para responder la pregunta. "
@@ -401,10 +403,11 @@ async def chat_completions(request: Request):
             "[PENDIENTE] de pending_implementations [/PENDIENTE]\n"
             "[SELF-CRITIQUE] errores propios [/SELF-CRITIQUE]\n"
             "[AI-LAB DEBUG] Pobla este bloque con valores reales de HARD FACTS: "
-            "task=<capability>, model=<model_id>, node=<node_name>, "
+            "profile=<profile del JSON>, task=<inferido de la solicitud>, "
+            "model=<model_id>, node=<node_name>, "
             "budget_used=<del sistema>, adaptive_scoring=<si en HARD FACTS>, "
             "working_memory=<si en HARD FACTS>, "
-            "qdrant_recall=<semantic_recall.matches del JSON>, "
+            "qdrant_recall=<matches, collections, chars del semantic_recall en JSON>, "
             "watchdog=<health.watchdog>, health=<health.score>. "
             "NO DISPONIBLE solo si el dato no existe en HARD FACTS. "
             "semantic_recall NO debe ir aqui, debe ir en [HARD_FACTS]. [/AI-LAB DEBUG]\n"

@@ -84,10 +84,10 @@ def shape_context(
     _start = time.time()   # cognitive telemetry start
 
     # ── 0. HARD FACTS block (always first) ───────────────────────────
-    _hard_extra: dict = {}
+    _hard_extra: dict = {"profile": task_type}
     if routing_mode != "primary":
         _hard_extra["routing"] = {"mode": routing_mode}
-    hard_facts = _build_hard_facts(extra_json=_hard_extra if _hard_extra else None)
+    hard_facts = _build_hard_facts(extra_json=_hard_extra)
 
     context_window = 32_000   # default fallback
     try:
