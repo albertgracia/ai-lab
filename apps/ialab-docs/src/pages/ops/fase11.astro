@@ -1,0 +1,132 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout title="FASE 11 - Cognitive Recall & Supervised Execution">
+  <main style="max-width: 800px; margin: 2rem auto; padding: 0 1rem; font-family: monospace; line-height: 1.6;">
+    <h1>FASE 11 &mdash; Cognitive Recall &amp; Supervised Execution</h1>
+    <p><em>Mayo 2026</em></p>
+
+    <hr />
+
+    <h2>11.0 &mdash; Controlled Cognitive Recall</h2>
+    <p><code>runtime/memory/recall_policy.py</code></p>
+    <ul>
+      <li><strong>should_recall(task_type, query)</strong> &mdash; decisión cognitiva: solo busca si query tiene sentido</li>
+      <li><strong>execute_recall(query, task_type)</strong> &mdash; pipeline: classify → search → quality gate → advisory block</li>
+      <li>Retrieval budget por perfil:
+        <ul>
+          <li><strong>fast</strong>: max 1 memory, 500 chars, score ≥ 0.65</li>
+          <li><strong>coding</strong>: max 3, 1500 chars, score ≥ 0.55</li>
+          <li><strong>reasoning</strong>: max 5, 3000 chars, score ≥ 0.45</li>
+          <li><strong>general</strong>: max 2, 1000 chars, score ≥ 0.50</li>
+        </ul>
+      </li>
+      <li>Strict source ordering: incidents → routing_history → cognitive_history → working_memory</li>
+      <li>Formato advisory: <code>Experiencias pasadas relevantes (advisory, no verificadas)</code></li>
+      <li>Stats inyectados en HARD FACTS como <code>semantic_recall</code> key</li>
+    </ul>
+
+    <h2>11.0.6 &mdash; Recall Quality Gate</h2>
+    <p>En <code>recall_policy.py</code>: antes de inyectar, ejecuta <code>assess_query()</code> sobre los hits. Si <strong>contamination_risk &gt; 0.2</strong>, descarta el recall completamente. Protege contra drift semántico y prompt inflation.</p>
+
+    <h2>10.1 &mdash; Memory Recall API</h2>
+    <ul>
+      <li><code>GET /api/memory/search?q=&amp;collection=&amp;limit=</code></li>
+      <li><code>GET /api/runtime/recall?q=&amp;limit=</code></li>
+      <li><code>GET /api/incidents/search?q=&amp;severity=&amp;limit=</code></li>
+      <li>Backfill: 14 incidents desde cluster_state + routing_history</li>
+      <li>Watchdog hook: service_down / degraded / recovered automático</li>
+    </ul>
+
+    <h2>10.2 &mdash; Incident Intelligence</h2>
+    <ul>
+      <li><code>GET /api/incidents/analytics?days=</code> &mdash; agregación por tipo, severidad, nodo, timeline</li>
+      <li><code>GET /api/incidents/timeline?days=&amp;bucket=</code> &mdash; series temporales (día/hora)</li>
+      <li>Hooks: routing_history (failures → incidents), cognitive_history (budget &gt; 90% → context_overflow)</li>
+    </ul>
+
+    <h2>10.3 &mdash; Semantic Search Quality</h2>
+    <p><code>runtime/memory/quality_assessment.py</code></p>
+    <ul>
+      <li><code>GET /api/memory/quality?q=&amp;collection=&amp;limit=</code> &mdash; precision, noise, contamination_risk</li>
+      <li><code>GET /api/memory/quality/batch?collection=&amp;limit=</code> &mdash; 10 test queries automáticos</li>
+      <li>Batch result: incidents avg_precision=0.78, noise=0.0</li>
+      <li>Threshold suggestion basado en gaps de score distribution</li>
+    </ul>
+
+    <h2>10.4 &mdash; Pattern Learning</h2>
+    <p><code>runtime/memory/pattern_learner.py</code> &mdash; detección de patrones en incidents: fallos repetidos, horas pico, tendencias de latencia.</p>
+
+    <h2>11.1 &mdash; Persistent Mode State</h2>
+    <p><code>runtime/modes/mode_manager.py</code> + <code>runtime/state/current_mode.json</code></p>
+    <ul>
+      <li><code>read_mode()</code>, <code>write_mode()</code>, <code>can_transition()</code>, <code>requires_reason()</code></li>
+      <li>Transiciones: readonly → plan → build → execute (plan→execute directo permitido con razón)</li>
+      <li><code>GET /api/mode</code>, <code>POST /api/mode/switch?mode=&amp;reason=</code></li>
+      <li>System prompt dinámico vía <code>build_system_context()</code> en router_api.py</li>
+      <li>HARD FACTS mode key ya no hardcodeada a "plan"</li>
+    </ul>
+
+    <h2>11.2 &mdash; Command Proposal Pipeline</h2>
+    <ul>
+      <li><code>POST /api/commands/propose</code> &mdash; propuesta con command + reason + risk</li>
+      <li><code>GET /api/commands/pending</code> &mdash; lista propuestas pendientes</li>
+      <li><code>POST /api/commands/approve?id=</code> &mdash; ejecuta vía sandbox_runner</li>
+      <li><code>POST /api/commands/reject?id=</code> &mdash; rechaza sin ejecutar</li>
+      <li>Proposals en <code>runtime/state/command_proposals.jsonl</code></li>
+      <li>Audit dual: Qdrant incidents + governance_audit.jsonl</li>
+    </ul>
+
+    <h2>11.6 &mdash; EXECUTE v1 Policy</h2>
+    <p><code>runtime/execution/execute_v1_policy.py</code></p>
+    <p><strong>EXECUTE v1 SOLO permite:</strong> archivos temporales, scripts sandbox, dry-run, comandos readonly, análisis, validación, generación de planes.</p>
+    <p><strong>PROHIBIDO:</strong> Docker, systemctl (except status), network (curl solo localhost/health), filesystem fuera de sandbox, Hyper-V, UniFi, Cloudflare, sudo, chmod, mount, dd, iptables, virsh, git push/commit, ssh, scp, kill, apt, pip/npm install, shell=True.</p>
+    <p>Whitelist: ls, cat, echo, head, tail, wc, grep, find, pwd, date, whoami, id, df -h, free -h, ps aux, uname, uptime, env. python3 requiere dry-run.</p>
+    <p>Validación en dos capas: <code>sandbox_runner.py</code> + <code>live_api.py</code> approve handler.</p>
+
+    <h2>11.8 &mdash; Advisory Recall</h2>
+    <p>Todo recall injection usa tono <strong>advisory</strong>: "Experiencias pasadas relevantes (advisory, no verificadas)". Nunca "Esto es verdad." El LLM debe tratar el recall como <strong>pista</strong>, no como <strong>hecho</strong>.</p>
+
+    <hr />
+
+    <h2>Arquitectura General</h2>
+    <pre style="background:#1e1e1e; color:#ddd; padding:1rem; border-radius:6px; overflow-x:auto;">
+FASE 11: Cognitive Operations Runtime
+
+  LLM ──→ router_api.py
+              │
+              ├── build_system_context() → mode dinámico
+              │
+              └── context_shaper.py
+                      │
+                      ├── HARD FACTS (JSON + texto)
+                      │     └── semantic_recall stats
+                      │
+                      └── execute_recall() ← recall_policy.py
+                              ├── should_recall() gate
+                              ├── search sources (ordered)
+                              ├── quality gate (contamination)
+                              └── advisory block
+
+  Live API (:8084)
+      ├── /api/mode/switch        ← mode_manager.py
+      ├── /api/commands/propose   ← JSONL pipeline
+      ├── /api/commands/approve   ← sandbox_runner.py
+      │                              └── execute_v1_policy.py
+      └── /api/commands/reject
+
+  Seguridad:
+      ├── execute_v1_policy.py    (global whitelist)
+      ├── capability_guard.py     (mode check)
+      └── profile loader          (per-user allow_shell)
+    </pre>
+
+    <h2>State persistente</h2>
+    <ul>
+      <li><code>runtime/state/current_mode.json</code> &mdash; modo operativo actual</li>
+      <li><code>runtime/state/command_proposals.jsonl</code> &mdash; propuestas pendientes + historial</li>
+      <li><code>runtime/state/governance_audit.jsonl</code> &mdash; compliance trail</li>
+    </ul>
+  </main>
+</Layout>

@@ -200,6 +200,66 @@ def store_embedding(collection: str, payload: dict) -> bool:
     return store_event(collection, payload, embedding)
 
 
+# ── scroll (non-semantic, for analytics) ─────────────────────────────
+
+def scroll_all(collection: str, limit: int = 100) -> list[dict]:
+    """Scroll all points from a collection (no query vector, payload only).
+
+    Useful for analytics, aggregation, and audit — not for semantic search.
+    """
+    if not _HAVE_REQUESTS:
+        return []
+    try:
+        body = {"limit": limit, "with_payload": True, "with_vector": False}
+        resp = _req.post(
+            f"{QDRANT_HOST}/collections/{collection}/points/scroll",
+            json=body,
+            timeout=5,
+        )
+        if resp.status_code == 200:
+            points = resp.json().get("result", {}).get("points", [])
+            return [
+                {
+                    "id": p["id"],
+                    "payload": p.get("payload", {}),
+                }
+                for p in points
+            ]
+    except Exception:
+        pass
+    return []
+
+
+def scroll_filtered(collection: str, filter_cond: dict, limit: int = 100) -> list[dict]:
+    """Scroll points with a Qdrant filter condition."""
+    if not _HAVE_REQUESTS:
+        return []
+    try:
+        body = {
+            "filter": filter_cond,
+            "limit": limit,
+            "with_payload": True,
+            "with_vector": False,
+        }
+        resp = _req.post(
+            f"{QDRANT_HOST}/collections/{collection}/points/scroll",
+            json=body,
+            timeout=5,
+        )
+        if resp.status_code == 200:
+            points = resp.json().get("result", {}).get("points", [])
+            return [
+                {
+                    "id": p["id"],
+                    "payload": p.get("payload", {}),
+                }
+                for p in points
+            ]
+    except Exception:
+        pass
+    return []
+
+
 # ── search ────────────────────────────────────────────────────────────
 
 def search_collection(collection: str, query_text: str, limit: int = 5, threshold: float = 0.0) -> list[dict]:

@@ -86,6 +86,21 @@ def record_route_result(
     except ImportError:
         pass
 
+    # ── Incident hook (FASE 10.2) ────────────────────────────────────
+    if not success or failover:
+        try:
+            from runtime.memory.watchdog_incident_hook import record_node_incident
+            event = "routing_error" if not success else "failover"
+            sev = "critical" if not success else "warning"
+            msg = error if error else (f"Failover on {node}" if failover else f"Routing error on {node}")
+            record_node_incident(
+                node=node, host=host,
+                event=event, message=msg,
+                severity=sev,
+            )
+        except ImportError:
+            pass
+
 
 def read_route_history(limit: int = 500, from_disk: bool = False):
     """Return the last *limit* route records (newest first)."""

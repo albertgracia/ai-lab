@@ -79,9 +79,28 @@ def root():
     }
 
 
-BASE_SYSTEM_CONTEXT = """
+def _current_mode_label() -> str:
+    """Return the mode instruction for the system prompt based on current mode."""
+    try:
+        from runtime.modes.mode_manager import current_mode
+        mode = current_mode()
+    except ImportError:
+        mode = "plan"
+
+    labels = {
+        "readonly": "MODO READ-ONLY: solo lectura, analisis y diagnostico. No ejecutas nada.",
+        "plan": "MODO PLAN: lees, analizas, diagnosticas y propones, pero NO ejecutas cambios sin confirmacion explicita.",
+        "build": "MODO BUILD: puedes proponer cambios en archivos y configuracion. Los comandos shell requieren aprobacion.",
+        "execute": "MODO EXECUTE (supervisado): puedes proponer comandos. Cada comando pasa por revision antes de ejecutarse.",
+    }
+    return labels.get(mode, labels["plan"])
+
+
+def build_system_context() -> str:
+    mode_instruction = _current_mode_label()
+    return f"""
 Eres el copiloto autonomo del AI-LAB de Albert.
-Responde siempre en espanol. Operas en MODO PLAN: lees, analizas, diagnosticas y propones, pero NO ejecutas cambios sin confirmacion explicita.
+Responde siempre en espanol. Operas en {mode_instruction}
 Tienes acceso a: (a) HARD FACTS con datos del runtime, (b) tu conocimiento del dominio.
 
 REGLAS ESTRICTAS:
@@ -310,7 +329,7 @@ async def chat_completions(request: Request):
         task = node.get("capability", "general")
         wm.set_task(task)
 
-        agent_context = shape_context(task, node.get("model", ""), wm)
+        agent_context = shape_context(task, node.get("model", ""), wm, query_text=request_text)
     else:
         agent_context = build_selective_context(request_text)
 
@@ -330,7 +349,7 @@ async def chat_completions(request: Request):
     _max_ctx_chars = _ctx_limit.get(_task_cap, 4000)
 
     system_prompt = (
-        BASE_SYSTEM_CONTEXT
+        build_system_context()
         + "\n\n"
         + "=== RUNTIME DATA ===\n"
         + agent_context[:_max_ctx_chars]
@@ -599,4 +618,194 @@ async def api_runtime_recall(q: str = "", limit: int = 3):
         "query": q,
         "results": results,
         "count": len(results),
+    }
+
+
+@app.get("/api/incidents/analytics")
+async def api_incidents_analytics(days: int = 7):
+    """Incident intelligence analytics.
+
+    Aggregates incidents by type, severity, node, and time.
+    Uses Qdrant scroll (non-semantic) — no query vector needed.
+
+    Args:
+        days: lookback window in days (default 7)
+
+    Returns:
+        total: total incident count
+        by_type: {event_type: count}
+        by_severity: {severity: count}
+        by_node: {node: count}
+        timeline: [{date, count, critical, warning, info}]
+        latest: last 10 incidents
+    """
+    from runtime.memory.qdrant_store import scroll_all
+    from collections import Counter
+    import time
+
+    points = scroll_all("incidents")
+    cutoff = time.time() - days * 86400
+
+    filtered = [p for p in points if p["payload"].get("timestamp", 0) >= cutoff]
+
+    by_type = dict(Counter(p["payload"].get("event_type", "unknown") for p in filtered))
+    by_severity = dict(Counter(p["payload"].get("severity", "unknown") for p in filtered))
+    by_node = dict(Counter(p["payload"].get("node", "unknown") for p in filtered))
+
+    by_type = dict(sorted(by_type.items(), key=lambda x: -x[1]))
+    by_severity = dict(sorted(by_severity.items(), key=lambda x: -x[1]))
+    by_node = dict(sorted(by_node.items(), key=lambda x: -x[1]))
+
+    timeline_raw = Counter()
+    for p in filtered:
+        day = time.strftime("%Y-%m-%d", time.gmtime(p["payload"].get("timestamp", 0)))
+        timeline_raw[day] += 1
+
+    timeline_sev = {}
+    for p in filtered:
+        day = time.strftime("%Y-%m-%d", time.gmtime(p["payload"].get("timestamp", 0)))
+        sev = p["payload"].get("severity", "info")
+        if day not in timeline_sev:
+            timeline_sev[day] = {"critical": 0, "warning": 0, "info": 0}
+        if sev in timeline_sev[day]:
+            timeline_sev[day][sev] += 1
+
+    timeline = [
+        {
+            "date": day,
+            "count": timeline_raw[day],
+            **timeline_sev.get(day, {"critical": 0, "warning": 0, "info": 0}),
+        }
+        for day in sorted(timeline_raw.keys())
+    ]
+
+    latest = sorted(
+        filtered,
+        key=lambda p: p["payload"].get("timestamp", 0),
+        reverse=True,
+    )[:10]
+    for p in latest:
+        p["payload"]["_id"] = p["id"]
+
+    return {
+        "total": len(filtered),
+        "days": days,
+        "by_type": by_type,
+        "by_severity": by_severity,
+        "by_node": by_node,
+        "timeline": timeline,
+        "latest": [p["payload"] for p in latest],
+    }
+
+
+@app.get("/api/incidents/timeline")
+async def api_incidents_timeline(days: int = 7, bucket: str = "day"):
+    """Incident timeline with configurable time buckets.
+
+    Args:
+        days: lookback window
+        bucket: 'day' or 'hour'
+    """
+    from runtime.memory.qdrant_store import scroll_all
+    from collections import Counter
+    import time
+
+    points = scroll_all("incidents")
+    cutoff = time.time() - days * 86400
+    filtered = [p for p in points if p["payload"].get("timestamp", 0) >= cutoff]
+
+    timeline = Counter()
+    for p in filtered:
+        ts = p["payload"].get("timestamp", 0)
+        if bucket == "hour":
+            label = time.strftime("%Y-%m-%d %H:00", time.gmtime(ts))
+        else:
+            label = time.strftime("%Y-%m-%d", time.gmtime(ts))
+        timeline[label] += 1
+
+    return {
+        "total": len(filtered),
+        "days": days,
+        "bucket": bucket,
+        "timeline": [
+            {"label": k, "count": v}
+            for k, v in sorted(timeline.items())
+        ],
+    }
+
+
+@app.get("/api/memory/quality")
+async def api_memory_quality(q: str = "", collection: str = "incidents", limit: int = 10):
+    """Relevance quality metrics for a single query.
+
+    Uses quality_assessment module for precision, noise, contamination risk.
+    """
+    from runtime.memory.qdrant_store import search_collection as _sc
+    from runtime.memory.qdrant_collections import COLLECTION_SCHEMAS
+    from runtime.memory.quality_assessment import assess_query, suggest_thresholds
+
+    valid = set(COLLECTION_SCHEMAS.keys())
+    if collection not in valid:
+        return JSONResponse({
+            "error": f"Invalid collection. Valid: {sorted(valid)}"
+        }, status_code=400)
+
+    results = _sc(collection, q, limit=limit) if q else []
+    assessment = assess_query(q, results)
+    assessment["collection"] = collection
+    assessment["threshold_suggestion"] = suggest_thresholds(results)
+    assessment["results"] = results
+    return assessment
+
+
+@app.get("/api/memory/quality/batch")
+async def api_memory_quality_batch(collection: str = "incidents", limit: int = 5):
+    """Run batch quality assessment across predefined test queries.
+
+    Tests multiple semantic search queries and aggregates precision,
+    noise, and contamination metrics. Useful for regression testing
+    and embedding quality monitoring.
+
+    Args:
+        collection: Qdrant collection to test
+        limit: results per query
+    """
+    from runtime.memory.qdrant_store import search_collection as _sc
+    from runtime.memory.qdrant_collections import COLLECTION_SCHEMAS
+    from runtime.memory.quality_assessment import run_batch
+
+    valid = set(COLLECTION_SCHEMAS.keys())
+    if collection not in valid:
+        return JSONResponse({
+            "error": f"Invalid collection. Valid: {sorted(valid)}"
+        }, status_code=400)
+
+    return run_batch(collection, _sc, limit=limit)
+
+
+@app.get("/api/runtime/patterns")
+async def api_runtime_patterns(days: int = 7):
+    """Detect operational patterns from Qdrant data.
+
+    Analyzes incidents, routing history, and cognitive history
+    to identify recurring issues, trends, and correlations.
+
+    Args:
+        days: lookback window (default 7)
+
+    Returns:
+        patterns: list of detected patterns with confidence scores
+        latency_trends: per-model latency drift analysis
+        generated_at: timestamp
+    """
+    from runtime.memory.pattern_learner import learn_patterns, latency_trends
+
+    patterns = learn_patterns(days=days)
+    ltrends = latency_trends(days=days)
+
+    return {
+        "patterns": patterns,
+        "latency_trends": ltrends,
+        "days": days,
+        "generated_at": int(time.time()),
     }

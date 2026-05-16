@@ -7,6 +7,7 @@ from runtime.security.capability_guard import validate_shell_command
 from runtime.audit.audit_logger import audit_event
 from runtime.profiles.loader import load_profile
 from runtime.memory.episodic_memory import write_episode
+from runtime.execution.execute_v1_policy import is_allowed as v1_is_allowed
 
 
 DEFAULT_TIMEOUT = 30
@@ -32,6 +33,10 @@ def run_safe_command(
     timeout: int = DEFAULT_TIMEOUT,
 ):
     validate_shell_command(mode, command)
+
+    allowed, reason = v1_is_allowed(command)
+    if not allowed:
+        raise PermissionError(f"EXECUTE v1 policy blocked: {reason}")
 
     profile = load_profile(profile_name)
 
@@ -163,9 +168,9 @@ def run_safe_command(
 
 if __name__ == "__main__":
     tests = [
-        ("execute", "sandbox", "docker ps"),
+        ("execute", "pilot", "ls /tmp"),
         ("execute", "pilot", "docker ps"),
-        ("execute", "production", "docker ps"),
+        ("execute", "pilot", "cat /etc/shadow"),
     ]
 
     for mode, profile, cmd in tests:

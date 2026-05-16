@@ -61,6 +61,7 @@ def shape_context(
     task_type: str,
     model_id: str = "",
     working_memory=None,
+    query_text: str = "",
 ) -> str:
     """Return a context string optimised for *task_type* and *model_id*.
 
@@ -174,8 +175,40 @@ def shape_context(
     except ImportError:
         pass
 
+    # ── 5b. controlled cognitive recall (FASE 11.0) ──────────────────
+    recall_block = ""
+    recall_stats = {}
+    if query_text and query_text.strip():
+        try:
+            from runtime.memory.recall_policy import execute_recall
+            recall_result = execute_recall(query_text, task_type=task_type)
+            if recall_result.get("enabled"):
+                recall_block = recall_result["block"]
+                recall_stats = {
+                    "semantic_recall": {
+                        "enabled": True,
+                        "collections_used": recall_result["collections_used"],
+                        "matches": recall_result["matches"],
+                        "avg_score": recall_result["avg_score"],
+                        "chars_injected": recall_result["chars_injected"],
+                    }
+                }
+        except ImportError:
+            pass
+
+    # Rebuild HARD FACTS with recall stats if available
+    if recall_stats:
+        hard_facts = _build_hard_facts(extra_json=recall_stats)
+
     budget_info = f"BUDGET: budget={budget} chars, used={used}/{budget} ({used/max(budget,1)*100:.0f}%) [HARD_FACTS]"
-    return hard_facts + "\n\n" + budget_info + "\n\n---\n\n" + "\n\n---\n\n".join(chunks)
+    parts = [hard_facts, budget_info]
+    if recall_block:
+        parts.append(recall_block)
+    else:
+        # Always show recall status, even if empty
+        parts.append("[SEMANTIC_RECALL_BEGIN]\n  (no experiences relevantes encontradas)\n[/SEMANTIC_RECALL_END]")
+    parts.append("\n\n---\n\n".join(chunks))
+    return "\n\n".join(parts)
 
 
 # ── HARD FACTS generator (anti-hallucination) ──────────────────────────
@@ -186,7 +219,7 @@ FORBIDDEN_REFERENCES = [
     "AWS", "GCP", "Azure", "Kubernetes", "Terraform",
 ]
 
-def _build_hard_facts() -> str:
+def _build_hard_facts(extra_json: dict | None = None) -> str:
     """Generate structured JSON + text HARD FACTS block from live sources.
 
     Returns a hybrid block:
@@ -215,10 +248,16 @@ def _build_hard_facts() -> str:
 
     # ── initialize output parts ────────────────────────────────────
     text_lines: list[str] = []
+    _current_mode = "plan"
+    try:
+        from runtime.modes.mode_manager import current_mode as _cm
+        _current_mode = _cm()
+    except ImportError:
+        pass
     data: dict = {
         "schema_version": "1.0",
         "runtime": {
-            "mode": "plan",
+            "mode": _current_mode,
             "version": "1.1.0",
             "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             "uptime_hours": 0.0,
@@ -508,6 +547,14 @@ def _build_hard_facts() -> str:
 
     # ── 12. PENDING IMPLEMENTATIONS ────────────────────────────────
     text_lines.append("PENDING: routing_confidence latency_per_request puppet_ansible gateway_api_write rx7900xt_diagnosis ci_cd_automation auto_scaling")
+
+    # ── Merge extra JSON (FASE 11.0 — semantic_recall stats) ───────
+    if extra_json:
+        for _ek, _ev in extra_json.items():
+            if isinstance(_ev, dict):
+                data[_ek] = {**data.get(_ek, {}), **_ev}
+            else:
+                data[_ek] = _ev
 
     # ── Serialize JSON block ────────────────────────────────────────
     try:

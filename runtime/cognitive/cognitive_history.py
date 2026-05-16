@@ -63,6 +63,18 @@ def record_snapshot(
     except ImportError:
         pass
 
+    # ── Incident hook for context overflows (FASE 10.2) ──────────
+    if budget_used > 0.9:
+        try:
+            from runtime.memory.watchdog_incident_hook import record_node_incident
+            record_node_incident(
+                node="", host="",
+                event="context_overflow",
+                message=f"Context budget at {budget_used:.0%} ({task_type}/{model})",
+                severity="warning",
+            )
+        except ImportError:
+            pass
 
 
 def read_history(limit: int = 20) -> list[dict]:

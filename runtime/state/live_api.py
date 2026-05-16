@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """AI-LAB Live API v3 - Status, Topology, SSE Events, Analytics."""
-import json, subprocess, urllib.parse
+import json, subprocess, urllib.parse, uuid
 from pathlib import Path
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from runtime.event_bus import emit
@@ -143,7 +143,13 @@ def _pending_actions():
 def _watchdog():
     try:
         from runtime.watchdog.runtime_watchdog import run_watchdog
-        return run_watchdog()
+        result = run_watchdog()
+        try:
+            from runtime.memory.watchdog_incident_hook import record_watchdog_incident
+            record_watchdog_incident(result)
+        except ImportError:
+            pass
+        return result
     except ImportError:
         return {"status": "error", "checks": {}, "error": "watchdog not available"}
 
@@ -184,6 +190,10 @@ class APIHandler(BaseHTTPRequestHandler):
             self._handle_incidents_search()
         elif self.path.startswith("/api/runtime/recall"):
             self._handle_runtime_recall()
+        elif self.path == "/api/mode":
+            self._handle_get_mode()
+        elif self.path == "/api/commands/pending":
+            self._handle_pending_commands()
         else: self._send_error(404)
     def do_POST(self):
         parsed = urllib.parse.urlparse(self.path)
@@ -231,6 +241,14 @@ class APIHandler(BaseHTTPRequestHandler):
                 self._json({"total": len(acts), "actions": acts})
             except ImportError:
                 self._json({"error": "pending_adjustments not available"})
+        elif path == "/api/mode/switch":
+            self._handle_switch_mode(qs)
+        elif path == "/api/commands/propose":
+            self._handle_propose_command()
+        elif path == "/api/commands/approve" and adj_id:
+            self._handle_approve_command(adj_id)
+        elif path == "/api/commands/reject" and adj_id:
+            self._handle_reject_command(adj_id)
         else:
             self._send_error(404)
     def do_OPTIONS(self):
@@ -316,7 +334,167 @@ class APIHandler(BaseHTTPRequestHandler):
         except ImportError:
             self._json({"error": "qdrant_store not available"})
 
+    # ── Mode handlers (FASE 11.1) ─────────────────────────────────────
+
+    def _handle_get_mode(self):
+        try:
+            from runtime.modes.mode_manager import read_mode
+            self._json(read_mode())
+        except ImportError:
+            self._json({"mode": "plan", "error": "mode_manager not available"})
+
+    def _handle_switch_mode(self, qs):
+        try:
+            from runtime.modes.mode_manager import can_transition, requires_reason, write_mode, current_mode
+            target = qs.get("mode", [None])[0]
+            reason = qs.get("reason", [""])[0]
+            if not target or target not in ("readonly", "plan", "build", "execute"):
+                self._json({"error": "Invalid mode. Valid: readonly, plan, build, execute"})
+                return
+            cur = current_mode()
+            allowed, msg = can_transition(cur, target)
+            if not allowed:
+                self._json({"error": msg})
+                return
+            if requires_reason(cur, target) and not reason:
+                self._json({"error": f"Transition {cur}→{target} requires a 'reason' parameter"})
+                return
+            state = write_mode(target, "api", reason)
+            self._json({"success": True, "previous": cur, **state})
+        except ImportError:
+            self._json({"error": "mode_manager not available"})
+
+    # ── Command proposal handlers (FASE 11.2) ─────────────────────────
+
+    def _handle_pending_commands(self):
+        proposals = _load_proposals()
+        pending = [p for p in proposals if p.get("status") == "pending"]
+        self._json({"total": len(pending), "proposals": pending})
+
+    def _handle_propose_command(self):
+        length = int(self.headers.get("Content-Length", 0))
+        if length == 0:
+            self._json({"error": "empty body"})
+            return
+        body = json.loads(self.rfile.read(length).decode("utf-8"))
+        command = body.get("command", "").strip()
+        reason = body.get("reason", "").strip()
+        risk = body.get("risk", "low")
+        if not command:
+            self._json({"error": "command is required"})
+            return
+        proposals = _load_proposals()
+        proposal = {
+            "id": str(uuid.uuid4())[:12],
+            "command": command,
+            "reason": reason,
+            "risk": risk,
+            "status": "pending",
+            "created_at": int(_time.time()),
+            "proposed_by": "llm",
+        }
+        proposals.append(proposal)
+        _save_proposals(proposals)
+        _audit("command_proposed", {"command": command, "risk": risk, "reason": reason})
+        self._json({"success": True, "proposal": proposal})
+
+    def _handle_approve_command(self, adj_id):
+        proposals = _load_proposals()
+        found = None
+        for p in proposals:
+            if p["id"] == adj_id and p.get("status") == "pending":
+                found = p
+                break
+        if not found:
+            self._json({"error": "proposal not found or not pending"})
+            return
+        try:
+            from runtime.execution.sandbox_runner import run_safe_command
+            from runtime.execution.execute_v1_policy import is_allowed as v1_check
+            from runtime.modes.mode_manager import current_mode
+            mode = current_mode()
+            allowed, reason = v1_check(found["command"])
+            if not allowed:
+                self._json({"error": f"EXECUTE v1 policy blocked: {reason}", "proposal_id": adj_id})
+                return
+            result = run_safe_command(mode, found["command"], "pilot")
+            found["status"] = "executed"
+            found["approved_at"] = int(_time.time())
+            found["result"] = {
+                "success": result.get("returncode", -1) == 0,
+                "exit_code": result.get("returncode"),
+                "output": result.get("stdout", "")[:2000],
+                "errors": result.get("stderr", "")[:500],
+            }
+            _save_proposals(proposals)
+            _audit("command_approved", {"id": adj_id, "command": found["command"]})
+            self._json({"success": True, **found})
+        except ImportError:
+            self._json({"error": "sandbox_runner not available"})
+
+    def _handle_reject_command(self, adj_id):
+        proposals = _load_proposals()
+        found = None
+        for p in proposals:
+            if p["id"] == adj_id and p.get("status") == "pending":
+                found = p
+                break
+        if not found:
+            self._json({"error": "proposal not found or not pending"})
+            return
+        found["status"] = "rejected"
+        found["rejected_at"] = int(_time.time())
+        _save_proposals(proposals)
+        _audit("command_rejected", {"id": adj_id, "command": found["command"]})
+        self._json({"success": True, "id": adj_id, "status": "rejected"})
+
     # ─────────────────────────────────────────────────────────────────
+
+def _proposals_path() -> Path:
+    return Path("/opt/ai-lab/runtime/state/command_proposals.jsonl")
+
+
+def _load_proposals() -> list[dict]:
+    p = _proposals_path()
+    if not p.exists():
+        return []
+    proposals = []
+    for line in p.read_text().strip().splitlines():
+        if line:
+            try:
+                proposals.append(json.loads(line))
+            except json.JSONDecodeError:
+                pass
+    return proposals
+
+
+def _save_proposals(proposals: list[dict]):
+    p = _proposals_path()
+    p.parent.mkdir(parents=True, exist_ok=True)
+    with open(p, "w") as f:
+        for prop in proposals:
+            f.write(json.dumps(prop, ensure_ascii=False) + "\n")
+
+
+def _audit(event: str, payload: dict):
+    try:
+        from runtime.audit.audit_logger import audit_event
+        audit_event(event, payload)
+    except ImportError:
+        pass
+    try:
+        from runtime.memory.qdrant_store import store_embedding
+        store_embedding("incidents", {
+            "event_type": event,
+            "severity": "info",
+            "message": payload.get("command", payload.get("reason", event)),
+            "timestamp": int(_time.time()),
+            "schema_version": "1.0",
+            "source": "command_pipeline",
+        })
+    except ImportError:
+        pass
+
 
 def run():
     server = ThreadingHTTPServer((HOST, PORT), APIHandler)
