@@ -63,6 +63,10 @@ def shape_context(
     working_memory=None,
     query_text: str = "",
     routing_mode: str = "primary",
+    selected_model: str | None = None,
+    selected_node: str | None = None,
+    routing_reason_codes: list[str] | None = None,
+    discovery_source: str | None = None,
 ) -> str:
     """Return a context string optimised for *task_type* and *model_id*.
 
@@ -85,8 +89,31 @@ def shape_context(
 
     # ── 0. HARD FACTS block (always first) ───────────────────────────
     _hard_extra: dict = {"profile": task_type}
-    if routing_mode != "primary":
-        _hard_extra["routing"] = {"mode": routing_mode}
+    _routing: dict = {"mode": routing_mode}
+    if selected_model:
+        _routing["selected_model"] = selected_model
+    if selected_node:
+        _routing["selected_node"] = selected_node
+    if routing_reason_codes:
+        _routing["reason_codes"] = list(routing_reason_codes)
+    if discovery_source:
+        _routing["discovery_source"] = discovery_source
+    _hard_extra["routing"] = _routing
+
+    try:
+        from runtime.models.model_discovery import get_cached_discovery
+        _disc = get_cached_discovery() or {}
+        if _disc:
+            _hard_extra["model_discovery"] = {
+                "enabled": True,
+                "source": "lmstudio",
+                "ttl_seconds": _disc.get("ttl_seconds", 60),
+                "nodes_scanned": _disc.get("nodes_scanned", len(_disc.get("nodes", []))),
+                "models_found": _disc.get("models_found", 0),
+                "last_refresh": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(_disc.get("timestamp", time.time()))),
+            }
+    except Exception:
+        pass
     hard_facts = _build_hard_facts(extra_json=_hard_extra)
 
     context_window = 32_000   # default fallback
@@ -560,6 +587,27 @@ def _build_hard_facts(extra_json: dict | None = None) -> str:
                 data[_ek] = {**data.get(_ek, {}), **_ev}
             else:
                 data[_ek] = _ev
+
+    _routing = data.get("routing", {}) if isinstance(data.get("routing"), dict) else {}
+    if _routing:
+        _reason_codes = _routing.get("reason_codes", []) or []
+        _reason_codes_str = ", ".join(_reason_codes[:6]) if _reason_codes else "none"
+        text_lines.append(
+            f"ROUTING: mode={_routing.get('mode', 'primary')} selected_model={_routing.get('selected_model', 'n/a')} selected_node={_routing.get('selected_node', 'n/a')} reason_codes={_reason_codes_str}"
+        )
+
+    _model_discovery = data.get("model_discovery", {}) if isinstance(data.get("model_discovery"), dict) else {}
+    if _model_discovery:
+        text_lines.append(
+            f"DISCOVERY: source={_model_discovery.get('source', 'lmstudio')} ttl={_model_discovery.get('ttl_seconds', 60)}s nodes={_model_discovery.get('nodes_scanned', 0)} models={_model_discovery.get('models_found', 0)} refresh={_model_discovery.get('last_refresh', 'n/a')}"
+        )
+
+    if data.get("gpu_nodes"):
+        model_counts = []
+        for node in data.get("gpu_nodes", []):
+            model_counts.append(f"{node.get('friendly_name', node.get('host', 'node'))}:{len(node.get('models', []))} models")
+        if model_counts:
+            text_lines.append("MODELS/NODE: " + " | ".join(model_counts[:6]))
 
     # ── Serialize JSON block ────────────────────────────────────────
     try:

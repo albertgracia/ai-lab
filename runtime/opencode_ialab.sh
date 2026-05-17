@@ -36,5 +36,5 @@ EOF
 
 /usr/local/bin/opencode run \
   --dir /opt/ai-lab \
-  --model ailab-router/ailab-router/auto \
+  --model ailab-router/auto \
   -- "$(cat "$PROMPT_FILE")"

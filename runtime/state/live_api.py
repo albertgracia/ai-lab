@@ -76,6 +76,34 @@ def _model_performance():
     except ImportError:
         return {"error": "model_performance module not available"}
 
+def _model_discovery(force=False):
+    try:
+        from runtime.models.model_discovery import discover_all_models
+        return discover_all_models(force=force)
+    except ImportError:
+        return {"error": "model_discovery module not available"}
+
+def _model_catalog(force=False):
+    try:
+        from runtime.models.model_discovery import discover_all_models
+        from runtime.models.model_registry import merge_registry_with_discovery
+        discovery = discover_all_models(force=force)
+        catalog = []
+        for node in discovery.get("nodes", []):
+            for model in node.get("models", []):
+                model_id = model.get("id") if isinstance(model, dict) else model
+                if not model_id:
+                    continue
+                catalog.append(merge_registry_with_discovery(model_id, {**node, "node": node.get("name") or node.get("host")}))
+        return {
+            "timestamp": discovery.get("timestamp"),
+            "count": len(catalog),
+            "models": catalog,
+            "discovery": discovery,
+        }
+    except ImportError:
+        return {"error": "model_catalog unavailable"}
+
 def _cognitive_snapshot():
     try:
         from runtime.cognitive.cognitive_history import read_history
@@ -182,6 +210,12 @@ class APIHandler(BaseHTTPRequestHandler):
             self._json(_pending_actions())
         elif self.path == "/api/watchdog":
             self._json(_watchdog())
+        elif self.path == "/api/models/discovery":
+            self._json(_model_discovery(force=False))
+        elif self.path == "/api/models/discovery/refresh":
+            self._json(_model_discovery(force=True))
+        elif self.path == "/api/models/catalog":
+            self._json(_model_catalog(force=False))
         elif self.path == "/api/events":
             self._sse()
         elif self.path.startswith("/api/memory/search"):

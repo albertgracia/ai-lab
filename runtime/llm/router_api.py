@@ -317,6 +317,11 @@ async def chat_completions(request: Request):
         request_text,
         capability=capability
     )
+    selected_model = node.get("model")
+    selected_node = node.get("name")
+    routing_mode = node.get("mode", "primary")
+    reason_codes = node.get("reason_codes", [])
+    discovery_source = node.get("discovery_source", "static")
 
     upstream_url = (
         f"http://{node['host']}:{node['port']}"
@@ -334,7 +339,17 @@ async def chat_completions(request: Request):
         task = node.get("capability", "general")
         wm.set_task(task)
 
-        agent_context = shape_context(task, node.get("model", ""), wm, query_text=request_text, routing_mode=node.get("mode", "primary"))
+        agent_context = shape_context(
+            task,
+            selected_model or "",
+            wm,
+            query_text=request_text,
+            routing_mode=routing_mode,
+            selected_model=selected_model,
+            selected_node=selected_node,
+            routing_reason_codes=reason_codes,
+            discovery_source=discovery_source,
+        )
     else:
         agent_context = build_selective_context(request_text)
 

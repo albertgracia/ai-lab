@@ -26,16 +26,16 @@
         "baseURL": "http://192.168.1.30:8083/v1"
       },
       "models": {
-        "ailab-router/auto": {
+        "auto": {
           "name": "AI-LAB Router (auto)"
         },
-        "ailab-router/fast": {
+        "fast": {
           "name": "AI-LAB Router (fast)"
         },
-        "ailab-router/reasoning": {
+        "reasoning": {
           "name": "AI-LAB Router (reasoning)"
         },
-        "ailab-router/coding": {
+        "coding": {
           "name": "AI-LAB Router (coding)"
         }
       }

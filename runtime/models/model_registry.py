@@ -140,6 +140,12 @@ MODEL_REGISTRY = {
     },
 }
 
+model_registry = MODEL_REGISTRY
+
+MODEL_ALIASES = {
+    "Qwen2.5-Coder-32B-Instruct-GGUF-Q4_K_M": "qwen2.5-coder-32b-instruct",
+}
+
 
 # ── task → dimension mapping ─────────────────────────────────────────────
 # Weight per scoring dimension for each task type.
@@ -173,9 +179,14 @@ def score_model(task_type, model_id, node_state=None):
     -------
     int  (0‑100)
     """
-    model = MODEL_REGISTRY.get(model_id)
+    canonical = normalize_model_id(model_id)
+    model = MODEL_REGISTRY.get(model_id) or MODEL_REGISTRY.get(canonical)
     if not model:
-        return 0
+        try:
+            from runtime.models.model_classifier import score_unknown_model
+            return score_unknown_model(task_type, model_id)
+        except ImportError:
+            return 0
 
     weights = TASK_MODEL_SCORING.get(task_type, TASK_MODEL_SCORING["general"])
     total_weight = sum(weights.values()) or 1.0
@@ -200,9 +211,7 @@ def get_best_model(task_type, available_models=None):
     list[tuple[str, int]]  (best first)
     """
     candidates = available_models or list(MODEL_REGISTRY.keys())
-    scored = [(mid, score_model(task_type, mid))
-              for mid in candidates
-              if mid in MODEL_REGISTRY]
+    scored = [(mid, score_model(task_type, mid)) for mid in candidates]
     scored.sort(key=lambda x: x[1], reverse=True)
     return scored
 
@@ -211,3 +220,91 @@ def best_for_task(task_type, available_models=None):
     """Convenience: return the single best model_id (or None)."""
     ranked = get_best_model(task_type, available_models)
     return ranked[0][0] if ranked else None
+
+
+def normalize_model_id(model_id: str) -> str:
+    if not model_id:
+        return model_id
+    if model_id in MODEL_ALIASES:
+        return MODEL_ALIASES[model_id]
+    lowered = model_id.strip().lower()
+    for alias, canonical in MODEL_ALIASES.items():
+        if lowered == alias.lower():
+            return canonical
+    if "/" in lowered:
+        tail = lowered.split("/")[-1]
+        if tail:
+            return tail
+    return lowered
+
+
+def get_model_metadata(model_id: str):
+    canonical = normalize_model_id(model_id)
+    if canonical in MODEL_REGISTRY:
+        meta = dict(MODEL_REGISTRY[canonical])
+        meta["id"] = canonical
+        meta["source"] = "registry"
+        return meta
+
+    try:
+        from runtime.models.model_classifier import classify_model
+        meta = classify_model(canonical)
+        meta["source"] = "heuristic"
+        return meta
+    except ImportError:
+        return None
+
+
+def get_model_scores(model_id: str):
+    meta = get_model_metadata(model_id)
+    if not meta:
+        return {}
+
+    if meta.get("source") == "registry":
+        scores = dict(meta.get("scores", {}))
+        scores["capability_score"] = round(sum(scores.values()) / max(len(scores), 1), 1)
+        scores["source"] = "registry"
+        return scores
+
+    try:
+        from runtime.models.model_classifier import score_unknown_model
+        size_b = int(meta.get("size_b") or 0)
+        return {
+            "reasoning": 9 if meta.get("type") == "reasoning" else 6,
+            "coding": 9 if meta.get("type") == "coding" else 6,
+            "speed": 10 if meta.get("type") in ("fast", "general") else 5,
+            "memory": 8 if size_b <= 9 else 6 if size_b <= 14 else 5,
+            "capability_score": score_unknown_model("general", model_id),
+            "source": "heuristic",
+        }
+    except ImportError:
+        return meta.get("scores", {}) if isinstance(meta, dict) else {}
+
+
+def get_model_skills(model_id: str) -> list[str]:
+    meta = get_model_metadata(model_id)
+    if not meta:
+        return []
+    return list(meta.get("skills", []))
+
+
+def merge_registry_with_discovery(model_id: str, discovered: dict) -> dict:
+    canonical = normalize_model_id(model_id)
+    meta = get_model_metadata(canonical) or {"id": canonical, "source": "heuristic"}
+    merged = dict(meta)
+    discovered = discovered or {}
+    merged.update({
+        "id": canonical,
+        "discovered_id": model_id,
+        "source": meta.get("source", "heuristic") if meta else "heuristic",
+        "discovery_source": discovered.get("source", "lmstudio_discovery"),
+    })
+    if discovered:
+        merged["node"] = discovered.get("node") or discovered.get("name")
+        merged["host"] = discovered.get("host")
+        merged["port"] = discovered.get("port")
+        merged["online"] = discovered.get("online", False)
+        merged["latency_ms"] = discovered.get("latency_ms")
+        merged["discovered"] = discovered
+    merged["model_metadata_source"] = "registry" if meta.get("source") == "registry" else "heuristic"
+    return merged
