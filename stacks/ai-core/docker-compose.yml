@@ -24,8 +24,8 @@ services:
       - /opt/ai-lab/data/open-webui:/app/backend/data
     environment:
       - OLLAMA_BASE_URL=http://ollama:11434
-      - OPENAI_API_BASE_URL=http://192.168.1.50:1234
-      - OPENAI_API_KEY=not-needed
+      - OPENAI_API_BASE_URL=http://host.docker.internal:8083/v1
+      - OPENAI_API_KEY=ailab
       - TZ=Europe/Madrid
     ports:
       - "3000:8080"

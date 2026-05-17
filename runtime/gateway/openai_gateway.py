@@ -766,9 +766,23 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 f"{get_active_backend()['url']}/chat/completions",
                 headers=backend_headers(),
                 json=payload,
-                stream=stream_enabled,
+                stream=False,
                 timeout=(10, 600),
             )
+
+            if response.status_code == 400:
+                try:
+                    error_msg = str(response.json().get("error", {}).get("message", ""))
+                except Exception:
+                    error_msg = ""
+                if "unloaded" in error_msg.lower():
+                    response = requests.post(
+                        f"{get_active_backend()['url']}/chat/completions",
+                        headers=backend_headers(),
+                        json=payload,
+                        stream=False,
+                        timeout=(10, 600),
+                    )
 
             latency_ms = int(
                 (time.time() - start_time) * 1000

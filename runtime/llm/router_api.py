@@ -530,6 +530,7 @@ async def chat_completions(request: Request):
         ]
 
     upstream_payload = dict(payload)
+    upstream_payload.pop("stream", None)
 
     upstream_payload["model"] = node["model"]
 
@@ -547,7 +548,6 @@ async def chat_completions(request: Request):
         else 0.2)
     )
 
-    # Only set reasoning effort for non-reasoning models
     if "reasoning" not in upstream_payload.get("model", "") and "reasoning" not in upstream_payload.get("model", ""):
         upstream_payload.setdefault(
             "reasoning",
@@ -563,51 +563,91 @@ async def chat_completions(request: Request):
 
     try:
 
-        if upstream_payload.get("stream"):
+        client_wants_stream = bool(payload.get("stream"))
 
+        if client_wants_stream:
             _stream_start = time.time()
+
             upstream = requests.post(
                 upstream_url,
                 json=upstream_payload,
-                stream=True,
                 timeout=300,
             )
 
-            async def sanitize_stream():
-                for raw_line in upstream.iter_lines():
-                    if not raw_line:
-                        continue
-                    line = raw_line.decode("utf-8", errors="replace")
-                    if not line.startswith("data: "):
-                        yield line + "\n"
-                        continue
-                    payload = line[6:].strip()
-                    if payload == "[DONE]":
-                        yield "data: [DONE]\n\n"
+            content = upstream.json()
+            if upstream.status_code == 400:
+                error_msg = str(content.get("error", {}).get("message", content.get("message", "")))
+                if "unloaded" in error_msg.lower() or "invalid model identifier" in error_msg.lower():
+                    fallback_url = f"http://192.168.1.50:1234/v1/chat/completions"
+                    fallback_payload = dict(upstream_payload)
+                    fallback_payload["model"] = "llama-3.1-8b-instruct"
+                    upstream = requests.post(fallback_url, json=fallback_payload, timeout=300)
+                    content = upstream.json()
+
+            choices = content.get("choices", [])
+            for choice in choices:
+                msg = choice.get("message", {})
+                if "reasoning_content" in msg:
+                    rc = msg.pop("reasoning_content")
+                    tool_calls = parse_tool_calls_from_text(rc if isinstance(rc, str) else None)
+                    if tool_calls:
+                        msg["tool_calls"] = tool_calls
+                    elif not msg.get("content"):
+                        msg["content"] = rc
+                elif isinstance(msg.get("content"), str):
+                    tool_calls = parse_tool_calls_from_text(msg.get("content"))
+                    if tool_calls:
+                        msg["tool_calls"] = tool_calls
+                if msg.get("tool_calls"):
+                    msg["content"] = None
+                if isinstance(msg.get("content"), str):
+                    msg["content"] = sanitize_prompt_text(msg.get("content"))
+                if mode_name == "observe" and isinstance(msg.get("content"), str):
+                    msg["content"] = sanitize_observe_output(msg.get("content"))
+
+            for choice in choices:
+                msg = choice.get("message", {})
+                tool_calls = msg.get("tool_calls") or []
+                if not tool_calls:
+                    continue
+                blocked = False
+                blocked_reason = ""
+                for tc in tool_calls:
+                    dangerous, marker = tool_call_is_dangerous(tc)
+                    if dangerous:
+                        blocked = True
+                        blocked_reason = marker or "dangerous command"
                         break
+                if blocked:
+                    msg.pop("tool_calls", None)
+                    msg["content"] = f"Solicitud bloqueada por policy: {blocked_reason}"
+                    choice["finish_reason"] = "stop"
+                    GOVERNANCE_BLOCKED.inc()
+                    GOVERNANCE_BLOCKED_BY_REASON.labels(reason=blocked_reason).inc()
                     try:
-                        obj = json_mod.loads(payload)
-                        choices = obj.get("choices", [])
-                        for choice in choices:
-                            delta = choice.get("delta", {})
-                            if "reasoning_content" in delta:
-                                rc = delta.pop("reasoning_content")
-                                tool_calls = parse_tool_calls_from_text(rc if isinstance(rc, str) else None)
-                                if tool_calls:
-                                    delta["tool_calls"] = tool_calls
-                                    delta["content"] = None
-                                elif not delta.get("content"):
-                                    delta["content"] = rc
-                                else:
-                                    delta["content"] = rc + "\n" + delta["content"]
-                            elif isinstance(delta.get("content"), str):
-                                tool_calls = parse_tool_calls_from_text(delta.get("content"))
-                                if tool_calls:
-                                    delta["tool_calls"] = tool_calls
-                                    delta["content"] = None
-                        yield f"data: {json_mod.dumps(obj, ensure_ascii=False)}\n\n"
-                    except Exception:
-                        yield line + "\n"
+                        from runtime.audit.audit_logger import audit_event
+                        audit_event("tool_call_blocked", {"reason": blocked_reason, "node": node.get("name"), "model": node.get("model")})
+                    except ImportError:
+                        pass
+
+            async def wrap_as_sse():
+                full_text = ""
+                for choice in content.get("choices", []):
+                    delta = choice.get("delta", choice.get("message", {}))
+                    text = delta.get("content", "")
+                    if text:
+                        full_text += text
+
+                if full_text:
+                    words = full_text.split()
+                    for i in range(0, len(words), 3):
+                        chunk = " ".join(words[i:i+3])
+                        yield f"data: {json_mod.dumps({'choices': [{'delta': {'content': chunk + ' '}, 'index': 0}]}, ensure_ascii=False)}\n\n"
+                    yield "data: [DONE]\n\n"
+                else:
+                    chunk = content.get("choices", [{}])[0].get("message", {})
+                    yield f"data: {json_mod.dumps({'choices': [{'delta': {'content': chunk.get('content', '') or 'OK'}, 'index': 0}]}, ensure_ascii=False)}\n\n"
+                    yield "data: [DONE]\n\n"
 
             try:
                 from runtime.routing.routing_history import record_route_result as _rrr
@@ -619,12 +659,9 @@ async def chat_completions(request: Request):
                 pass
 
             return StreamingResponse(
-                sanitize_stream(),
-                status_code=upstream.status_code,
-                media_type=upstream.headers.get(
-                    "content-type",
-                    "text/event-stream"
-                ),
+                wrap_as_sse(),
+                status_code=200,
+                media_type="text/event-stream",
                 headers=headers,
             )
 
@@ -636,6 +673,16 @@ async def chat_completions(request: Request):
         )
 
         content = upstream.json()
+
+        if upstream.status_code >= 400:
+            error_msg = str(content.get("error", {}).get("message", content.get("message", "")))
+            if "unloaded" in error_msg.lower() or "invalid model identifier" in error_msg.lower():
+                fallback_url = f"http://192.168.1.50:1234/v1/chat/completions"
+                fallback_payload = dict(upstream_payload)
+                fallback_payload["model"] = "llama-3.1-8b-instruct"
+                upstream = requests.post(fallback_url, json=fallback_payload, timeout=300)
+                content = upstream.json()
+
         choices = content.get("choices", [])
         for choice in choices:
             msg = choice.get("message", {})
