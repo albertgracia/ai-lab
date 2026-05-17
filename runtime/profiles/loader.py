@@ -4,6 +4,7 @@ from importlib import import_module
 VALID_PROFILES = {
     "sandbox",
     "pilot",
+    "observe",
     "production",
 }
 

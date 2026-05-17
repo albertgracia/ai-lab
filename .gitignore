@@ -70,6 +70,11 @@ backups/
 runtime/
 !apps/metrics-dashboard/src/app/runtime/
 !apps/metrics-dashboard/src/app/runtime/page.tsx
+!runtime/control/
+!runtime/health/
+!runtime/tools/tool_metrics.py
+!runtime/telemetry/prometheus_metrics.py
+!runtime/memory/memory_usefulness.py
 sessions/
 
 

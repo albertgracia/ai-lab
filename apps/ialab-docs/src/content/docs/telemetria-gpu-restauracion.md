@@ -1,6 +1,6 @@
 ---
 title: "Restauración de telemetría GPU y verificación de dashboards"
-summary: "Diagnóstico y reparación de target Prometheus caído en RX9070 (9183), corrección de etiquetas en exporter GPU, y verificación de los 9 dashboards AI-LAB en Grafana."
+summary: "Diagnóstico y reparación de telemetry GPU tras reboot: restauración de RX9070/RX7900XT, corrección de labels y verificación de dashboards AI-LAB y metricas.labrazahome.com."
 order: 27
 ---
 
@@ -15,7 +15,15 @@ Target `192.168.1.50:9183` en Prometheus reportado como caído:
 
 ## Diagnóstico
 
-El puerto 9183 lo servía un script PowerShell (`gpu_metrics.ps1`) con `HttpListener` que lee sensores GPU vía `LibreHardwareMonitorLib.dll`. El proceso se había caído y al restaurarlo se descubrieron problemas adicionales.
+El sistema de telemetría GPU tiene dos rutas distintas:
+
+- `9182` para `windows_gpu_*` en `GPU AI Metrics`.
+- `9183` para `gpu_temperature_celsius`, `gpu_smalldata` y `gpu_power_watts` en `AI-LAB GPUs` y `metricas.labrazahome.com/gpus`.
+
+Tras el reboot del lab aparecieron dos regresiones:
+
+- `.50:9182` dejó de emitir `windows_gpu_*` porque `windows_exporter` quedó sin el collector `gpu`.
+- `.60:9183` seguía arrancando con una versión vieja de `gpu_metrics.ps1` que generaba labels sin comillas y Prometheus la rechazaba.
 
 ## Problemas encontrados y soluciones
 
@@ -23,16 +31,16 @@ El puerto 9183 lo servía un script PowerShell (`gpu_metrics.ps1`) con `HttpList
 |---|---|---|---|
 | 1 | Puerto 9183 no accesible desde red local | Firewall de Windows bloqueando tráfico entrante | `netsh advfirewall firewall add rule name="GPU Metrics 9183" dir=in action=allow protocol=TCP localport=9183` |
 | 2 | Métricas rechazadas por Prometheus | Etiquetas sin quotes: `gpu=RX9070` en lugar de `gpu="RX9070"` | Añadido `[char]34` alrededor de valores en `gpu_metrics.ps1` |
-| 3 | Task programada GPUExporter no se reiniciaba | Procesos PowerShell huérfanos bloqueando el puerto | Matar procesos y reiniciar vía `schtasks /run /tn GPUExporter` |
+| 3 | Task programada GPUExporter no se reiniciaba | Proceso PowerShell heredado y wrapper `wscript` frágil | Recrear la tarea como `powershell.exe -File gpu_metrics.ps1` directo |
+| 4 | `windows_gpu_*` desapareció en `.50:9182` | `windows_exporter` quedó con `collectors.enabled: "[defaults],textfile"` | Activar `gpu` en `config.yaml` y reiniciar el servicio |
 
 ## Arquitectura del exporter GPU
 
 ```
 GPUExporter (scheduled task, cada 1 min)
-  └─ wscript.exe → start_hidden.vbs
-       └─ powershell.exe → gpu_metrics.ps1
-            └─ HttpListener en :9183 con LibreHardwareMonitorLib.dll
-                 └─ /metrics → sensores GPU (temp, load, clock, power, D3D)
+  └─ powershell.exe → gpu_metrics.ps1
+       └─ HttpListener en :9183 con LibreHardwareMonitorLib.dll
+            └─ /metrics → sensores GPU (temp, load, clock, power, D3D)
 
 GPUSensorCollector (scheduled task, cada 1 min)
   └─ powershell.exe → get_gpu_sensors.ps1
@@ -112,7 +120,7 @@ El script `get_gpu_sensors.ps1` usaba `Out-File` sin `-Encoding ascii`, generand
 | Puertos API (8083, 8084, 8008, 4322) | ✅ Todos respondiendo |
 | Prometheus targets | ✅ 14/14 UP |
 | Grafana dashboards AI-LAB | ✅ 9/9 con datos |
-| GPUs (RX9070, RX7900XT) | ✅ Métricas D3D completas |
+| GPUs (RX9070, RX7900XT) | ✅ Métricas GPU completas en 9182 + 9183 |
 | FASE 12 learning engine | ✅ Ciclo completo operativo |
 
 ## Commit

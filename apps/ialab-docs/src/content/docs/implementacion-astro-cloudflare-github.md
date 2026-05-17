@@ -92,9 +92,9 @@ git push origin main
 | Sitio | Efecto | Tiempo |
 |---|---|---|
 | Blog Publico | Cloudflare Pages rebuild automatico | ~1-2 min |
-| Blog Privado | Sin efecto directo (requiere rebuild manual) | Manual |
+| Blog Privado | GitHub Actions runner rebuild + restart automatico | ~20-30 s |
 
-### Para actualizar el blog privado (ademas del push):
+### Para forzar el blog privado manualmente, si hace falta:
 ```bash
 cd /opt/ai-lab/apps/ialab-docs && npm run build
 echo 19682507 | sudo -S systemctl restart ailab-docs.service

@@ -180,6 +180,11 @@ def execute_recall(query_text: str, task_type: str = "") -> dict:
         qa = assess_query(query_text, all_hits)
         if qa.get("contamination_risk", 0) > CONTAMINATION_GATE:
             result["block"] = ""
+            try:
+                from runtime.audit.audit_logger import audit_event
+                audit_event("recall_contaminated", {"query": query_text[:100], "risk": qa.get("contamination_risk", 0)})
+            except ImportError:
+                pass
             return result
     except ImportError:
         pass

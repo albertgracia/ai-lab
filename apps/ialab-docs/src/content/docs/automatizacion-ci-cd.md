@@ -123,9 +123,9 @@ nada mas. La contrasena no queda almacenada en ningun lado.
 
 | Cambio | Blog Publico | Blog Privado |
 |---|---|---|
-| Push a `main` con cambios en `apps/ialab-docs/` | ✅ Automatico (Cloudflare) | ✅ Automatico (Runner) |
+| Push a `main` con cambios en `apps/ialab-docs/` | ✅ Automatico (Cloudflare Pages) | ✅ Automatico (Runner local) |
 | Push a `main` sin cambios en docs | ❌ No se activa | ❌ No se activa |
-| Workflow manual (GitHub Actions UI) | ❌ No se activa | ✅ Manual |
+| Workflow manual (GitHub Actions UI) | ❌ No se activa | ✅ Manual, solo para remediation |
 
 ## Archivos del proyecto
 

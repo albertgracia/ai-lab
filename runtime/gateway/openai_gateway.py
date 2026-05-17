@@ -7,6 +7,9 @@ import requests
 import time
 
 from runtime.router.capability_router import choose_model
+from runtime.llm.model_router import infer_task
+from runtime.agent.intent_router import detect_intent
+from runtime.modes.mode_manager import current_mode
 
 from runtime.telemetry.gateway_metrics import (
     register_request,
@@ -38,11 +41,15 @@ from runtime.distributed.execution_coordinator import (
 
 
 from runtime.gateway.stream_sanitizer import relay_stream
+from runtime.gateway.tool_call_parser import extract_tool_calls_from_message, filter_dangerous_tool_calls, parse_tool_calls
+from runtime.gateway.tool_request_classifier import build_observe_context, sanitize_observe_output, sanitize_payload_messages, sanitize_prompt_text, should_use_greeting_fastpath, should_use_tool_fastpath
 from runtime.gateway.gateway_metrics import (
     load_metrics,
     record_request,
     record_error,
 )
+from runtime.telemetry.prometheus_metrics import GOVERNANCE_BLOCKED, GOVERNANCE_BLOCKED_BY_REASON
+from prometheus_client import generate_latest as prom_generate_latest, REGISTRY as prom_REGISTRY
 from collections import defaultdict
 import threading
 
@@ -303,9 +310,44 @@ def sanitize_text(value):
 
 
 def inject_agent_context(payload):
+    payload = sanitize_payload_messages(payload)
     messages = payload.get("messages", [])
+    mode_name = current_mode()
+    user_text = ""
+    for msg in reversed(messages):
+        if isinstance(msg, dict) and msg.get("role") == "user" and isinstance(msg.get("content"), str):
+            user_text = msg.get("content", "")
+            break
+    prompt_route = detect_intent(user_text)
+    observe_fastpath = prompt_route.mode == "observe" and not should_use_tool_fastpath(payload)
 
-    system_prompt = load_agent_prompt()
+    if (mode_name == "observe" or observe_fastpath) and not should_use_tool_fastpath(payload):
+        system_prompt = (
+            "Responde en espanol, natural y breve. Usa solo informacion observable. "
+            "No uses HARD_FACTS, no uses secciones y no inventes datos. "
+            "Si el usuario pide detalle, resume en 3-5 lineas. "
+            f"OBSERVED_RUNTIME: {build_observe_context()}"
+        )
+        payload["max_tokens"] = min(int(payload.get("max_tokens", 180) or 180), 180)
+        payload["temperature"] = min(float(payload.get("temperature", 0.1) or 0.1), 0.2)
+    elif should_use_greeting_fastpath(payload):
+        payload.pop("tools", None)
+        payload.pop("tool_choice", None)
+        system_prompt = (
+            "Responde en espanol, muy breve y natural. "
+            "No uses HARD_FACTS, no uses secciones y no inventes datos."
+        )
+        payload["model"] = "llama-3.1-8b-instruct"
+        payload["max_tokens"] = min(int(payload.get("max_tokens", 96) or 96), 96)
+        payload["temperature"] = min(float(payload.get("temperature", 0.2) or 0.2), 0.2)
+    elif should_use_tool_fastpath(payload):
+        system_prompt = (
+            "Eres el gateway tool-aware de AI-LAB. "
+            "Si necesitas usar una herramienta, emite tool_calls estructurados. "
+            "Responde en espanol y evita contexto innecesario."
+        )
+    else:
+        system_prompt = load_agent_prompt()
 
     injected = [
         {
@@ -337,13 +379,31 @@ def sanitize_completion_response(data):
     for choice in choices:
         message = choice.get("message", {})
 
+        tool_calls = extract_tool_calls_from_message(message)
+        if tool_calls:
+            safe_tool_calls, blocked_reason = filter_dangerous_tool_calls(tool_calls)
+            if blocked_reason:
+                record_blocked_prompt()
+                GOVERNANCE_BLOCKED.inc()
+                GOVERNANCE_BLOCKED_BY_REASON.labels(reason=blocked_reason).inc()
+                message.pop("tool_calls", None)
+                message["content"] = f"Solicitud bloqueada por policy: {blocked_reason}"
+                choice["finish_reason"] = "stop"
+            else:
+                message["tool_calls"] = safe_tool_calls
+                message["content"] = None
+
         message.pop("reasoning_content", None)
 
         content = message.get("content", "")
 
-        message["content"] = sanitize_text(content)
+        if content:
+            message["content"] = sanitize_prompt_text(sanitize_text(content))
 
-        if not message["content"]:
+        if current_mode() == "observe" and isinstance(message.get("content"), str):
+            message["content"] = sanitize_observe_output(message.get("content"))
+
+        if not message.get("content") and not tool_calls:
             message["content"] = (
                 "Respuesta generada, pero el contenido final "
                 "llegó vacío desde el modelo."
@@ -501,6 +561,8 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 + "# HELP ailab_governance_parser_failures_total Parser failures\n"
                 + "# TYPE ailab_governance_parser_failures_total counter\n"
                 + f"ailab_governance_parser_failures_total {PARSER_FAILURES}\n"
+                + "\n# ── prometheus_client managed metrics ──\n"
+                + prom_generate_latest(prom_REGISTRY).decode("utf-8")
             )
             self.send_response(200)
             self.send_header("Content-Type", "text/plain; charset=utf-8")
@@ -680,14 +742,19 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 "default"
             )
 
-            task_type = "reasoning"
+            task_type = infer_task(str(payload))
+            observe_user_text = ""
+            for msg in reversed(payload.get("messages", [])):
+                if isinstance(msg, dict) and msg.get("role") == "user" and isinstance(msg.get("content"), str):
+                    observe_user_text = msg.get("content", "")
+                    break
+            observe_fastpath = detect_intent(observe_user_text).mode == "observe" and not should_use_tool_fastpath(payload)
 
-            if "code" in str(payload).lower():
-                task_type = "coding"
-
-            selected_model = choose_model(
-                task_type
-            )
+            selected_model = choose_model(task_type)
+            if (current_mode() == "observe" or observe_fastpath) and not should_use_tool_fastpath(payload):
+                selected_model = "llama-3.1-8b-instruct"
+            elif should_use_greeting_fastpath(payload):
+                selected_model = "llama-3.1-8b-instruct"
             session_id = create_session(task_type, selected_model, get_active_backend()["name"])
             payload["model"] = selected_model
 

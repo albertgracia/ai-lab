@@ -13,6 +13,7 @@ def main():
     tests = [
         ("plan", "write"),
         ("readonly", "logs"),
+        ("observe", "shell"),
         ("build", "write"),
         ("build", "deploy"),
         ("execute", "deploy"),

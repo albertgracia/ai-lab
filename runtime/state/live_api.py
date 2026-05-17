@@ -240,6 +240,24 @@ class APIHandler(BaseHTTPRequestHandler):
             self._handle_learning_context_efficiency()
         elif self.path.startswith("/api/learning/recall-threshold"):
             self._handle_learning_recall_threshold()
+        elif self.path == "/api/control/runtime":
+            self._handle_control_runtime()
+        elif self.path == "/api/control/status":
+            self._handle_control_status()
+        elif self.path == "/api/control/nodes":
+            self._handle_control_nodes()
+        elif self.path == "/api/control/routes":
+            self._handle_control_routes()
+        elif self.path == "/api/control/policies":
+            self._handle_control_policies()
+        elif self.path == "/api/control/explain/last-route":
+            self._handle_control_explain()
+        elif self.path == "/api/control/snapshots":
+            self._handle_control_snapshots()
+        elif self.path.startswith("/api/control/snapshots/"):
+            self._handle_control_snapshot_detail(self.path.rsplit("/", 1)[-1])
+        elif self.path == "/api/control/recover":
+            self._handle_control_recover()
         else: self._send_error(404)
     def do_POST(self):
         parsed = urllib.parse.urlparse(self.path)
@@ -295,8 +313,93 @@ class APIHandler(BaseHTTPRequestHandler):
             self._handle_approve_command(adj_id)
         elif path == "/api/commands/reject" and adj_id:
             self._handle_reject_command(adj_id)
+        elif path == "/api/control/snapshots":
+            self._handle_create_snapshot()
+        elif path.startswith("/api/control/snapshots/") and path.endswith("/recover"):
+            sid = path.rsplit("/", 2)[-2]
+            self._handle_apply_recovery(sid)
         else:
             self._send_error(404)
+
+    # ── Control Plane handlers (FASE 18.1) ─────────────────────────────
+
+    def _handle_control_runtime(self):
+        try:
+            from runtime.control.control_plane import get_control_runtime
+            self._json(get_control_runtime())
+        except ImportError:
+            self._json({"error": "control_plane not available"})
+
+    def _handle_control_status(self):
+        try:
+            from runtime.control.control_plane import get_control_status
+            self._json(get_control_status())
+        except ImportError:
+            self._json({"error": "control_plane not available"})
+
+    def _handle_control_nodes(self):
+        try:
+            from runtime.control.control_plane import get_control_nodes
+            self._json(get_control_nodes())
+        except ImportError:
+            self._json({"error": "control_plane not available"})
+
+    def _handle_control_routes(self):
+        try:
+            from runtime.control.control_plane import get_control_routes
+            self._json(get_control_routes())
+        except ImportError:
+            self._json({"error": "control_plane not available"})
+
+    def _handle_control_policies(self):
+        try:
+            from runtime.control.control_plane import get_control_policies
+            self._json(get_control_policies())
+        except ImportError:
+            self._json({"error": "control_plane not available"})
+
+    def _handle_control_explain(self):
+        try:
+            from runtime.control.control_plane import explain_last_route
+            self._json(explain_last_route())
+        except ImportError:
+            self._json({"error": "control_plane not available"})
+
+    def _handle_control_snapshots(self):
+        try:
+            from runtime.control.recovery_manager import list_snapshots
+            self._json(list_snapshots())
+        except ImportError:
+            self._json({"error": "recovery_manager not available"})
+
+    def _handle_control_snapshot_detail(self, snapshot_id: str):
+        try:
+            from runtime.control.recovery_manager import preview_recovery_changes
+            self._json(preview_recovery_changes(snapshot_id))
+        except ImportError:
+            self._json({"error": "recovery_manager not available"})
+
+    def _handle_control_recover(self):
+        try:
+            from runtime.control.recovery_manager import health_recovery_policies
+            self._json(health_recovery_policies())
+        except ImportError:
+            self._json({"error": "recovery_manager not available"})
+
+    def _handle_create_snapshot(self):
+        try:
+            from runtime.control.recovery_manager import create_snapshot
+            self._json(create_snapshot("manual"))
+        except ImportError:
+            self._json({"error": "recovery_manager not available"})
+
+    def _handle_apply_recovery(self, snapshot_id: str):
+        try:
+            from runtime.control.recovery_manager import recover_from_snapshot
+            self._json(recover_from_snapshot(snapshot_id))
+        except ImportError:
+            self._json({"error": "recovery_manager not available"})
+
     def do_OPTIONS(self):
         self.send_response(204)
         self.send_header("Access-Control-Allow-Origin","*")
@@ -394,8 +497,8 @@ class APIHandler(BaseHTTPRequestHandler):
             from runtime.modes.mode_manager import can_transition, requires_reason, write_mode, current_mode
             target = qs.get("mode", [None])[0]
             reason = qs.get("reason", [""])[0]
-            if not target or target not in ("readonly", "plan", "build", "execute"):
-                self._json({"error": "Invalid mode. Valid: readonly, plan, build, execute"})
+            if not target or target not in ("readonly", "plan", "observe", "build", "execute"):
+                self._json({"error": "Invalid mode. Valid: readonly, plan, observe, build, execute"})
                 return
             cur = current_mode()
             allowed, msg = can_transition(cur, target)

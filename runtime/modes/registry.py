@@ -15,6 +15,22 @@ MODES = {
         ],
     },
 
+    "observe": {
+        "name": "observe",
+        "description": (
+            "Modo observación: análisis técnico/operativo con shell readonly e inspección segura."
+        ),
+        "capabilities": [
+            "read",
+            "search",
+            "rag",
+            "analyze",
+            "logs",
+            "status",
+            "shell",
+        ],
+    },
+
     "build": {
         "name": "build",
         "description": (

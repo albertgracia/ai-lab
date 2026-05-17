@@ -59,24 +59,72 @@ def infer_task(request_text=None, capability=None):
     if capability:
         return capability
     text = (request_text or "").lower()
+    if any(
+        w in text
+        for w in [
+            "tool use",
+            "tool-use",
+            "tool_calls",
+            "tool calls",
+            "function_call",
+            "function calling",
+            "use tools",
+        ]
+    ):
+        return "tool_use"
+    if any(
+        w in text
+        for w in [
+            "5 lineas",
+            "5 líneas",
+            "maximo 5",
+            "máximo 5",
+            "breve",
+            "brevemente",
+            "resumen corto",
+        ]
+    ):
+        return "fast"
     if len(text) > 500:
         return "reasoning"
-    if any(w in text for w in ["python", "code", "script", "bug", "api", "refactor", "debug", "fix"]):
+    if any(
+        w in text
+        for w in [
+            "python",
+            "code",
+            "script",
+            "bug",
+            "api",
+            "refactor",
+            "debug",
+            "fix",
+            "execute_v1_policy",
+            "whitelist",
+        ]
+    ):
         return "coding"
     if any(
         w in text
         for w in [
             "arquitectura",
             "architecture",
+            "arquitect",
             "complex",
             "analyze",
+            "analiza",
+            "analisis",
+            "análisis",
             "optimizar",
+            "óptimo",
+            "optimo",
             "infraestructura",
             "infrastructure",
             "informe",
             "report",
             "analisis",
             "diagnostico",
+            "razonamiento",
+            "reasoning",
             "estado actual",
             "resumen",
         ]
@@ -159,6 +207,14 @@ def _task_match_score(task: str, meta: dict) -> float:
         if model_type == "coding":
             return 0.78
         return 0.4
+    if task == "tool_use":
+        if model_type == "tool_use":
+            return 1.0
+        if {"tool-use", "reasoning", "analysis", "architecture"} & skills:
+            return 0.94
+        if model_type in ("reasoning", "coding"):
+            return 0.8
+        return 0.35
     if task == "vision":
         return 1.0 if meta.get("vision") else 0.1
     if task == "embeddings":
@@ -176,6 +232,8 @@ def _speed_score(task: str, meta: dict) -> float:
         return min(1.0, 0.35 + min(size_b, 32) / 48.0)
     if task == "reasoning":
         return min(1.0, 0.4 + min(size_b, 32) / 40.0)
+    if task == "tool_use":
+        return min(1.0, 0.45 + min(size_b, 32) / 44.0)
     return min(1.0, 0.5 + min(size_b, 32) / 60.0)
 
 
@@ -207,6 +265,12 @@ def select_node(request_text, capability=None):
     except Exception:
         perf_map = {}
 
+    health_map = {}
+    try:
+        from runtime.health.model_health import model_health_score
+    except Exception:
+        model_health_score = None  # type: ignore[assignment]
+
     candidates: list[dict] = []
 
     for node in discovered_nodes:
@@ -225,14 +289,18 @@ def select_node(request_text, capability=None):
                 continue
             merged = merge_registry_with_discovery(model_id, {**node, "node": cfg.get("name") or node.get("name") or host})
 
-            if task not in ("vision", "embeddings"):
+            if task not in ("vision", "embeddings", "tool_use"):
                 if merged.get("embedding") or "embeddings" in merged.get("skills", []):
                     continue
                 if merged.get("vision") or "vision" in merged.get("skills", []):
                     continue
+                if merged.get("tool_use") or "tool-use" in merged.get("skills", []):
+                    continue
             if task == "vision" and not (merged.get("vision") or "vision" in merged.get("skills", [])):
                 continue
             if task == "embeddings" and not (merged.get("embedding") or "embeddings" in merged.get("skills", [])):
+                continue
+            if task == "tool_use" and not (merged.get("tool_use") or "tool-use" in merged.get("skills", [])):
                 continue
 
             capability_score = float(score_model(task, model_id)) / 100.0 if _USE_REGISTRY else 0.0
@@ -240,13 +308,19 @@ def select_node(request_text, capability=None):
             performance_score = _performance_score(task, model_id, merged, perf_map)
             node_availability_score = 1.0 if node.get("online") else 0.0
             speed_score = _speed_score(task, merged)
+            health_score = (
+                model_health_score(model_id, cfg.get("name") or node.get("name") or host)
+                if model_health_score
+                else 0.50
+            )
 
             total = (
-                capability_score * 0.45
-                + task_match_score * 0.25
-                + performance_score * 0.15
+                capability_score * 0.40
+                + task_match_score * 0.22
+                + performance_score * 0.13
                 + node_availability_score * 0.10
                 + speed_score * 0.05
+                + health_score * 0.10
             )
 
             max_vram = max((cfg.get("vram_gb", 0) or 0) for cfg in node_cfg.values()) if node_cfg else 0

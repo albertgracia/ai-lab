@@ -24,15 +24,14 @@ const isPublic = window.location.hostname === "ai-lab.labrazahome.com"
 const apiUrl = isPublic ? "/api/analytics.json" : "https://blog-ai-lab.labrazahome.com/api/analytics";
 const res = await fetch(apiUrl, {
   cache: "no-store",
-  headers: isPublic ? {} : {"CF-Access-Client-Id": "...", "CF-Access-Client-Secret": "..."}
 });
 ```
 
 ## Sitio Privado: Service Token + Cloudflare Access
 
-- Las peticiones se hacen directamente a `blog-ai-lab.labrazahome.com/api/analytics`
-- Se incluyen las cabeceras `CF-Access-Client-Id` y `CF-Access-Client-Secret` (Service Token)
-- CORS configurado en Cloudflare Access: `https://ai-lab.labrazahome.com`
+- Las peticiones se hacen al mismo origen del blog privado: `/api/analytics`
+- El browser no envía tokens de acceso manuales
+- Cloudflare Access protege el sitio, no el JS del cliente
 - Traefik enruta `/api/*` a `localhost:8084` (Live API)
 - Datos en **tiempo real**
 

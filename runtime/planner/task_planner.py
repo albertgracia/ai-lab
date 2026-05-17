@@ -27,6 +27,9 @@ class TaskPlan:
 
 
 def infer_profile(mode: str, intent: str) -> str:
+    if mode == "observe":
+        return "observe"
+
     if mode == "execute":
         return "pilot"
 
@@ -118,6 +121,26 @@ def build_steps(user_goal: str, intent: str, mode: str, profile: str) -> list[Ta
                 mode="plan",
                 profile="production",
                 capability_required="plan",
+            )
+        )
+
+    elif intent == "observe":
+        steps.append(
+            TaskStep(
+                order=4,
+                title="Run read-only diagnostics and safe shell inspection",
+                mode="observe",
+                profile="observe",
+                capability_required="shell",
+            )
+        )
+        steps.append(
+            TaskStep(
+                order=5,
+                title="Summarize findings without hard facts boilerplate",
+                mode="observe",
+                profile="observe",
+                capability_required="analyze",
             )
         )
 

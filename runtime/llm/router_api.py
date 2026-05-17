@@ -8,11 +8,26 @@ import requests
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse, PlainTextResponse, StreamingResponse
 import json as json_mod
 
 from runtime.llm.model_router import select_node
+from runtime.agent.intent_router import detect_intent
+from runtime.modes.mode_manager import current_mode
 from runtime.state.system_state import build_system_state
+from runtime.gateway.tool_call_parser import parse_tool_calls_from_text, tool_call_is_dangerous
+from runtime.gateway.tool_request_classifier import (
+    build_observe_context,
+    build_minimal_greeting_messages,
+    build_minimal_tool_messages,
+    sanitize_payload_messages,
+    sanitize_prompt_text,
+    sanitize_observe_output,
+    should_use_greeting_fastpath,
+    should_use_tool_fastpath,
+)
+
+from runtime.telemetry.prometheus_metrics import HARD_FACTS_HITS, GOVERNANCE_BLOCKED, GOVERNANCE_BLOCKED_BY_REASON, ROUTER_REQUESTS
 
 from runtime.agent.selective_context import (
     build_selective_context
@@ -90,6 +105,7 @@ def _current_mode_label() -> str:
     labels = {
         "readonly": "MODO READ-ONLY: solo lectura, analisis y diagnostico. No ejecutas nada.",
         "plan": "MODO PLAN: lees, analizas, diagnosticas y propones, pero NO ejecutas cambios sin confirmacion explicita.",
+        "observe": "MODO OBSERVE: inspeccion tecnica/operativa segura. Puedes leer, analizar y usar shell readonly. No ejecutas cambios.",
         "build": "MODO BUILD: puedes proponer cambios en archivos y configuracion. Los comandos shell requieren aprobacion.",
         "execute": "MODO EXECUTE (supervisado): puedes proponer comandos. Cada comando pasa por revision antes de ejecutarse.",
     }
@@ -98,6 +114,21 @@ def _current_mode_label() -> str:
 
 def build_system_context() -> str:
     mode_instruction = _current_mode_label()
+    mode_name = current_mode()
+    if mode_name == "observe":
+        return f"""
+Eres el copiloto observador del AI-LAB de Albert.
+Responde siempre en espanol. Operas en {mode_instruction}
+
+REGLAS:
+1. Prioriza inspeccion, diagnostico y analisis tecnico.
+2. Usa comandos readonly solo si aportan informacion.
+3. No ejecutes acciones que alteren estado.
+4. No uses formato HARD_FACTS obligatorio; responde natural y conciso.
+5. Si faltan datos, di que faltan.
+6. No inventes metricas ni estado interno.
+"""
+    HARD_FACTS_HITS.inc()
     return f"""
 Eres el copiloto autonomo del AI-LAB de Albert.
 Responde siempre en espanol. Operas en {mode_instruction}
@@ -133,6 +164,16 @@ def health():
         "status": "ok",
         "service": "ai-lab-router-api"
     }
+
+
+@app.get("/metrics")
+def metrics():
+    from prometheus_client import generate_latest, REGISTRY
+
+    return PlainTextResponse(
+        content=generate_latest(REGISTRY).decode("utf-8"),
+        media_type="text/plain; charset=utf-8",
+    )
 
 
 @app.get("/v1/models")
@@ -298,25 +339,41 @@ def api_usage():
 async def chat_completions(request: Request):
 
     payload = await request.json()
+    payload = sanitize_payload_messages(payload)
+    ROUTER_REQUESTS.inc()
 
-    build_system_state()
+    request_text = extract_request_text(payload)
+    user_text = get_last_user_message(payload)
+    mode_name = current_mode()
+    prompt_route = detect_intent(user_text or request_text)
+    greeting_fastpath = should_use_greeting_fastpath(payload)
+    tool_fastpath = should_use_tool_fastpath(payload)
+    observe_fastpath = prompt_route.mode == "observe" and not greeting_fastpath and not tool_fastpath
+
+    if mode_name != "observe" and not tool_fastpath and not greeting_fastpath and not observe_fastpath:
+        build_system_state()
 
     requested_model = payload.get(
         "model",
         "ailab-router/auto"
     )
 
-    request_text = extract_request_text(payload)
-    user_text = get_last_user_message(payload)
-
     capability = capability_from_model(
         requested_model
     )
+    if not capability and (payload.get("tools") or payload.get("tool_choice")):
+        capability = "tool_use"
+    if (mode_name == "observe" or observe_fastpath) and not tool_fastpath:
+        capability = "fast"
 
     node = select_node(
         request_text,
         capability=capability
     )
+    if greeting_fastpath:
+        node = dict(node)
+        node["model"] = "llama-3.1-8b-instruct"
+        node["capability"] = "fast"
     selected_model = node.get("model")
     selected_node = node.get("name")
     routing_mode = node.get("mode", "primary")
@@ -328,118 +385,149 @@ async def chat_completions(request: Request):
         "/v1/chat/completions"
     )
 
-    messages = payload.get("messages", [])
-
-    # ── working memory + context shaper (FASE 8.7) ──────────────────
-    wm = None
-    if _HAVE_WORKING_MEMORY and _HAVE_CONTEXT_SHAPER:
-        session_id = request.headers.get("X-AI-LAB-Session", request.client.host if request.client else "default")
-        wm = get_session(session_id)
-        wm.add_turn("user", request_text)
-        task = node.get("capability", "general")
-        wm.set_task(task)
-
-        agent_context = shape_context(
-            task,
-            selected_model or "",
-            wm,
-            query_text=request_text,
+    if greeting_fastpath:
+        payload.pop("tools", None)
+        payload.pop("tool_choice", None)
+        capability = "fast"
+        payload["messages"] = build_minimal_greeting_messages(user_text or request_text)
+    elif (mode_name == "observe" or observe_fastpath) and not tool_fastpath:
+        payload["max_tokens"] = min(int(payload.get("max_tokens", 180) or 180), 180)
+        payload["temperature"] = min(float(payload.get("temperature", 0.1) or 0.1), 0.2)
+        payload["messages"] = [
+            {
+                "role": "system",
+                "content": (
+                    "Eres el observador del AI-LAB de Albert. Usa solo informacion observable. "
+                    "No uses HARD_FACTS, no uses secciones y no inventes datos. "
+                    "Si el usuario pide detalle, resume en 3-5 lineas. "
+                    f"OBSERVED_RUNTIME: {build_observe_context()}"
+                ),
+            },
+            {"role": "user", "content": user_text or request_text},
+        ]
+    elif tool_fastpath:
+        payload["messages"] = build_minimal_tool_messages(
+            payload,
+            selected_model=selected_model or "",
+            selected_node=selected_node or "",
             routing_mode=routing_mode,
-            selected_model=selected_model,
-            selected_node=selected_node,
-            routing_reason_codes=reason_codes,
+            reason_codes=reason_codes,
             discovery_source=discovery_source,
+            user_text=user_text or request_text,
         )
     else:
-        agent_context = build_selective_context(request_text)
+        messages = payload.get("messages", [])
 
-    context_summary = "\\n".join(
-        line for line in agent_context.splitlines()
-        if line.startswith("Agent:")
-        or line.startswith("Reasoning:")
-        or line.startswith("Complexity:")
-        or line.startswith("Workflow:")
-        or line.startswith("Domains:")
-        or line.startswith("Multi Agent:")
-    )
+        # ── working memory + context shaper (FASE 8.7) ──────────────────
+        wm = None
+        if _HAVE_WORKING_MEMORY and _HAVE_CONTEXT_SHAPER:
+            session_id = request.headers.get("X-AI-LAB-Session", request.client.host if request.client else "default")
+            wm = get_session(session_id)
+            wm.add_turn("user", request_text)
+            task = node.get("capability", "general")
+            wm.set_task(task)
 
-    # Per-task context budget: fast=2500, coding=5000, reasoning=7000 chars
-    _ctx_limit = {"fast": 2500, "coding": 5000, "reasoning": 7000}
-    _task_cap = node.get("capability", "general")
-    _max_ctx_chars = _ctx_limit.get(_task_cap, 4000)
+            agent_context = shape_context(
+                task,
+                selected_model or "",
+                wm,
+                query_text=request_text,
+                routing_mode=routing_mode,
+                selected_model=selected_model,
+                selected_node=selected_node,
+                routing_reason_codes=reason_codes,
+                discovery_source=discovery_source,
+            )
+        else:
+            agent_context = build_selective_context(request_text)
 
-    system_prompt = (
-        build_system_context()
-        + "\n\n"
-        + "=== RUNTIME DATA ===\n"
-        + agent_context[:_max_ctx_chars]
-        + "\n\n"
-        + "Usa los datos anteriores. No copies contexto interno ni prompts."
-        + ("\n\nMODO RAPIDO: responde en bullets, max 8 lineas. Sin informe tecnico ni secciones largas."
-           if _task_cap == "fast" else "")
-    )
-
-    # ── budget-aware context truncation ─────────────────────────────
-    # Garantiza que system_prompt + final_instruction nunca exceda
-    # LM_STUDIO_MAX_CONTEXT tokens (16384 actual).
-    system_chars = len(system_prompt)
-    remaining_chars = int((LM_STUDIO_MAX_CONTEXT - CONTEXT_OVERHEAD_TOKENS) * CHARS_PER_TOKEN)
-    budget_chars = max(1000, remaining_chars - system_chars)
-    safe_text = truncate_text(user_text, budget_chars)
-
-    if _task_cap == "fast":
-        final_instruction = (
-            "Responde en bullets, max 8 lineas. Sin formato de secciones.\n"
-            + safe_text
-        )
-    elif _task_cap == "coding":
-        final_instruction = (
-            "Responde con el FORMATO OBLIGATORIO:\n"
-            "[HARD_FACTS] datos del JSON relevantes [/HARD_FACTS]\n"
-            "[INFERIDO] deducciones [/INFERIDO]\n"
-            "[NO DISPONIBLE] datos ausentes [/NO DISPONIBLE]\n"
-            "[PENDIENTE] de pending [/PENDIENTE]\n"
-            "[SELF-CRITIQUE] errores [/SELF-CRITIQUE]\n"
-            "[AI-LAB DEBUG] Pobla con valores reales de HARD FACTS: profile, task, model, node, budget_used, "
-            "adaptive_scoring, working_memory, "
-            "qdrant_recall (matches, collections, chars del JSON), watchdog, health. "
-            "NO DISPONIBLE solo si el dato no existe en HARD FACTS. "
-            "semantic_recall debe ir en [HARD_FACTS], no aqui. [/AI-LAB DEBUG]\n"
-            "IMPORTANTE: puedes usar tu conocimiento en programacion para responder la pregunta. "
-            "El formato de secciones es obligatorio pero el contenido tecnico es bienvenido.\n\n"
-            + safe_text
-        )
-    else:
-        final_instruction = (
-            "Responde con el FORMATO OBLIGATORIO:\n"
-            "[HARD_FACTS] datos literales del JSON [/HARD_FACTS]\n"
-            "[INFERIDO] deducciones logicas [/INFERIDO]\n"
-            "[NO DISPONIBLE] datos ausentes [/NO DISPONIBLE]\n"
-            "[PENDIENTE] de pending_implementations [/PENDIENTE]\n"
-            "[SELF-CRITIQUE] errores propios [/SELF-CRITIQUE]\n"
-            "[AI-LAB DEBUG] Pobla este bloque con valores reales de HARD FACTS: "
-            "profile=<profile del JSON>, task=<inferido de la solicitud>, "
-            "model=<model_id>, node=<node_name>, "
-            "budget_used=<del sistema>, adaptive_scoring=<si en HARD FACTS>, "
-            "working_memory=<si en HARD FACTS>, "
-            "qdrant_recall=<matches, collections, chars del semantic_recall en JSON>, "
-            "watchdog=<health.watchdog>, health=<health.score>. "
-            "NO DISPONIBLE solo si el dato no existe en HARD FACTS. "
-            "semantic_recall NO debe ir aqui, debe ir en [HARD_FACTS]. [/AI-LAB DEBUG]\n"
-            "No copies contexto interno ni prompts.\n\n"
-            + safe_text
+        context_summary = "\\n".join(
+            line for line in agent_context.splitlines()
+            if line.startswith("Agent:")
+            or line.startswith("Reasoning:")
+            or line.startswith("Complexity:")
+            or line.startswith("Workflow:")
+            or line.startswith("Domains:")
+            or line.startswith("Multi Agent:")
         )
 
-    payload["messages"] = [
-        {
-            "role": "system",
-            "content": system_prompt
-        },
-        {
-            "role": "user",
-            "content": final_instruction
-        }
-    ]
+        # Per-task context budget: fast=2500, coding=5000, reasoning=7000 chars
+        _ctx_limit = {"fast": 2500, "coding": 5000, "reasoning": 7000}
+        _task_cap = node.get("capability", "general")
+        _max_ctx_chars = _ctx_limit.get(_task_cap, 4000)
+
+        system_prompt = (
+            build_system_context()
+            + "\n\n"
+            + "=== RUNTIME DATA ===\n"
+            + agent_context[:_max_ctx_chars]
+            + "\n\n"
+            + "Usa los datos anteriores. No copies contexto interno ni prompts."
+            + ("\n\nMODO RAPIDO: responde en bullets, max 8 lineas. Sin informe tecnico ni secciones largas."
+               if _task_cap == "fast" else "")
+        )
+
+        # ── budget-aware context truncation ─────────────────────────────
+        # Garantiza que system_prompt + final_instruction nunca exceda
+        # LM_STUDIO_MAX_CONTEXT tokens (16384 actual).
+        system_chars = len(system_prompt)
+        remaining_chars = int((LM_STUDIO_MAX_CONTEXT - CONTEXT_OVERHEAD_TOKENS) * CHARS_PER_TOKEN)
+        budget_chars = max(1000, remaining_chars - system_chars)
+        safe_text = truncate_text(user_text, budget_chars)
+
+        if _task_cap == "fast":
+            final_instruction = (
+                "Responde en bullets, max 8 lineas. Sin formato de secciones.\n"
+                + safe_text
+            )
+        elif _task_cap == "coding":
+            final_instruction = (
+                "Responde con el FORMATO OBLIGATORIO:\n"
+                "[HARD_FACTS] datos del JSON relevantes [/HARD_FACTS]\n"
+                "[INFERIDO] deducciones [/INFERIDO]\n"
+                "[NO DISPONIBLE] datos ausentes [/NO DISPONIBLE]\n"
+                "[PENDIENTE] de pending [/PENDIENTE]\n"
+                "[SELF-CRITIQUE] errores [/SELF-CRITIQUE]\n"
+                "[AI-LAB DEBUG] Pobla con valores reales de HARD FACTS: profile, task, model, node, budget_used, "
+                "adaptive_scoring, working_memory, "
+                "qdrant_recall (matches, collections, chars del JSON), watchdog, health. "
+                "NO DISPONIBLE solo si el dato no existe en HARD FACTS. "
+                "semantic_recall debe ir en [HARD_FACTS], no aqui. [/AI-LAB DEBUG]\n"
+                "IMPORTANTE: puedes usar tu conocimiento en programacion para responder la pregunta. "
+                "El formato de secciones es obligatorio pero el contenido tecnico es bienvenido.\n\n"
+                + safe_text
+            )
+        else:
+            final_instruction = (
+                "Responde con el FORMATO OBLIGATORIO:\n"
+                "[HARD_FACTS] datos literales del JSON [/HARD_FACTS]\n"
+                "[INFERIDO] deducciones logicas [/INFERIDO]\n"
+                "[NO DISPONIBLE] datos ausentes [/NO DISPONIBLE]\n"
+                "[PENDIENTE] de pending_implementations [/PENDIENTE]\n"
+                "[SELF-CRITIQUE] errores propios [/SELF-CRITIQUE]\n"
+                "[AI-LAB DEBUG] Pobla este bloque con valores reales de HARD FACTS: "
+                "profile=<profile del JSON>, task=<inferido de la solicitud>, "
+                "model=<model_id>, node=<node_name>, "
+                "budget_used=<del sistema>, adaptive_scoring=<si en HARD FACTS>, "
+                "working_memory=<si en HARD FACTS>, "
+                "qdrant_recall=<matches, collections, chars del semantic_recall en JSON>, "
+                "watchdog=<health.watchdog>, health=<health.score>. "
+                "NO DISPONIBLE solo si el dato no existe en HARD FACTS. "
+                "semantic_recall NO debe ir aqui, debe ir en [HARD_FACTS]. [/AI-LAB DEBUG]\n"
+                "No copies contexto interno ni prompts.\n\n"
+                + safe_text
+            )
+
+        payload["messages"] = [
+            {
+                "role": "system",
+                "content": system_prompt
+            },
+            {
+                "role": "user",
+                "content": final_instruction
+            }
+        ]
 
     upstream_payload = dict(payload)
 
@@ -504,10 +592,19 @@ async def chat_completions(request: Request):
                             delta = choice.get("delta", {})
                             if "reasoning_content" in delta:
                                 rc = delta.pop("reasoning_content")
-                                if not delta.get("content"):
+                                tool_calls = parse_tool_calls_from_text(rc if isinstance(rc, str) else None)
+                                if tool_calls:
+                                    delta["tool_calls"] = tool_calls
+                                    delta["content"] = None
+                                elif not delta.get("content"):
                                     delta["content"] = rc
                                 else:
                                     delta["content"] = rc + "\n" + delta["content"]
+                            elif isinstance(delta.get("content"), str):
+                                tool_calls = parse_tool_calls_from_text(delta.get("content"))
+                                if tool_calls:
+                                    delta["tool_calls"] = tool_calls
+                                    delta["content"] = None
                         yield f"data: {json_mod.dumps(obj, ensure_ascii=False)}\n\n"
                     except Exception:
                         yield line + "\n"
@@ -544,8 +641,48 @@ async def chat_completions(request: Request):
             msg = choice.get("message", {})
             if "reasoning_content" in msg:
                 rc = msg.pop("reasoning_content")
-                if not msg.get("content"):
+                tool_calls = parse_tool_calls_from_text(rc if isinstance(rc, str) else None)
+                if tool_calls:
+                    msg["tool_calls"] = tool_calls
+                elif not msg.get("content"):
                     msg["content"] = rc
+            elif isinstance(msg.get("content"), str):
+                tool_calls = parse_tool_calls_from_text(msg.get("content"))
+                if tool_calls:
+                    msg["tool_calls"] = tool_calls
+            if msg.get("tool_calls"):
+                msg["content"] = None
+
+            if isinstance(msg.get("content"), str):
+                msg["content"] = sanitize_prompt_text(msg.get("content"))
+
+            if mode_name == "observe" and isinstance(msg.get("content"), str):
+                msg["content"] = sanitize_observe_output(msg.get("content"))
+
+        for choice in choices:
+            msg = choice.get("message", {})
+            tool_calls = msg.get("tool_calls") or []
+            if not tool_calls:
+                continue
+            blocked = False
+            blocked_reason = ""
+            for tc in tool_calls:
+                dangerous, marker = tool_call_is_dangerous(tc)
+                if dangerous:
+                    blocked = True
+                    blocked_reason = marker or "dangerous command"
+                    break
+            if blocked:
+                msg.pop("tool_calls", None)
+                msg["content"] = f"Solicitud bloqueada por policy: {blocked_reason}"
+                choice["finish_reason"] = "stop"
+                GOVERNANCE_BLOCKED.inc()
+                GOVERNANCE_BLOCKED_BY_REASON.labels(reason=blocked_reason).inc()
+                try:
+                    from runtime.audit.audit_logger import audit_event
+                    audit_event("tool_call_blocked", {"reason": blocked_reason, "node": selected_node, "model": selected_model})
+                except ImportError:
+                    pass
 
         try:
             from runtime.routing.routing_history import record_route_result as _rrr

@@ -121,7 +121,8 @@ git push origin main
 aparecen.
 
 **Causa:** El blog publico depende del build de Cloudflare Pages. El blog
-privado depende del build local + reinicio del servicio.
+privado depende del runner local, que ejecuta build + restart al detectar un
+push; si eso falla, la correccion manual es build + restart del servicio.
 
 **Soluciones:**
 
@@ -155,7 +156,9 @@ echo 19682507 | sudo -S systemctl restart ailab-docs.service
 pero la pagina devuelve 404.
 
 **Causa:** El documento existe en GitHub pero Cloudflare Pages aun no ha
-completado el build (tarda ~1-2 min). O el build local no se ha actualizado.
+completado el build (tarda ~1-2 min). Si el blog privado tambien falla, el
+runner local puede no haber terminado su build/restart o puede requerir una
+intervencion manual.
 
 **Solucion:**
 

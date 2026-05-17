@@ -52,11 +52,12 @@ emite eventos, se visualiza en vivo y puede ser monitorizado con latencia sub-5s
 - Router API con routing capability-aware
 - Live API con eventos SSE y topologia
 
-### Capa 3: Observabilidad (Stack Central en 1.40)
-- Prometheus: scraping de todas las metricas
-- Grafana: 8 dashboards + 2 nuevos Fase 8
-- Loki: logs centralizados
-- Cloudflare Tunnel: acceso seguro
+### Capa 3: Observabilidad operativa en 1.40
+- Prometheus: `192.168.1.40:9090`
+- Grafana: `192.168.1.40:3000`
+- Loki: `192.168.1.40:3100`
+- Promtail: `192.168.1.30:1514/tcp` para `unifi-ids`
+- Dashboards y logs ya conectados al stack vivo
 
 ### Capa 4: Visualizacion en Tiempo Real (Fase 8)
 - SSE Event Bus: eventos estructurados via streaming

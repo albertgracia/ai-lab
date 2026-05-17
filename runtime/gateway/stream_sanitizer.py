@@ -5,6 +5,8 @@ Removes reasoning traces and empty chunks from LM Studio streams.
 
 import json
 
+from runtime.gateway.tool_call_parser import parse_tool_calls_from_text
+
 
 def relay_stream(upstream, handler):
     """
@@ -41,16 +43,25 @@ def relay_stream(upstream, handler):
 
             delta = choices[0].get("delta", {})
 
+            reasoning = delta.get("reasoning_content")
+            tool_calls = parse_tool_calls_from_text(reasoning if isinstance(reasoning, str) else None)
+            if not tool_calls and isinstance(delta.get("content"), str):
+                tool_calls = parse_tool_calls_from_text(delta.get("content"))
+            if tool_calls:
+                delta["tool_calls"] = tool_calls
+                delta["content"] = None
+
             # eliminar reasoning_content si existe
             delta.pop("reasoning_content", None)
 
             # si no hay contenido real → ignorar chunk
             has_content = bool(delta.get("content"))
             has_role = bool(delta.get("role"))
+            has_tool_calls = bool(delta.get("tool_calls"))
 
             finish_reason = choices[0].get("finish_reason")
 
-            if not has_content and not has_role and not finish_reason:
+            if not has_content and not has_role and not has_tool_calls and not finish_reason:
                 continue
 
             cleaned = json.dumps(obj, ensure_ascii=False)

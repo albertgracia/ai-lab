@@ -15,14 +15,15 @@ from typing import Optional
 
 MODE_FILE = Path("/opt/ai-lab/runtime/state/current_mode.json")
 
-VALID_MODES = ("readonly", "plan", "build", "execute")
+VALID_MODES = ("readonly", "plan", "observe", "build", "execute")
 
 # Allowed transitions without extra validation
 _AUTO_TRANSITIONS = {
     "readonly": ("plan",),
-    "plan": ("readonly", "build", "execute"),
-    "build": ("readonly", "plan", "execute"),
-    "execute": ("readonly", "plan", "build"),
+    "plan": ("readonly", "observe", "build", "execute"),
+    "observe": ("readonly", "plan", "build", "execute"),
+    "build": ("readonly", "plan", "observe", "execute"),
+    "execute": ("readonly", "plan", "observe", "build"),
 }
 
 # Transitions that require explicit reason
@@ -30,6 +31,7 @@ _REQUIRE_REASON = {
     ("plan", "execute"),
     ("build", "execute"),
     ("readonly", "execute"),
+    ("observe", "execute"),
 }
 
 
