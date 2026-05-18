@@ -1,0 +1,42 @@
+{
+  "profile": "agent",
+  "version": "21.1",
+  "description": "Perfil operativo con herramientas del AI-LAB. Tools permitidas, razonamiento habilitado, memoria completa.",
+
+  "prompt": "tool_use_prompt.md",
+  "model": {
+    "default": "qwen3.6-27b",
+    "fallback": "qwen2.5-coder-14b-instruct"
+  },
+
+  "inference": {
+    "max_tokens": 2048,
+    "temperature": 0.2,
+    "top_p": 0.9
+  },
+
+  "tools": {
+    "allowed": true
+  },
+
+  "memory": {
+    "policy": "full",
+    "max_chars": 5000,
+    "min_score": 0.4
+  },
+
+  "reasoning": {
+    "policy": "enabled"
+  },
+
+  "streaming": {
+    "enabled": true,
+    "preferred": false
+  },
+
+  "output": {
+    "format": "text",
+    "sanitize": false,
+    "no_wrappers": []
+  }
+}

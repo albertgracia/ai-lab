@@ -1,0 +1,42 @@
+{
+  "profile": "coding",
+  "version": "21.1",
+  "description": "Perfil de programacion del AI-LAB. Codigo claro, explicaciones breves, sin herramientas salvo peticion.",
+
+  "prompt": "coding_prompt.md",
+  "model": {
+    "default": "qwen2.5-coder-14b-instruct",
+    "fallback": "qwen2.5-coder-14b-instruct"
+  },
+
+  "inference": {
+    "max_tokens": 1024,
+    "temperature": 0.2,
+    "top_p": 0.95
+  },
+
+  "tools": {
+    "allowed": false
+  },
+
+  "memory": {
+    "policy": "light",
+    "max_chars": 2000,
+    "min_score": 0.55
+  },
+
+  "reasoning": {
+    "policy": "disabled"
+  },
+
+  "streaming": {
+    "enabled": true,
+    "preferred": false
+  },
+
+  "output": {
+    "format": "text",
+    "sanitize": true,
+    "no_wrappers": ["HARD_FACTS", "JSON", "Plan Mode"]
+  }
+}

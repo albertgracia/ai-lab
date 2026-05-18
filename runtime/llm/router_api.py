@@ -44,6 +44,13 @@ except ImportError:
     _load_route_prompt = None  # type: ignore[assignment]
     _HAVE_PROMPT_LOADER = False
 
+try:
+    from runtime.profiles.profile_loader import apply_profile as _apply_profile
+    _HAVE_PROFILE_LOADER = True
+except ImportError:
+    _apply_profile = None  # type: ignore[assignment]
+    _HAVE_PROFILE_LOADER = False
+
 # ── cognitive telemetry (FASE 8.9) ─────────────────────────────────
 try:
     from runtime.cognitive.cognitive_metrics import increment as _cog_inc, set_metric as _cog_set
@@ -408,6 +415,11 @@ async def chat_completions(request: Request):
         intent_mode=prompt_route.mode,
     )
     record_route_family_metrics(route.family)
+    try:
+        if _HAVE_PROFILE_LOADER:
+            payload = _apply_profile(payload, route.family)
+    except Exception:
+        pass
     try:
         from runtime.audit.audit_logger import audit_event
         audit_event(

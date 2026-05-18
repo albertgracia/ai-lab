@@ -1,0 +1,42 @@
+{
+  "profile": "chat",
+  "version": "21.1",
+  "description": "Perfil de chat conversacional general del AI-LAB. Respuestas naturales, sin herramientas, sin razonamiento forzado.",
+
+  "prompt": "chat_prompt.md",
+  "model": {
+    "default": "qwen2.5-coder-14b-instruct",
+    "fallback": "llama-3.1-8b-instruct"
+  },
+
+  "inference": {
+    "max_tokens": 512,
+    "temperature": 0.4,
+    "top_p": 0.95
+  },
+
+  "tools": {
+    "allowed": false
+  },
+
+  "memory": {
+    "policy": "light",
+    "max_chars": 1500,
+    "min_score": 0.6
+  },
+
+  "reasoning": {
+    "policy": "disabled"
+  },
+
+  "streaming": {
+    "enabled": true,
+    "preferred": true
+  },
+
+  "output": {
+    "format": "text",
+    "sanitize": true,
+    "no_wrappers": ["HARD_FACTS", "JSON", "Plan Mode", "FORMATO OBLIGATORIO"]
+  }
+}

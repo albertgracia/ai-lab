@@ -62,6 +62,13 @@ except ImportError:
     _load_route_prompt = None  # type: ignore[assignment]
     _HAVE_PROMPT_LOADER = False
 
+try:
+    from runtime.profiles.profile_loader import apply_profile as _apply_profile
+    _HAVE_PROFILE_LOADER = True
+except ImportError:
+    _apply_profile = None  # type: ignore[assignment]
+    _HAVE_PROFILE_LOADER = False
+
 RATE_LIMIT_REQUESTS = 30
 RATE_LIMIT_WINDOW = 60
 _rate_limit_data: dict = defaultdict(list)
@@ -345,6 +352,11 @@ def inject_agent_context(payload):
     payload["_ai_lab_route_variant"] = route.variant
     payload["_ai_lab_route_reason"] = route.reason
     record_route_family_metrics(route.family)
+    try:
+        if _HAVE_PROFILE_LOADER:
+            payload = _apply_profile(payload, route.family)
+    except Exception:
+        pass
 
     try:
         from runtime.audit.audit_logger import audit_event

@@ -1,0 +1,26 @@
+{
+  "version": "21.1",
+  "description": "Cognitive profile routing for AI-LAB. Maps route families to policy bundles that define model, inference, tools, memory, reasoning, streaming and output behaviour.",
+  "default_profile": "chat_profile.json",
+  "routes": {
+    "minimal": "observe_profile.json",
+    "casual": "observe_profile.json",
+    "greeting": "observe_profile.json",
+    "report": "observe_profile.json",
+    "observe": "observe_profile.json",
+    "fast": "chat_profile.json",
+    "general": "chat_profile.json",
+    "cognitive": "chat_profile.json",
+    "chat": "chat_profile.json",
+    "coding": "coding_profile.json",
+    "reasoning": "analysis_profile.json",
+    "tool_use": "agent_profile.json",
+    "tool_fastpath": "agent_profile.json"
+  },
+  "overrides": {
+    "minimal": { "inference": { "max_tokens": 96 } },
+    "casual": { "inference": { "max_tokens": 96 } },
+    "greeting": { "inference": { "max_tokens": 96 } },
+    "report": { "inference": { "max_tokens": 96 } }
+  }
+}

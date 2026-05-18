@@ -68,7 +68,7 @@ runtime/prompts/
 
 ## FASE 21 — Perfiles cognitivos
 
-**Estado:** planificada
+**Estado:** 21A completada — policy bundles + loader + routing
 
 **Objetivo:** Crear perfiles de comportamiento sin romper el routing existente.
 

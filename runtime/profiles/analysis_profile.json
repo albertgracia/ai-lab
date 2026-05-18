@@ -1,0 +1,42 @@
+{
+  "profile": "analysis",
+  "version": "21.1",
+  "description": "Perfil de analisis profundo del AI-LAB. Razonamiento estructurado, memoria completa, sin herramientas.",
+
+  "prompt": "reasoning_prompt.md",
+  "model": {
+    "default": "qwen2.5-coder-32b-instruct",
+    "fallback": "qwen2.5-coder-14b-instruct"
+  },
+
+  "inference": {
+    "max_tokens": 2048,
+    "temperature": 0.3,
+    "top_p": 0.9
+  },
+
+  "tools": {
+    "allowed": false
+  },
+
+  "memory": {
+    "policy": "full",
+    "max_chars": 4000,
+    "min_score": 0.45
+  },
+
+  "reasoning": {
+    "policy": "enabled"
+  },
+
+  "streaming": {
+    "enabled": true,
+    "preferred": false
+  },
+
+  "output": {
+    "format": "text",
+    "sanitize": false,
+    "no_wrappers": []
+  }
+}

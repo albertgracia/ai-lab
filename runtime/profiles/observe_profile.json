@@ -1,0 +1,42 @@
+{
+  "profile": "observe",
+  "version": "21.1",
+  "description": "Perfil de observacion ligera del AI-LAB. Respuestas breves, sin herramientas, modelo rapido.",
+
+  "prompt": "observe_prompt.md",
+  "model": {
+    "default": "llama-3.1-8b-instruct",
+    "fallback": "llama-3.1-8b-instruct"
+  },
+
+  "inference": {
+    "max_tokens": 256,
+    "temperature": 0.1,
+    "top_p": 0.95
+  },
+
+  "tools": {
+    "allowed": false
+  },
+
+  "memory": {
+    "policy": "minimal",
+    "max_chars": 500,
+    "min_score": 0.7
+  },
+
+  "reasoning": {
+    "policy": "disabled"
+  },
+
+  "streaming": {
+    "enabled": true,
+    "preferred": true
+  },
+
+  "output": {
+    "format": "text",
+    "sanitize": true,
+    "no_wrappers": ["HARD_FACTS", "JSON", "Plan Mode", "FORMATO OBLIGATORIO", "reasoning_content", "tool_calls"]
+  }
+}
