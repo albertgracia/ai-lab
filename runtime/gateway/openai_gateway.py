@@ -469,18 +469,6 @@ def inject_agent_context(payload):
 
         payload["messages"] = injected
 
-    # FASE 21B guard: detecta payloads sin profile aplicado
-    if "max_tokens" not in payload or "temperature" not in payload:
-        print(
-            "FASE21B_WARN profile_missing route=", route.family,
-            "has_tokens=", "max_tokens" in payload,
-            "has_temp=", "temperature" in payload,
-            "source=", payload.get("_profile_source", "none"),
-            flush=True,
-        )
-    if "temperature" not in payload:
-        payload["temperature"] = 0.2
-
     if "max_tokens" not in payload:
         payload["max_tokens"] = 2048
     elif route.family in ("minimal", "observe"):
