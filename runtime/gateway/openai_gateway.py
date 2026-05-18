@@ -55,6 +55,13 @@ import threading
 
 prime_route_family_metrics()
 
+try:
+    from runtime.prompts.prompt_loader import get_prompt_for_route as _load_route_prompt
+    _HAVE_PROMPT_LOADER = True
+except ImportError:
+    _load_route_prompt = None  # type: ignore[assignment]
+    _HAVE_PROMPT_LOADER = False
+
 RATE_LIMIT_REQUESTS = 30
 RATE_LIMIT_WINDOW = 60
 _rate_limit_data: dict = defaultdict(list)
@@ -401,7 +408,17 @@ def inject_agent_context(payload):
             "Responde en espanol y evita contexto innecesario."
         )
     else:
-        system_prompt = load_agent_prompt()
+        if _HAVE_PROMPT_LOADER:
+            try:
+                prompt_text, _warnings = _load_route_prompt(route.family, "")
+                if prompt_text:
+                    system_prompt = prompt_text
+                else:
+                    system_prompt = load_agent_prompt()
+            except Exception:
+                system_prompt = load_agent_prompt()
+        else:
+            system_prompt = load_agent_prompt()
 
     if is_report_request(user_text) and system_prompt is not None:
         system_prompt += (

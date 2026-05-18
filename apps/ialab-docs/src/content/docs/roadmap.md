@@ -32,7 +32,7 @@ Ver: `/docs/fase-20b-limpieza-wrappers-legacy`
 
 ## FASE 20C — Normalización de prompts runtime
 
-**Estado:** planificada
+**Estado:** completada
 
 **Objetivo:** Separar definitivamente los prompts por tipo de ruta sin cambiar arquitectura.
 

@@ -1,0 +1,25 @@
+{
+  "version": "20C.1",
+  "description": "Declarative prompt routing for AI-LAB runtime. Each route family maps to a .md file loaded at runtime.",
+  "default": "chat_prompt.md",
+  "routes": {
+    "minimal": "minimal_prompt.md",
+    "casual": "minimal_prompt.md",
+    "greeting": "minimal_prompt.md",
+    "report": "minimal_prompt.md",
+    "observe": "observe_prompt.md",
+    "fast": "chat_prompt.md",
+    "general": "chat_prompt.md",
+    "chat": "chat_prompt.md",
+    "coding": "coding_prompt.md",
+    "reasoning": "reasoning_prompt.md",
+    "tool_use": "tool_use_prompt.md",
+    "tool_fastpath": "tool_use_prompt.md"
+  },
+  "forbidden_markers": {
+    "minimal": ["HARD_FACTS", "follow_ups", "Plan Mode", "CRITICAL:", "STRICTLY FORBIDDEN", "reasoning_content", "tool_calls", "FORMATO OBLIGATORIO"],
+    "chat": ["HARD_FACTS", "follow_ups", "Plan Mode", "CRITICAL:", "STRICTLY FORBIDDEN", "FORMATO OBLIGATORIO"],
+    "coding": ["HARD_FACTS", "follow_ups", "Plan Mode", "CRITICAL:", "STRICTLY FORBIDDEN"],
+    "observe": ["HARD_FACTS", "follow_ups", "Plan Mode", "CRITICAL:", "STRICTLY FORBIDDEN", "reasoning_content", "tool_calls", "FORMATO OBLIGATORIO"]
+  }
+}

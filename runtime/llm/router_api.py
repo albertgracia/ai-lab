@@ -37,6 +37,13 @@ from runtime.agent.selective_context import (
     build_selective_context
 )
 
+try:
+    from runtime.prompts.prompt_loader import get_prompt_for_route as _load_route_prompt
+    _HAVE_PROMPT_LOADER = True
+except ImportError:
+    _load_route_prompt = None  # type: ignore[assignment]
+    _HAVE_PROMPT_LOADER = False
+
 # ── cognitive telemetry (FASE 8.9) ─────────────────────────────────
 try:
     from runtime.cognitive.cognitive_metrics import increment as _cog_inc, set_metric as _cog_set
@@ -596,13 +603,23 @@ async def chat_completions(request: Request):
         )
 
         if _task_cap in ("fast", "general"):
-            system_prompt = (
-                "Eres el asistente tecnico del AI-LAB.\n"
-                "Responde en espanol de forma clara, util y natural.\n"
-                "No uses HARD_FACTS, no uses secciones formateadas y no inventes datos.\n"
-                + ("=== RUNTIME DATA ===\n" + agent_context[:2500] + "\n\n" if agent_context.strip() else "")
-                + "Prioriza respuestas visibles, coherentes y utiles."
-            )
+            try:
+                prompt_text, _warnings = _load_route_prompt("fast", "fast") if _HAVE_PROMPT_LOADER else ("", [])
+                if prompt_text:
+                    system_prompt = prompt_text
+                    if agent_context.strip():
+                        system_prompt += "\n\n=== RUNTIME DATA ===\n" + agent_context[:2500] + "\n"
+                    system_prompt += "\nPrioriza respuestas visibles, coherentes y utiles."
+                else:
+                    raise ValueError("empty prompt")
+            except Exception:
+                system_prompt = (
+                    "Eres el asistente tecnico del AI-LAB.\n"
+                    "Responde en espanol de forma clara, util y natural.\n"
+                    "No uses HARD_FACTS, no uses secciones formateadas y no inventes datos.\n"
+                    + ("=== RUNTIME DATA ===\n" + agent_context[:2500] + "\n\n" if agent_context.strip() else "")
+                    + "Prioriza respuestas visibles, coherentes y utiles."
+                )
 
         # ── budget-aware context truncation ─────────────────────────────
         # Garantiza que system_prompt + final_instruction nunca exceda
