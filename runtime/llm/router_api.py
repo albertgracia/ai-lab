@@ -564,16 +564,10 @@ async def chat_completions(request: Request):
             },
         )
     elif route.family == "minimal" and route.variant == "greeting":
-        payload.pop("tools", None)
-        payload.pop("tool_choice", None)
         capability = "fast"
         payload["messages"] = build_minimal_greeting_messages(user_text or request_text)
     elif route.family == "observe":
-        payload.pop("tools", None)
-        payload.pop("tool_choice", None)
-        payload["model"] = "llama-3.1-8b-instruct"
         payload["max_tokens"] = min(int(payload.get("max_tokens", 180) or 180), 180)
-        payload["temperature"] = min(float(payload.get("temperature", 0.1) or 0.1), 0.2)
         payload["messages"] = [
             {
                 "role": "system",
