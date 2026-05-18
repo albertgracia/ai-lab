@@ -631,6 +631,8 @@ async def chat_completions(request: Request):
                         pass
 
             async def wrap_as_sse():
+                chunk_id = content.get("id", "chatcmpl-" + str(int(time.time())))
+                model_name = content.get("model", node.get("model", "unknown"))
                 full_text = ""
                 for choice in content.get("choices", []):
                     delta = choice.get("delta", choice.get("message", {}))
@@ -638,15 +640,16 @@ async def chat_completions(request: Request):
                     if text:
                         full_text += text
 
+                base = {"id": chunk_id, "object": "chat.completion.chunk", "model": model_name}
                 if full_text:
                     words = full_text.split()
                     for i in range(0, len(words), 3):
                         chunk = " ".join(words[i:i+3])
-                        yield f"data: {json_mod.dumps({'choices': [{'delta': {'content': chunk + ' '}, 'index': 0}]}, ensure_ascii=False)}\n\n"
+                        yield f"data: {json_mod.dumps({**base, 'choices': [{'delta': {'content': chunk + ' '}, 'index': 0}]}, ensure_ascii=False)}\n\n"
                     yield "data: [DONE]\n\n"
                 else:
-                    chunk = content.get("choices", [{}])[0].get("message", {})
-                    yield f"data: {json_mod.dumps({'choices': [{'delta': {'content': chunk.get('content', '') or 'OK'}, 'index': 0}]}, ensure_ascii=False)}\n\n"
+                    c = content.get("choices", [{}])[0].get("message", {}).get("content", "") or " "
+                    yield f"data: {json_mod.dumps({**base, 'choices': [{'delta': {'content': c}, 'index': 0}]}, ensure_ascii=False)}\n\n"
                     yield "data: [DONE]\n\n"
 
             try:
