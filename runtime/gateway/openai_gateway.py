@@ -409,12 +409,10 @@ def inject_agent_context(payload):
 
     if route.family == "minimal" and route.variant == "report":
         payload["messages"] = build_minimal_report_messages(user_text)
-        payload["model"] = "llama-3.1-8b-instruct"
         payload["max_tokens"] = min(int(payload.get("max_tokens", 180) or 180), 180)
         payload["temperature"] = min(float(payload.get("temperature", 0.1) or 0.1), 0.2)
         system_prompt = None
     elif route.family == "minimal" and route.variant == "casual":
-        payload["model"] = "llama-3.1-8b-instruct"
         payload["max_tokens"] = min(int(payload.get("max_tokens", 96) or 96), 96)
         payload["temperature"] = min(float(payload.get("temperature", 0.2) or 0.2), 0.2)
         system_prompt = (
@@ -422,7 +420,6 @@ def inject_agent_context(payload):
             "No uses HARD_FACTS, no uses secciones y no inventes datos."
         )
     elif route.family == "observe":
-        payload["model"] = "llama-3.1-8b-instruct"
         system_prompt = (
             "Responde en espanol, natural y breve. Usa solo informacion observable. "
             "No uses HARD_FACTS, no uses secciones y no inventes datos. "
@@ -436,7 +433,6 @@ def inject_agent_context(payload):
             "Responde en espanol, muy breve y natural. "
             "No uses HARD_FACTS, no uses secciones y no inventes datos."
         )
-        payload["model"] = "llama-3.1-8b-instruct"
         payload["max_tokens"] = min(int(payload.get("max_tokens", 96) or 96), 96)
         payload["temperature"] = min(float(payload.get("temperature", 0.2) or 0.2), 0.2)
     elif route.family == "tool_fastpath":
