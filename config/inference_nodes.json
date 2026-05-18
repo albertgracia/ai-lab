@@ -7,8 +7,8 @@
       "port": 1234,
       "models": {
         "fast": {
-          "name": "Llama 3.1 8B",
-          "model_id": "llama-3.1-8b-instruct"
+          "name": "Qwen 2.5 Coder 14B",
+          "model_id": "qwen2.5-coder-14b-instruct"
         },
         "coding": {
           "name": "Qwen 2.5 Coder 14B",

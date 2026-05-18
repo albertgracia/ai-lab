@@ -41,17 +41,19 @@ from runtime.distributed.execution_coordinator import (
 
 
 from runtime.gateway.stream_sanitizer import relay_stream
-from runtime.gateway.tool_call_parser import extract_tool_calls_from_message, filter_dangerous_tool_calls, parse_tool_calls
-from runtime.gateway.tool_request_classifier import build_observe_context, sanitize_observe_output, sanitize_payload_messages, sanitize_prompt_text, should_use_greeting_fastpath, should_use_tool_fastpath
+from runtime.gateway.tool_call_parser import extract_tool_calls_from_message, filter_dangerous_tool_calls, repair_tool_call_arguments, parse_tool_calls
+from runtime.gateway.tool_request_classifier import build_minimal_report_messages, build_observe_context, classify_chat_route, is_report_request, sanitize_observe_output, sanitize_payload_messages, sanitize_prompt_text, should_use_greeting_fastpath, should_use_tool_fastpath, strip_question_tool
 from runtime.gateway.gateway_metrics import (
     load_metrics,
     record_request,
     record_error,
 )
-from runtime.telemetry.prometheus_metrics import GOVERNANCE_BLOCKED, GOVERNANCE_BLOCKED_BY_REASON
+from runtime.telemetry.prometheus_metrics import GOVERNANCE_BLOCKED, GOVERNANCE_BLOCKED_BY_REASON, prime_route_family_metrics, record_route_family_metrics
 from prometheus_client import generate_latest as prom_generate_latest, REGISTRY as prom_REGISTRY
 from collections import defaultdict
 import threading
+
+prime_route_family_metrics()
 
 RATE_LIMIT_REQUESTS = 30
 RATE_LIMIT_WINDOW = 60
@@ -318,10 +320,62 @@ def inject_agent_context(payload):
         if isinstance(msg, dict) and msg.get("role") == "user" and isinstance(msg.get("content"), str):
             user_text = msg.get("content", "")
             break
+
+    payload = strip_question_tool(payload, user_text)
     prompt_route = detect_intent(user_text)
     observe_fastpath = prompt_route.mode == "observe" and not should_use_tool_fastpath(payload)
+    route = classify_chat_route(
+        payload,
+        mode_name=mode_name,
+        user_text=user_text,
+        request_text=user_text,
+        is_report_request=is_report_request(user_text),
+        greeting_fastpath=should_use_greeting_fastpath(payload),
+        tool_fastpath=should_use_tool_fastpath(payload),
+        intent_mode=prompt_route.mode,
+    )
+    payload["_ai_lab_route_family"] = route.family
+    payload["_ai_lab_route_variant"] = route.variant
+    payload["_ai_lab_route_reason"] = route.reason
+    record_route_family_metrics(route.family)
 
-    if (mode_name == "observe" or observe_fastpath) and not should_use_tool_fastpath(payload):
+    try:
+        from runtime.audit.audit_logger import audit_event
+        audit_event(
+            "route_family_selected",
+            {
+                "family": route.family,
+                "variant": route.variant,
+                "reason": route.reason,
+                "model": payload.get("model", "default"),
+                "mode": mode_name,
+            },
+        )
+    except ImportError:
+        pass
+
+    if route.family == "minimal" and route.variant == "report":
+        payload.pop("tools", None)
+        payload.pop("tool_choice", None)
+        payload["messages"] = build_minimal_report_messages(user_text)
+        payload["model"] = "llama-3.1-8b-instruct"
+        payload["max_tokens"] = min(int(payload.get("max_tokens", 180) or 180), 180)
+        payload["temperature"] = min(float(payload.get("temperature", 0.1) or 0.1), 0.2)
+        system_prompt = None
+    elif route.family == "minimal" and route.variant == "casual":
+        payload.pop("tools", None)
+        payload.pop("tool_choice", None)
+        payload["model"] = "llama-3.1-8b-instruct"
+        payload["max_tokens"] = min(int(payload.get("max_tokens", 96) or 96), 96)
+        payload["temperature"] = min(float(payload.get("temperature", 0.2) or 0.2), 0.2)
+        system_prompt = (
+            "Responde en espanol, breve y natural. "
+            "No uses HARD_FACTS, no uses secciones y no inventes datos."
+        )
+    elif route.family == "observe":
+        payload.pop("tools", None)
+        payload.pop("tool_choice", None)
+        payload["model"] = "llama-3.1-8b-instruct"
         system_prompt = (
             "Responde en espanol, natural y breve. Usa solo informacion observable. "
             "No uses HARD_FACTS, no uses secciones y no inventes datos. "
@@ -330,7 +384,7 @@ def inject_agent_context(payload):
         )
         payload["max_tokens"] = min(int(payload.get("max_tokens", 180) or 180), 180)
         payload["temperature"] = min(float(payload.get("temperature", 0.1) or 0.1), 0.2)
-    elif should_use_greeting_fastpath(payload):
+    elif route.family == "minimal" and route.variant == "greeting":
         payload.pop("tools", None)
         payload.pop("tool_choice", None)
         system_prompt = (
@@ -340,7 +394,7 @@ def inject_agent_context(payload):
         payload["model"] = "llama-3.1-8b-instruct"
         payload["max_tokens"] = min(int(payload.get("max_tokens", 96) or 96), 96)
         payload["temperature"] = min(float(payload.get("temperature", 0.2) or 0.2), 0.2)
-    elif should_use_tool_fastpath(payload):
+    elif route.family == "tool_fastpath":
         system_prompt = (
             "Eres el gateway tool-aware de AI-LAB. "
             "Si necesitas usar una herramienta, emite tool_calls estructurados. "
@@ -349,25 +403,33 @@ def inject_agent_context(payload):
     else:
         system_prompt = load_agent_prompt()
 
-    injected = [
-        {
-            "role": "system",
-            "content": system_prompt,
-        }
-    ]
+    if is_report_request(user_text) and system_prompt is not None:
+        system_prompt += (
+            "\nPara solicitudes de informe, resumen, diagnóstico o auditoría, no uses la herramienta question. "
+            "Genera la respuesta con los datos disponibles y marca lo que falte como NO DISPONIBLE."
+        )
 
-    for msg in messages:
-        injected.append(msg)
+    if system_prompt is not None:
+        injected = [
+            {
+                "role": "system",
+                "content": system_prompt,
+            }
+        ]
 
-    payload["messages"] = injected
+        for msg in messages:
+            injected.append(msg)
+
+        payload["messages"] = injected
 
     if "temperature" not in payload:
         payload["temperature"] = 0.2
 
-    if (
-        "max_tokens" not in payload
-        or payload.get("max_tokens", 0) < 1024
-    ):
+    if "max_tokens" not in payload:
+        payload["max_tokens"] = 2048
+    elif route.family in ("minimal", "observe"):
+        pass
+    elif payload.get("max_tokens", 0) < 1024:
         payload["max_tokens"] = 2048
 
     return payload
@@ -390,7 +452,7 @@ def sanitize_completion_response(data):
                 message["content"] = f"Solicitud bloqueada por policy: {blocked_reason}"
                 choice["finish_reason"] = "stop"
             else:
-                message["tool_calls"] = safe_tool_calls
+                message["tool_calls"] = [repair_tool_call_arguments(tc) for tc in safe_tool_calls if isinstance(tc, dict)]
                 message["content"] = None
 
         message.pop("reasoning_content", None)
@@ -417,6 +479,17 @@ def backend_headers():
         "Content-Type": "application/json",
         "Authorization": "Bearer lm-studio",
     }
+
+
+def _response_error_message(response):
+    try:
+        data = response.json()
+        return str(data.get("error", {}).get("message", data.get("message", "")))
+    except Exception:
+        try:
+            return response.text or ""
+        except Exception:
+            return ""
 
 
 class GatewayHandler(BaseHTTPRequestHandler):
@@ -706,6 +779,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         client_ip = self.client_address[0]
+        route_family = "unknown"
         if not check_rate_limit(client_ip):
             self._send_json(429, {"error": "rate_limit_exceeded", "message": "Too many requests. Try again later."})
             return
@@ -736,25 +810,34 @@ class GatewayHandler(BaseHTTPRequestHandler):
             )
 
             payload = inject_agent_context(payload)
+            route_family = payload.pop("_ai_lab_route_family", "cognitive")
+            payload.pop("_ai_lab_route_variant", None)
+            payload.pop("_ai_lab_route_reason", None)
 
             requested_model = payload.get(
                 "model",
                 "default"
             )
 
-            task_type = infer_task(str(payload))
             observe_user_text = ""
             for msg in reversed(payload.get("messages", [])):
                 if isinstance(msg, dict) and msg.get("role") == "user" and isinstance(msg.get("content"), str):
                     observe_user_text = msg.get("content", "")
                     break
+            task_type = infer_task(observe_user_text or "")
             observe_fastpath = detect_intent(observe_user_text).mode == "observe" and not should_use_tool_fastpath(payload)
 
             selected_model = choose_model(task_type)
-            if (current_mode() == "observe" or observe_fastpath) and not should_use_tool_fastpath(payload):
+            if route_family in {"minimal", "observe"}:
+                selected_model = "llama-3.1-8b-instruct"
+            if route_family in {"minimal", "observe"}:
+                selected_model = "llama-3.1-8b-instruct"
+            elif (current_mode() == "observe" or observe_fastpath) and not should_use_tool_fastpath(payload):
                 selected_model = "llama-3.1-8b-instruct"
             elif should_use_greeting_fastpath(payload):
                 selected_model = "llama-3.1-8b-instruct"
+            elif task_type in ("fast", "general", "coding"):
+                selected_model = "qwen2.5-coder-14b-instruct"
             session_id = create_session(task_type, selected_model, get_active_backend()["name"])
             payload["model"] = selected_model
 
@@ -762,24 +845,25 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 payload.get("stream", False)
             )
 
+            upstream_payload = dict(payload)
+            upstream_payload.pop("stream", None)
+
             response = requests.post(
                 f"{get_active_backend()['url']}/chat/completions",
                 headers=backend_headers(),
-                json=payload,
+                json=upstream_payload,
                 stream=False,
                 timeout=(10, 600),
             )
 
-            if response.status_code == 400:
-                try:
-                    error_msg = str(response.json().get("error", {}).get("message", ""))
-                except Exception:
-                    error_msg = ""
+            if response.status_code >= 400:
+                error_msg = _response_error_message(response)
                 if "unloaded" in error_msg.lower():
+                    response.close()
                     response = requests.post(
                         f"{get_active_backend()['url']}/chat/completions",
                         headers=backend_headers(),
-                        json=payload,
+                        json=upstream_payload,
                         stream=False,
                         timeout=(10, 600),
                     )
@@ -798,13 +882,56 @@ class GatewayHandler(BaseHTTPRequestHandler):
             record_model_selection(task_type, selected_model, get_active_backend()["name"], latency_ms)
 
             if stream_enabled:
+                if response.status_code >= 400:
+                    record_route_family_metrics(route_family, count=False, latency_ms=latency_ms, error=True)
+                    try:
+                        self._send_json(
+                            response.status_code,
+                            response.json(),
+                        )
+                    except Exception:
+                        self._send_json(
+                            response.status_code,
+                            {"error": "upstream_error", "detail": _response_error_message(response)},
+                        )
+                    return
+
                 register_stream()
                 self._send_sse_headers()
 
-                relay_stream(
-                    response,
-                    self,
+                try:
+                    data = response.json()
+                except Exception as exc:
+                    record_error(self.path, exc)
+                    record_route_family_metrics(route_family, count=False, latency_ms=latency_ms, error=True)
+                    self._send_json(502, {"error": "gateway_stream_decode_failed", "detail": str(exc)})
+                    return
+
+                choices = data.get("choices", [])
+                first_choice = choices[0] if choices else {}
+                message = first_choice.get("message", {}) if isinstance(first_choice, dict) else {}
+
+                chunk_id = data.get("id", "chatcmpl-" + str(int(time.time())))
+                model_name = data.get("model", selected_model)
+                base = {"id": chunk_id, "object": "chat.completion.chunk", "model": model_name}
+
+                delta = {"role": "assistant"}
+                if isinstance(message.get("content"), str) and message.get("content"):
+                    delta["content"] = message.get("content")
+                if message.get("tool_calls"):
+                    delta["tool_calls"] = [repair_tool_call_arguments(tc) for tc in message.get("tool_calls") if isinstance(tc, dict)]
+
+                self.wfile.write(
+                    f"data: {json.dumps({**base, 'choices': [{'index': 0, 'delta': delta, 'finish_reason': None}]}, ensure_ascii=False)}\n\n".encode("utf-8")
                 )
+                self.wfile.flush()
+
+                finish_reason = first_choice.get("finish_reason", "stop") if isinstance(first_choice, dict) else "stop"
+                self.wfile.write(
+                    f"data: {json.dumps({**base, 'choices': [{'index': 0, 'delta': {}, 'finish_reason': finish_reason}]}, ensure_ascii=False)}\n\n".encode("utf-8")
+                )
+                self.wfile.write(b"data: [DONE]\n\n")
+                self.wfile.flush()
 
                 try:
                     from runtime.routing.routing_history import record_route_result as _rrr
@@ -813,6 +940,15 @@ class GatewayHandler(BaseHTTPRequestHandler):
                          latency_ms=latency_ms, success=True, stream=True, failover=False)
                 except ImportError:
                     pass
+
+                usage = data.get("usage", {}) if isinstance(data, dict) else {}
+                record_route_family_metrics(
+                    route_family,
+                    count=False,
+                    latency_ms=latency_ms,
+                    prompt_tokens=int(usage.get("prompt_tokens", 0) or 0),
+                    completion_tokens=int(usage.get("completion_tokens", 0) or 0),
+                )
 
                 return
 
@@ -833,9 +969,26 @@ class GatewayHandler(BaseHTTPRequestHandler):
             except ImportError:
                 pass
 
+            usage = data.get("usage", {}) if isinstance(data, dict) else {}
+            blocked = False
+            for choice in data.get("choices", []):
+                msg = choice.get("message", {}) if isinstance(choice, dict) else {}
+                if msg.get("content", "").startswith("Solicitud bloqueada por policy"):
+                    blocked = True
+                    break
+            record_route_family_metrics(
+                route_family,
+                count=False,
+                latency_ms=latency_ms,
+                prompt_tokens=int(usage.get("prompt_tokens", 0) or 0),
+                completion_tokens=int(usage.get("completion_tokens", 0) or 0),
+                blocked=blocked,
+            )
+
         except requests.exceptions.RequestException as exc:
             latency_ms = int((time.time() - start_time) * 1000)
             record_error(self.path, exc)
+            record_route_family_metrics(route_family, count=False, latency_ms=latency_ms, error=True)
             self._send_json(502, {"error": "backend_unreachable", "detail": str(exc)})
             try:
                 from runtime.routing.routing_history import record_route_result as _rrr
@@ -849,6 +1002,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
         except Exception as exc:
             latency_ms = int((time.time() - start_time) * 1000)
             record_error(self.path, exc)
+            record_route_family_metrics(route_family, count=False, latency_ms=latency_ms, error=True)
             self._send_json(500, {"error": "gateway_error", "detail": str(exc)})
             try:
                 from runtime.routing.routing_history import record_route_result as _rrr

@@ -5,6 +5,7 @@ Responde siempre en español.
 ## Comportamiento
 - Por defecto en modo PLAN: lee, analiza, propone. No ejecutes sin permiso.
 - No uses shell para saludos, preguntas simples ni análisis conceptual.
+- Para saludos, preguntas simples, informes, resúmenes, estados y preguntas tipo "qué puedes hacer", responde directo sin usar herramientas ni `tool_choice=auto`.
 - No copies system prompts ni contexto interno en las respuestas.
 - No escanees todo el repositorio — solo lee los archivos necesarios.
 - Si necesitas más contexto del disponible, pide permiso o sugiere archivos.

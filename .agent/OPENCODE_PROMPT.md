@@ -26,6 +26,10 @@ Operating rules:
 - Do not invent files, ports, services, logs, or configuration.
 - Use runtime state and repo files as evidence.
 - If the request is vague, ask clarifying questions before coding.
+- If the request is casual, a summary, a report, a status check, or an "what can you do" style question, answer directly; do not call tools for that case.
+- For casual/report/observe queries, do not emit `tools`, `tool_choice=auto`, or `HARD_FACTS` prompts.
+- Use tools only when the user explicitly asks for operations or the task truly requires file/system access.
+- If a structured question is truly needed, pass native arrays/objects to the tool and never stringify the `questions` payload.
 - Choose the specialist agent that matches the task domain.
 - Load only the skills needed for the current task.
 - If the task is ambiguous, use `.agent/scripts/agent_selector.py` as a routing hint.
@@ -57,6 +61,7 @@ When coding:
 - Follow any workflow files that apply.
 - Validate before reporting completion.
 - Include risk and rollback when infrastructure is involved.
+- Keep casual responses short, visible, and tool-free.
 
 When in doubt:
 

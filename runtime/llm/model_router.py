@@ -47,10 +47,10 @@ except ImportError:
 
 
 DEFAULT_MODELS = {
-    "fast": "llama-3.1-8b-instruct",
-    "coding": "llama-3.1-8b-instruct",
+    "fast": "qwen2.5-coder-14b-instruct",
+    "coding": "qwen2.5-coder-14b-instruct",
     "reasoning": "qwen2.5-coder-32b-instruct",
-    "general": "llama-3.1-8b-instruct",
+    "general": "qwen2.5-coder-14b-instruct",
 }
 
 
@@ -59,6 +59,36 @@ def infer_task(request_text=None, capability=None):
     if capability:
         return capability
     text = (request_text or "").lower()
+    if any(
+        w in text
+        for w in [
+            "podrias decirme que puedes hacer",
+            "podrías decirme que puedes hacer",
+            "que puedes hacer",
+            "quien eres",
+            "quién eres",
+            "como funcionas",
+            "cómo funcionas",
+            "help",
+            "ayuda",
+            "what can you do",
+        ]
+    ):
+        return "fast"
+    if any(
+        w in text
+        for w in [
+            "informe",
+            "resumen",
+            "estado",
+            "status",
+            "reporte",
+            "report",
+            "diagnostico",
+            "diagnóstico",
+        ]
+    ):
+        return "fast"
     if any(
         w in text
         for w in [
@@ -119,14 +149,9 @@ def infer_task(request_text=None, capability=None):
             "optimo",
             "infraestructura",
             "infrastructure",
-            "informe",
-            "report",
-            "analisis",
-            "diagnostico",
             "razonamiento",
             "reasoning",
             "estado actual",
-            "resumen",
         ]
     ):
         return "reasoning"
@@ -423,7 +448,7 @@ def select_node(request_text, capability=None):
     elif models_on_node:
         selected = models_on_node[0]
     else:
-        selected = DEFAULT_MODELS.get(task, "llama-3.1-8b-instruct")
+        selected = DEFAULT_MODELS.get(task, "qwen2.5-coder-14b-instruct")
 
     return {
         "name": route.get("selected_node", "rx9070-node"),

@@ -15,11 +15,15 @@ from runtime.llm.model_router import select_node
 from runtime.agent.intent_router import detect_intent
 from runtime.modes.mode_manager import current_mode
 from runtime.state.system_state import build_system_state
-from runtime.gateway.tool_call_parser import parse_tool_calls_from_text, tool_call_is_dangerous
+from runtime.gateway.tool_call_parser import parse_tool_calls_from_text, repair_tool_call_arguments, tool_call_is_dangerous
 from runtime.gateway.tool_request_classifier import (
     build_observe_context,
+    classify_chat_route,
     build_minimal_greeting_messages,
+    build_minimal_report_messages,
     build_minimal_tool_messages,
+    is_report_request,
+    strip_question_tool,
     sanitize_payload_messages,
     sanitize_prompt_text,
     sanitize_observe_output,
@@ -27,7 +31,7 @@ from runtime.gateway.tool_request_classifier import (
     should_use_tool_fastpath,
 )
 
-from runtime.telemetry.prometheus_metrics import HARD_FACTS_HITS, GOVERNANCE_BLOCKED, GOVERNANCE_BLOCKED_BY_REASON, ROUTER_REQUESTS
+from runtime.telemetry.prometheus_metrics import HARD_FACTS_HITS, GOVERNANCE_BLOCKED, GOVERNANCE_BLOCKED_BY_REASON, ROUTER_REQUESTS, prime_route_family_metrics, record_route_family_metrics
 
 from runtime.agent.selective_context import (
     build_selective_context
@@ -47,6 +51,8 @@ try:
     ensure_collections()
 except ImportError:
     pass
+
+prime_route_family_metrics()
 
 # ── optional: working memory + context shaper (FASE 8.7) ────────────
 try:
@@ -150,6 +156,7 @@ REGLAS ESTRICTAS:
 13. 'latency_ms' en GPU nodes = latencia de red/ping del nodo. NO es latencia de inferencia del modelo. 'inference_latency_ms' solo si aparece explicitamente en HARD FACTS.
 14. Cualquier afirmacion con 'motivo REAL' o sufijo 'REAL' debe tener fuente explicita en HARD FACTS. Si no la tiene, debe ir en [INFERIDO] con nota 'inferencia no verificada'. semantic_recall (qdrant) debe aparecer SIEMPRE en [HARD_FACTS] si el dato esta disponible en el JSON.
 15. La palabra 'REAL' solo puede usarse si el campo existe literalmente en HARD FACTS o viene de routing.reason_codes. Si es inferido, no puede llamarse REAL.
+16. Si el usuario pide un resumen, informe, estado o reporte, responde directamente: no generes preguntas estructuradas ni uses herramientas de tipo `question`.
 """
 
 
@@ -227,29 +234,10 @@ def capability_from_model(model: str | None):
 
 
 def extract_request_text(payload: Dict[str, Any]) -> str:
+    return get_last_user_messages(payload, limit=MAX_EMBED_QUERY_MESSAGES)
 
-    messages = payload.get("messages", [])
 
-    parts = []
-
-    for msg in messages:
-
-        content = msg.get("content", "")
-
-        if isinstance(content, str):
-            parts.append(content)
-
-        elif isinstance(content, list):
-
-            for item in content:
-
-                if (
-                    isinstance(item, dict)
-                    and item.get("type") == "text"
-                ):
-                    parts.append(item.get("text", ""))
-
-    return "\n".join(parts)
+MAX_EMBED_QUERY_MESSAGES = 3
 
 
 def get_last_user_message(payload: Dict[str, Any]) -> str:
@@ -273,6 +261,34 @@ def get_last_user_message(payload: Dict[str, Any]) -> str:
     return ""
 
 
+def get_last_user_messages(payload: Dict[str, Any], limit: int = MAX_EMBED_QUERY_MESSAGES) -> str:
+    """Return the last *limit* user messages, oldest first."""
+    messages = payload.get("messages", [])
+    collected: list[str] = []
+
+    for msg in reversed(messages):
+        if msg.get("role") != "user":
+            continue
+        content = msg.get("content", "")
+        if isinstance(content, str):
+            text = content
+        elif isinstance(content, list):
+            text = "\n".join(
+                item.get("text", "") for item in content
+                if isinstance(item, dict) and item.get("type") == "text"
+            )
+        else:
+            text = ""
+
+        text = text.strip()
+        if text:
+            collected.append(text)
+        if len(collected) >= limit:
+            break
+
+    return "\n\n".join(reversed(collected))
+
+
 def truncate_text(text: str, max_chars: int) -> str:
     """Corta *text* en *max_chars* caracteres, sin romper palabras."""
     if len(text) <= max_chars:
@@ -282,6 +298,29 @@ def truncate_text(text: str, max_chars: int) -> str:
     if last_space > int(max_chars * 0.8):
         truncated = truncated[:last_space]
     return truncated + "\n\n[Contexto truncado para ajustarse a los límites del modelo LM Studio]"
+
+
+def _response_error_message(response: requests.Response) -> str:
+    try:
+        data = response.json()
+        return str(data.get("error", {}).get("message", data.get("message", "")))
+    except Exception:
+        try:
+            return response.text or ""
+        except Exception:
+            return ""
+
+
+def _passthrough_stream(response: requests.Response):
+    try:
+        for chunk in response.iter_content(chunk_size=8192):
+            if chunk:
+                yield chunk
+    finally:
+        try:
+            response.close()
+        except Exception:
+            pass
 
 
 
@@ -338,19 +377,46 @@ def api_usage():
 @app.post("/chat/completions")
 async def chat_completions(request: Request):
 
+    request_start = time.time()
     payload = await request.json()
     payload = sanitize_payload_messages(payload)
     ROUTER_REQUESTS.inc()
 
     request_text = extract_request_text(payload)
     user_text = get_last_user_message(payload)
+    payload = strip_question_tool(payload, user_text or request_text)
     mode_name = current_mode()
     prompt_route = detect_intent(user_text or request_text)
     greeting_fastpath = should_use_greeting_fastpath(payload)
     tool_fastpath = should_use_tool_fastpath(payload)
     observe_fastpath = prompt_route.mode == "observe" and not greeting_fastpath and not tool_fastpath
+    route = classify_chat_route(
+        payload,
+        mode_name=mode_name,
+        user_text=user_text,
+        request_text=request_text,
+        is_report_request=is_report_request(user_text or request_text),
+        greeting_fastpath=greeting_fastpath,
+        tool_fastpath=tool_fastpath,
+        intent_mode=prompt_route.mode,
+    )
+    record_route_family_metrics(route.family)
+    try:
+        from runtime.audit.audit_logger import audit_event
+        audit_event(
+            "route_family_selected",
+            {
+                "family": route.family,
+                "variant": route.variant,
+                "reason": route.reason,
+                "model": payload.get("model", "ailab-router/auto"),
+                "mode": mode_name,
+            },
+        )
+    except ImportError:
+        pass
 
-    if mode_name != "observe" and not tool_fastpath and not greeting_fastpath and not observe_fastpath:
+    if route.family == "cognitive":
         build_system_state()
 
     requested_model = payload.get(
@@ -363,12 +429,15 @@ async def chat_completions(request: Request):
     )
     if not capability and (payload.get("tools") or payload.get("tool_choice")):
         capability = "tool_use"
-    if (mode_name == "observe" or observe_fastpath) and not tool_fastpath:
+    effective_capability = capability
+    if route.family in ("minimal", "observe"):
+        effective_capability = "fast"
+    if route.family == "observe":
         capability = "fast"
 
     node = select_node(
         request_text,
-        capability=capability
+        capability=effective_capability
     )
     if greeting_fastpath:
         node = dict(node)
@@ -385,12 +454,71 @@ async def chat_completions(request: Request):
         "/v1/chat/completions"
     )
 
-    if greeting_fastpath:
+    if route.family == "minimal" and route.variant == "report":
+        proxy_payload = dict(payload)
+        proxy_payload.pop("stream", None)
+        proxy_payload.pop("_ai_lab_route_family", None)
+        proxy_payload.pop("_ai_lab_route_variant", None)
+        proxy_payload.pop("_ai_lab_route_reason", None)
+        proxy_payload["model"] = "auto"
+        proxy_payload["max_tokens"] = min(int(proxy_payload.get("max_tokens", 64) or 64), 64)
+        proxy_payload["temperature"] = 0
+        proxy_response = requests.post(
+            "http://127.0.0.1:8008/v1/chat/completions",
+            json=proxy_payload,
+            headers={"Connection": "close"},
+            timeout=300,
+        )
+        proxy_content = proxy_response.json() if proxy_response.content else {}
+        latency_ms = int((time.time() - request_start) * 1000)
+        record_route_family_metrics(route.family, count=False, latency_ms=latency_ms, blocked=False, error=proxy_response.status_code >= 400)
+        return JSONResponse(
+            status_code=proxy_response.status_code,
+            content=proxy_content,
+            headers={
+                "X-AI-LAB-Selected-Node": "gateway-proxy",
+                "X-AI-LAB-Selected-Host": "127.0.0.1",
+                "X-AI-LAB-Selected-Model": "llama-3.1-8b-instruct",
+                "X-AI-LAB-Capability": "fast",
+            },
+        )
+    elif route.family == "minimal" and route.variant == "casual":
+        proxy_payload = dict(payload)
+        proxy_payload.pop("stream", None)
+        proxy_payload.pop("_ai_lab_route_family", None)
+        proxy_payload.pop("_ai_lab_route_variant", None)
+        proxy_payload.pop("_ai_lab_route_reason", None)
+        proxy_payload["model"] = "auto"
+        proxy_payload["max_tokens"] = min(int(proxy_payload.get("max_tokens", 64) or 64), 64)
+        proxy_payload["temperature"] = 0
+        proxy_response = requests.post(
+            "http://127.0.0.1:8008/v1/chat/completions",
+            json=proxy_payload,
+            headers={"Connection": "close"},
+            timeout=300,
+        )
+        proxy_content = proxy_response.json() if proxy_response.content else {}
+        latency_ms = int((time.time() - request_start) * 1000)
+        record_route_family_metrics(route.family, count=False, latency_ms=latency_ms, blocked=False, error=proxy_response.status_code >= 400)
+        return JSONResponse(
+            status_code=proxy_response.status_code,
+            content=proxy_content,
+            headers={
+                "X-AI-LAB-Selected-Node": "gateway-proxy",
+                "X-AI-LAB-Selected-Host": "127.0.0.1",
+                "X-AI-LAB-Selected-Model": "llama-3.1-8b-instruct",
+                "X-AI-LAB-Capability": "fast",
+            },
+        )
+    elif route.family == "minimal" and route.variant == "greeting":
         payload.pop("tools", None)
         payload.pop("tool_choice", None)
         capability = "fast"
         payload["messages"] = build_minimal_greeting_messages(user_text or request_text)
-    elif (mode_name == "observe" or observe_fastpath) and not tool_fastpath:
+    elif route.family == "observe":
+        payload.pop("tools", None)
+        payload.pop("tool_choice", None)
+        payload["model"] = "llama-3.1-8b-instruct"
         payload["max_tokens"] = min(int(payload.get("max_tokens", 180) or 180), 180)
         payload["temperature"] = min(float(payload.get("temperature", 0.1) or 0.1), 0.2)
         payload["messages"] = [
@@ -405,7 +533,7 @@ async def chat_completions(request: Request):
             },
             {"role": "user", "content": user_text or request_text},
         ]
-    elif tool_fastpath:
+    elif route.family == "tool_fastpath":
         payload["messages"] = build_minimal_tool_messages(
             payload,
             selected_model=selected_model or "",
@@ -467,6 +595,15 @@ async def chat_completions(request: Request):
                if _task_cap == "fast" else "")
         )
 
+        if _task_cap in ("fast", "general"):
+            system_prompt = (
+                "Eres el asistente tecnico del AI-LAB.\n"
+                "Responde en espanol de forma clara, util y natural.\n"
+                "No uses HARD_FACTS, no uses secciones formateadas y no inventes datos.\n"
+                + ("=== RUNTIME DATA ===\n" + agent_context[:2500] + "\n\n" if agent_context.strip() else "")
+                + "Prioriza respuestas visibles, coherentes y utiles."
+            )
+
         # ── budget-aware context truncation ─────────────────────────────
         # Garantiza que system_prompt + final_instruction nunca exceda
         # LM_STUDIO_MAX_CONTEXT tokens (16384 actual).
@@ -475,11 +612,8 @@ async def chat_completions(request: Request):
         budget_chars = max(1000, remaining_chars - system_chars)
         safe_text = truncate_text(user_text, budget_chars)
 
-        if _task_cap == "fast":
-            final_instruction = (
-                "Responde en bullets, max 8 lineas. Sin formato de secciones.\n"
-                + safe_text
-            )
+        if _task_cap in ("fast", "general"):
+            final_instruction = safe_text
         elif _task_cap == "coding":
             final_instruction = (
                 "Responde con el FORMATO OBLIGATORIO:\n"
@@ -531,6 +665,9 @@ async def chat_completions(request: Request):
 
     upstream_payload = dict(payload)
     upstream_payload.pop("stream", None)
+    upstream_payload.pop("_ai_lab_route_family", None)
+    upstream_payload.pop("_ai_lab_route_variant", None)
+    upstream_payload.pop("_ai_lab_route_reason", None)
 
     upstream_payload["model"] = node["model"]
 
@@ -548,11 +685,21 @@ async def chat_completions(request: Request):
         else 0.2)
     )
 
-    if "reasoning" not in upstream_payload.get("model", "") and "reasoning" not in upstream_payload.get("model", ""):
-        upstream_payload.setdefault(
-            "reasoning",
-            {"effort": "none"}
-        )
+    if route.family in ("minimal", "observe"):
+        upstream_payload.pop("reasoning", None)
+    elif capability in ("reasoning",) or node.get("capability") in ("reasoning",):
+        if "reasoning" not in upstream_payload.get("model", ""):
+            upstream_payload.setdefault(
+                "reasoning",
+                {"effort": "none"}
+            )
+    else:
+        upstream_payload.pop("reasoning", None)
+
+    if "qwen2.5-coder-14b" in str(upstream_payload.get("model", "")):
+        upstream_payload.pop("reasoning", None)
+        upstream_payload.pop("tool_choice", None)
+        upstream_payload.pop("tools", None)
 
     headers = {
         "X-AI-LAB-Selected-Node": node["name"],
@@ -574,83 +721,66 @@ async def chat_completions(request: Request):
                 timeout=300,
             )
 
-            content = upstream.json()
-            if upstream.status_code == 400:
-                error_msg = str(content.get("error", {}).get("message", content.get("message", "")))
+            if upstream.status_code >= 400:
+                error_msg = _response_error_message(upstream)
                 if "unloaded" in error_msg.lower() or "invalid model identifier" in error_msg.lower():
-                    fallback_url = f"http://192.168.1.50:1234/v1/chat/completions"
-                    fallback_payload = dict(upstream_payload)
-                    fallback_payload["model"] = "llama-3.1-8b-instruct"
-                    upstream = requests.post(fallback_url, json=fallback_payload, timeout=300)
-                    content = upstream.json()
+                    upstream.close()
+                    fallback_node = {
+                        **node,
+                        "host": "192.168.1.50",
+                        "port": 1234,
+                        "model": "qwen2.5-coder-14b-instruct",
+                        "name": node.get("name", "rx9070"),
+                    }
+                    upstream_url = f"http://{fallback_node['host']}:{fallback_node['port']}/v1/chat/completions"
+                    upstream_payload = dict(upstream_payload)
+                    upstream_payload["model"] = fallback_node["model"]
+                    upstream = requests.post(
+                        upstream_url,
+                        json=upstream_payload,
+                        timeout=300,
+                    )
+                    node = fallback_node
+                    selected_model = node["model"]
+                    selected_node = node["name"]
+                    headers = {
+                        "X-AI-LAB-Selected-Node": node["name"],
+                        "X-AI-LAB-Selected-Host": node["host"],
+                        "X-AI-LAB-Selected-Model": node["model"],
+                        "X-AI-LAB-Capability": node["capability"],
+                    }
+
+            if upstream.status_code >= 400:
+                content = {"error": {"message": _response_error_message(upstream) or "upstream_error"}}
+                upstream.close()
+                return JSONResponse(
+                    status_code=upstream.status_code,
+                    content=content,
+                    headers=headers,
+                )
+
+            content = upstream.json()
 
             choices = content.get("choices", [])
-            for choice in choices:
-                msg = choice.get("message", {})
-                if "reasoning_content" in msg:
-                    rc = msg.pop("reasoning_content")
-                    tool_calls = parse_tool_calls_from_text(rc if isinstance(rc, str) else None)
-                    if tool_calls:
-                        msg["tool_calls"] = tool_calls
-                    elif not msg.get("content"):
-                        msg["content"] = rc
-                elif isinstance(msg.get("content"), str):
-                    tool_calls = parse_tool_calls_from_text(msg.get("content"))
-                    if tool_calls:
-                        msg["tool_calls"] = tool_calls
-                if msg.get("tool_calls"):
-                    msg["content"] = None
-                if isinstance(msg.get("content"), str):
-                    msg["content"] = sanitize_prompt_text(msg.get("content"))
-                if mode_name == "observe" and isinstance(msg.get("content"), str):
-                    msg["content"] = sanitize_observe_output(msg.get("content"))
-
-            for choice in choices:
-                msg = choice.get("message", {})
-                tool_calls = msg.get("tool_calls") or []
-                if not tool_calls:
-                    continue
-                blocked = False
-                blocked_reason = ""
-                for tc in tool_calls:
-                    dangerous, marker = tool_call_is_dangerous(tc)
-                    if dangerous:
-                        blocked = True
-                        blocked_reason = marker or "dangerous command"
-                        break
-                if blocked:
-                    msg.pop("tool_calls", None)
-                    msg["content"] = f"Solicitud bloqueada por policy: {blocked_reason}"
-                    choice["finish_reason"] = "stop"
-                    GOVERNANCE_BLOCKED.inc()
-                    GOVERNANCE_BLOCKED_BY_REASON.labels(reason=blocked_reason).inc()
-                    try:
-                        from runtime.audit.audit_logger import audit_event
-                        audit_event("tool_call_blocked", {"reason": blocked_reason, "node": node.get("name"), "model": node.get("model")})
-                    except ImportError:
-                        pass
+            first_choice = choices[0] if choices else {}
+            message = first_choice.get("message", {}) if isinstance(first_choice, dict) else {}
 
             async def wrap_as_sse():
                 chunk_id = content.get("id", "chatcmpl-" + str(int(time.time())))
                 model_name = content.get("model", node.get("model", "unknown"))
-                full_text = ""
-                for choice in content.get("choices", []):
-                    delta = choice.get("delta", choice.get("message", {}))
-                    text = delta.get("content", "")
-                    if text:
-                        full_text += text
-
                 base = {"id": chunk_id, "object": "chat.completion.chunk", "model": model_name}
-                if full_text:
-                    words = full_text.split()
-                    for i in range(0, len(words), 3):
-                        chunk = " ".join(words[i:i+3])
-                        yield f"data: {json_mod.dumps({**base, 'choices': [{'delta': {'content': chunk + ' '}, 'index': 0}]}, ensure_ascii=False)}\n\n"
-                    yield "data: [DONE]\n\n"
-                else:
-                    c = content.get("choices", [{}])[0].get("message", {}).get("content", "") or " "
-                    yield f"data: {json_mod.dumps({**base, 'choices': [{'delta': {'content': c}, 'index': 0}]}, ensure_ascii=False)}\n\n"
-                    yield "data: [DONE]\n\n"
+
+                delta = {"role": "assistant"}
+                if isinstance(message.get("content"), str) and message.get("content"):
+                    delta["content"] = message.get("content")
+                if message.get("tool_calls"):
+                    delta["tool_calls"] = [repair_tool_call_arguments(tc) for tc in message.get("tool_calls") if isinstance(tc, dict)]
+
+                yield f"data: {json_mod.dumps({**base, 'choices': [{'index': 0, 'delta': delta, 'finish_reason': None}]}, ensure_ascii=False)}\n\n"
+
+                finish_reason = first_choice.get("finish_reason", "stop") if isinstance(first_choice, dict) else "stop"
+                yield f"data: {json_mod.dumps({**base, 'choices': [{'index': 0, 'delta': {}, 'finish_reason': finish_reason}]}, ensure_ascii=False)}\n\n"
+                yield "data: [DONE]\n\n"
 
             try:
                 from runtime.routing.routing_history import record_route_result as _rrr
@@ -660,6 +790,15 @@ async def chat_completions(request: Request):
                      latency_ms=_ttfb_ms, success=True, stream=True, failover=False)
             except ImportError:
                 pass
+
+            usage = content.get("usage", {}) if isinstance(content, dict) else {}
+            record_route_family_metrics(
+                route.family,
+                count=False,
+                latency_ms=_ttfb_ms,
+                prompt_tokens=int(usage.get("prompt_tokens", 0) or 0),
+                completion_tokens=int(usage.get("completion_tokens", 0) or 0),
+            )
 
             return StreamingResponse(
                 wrap_as_sse(),
@@ -672,6 +811,7 @@ async def chat_completions(request: Request):
         upstream = requests.post(
             upstream_url,
             json=upstream_payload,
+            headers={"Connection": "close"},
             timeout=300
         )
 
@@ -682,11 +822,42 @@ async def chat_completions(request: Request):
             if "unloaded" in error_msg.lower() or "invalid model identifier" in error_msg.lower():
                 fallback_url = f"http://192.168.1.50:1234/v1/chat/completions"
                 fallback_payload = dict(upstream_payload)
-                fallback_payload["model"] = "llama-3.1-8b-instruct"
-                upstream = requests.post(fallback_url, json=fallback_payload, timeout=300)
+                fallback_payload["model"] = "qwen2.5-coder-14b-instruct"
+                upstream = requests.post(fallback_url, json=fallback_payload, headers={"Connection": "close"}, timeout=300)
                 content = upstream.json()
 
+        if not isinstance(content, dict):
+            latency_ms = int((time.time() - request_start) * 1000)
+            record_route_family_metrics(route.family, count=False, latency_ms=latency_ms, error=True)
+            return JSONResponse(
+                status_code=502,
+                content={
+                    "error": {
+                        "message": "upstream returned a non-object response",
+                        "type": "ai_lab_router_upstream_error",
+                        "selected_node": node,
+                    }
+                },
+                headers=headers,
+            )
+
         choices = content.get("choices", [])
+        if not choices:
+            latency_ms = int((time.time() - request_start) * 1000)
+            record_route_family_metrics(route.family, count=False, latency_ms=latency_ms, error=True)
+            return JSONResponse(
+                status_code=502,
+                content={
+                    "error": {
+                        "message": "upstream returned no choices",
+                        "type": "ai_lab_router_upstream_error",
+                        "selected_node": node,
+                        "upstream_status": upstream.status_code,
+                    }
+                },
+                headers=headers,
+            )
+
         for choice in choices:
             msg = choice.get("message", {})
             if "reasoning_content" in msg:
@@ -703,12 +874,16 @@ async def chat_completions(request: Request):
             if msg.get("tool_calls"):
                 msg["content"] = None
 
+            if msg.get("tool_calls"):
+                msg["tool_calls"] = [repair_tool_call_arguments(tc) for tc in msg.get("tool_calls") if isinstance(tc, dict)]
+
             if isinstance(msg.get("content"), str):
                 msg["content"] = sanitize_prompt_text(msg.get("content"))
 
             if mode_name == "observe" and isinstance(msg.get("content"), str):
                 msg["content"] = sanitize_observe_output(msg.get("content"))
 
+        blocked_any = False
         for choice in choices:
             msg = choice.get("message", {})
             tool_calls = msg.get("tool_calls") or []
@@ -723,6 +898,7 @@ async def chat_completions(request: Request):
                     blocked_reason = marker or "dangerous command"
                     break
             if blocked:
+                blocked_any = True
                 msg.pop("tool_calls", None)
                 msg["content"] = f"Solicitud bloqueada por policy: {blocked_reason}"
                 choice["finish_reason"] = "stop"
@@ -734,27 +910,52 @@ async def chat_completions(request: Request):
                 except ImportError:
                     pass
 
-        try:
-            from runtime.routing.routing_history import record_route_result as _rrr
-            _latency_ms = int((time.time() - _req_start) * 1000)
-            _rrr(task_type=node["capability"], model=node["model"],
-                 node=node["name"], host=node["host"],
-                 latency_ms=_latency_ms, success=True, stream=False, failover=False)
-        except ImportError:
-            pass
+            try:
+                from runtime.routing.routing_history import record_route_result as _rrr
+                _latency_ms = int((time.time() - _req_start) * 1000)
+                _rrr(task_type=node["capability"], model=node["model"],
+                     node=node["name"], host=node["host"],
+                     latency_ms=_latency_ms, success=True, stream=False, failover=False)
+            except ImportError:
+                pass
 
+            usage = content.get("usage", {}) if isinstance(content, dict) else {}
+            record_route_family_metrics(
+                route.family,
+                count=False,
+                latency_ms=_latency_ms,
+                prompt_tokens=int(usage.get("prompt_tokens", 0) or 0),
+                completion_tokens=int(usage.get("completion_tokens", 0) or 0),
+                blocked=blocked_any,
+            )
+
+            return JSONResponse(
+                status_code=upstream.status_code,
+                content=content,
+                headers=headers,
+            )
+
+        latency_ms = int((time.time() - request_start) * 1000)
+        record_route_family_metrics(route.family, count=False, latency_ms=latency_ms, error=True)
         return JSONResponse(
-            status_code=upstream.status_code,
-            content=content,
+            status_code=502,
+            content={
+                "error": {
+                    "message": "upstream returned no usable choices",
+                    "type": "ai_lab_router_upstream_error",
+                    "selected_node": node,
+                    "upstream_status": upstream.status_code,
+                }
+            },
             headers=headers,
         )
 
     except Exception as exc:
 
-        _err_start = time.time()
+        record_route_family_metrics(route.family, count=False, error=True)
         try:
             from runtime.routing.routing_history import record_route_result as _rrr
-            _latency_ms = int((time.time() - _err_start) * 1000)
+            _latency_ms = int((time.time() - request_start) * 1000)
             _rrr(task_type=node["capability"] if isinstance(node, dict) else "unknown",
                  model=node.get("model", "unknown") if isinstance(node, dict) else "unknown",
                  node=node.get("name", "unknown") if isinstance(node, dict) else "unknown",

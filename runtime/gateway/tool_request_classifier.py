@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import hashlib
 import json
 import re
@@ -37,6 +38,19 @@ _GREETING_MARKERS = (
     "ok",
 )
 
+_CASUAL_MARKERS = (
+    "que puedes hacer",
+    "podrias decirme que puedes hacer",
+    "podrías decirme que puedes hacer",
+    "quien eres",
+    "quién eres",
+    "como funcionas",
+    "cómo funcionas",
+    "help",
+    "ayuda",
+    "what can you do",
+)
+
 _SYSTEM_REMINDER_RE = re.compile(
     r"<system-reminder>.*?</system-reminder>",
     re.IGNORECASE | re.DOTALL,
@@ -54,6 +68,21 @@ _OBSERVE_INTROSPECTION_RE = re.compile(
     r"^(the user is|let me|i need to|i should|i'll|voy a|debo|primero|now let me)",
     re.IGNORECASE,
 )
+
+ROUTE_FAMILIES = (
+    "minimal",
+    "observe",
+    "tool_fastpath",
+    "cognitive",
+    "learning",
+)
+
+
+@dataclass(frozen=True)
+class RuntimeRoute:
+    family: str
+    variant: str = "default"
+    reason: str = ""
 
 
 def sanitize_prompt_text(text: str | None) -> str:
@@ -177,6 +206,73 @@ def _last_user_text(payload: dict[str, Any]) -> str:
     return str(payload.get("input", "") or payload.get("query", "") or "")
 
 
+def is_report_request(text_or_payload: Any) -> bool:
+    if isinstance(text_or_payload, dict):
+        text = _last_user_text(text_or_payload)
+    else:
+        text = str(text_or_payload or "")
+
+    t = text.lower()
+    if not t:
+        return False
+
+    markers = (
+        "informe",
+        "resumen",
+        "estado de ai-lab",
+        "estado del ai-lab",
+        "diagnóstico",
+        "diagnostico",
+        "auditoría",
+        "auditoria",
+        "reporte",
+        "summary",
+        "report",
+        "status",
+        "analysis",
+        "analisis",
+        "análisis",
+        "audit",
+    )
+    return any(marker in t for marker in markers)
+
+
+def strip_question_tool(payload: dict[str, Any], user_text: str | None = None) -> dict[str, Any]:
+    if not is_report_request(user_text or payload):
+        return payload
+
+    tools = payload.get("tools")
+    if not isinstance(tools, list):
+        return payload
+
+    filtered_tools: list[Any] = []
+    for tool in tools:
+        if not isinstance(tool, dict):
+            filtered_tools.append(tool)
+            continue
+        fn = tool.get("function") if isinstance(tool.get("function"), dict) else {}
+        name = str(fn.get("name") or tool.get("name") or "").strip().lower()
+        if name == "question":
+            continue
+        filtered_tools.append(tool)
+
+    payload = dict(payload)
+    if filtered_tools:
+        payload["tools"] = filtered_tools
+    else:
+        payload.pop("tools", None)
+
+    choice = payload.get("tool_choice")
+    if choice in {"question", "auto", "required"}:
+        payload["tool_choice"] = "none"
+    elif isinstance(choice, dict):
+        fn = choice.get("function") if isinstance(choice.get("function"), dict) else {}
+        if str(fn.get("name") or "").strip().lower() == "question":
+            payload["tool_choice"] = "none"
+
+    return payload
+
+
 def is_greeting_request(payload: dict[str, Any]) -> bool:
     text = _last_user_text(payload).strip().lower()
     if not text:
@@ -189,6 +285,22 @@ def is_greeting_request(payload: dict[str, Any]) -> bool:
         return True
 
     return any(marker in text for marker in _GREETING_MARKERS)
+
+
+def is_casual_request(text_or_payload: Any) -> bool:
+    if isinstance(text_or_payload, dict):
+        text = _last_user_text(text_or_payload)
+    else:
+        text = str(text_or_payload or "")
+
+    t = text.lower().strip()
+    if not t:
+        return False
+
+    if t in _CASUAL_MARKERS:
+        return True
+
+    return any(marker in t for marker in _CASUAL_MARKERS)
 
 
 def requires_full_context(payload: dict[str, Any]) -> bool:
@@ -277,6 +389,12 @@ def build_minimal_tool_messages(
         "Responde en espanol y no inventes datos no presentes."
     )
 
+    if is_report_request(user_text):
+        system_prompt += (
+            "\nPara informes, res\xFAmenes, diagn\xF3sticos o auditor\xEDas, no uses la herramienta question. "
+            "Genera la respuesta con los datos disponibles y marca lo que falte como NO DISPONIBLE."
+        )
+
     return [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_text},
@@ -294,3 +412,58 @@ def build_minimal_greeting_messages(user_text: str) -> list[dict[str, str]]:
         },
         {"role": "user", "content": user_text},
     ]
+
+
+def build_minimal_report_messages(user_text: str) -> list[dict[str, str]]:
+    return [
+        {
+            "role": "system",
+            "content": (
+                "Responde en espanol, directo y util. "
+                "Genera un informe breve en 5-8 lineas. "
+                "No uses HARD_FACTS, no uses herramientas y no inventes datos. "
+                "Si falta algo, marca NO DISPONIBLE."
+            ),
+        },
+        {"role": "user", "content": user_text},
+    ]
+
+
+def classify_chat_route(
+    payload: dict[str, Any],
+    *,
+    mode_name: str,
+    user_text: str,
+    request_text: str,
+    is_report_request: bool,
+    greeting_fastpath: bool,
+    tool_fastpath: bool,
+    intent_mode: str = "",
+) -> RuntimeRoute:
+    """Segment chat requests into explicit runtime families."""
+    text = user_text or request_text
+
+    if is_report_request:
+        return RuntimeRoute(family="minimal", variant="report", reason="report request")
+    if is_casual_request(text):
+        return RuntimeRoute(family="minimal", variant="casual", reason="casual request")
+    if greeting_fastpath:
+        return RuntimeRoute(family="minimal", variant="greeting", reason="greeting fastpath")
+    if mode_name == "observe" or intent_mode == "observe":
+        return RuntimeRoute(family="observe", variant="observe", reason="observe mode")
+    if tool_fastpath:
+        return RuntimeRoute(family="tool_fastpath", variant="tool", reason="tool fastpath")
+    if text.strip():
+        return RuntimeRoute(family="cognitive", variant="default", reason="general cognitive routing")
+    return RuntimeRoute(family="minimal", variant="empty", reason="empty input")
+
+
+def classify_api_route(path: str) -> RuntimeRoute:
+    """Segment internal API endpoints by runtime family."""
+    if path.startswith("/api/learning/"):
+        return RuntimeRoute(family="learning", variant=path.rsplit("/", 1)[-1], reason="learning api")
+    if path.startswith("/api/control/"):
+        return RuntimeRoute(family="cognitive", variant="control", reason="control plane")
+    if path.startswith("/api/memory/") or path.startswith("/api/incidents/"):
+        return RuntimeRoute(family="cognitive", variant="memory", reason="memory api")
+    return RuntimeRoute(family="minimal", variant="default", reason="unclassified api")

@@ -24,6 +24,13 @@ TASK_MODEL_PREFERENCES = {
         "deepseek",
         "reasoning",
     ],
+    "tool_use": [
+        "qwen3.6",
+        "qwen",
+        "tool",
+        "function",
+        "tools",
+    ],
     "coding": [
         "coder",
         "deepseek-coder",
@@ -129,6 +136,9 @@ def infer_model_capabilities(model_name):
         capabilities.add("vision")
         capabilities.add("multimodal")
 
+    if "tool" in name or "function" in name or "qwen3.6" in name:
+        capabilities.add("tool_use")
+
     if "4b" in name or "8b" in name or "9b" in name or "mini" in name:
         capabilities.add("fast")
 
@@ -232,6 +242,9 @@ def score_model_for_task(
 
     if task_type == "vision" and "multimodal" in model_caps:
         score += 35
+
+    if task_type == "tool_use" and "tool_use" in model_caps:
+        score += 55
 
     if task_type in ["reasoning", "orchestration"] and "large-context" in model_caps:
         score += 25
