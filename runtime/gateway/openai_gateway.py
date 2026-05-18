@@ -69,6 +69,13 @@ except ImportError:
     _apply_profile = None  # type: ignore[assignment]
     _HAVE_PROFILE_LOADER = False
 
+try:
+    from runtime.telemetry.prometheus_metrics import record_profile_metrics
+    _HAVE_PROFILE_METRICS = True
+except ImportError:
+    record_profile_metrics = None  # type: ignore[assignment]
+    _HAVE_PROFILE_METRICS = False
+
 RATE_LIMIT_REQUESTS = 30
 RATE_LIMIT_WINDOW = 60
 _rate_limit_data: dict = defaultdict(list)
@@ -355,6 +362,17 @@ def inject_agent_context(payload):
     try:
         if _HAVE_PROFILE_LOADER:
             payload = _apply_profile(payload, route.family)
+            payload["_profile_source"] = "profile_loader"
+            profile = payload.get("_profile", "unknown")
+            print(
+                f"profile={profile} v={payload.get('_profile_version','?')} "
+                f"route={route.family} model={payload.get('model','?')} "
+                f"tokens={payload.get('max_tokens','?')} temp={payload.get('temperature','?')} "
+                f"tools={'tools' in payload} source=profile_loader",
+                flush=True,
+            )
+            if _HAVE_PROFILE_METRICS:
+                record_profile_metrics(profile, route.family, payload.get("model", "?"))
     except Exception:
         pass
 
@@ -372,6 +390,22 @@ def inject_agent_context(payload):
         )
     except ImportError:
         pass
+
+    if payload.get("_profile_source") == "profile_loader":
+        try:
+            from runtime.audit.audit_logger import audit_event
+            audit_event("profile_applied", {
+                "profile": payload.get("_profile", "unknown"),
+                "version": payload.get("_profile_version", "0"),
+                "source": "profile_loader",
+                "route": route.family,
+                "model": payload.get("model", "unknown"),
+                "max_tokens": payload.get("max_tokens", 0),
+                "temperature": payload.get("temperature", 0),
+                "tools_allowed": "tools" in payload,
+            })
+        except ImportError:
+            pass
 
     if route.family == "minimal" and route.variant == "report":
         payload.pop("tools", None)
