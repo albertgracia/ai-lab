@@ -408,16 +408,12 @@ def inject_agent_context(payload):
             pass
 
     if route.family == "minimal" and route.variant == "report":
-        payload.pop("tools", None)
-        payload.pop("tool_choice", None)
         payload["messages"] = build_minimal_report_messages(user_text)
         payload["model"] = "llama-3.1-8b-instruct"
         payload["max_tokens"] = min(int(payload.get("max_tokens", 180) or 180), 180)
         payload["temperature"] = min(float(payload.get("temperature", 0.1) or 0.1), 0.2)
         system_prompt = None
     elif route.family == "minimal" and route.variant == "casual":
-        payload.pop("tools", None)
-        payload.pop("tool_choice", None)
         payload["model"] = "llama-3.1-8b-instruct"
         payload["max_tokens"] = min(int(payload.get("max_tokens", 96) or 96), 96)
         payload["temperature"] = min(float(payload.get("temperature", 0.2) or 0.2), 0.2)
@@ -426,8 +422,6 @@ def inject_agent_context(payload):
             "No uses HARD_FACTS, no uses secciones y no inventes datos."
         )
     elif route.family == "observe":
-        payload.pop("tools", None)
-        payload.pop("tool_choice", None)
         payload["model"] = "llama-3.1-8b-instruct"
         system_prompt = (
             "Responde en espanol, natural y breve. Usa solo informacion observable. "
@@ -438,8 +432,6 @@ def inject_agent_context(payload):
         payload["max_tokens"] = min(int(payload.get("max_tokens", 180) or 180), 180)
         payload["temperature"] = min(float(payload.get("temperature", 0.1) or 0.1), 0.2)
     elif route.family == "minimal" and route.variant == "greeting":
-        payload.pop("tools", None)
-        payload.pop("tool_choice", None)
         system_prompt = (
             "Responde en espanol, muy breve y natural. "
             "No uses HARD_FACTS, no uses secciones y no inventes datos."
@@ -485,6 +477,15 @@ def inject_agent_context(payload):
 
         payload["messages"] = injected
 
+    # FASE 21B guard: detecta payloads sin profile aplicado
+    if "max_tokens" not in payload or "temperature" not in payload:
+        print(
+            "FASE21B_WARN profile_missing route=", route.family,
+            "has_tokens=", "max_tokens" in payload,
+            "has_temp=", "temperature" in payload,
+            "source=", payload.get("_profile_source", "none"),
+            flush=True,
+        )
     if "temperature" not in payload:
         payload["temperature"] = 0.2
 
