@@ -281,10 +281,16 @@ def is_greeting_request(payload: dict[str, Any]) -> bool:
     if text in _GREETING_MARKERS:
         return True
 
-    if len(text.split()) <= 2 and any(marker == text.split()[0] for marker in _GREETING_MARKERS):
+    tokens = re.findall(r"\b[\wáéíóúüñ]+\b", text, flags=re.IGNORECASE)
+    if not tokens:
+        return False
+
+    greeting_words = {"hi", "hello", "hola", "hey", "buenas", "gracias", "thanks", "ok"}
+
+    if len(tokens) <= 2 and tokens[0] in greeting_words:
         return True
 
-    return any(marker in text for marker in _GREETING_MARKERS)
+    return False
 
 
 def is_casual_request(text_or_payload: Any) -> bool:
