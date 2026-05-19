@@ -92,6 +92,20 @@ def apply_tool_policy(payload: dict, policy: dict) -> dict:
 
     Returns a new dict with tools filtered and metadata injected.
     """
+    def _audit_tool(tool_name: str, result: str, reason: str = ""):
+        try:
+            from runtime.audit.audit_logger import audit_event
+            audit_event(result, {
+                "tool_name": tool_name,
+                "policy": policy.get("policy", "unknown"),
+                "mode": mode,
+                "profile": p.get("_profile", payload.get("_profile", "unknown")),
+                "route": payload.get("_ai_lab_route_family", "unknown"),
+                "reason": reason,
+            })
+        except ImportError:
+            pass
+
     p = dict(payload)
     master = _read_blocked_master()
     mode = policy.get("mode", "disabled")
@@ -112,6 +126,8 @@ def apply_tool_policy(payload: dict, policy: dict) -> dict:
         return p
 
     if mode == "disabled":
+        for tool in tools:
+            _audit_tool(_tool_name(tool) or "unknown", "tool_call_blocked_by_policy", "mode=disabled")
         p.pop("tools", None)
         p.pop("tool_choice", None)
 
@@ -123,11 +139,15 @@ def apply_tool_policy(payload: dict, policy: dict) -> dict:
             if not name:
                 continue
             if name in all_blocked:
+                _audit_tool(name, "tool_call_blocked_by_policy", "blocked_name")
                 continue
             if ttype in master_blocked_types:
+                _audit_tool(name, "tool_call_blocked_by_policy", "blocked_type")
                 continue
             if policy_allowed and name not in policy_allowed:
+                _audit_tool(name, "tool_call_blocked_by_policy", "not_in_allowed")
                 continue
+            _audit_tool(name, "tool_call_allowed")
             filtered.append(tool)
         if filtered:
             p["tools"] = filtered
@@ -145,11 +165,15 @@ def apply_tool_policy(payload: dict, policy: dict) -> dict:
             if not name:
                 continue
             if name in master_blocked:
+                _audit_tool(name, "tool_call_blocked_by_policy", "master_blocked")
                 continue
             if ttype in master_blocked_types:
+                _audit_tool(name, "tool_call_blocked_by_policy", "master_blocked_type")
                 continue
             if name in policy_blocked:
+                _audit_tool(name, "tool_call_blocked_by_policy", "policy_blocked")
                 continue
+            _audit_tool(name, "tool_call_allowed")
             filtered.append(tool)
         if filtered:
             p["tools"] = filtered
