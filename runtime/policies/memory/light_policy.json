@@ -1,0 +1,13 @@
+{
+  "policy": "light",
+  "version": "23A.1",
+  "description": "Recall semantico controlado. Maximo 1 memoria, maximo 800 chars. Solo incidents. Sin memoria episodica. Conservador para evitar drift en chat/coding.",
+  "semantic_recall": true,
+  "episodic_recall": false,
+  "max_memories": 1,
+  "max_chars": 800,
+  "min_score": 0.6,
+  "min_query_words": 4,
+  "sources": ["incidents"],
+  "inject_runtime_state": false
+}

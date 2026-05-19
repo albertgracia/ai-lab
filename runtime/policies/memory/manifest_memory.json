@@ -1,0 +1,12 @@
+{
+  "version": "23A.1",
+  "description": "Mapeo de perfiles cognitivos a politicas de memoria. Controla que perfiles pueden activar semantic recall, episodic recall y runtime state injection.",
+  "default": "light_policy.json",
+  "profiles": {
+    "chat": "light_policy.json",
+    "coding": "light_policy.json",
+    "analysis": "full_policy.json",
+    "observe": "minimal_policy.json",
+    "agent": "full_policy.json"
+  }
+}

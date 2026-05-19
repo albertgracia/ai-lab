@@ -1,0 +1,13 @@
+{
+  "policy": "full",
+  "version": "23A.1",
+  "description": "Recall semantico completo. Hasta 5 memorias semanticas, memoria episodica activa, runtime state inyectado. Para analysis y agent.",
+  "semantic_recall": true,
+  "episodic_recall": true,
+  "max_memories": 5,
+  "max_chars": 4000,
+  "min_score": 0.45,
+  "min_query_words": 3,
+  "sources": ["incidents", "routing_history", "cognitive_history"],
+  "inject_runtime_state": true
+}

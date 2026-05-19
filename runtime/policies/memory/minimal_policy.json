@@ -1,0 +1,13 @@
+{
+  "policy": "minimal",
+  "version": "23A.1",
+  "description": "Sin recall. Sin memoria semantica ni episodica. Respuestas ligeras, rapidas, sin contexto persistente.",
+  "semantic_recall": false,
+  "episodic_recall": false,
+  "max_memories": 0,
+  "max_chars": 0,
+  "min_score": 0.8,
+  "min_query_words": 999,
+  "sources": [],
+  "inject_runtime_state": false
+}
