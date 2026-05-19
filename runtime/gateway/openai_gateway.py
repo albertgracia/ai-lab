@@ -334,6 +334,26 @@ def sanitize_text(value):
 
 def inject_agent_context(payload):
     payload = sanitize_payload_messages(payload)
+
+    # FASE 25: OpenCode production guard
+    if payload.get("_client") == "opencode":
+        payload["_client_profile"] = "opencode"
+        tools = payload.get("tools")
+        if isinstance(tools, list):
+            payload["tools"] = [t for t in tools if (t.get("function", {}).get("name", "") if isinstance(t.get("function"), dict) else "") != "question"]
+        if not payload.get("tools"):
+            payload.pop("tool_choice", None)
+            payload.pop("tools", None)
+        user_text = ""
+        for msg in reversed(payload.get("messages", [])):
+            if isinstance(msg, dict) and msg.get("role") == "user":
+                user_text = msg.get("content", "") if isinstance(msg.get("content"), str) else ""
+                break
+        hf_keywords = ("razonamiento", "auditoría", "arquitectura", "debug profundo", "analiza la arquitectura")
+        if not any(kw in (user_text or "").lower() for kw in hf_keywords):
+            payload["_suppress_hard_facts"] = True
+        payload["_wrapper_suppressed"] = True
+
     messages = payload.get("messages", [])
     mode_name = current_mode()
     user_text = ""
@@ -403,6 +423,8 @@ def inject_agent_context(payload):
                 "max_tokens": payload.get("max_tokens", 0),
                 "temperature": payload.get("temperature", 0),
                 "tools_allowed": "tools" in payload,
+                "_request_id": payload.get("_request_id", ""),
+                "_trace_family": payload.get("_trace_family", ""),
             })
         except ImportError:
             pass
@@ -822,6 +844,8 @@ class GatewayHandler(BaseHTTPRequestHandler):
         )
 
     def do_POST(self):
+        import uuid as _uuid
+        _request_id = str(_uuid.uuid4())[:8]
         client_ip = self.client_address[0]
         route_family = "unknown"
         if not check_rate_limit(client_ip):
@@ -853,6 +877,11 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 raw_body.decode("utf-8")
             )
 
+            # FASE 25: detect OpenCode client from headers
+            if "opencode" in str(self.headers.get("User-Agent", "")).lower() or "opencode" in str(self.headers.get("X-AI-LAB-Client", "")).lower():
+                payload["_client"] = "opencode"
+
+            payload["_request_id"] = _request_id
             payload = inject_agent_context(payload)
 
             # FASE 22B.4: confirmation gate for write/agentic tools
@@ -875,7 +904,9 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     })
                     return
 
+            payload["_request_id"] = _request_id
             route_family = payload.pop("_ai_lab_route_family", "cognitive")
+            payload["_trace_family"] = route_family
             payload.pop("_ai_lab_route_variant", None)
             payload.pop("_ai_lab_route_reason", None)
 

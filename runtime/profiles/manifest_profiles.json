@@ -15,7 +15,11 @@
     "coding": "coding_profile.json",
     "reasoning": "analysis_profile.json",
     "tool_use": "agent_profile.json",
-    "tool_fastpath": "agent_profile.json"
+    "tool_fastpath": "agent_profile.json",
+    "opencode_minimal": "observe_profile.json",
+    "opencode_chat": "chat_profile.json",
+    "opencode_coding": "coding_profile.json",
+    "opencode_reasoning": "analysis_profile.json"
   },
   "overrides": {
     "minimal": { "inference": { "max_tokens": 96 } },
