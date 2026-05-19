@@ -9,6 +9,8 @@ and truncation happen in the caller (context_shaper).
 
 from __future__ import annotations
 
+import time
+
 from pathlib import Path
 
 try:
@@ -33,22 +35,16 @@ def _should_skip(policy: dict, query_text: str) -> tuple[bool, str]:
 
 def build_memory_context(policy: dict, query_text: str, task_type: str = "general") -> dict:
     """Execute memory recall governed by *policy*.
+    Returns dict with items, memories, chars, scores, sources, retrieval_ms."""
+    t_start = time.time()
 
-    Returns:
-        {
-            "items": [{"text":str, "score":float, "source":str, "timestamp":int}, ...],
-            "memories": int,
-            "chars": int,
-            "top_score": float,
-            "avg_score": float,
-            "hit_ratio": float,
-            "sources": list[str],
-            "skipped": bool,
-            "skip_reason": str,
-        }
-    """
     skipped, reason = _should_skip(policy, query_text)
     if skipped:
+        try:
+            from runtime.telemetry.prometheus_metrics import record_memory_metrics
+            record_memory_metrics({"memories": 0, "chars": 0, "skipped": True, "sources": []}, policy.get("policy", "unknown"))
+        except ImportError:
+            pass
         return {
             "items": [],
             "memories": 0,
@@ -59,6 +55,7 @@ def build_memory_context(policy: dict, query_text: str, task_type: str = "genera
             "sources": [],
             "skipped": True,
             "skip_reason": reason,
+            "retrieval_ms": int((time.time() - t_start) * 1000),
         }
 
     sources = policy.get("sources", [])
@@ -139,6 +136,19 @@ def build_memory_context(policy: dict, query_text: str, task_type: str = "genera
     hit_ratio = len(items) / max(max_memories, 1)
     total_chars = sum(len(i["text"]) for i in items)
 
+    retrieval_ms = int((time.time() - t_start) * 1000)
+    try:
+        from runtime.telemetry.prometheus_metrics import record_memory_metrics
+        ctx = {
+            "memories": len(items), "chars": total_chars, "top_score": top_score,
+            "avg_score": avg_score, "hit_ratio": hit_ratio,
+            "sources": list(dict.fromkeys(i["source"] for i in items)),
+            "skipped": False,
+        }
+        record_memory_metrics(ctx, policy.get("policy", "unknown"))
+    except ImportError:
+        pass
+
     return {
         "items": items,
         "memories": len(items),
@@ -149,4 +159,5 @@ def build_memory_context(policy: dict, query_text: str, task_type: str = "genera
         "sources": list(dict.fromkeys(i["source"] for i in items)),
         "skipped": False,
         "skip_reason": "",
+        "retrieval_ms": retrieval_ms,
     }

@@ -67,6 +67,8 @@ def shape_context(
     selected_node: str | None = None,
     routing_reason_codes: list[str] | None = None,
     discovery_source: str | None = None,
+    profile_name: str = "",
+    _memory_out: dict | None = None,
 ) -> str:
     """Return a context string optimised for *task_type* and *model_id*.
 
@@ -206,26 +208,93 @@ def shape_context(
     except ImportError:
         pass
 
-    # ── 5b. controlled cognitive recall (FASE 11.0) ──────────────────
+    # ── 5b. governed memory recall (FASE 23A) ──────────────────────────
     recall_block = ""
     recall_stats = {}
     if query_text and query_text.strip():
-        try:
-            from runtime.memory.recall_policy import execute_recall
-            recall_result = execute_recall(query_text, task_type=task_type)
-            if recall_result.get("enabled"):
-                recall_block = recall_result["block"]
-                recall_stats = {
-                    "semantic_recall": {
-                        "enabled": True,
-                        "collections_used": recall_result["collections_used"],
-                        "matches": recall_result["matches"],
-                        "avg_score": recall_result["avg_score"],
-                        "chars_injected": recall_result["chars_injected"],
+        env_flag = os.environ.get("AI_LAB_ENABLE_MEMORY_INJECTOR", "false").lower()
+        if env_flag in ("true", "1", "yes", "analysis_only"):
+            pn = profile_name or task_type
+            if env_flag == "analysis_only" and pn not in ("analysis", "agent"):
+                env_flag = "false"
+        else:
+            env_flag = "false"
+
+        if env_flag in ("true", "1", "yes"):
+            try:
+                from runtime.policies.memory.memory_injector import build_memory_context
+                from runtime.policies.memory.memory_loader import get_policy_for_profile
+                memory_policy = get_policy_for_profile(profile_name or task_type)
+                memory_ctx = build_memory_context(memory_policy, query_text, task_type)
+                if not memory_ctx["skipped"] and memory_ctx["items"]:
+                    recall_block = _format_memory_items(memory_ctx["items"])
+                    recall_stats = {
+                        "semantic_recall": {
+                            "enabled": True,
+                            "collections_used": memory_ctx["sources"],
+                            "matches": memory_ctx["memories"],
+                            "avg_score": memory_ctx["avg_score"],
+                            "chars_injected": memory_ctx["chars"],
+                            "top_score": memory_ctx["top_score"],
+                            "hit_ratio": memory_ctx["hit_ratio"],
+                            "retrieval_ms": memory_ctx.get("retrieval_ms", 0),
+                            "policy": memory_policy.get("policy"),
+                            "injector_version": "23A",
+                        }
                     }
-                }
-        except ImportError:
-            pass
+            except Exception as exc:
+                print(
+                    f"FASE23A_ERROR memory_injector_failed profile={profile_name or task_type} "
+                    f"error={exc} — falling back to legacy execute_recall",
+                    flush=True,
+                )
+                try:
+                    from runtime.audit.audit_logger import audit_event
+                    audit_event("memory_injector_failed", {
+                        "error": str(exc),
+                        "profile": profile_name or task_type,
+                        "query": query_text[:100],
+                    })
+                except ImportError:
+                    pass
+                env_flag = "false"
+
+        if env_flag == "false":
+            try:
+                from runtime.memory.recall_policy import execute_recall
+                recall_result = execute_recall(query_text, task_type=task_type)
+                if recall_result.get("enabled"):
+                    recall_block = recall_result["block"]
+                    recall_stats = {
+                        "semantic_recall": {
+                            "enabled": True,
+                            "collections_used": recall_result["collections_used"],
+                            "matches": recall_result["matches"],
+                            "avg_score": recall_result["avg_score"],
+                            "chars_injected": recall_result["chars_injected"],
+                            "policy": "legacy",
+                        }
+                    }
+            except ImportError:
+                pass
+
+    # FASE 23A: export memory metadata for observability
+    if _memory_out is not None and recall_stats:
+        msr = recall_stats.get("semantic_recall", {})
+        _memory_out.update({
+            "_memory_policy": msr.get("policy", "legacy"),
+            "_memory_memories": msr.get("matches", 0),
+            "_memory_chars": msr.get("chars_injected", 0),
+            "_memory_sources": msr.get("collections_used", []),
+            "_memory_top_score": msr.get("top_score", 0.0),
+            "_memory_avg_score": msr.get("avg_score", 0.0),
+            "_memory_hit_ratio": msr.get("hit_ratio", 0.0),
+            "_memory_retrieval_ms": msr.get("retrieval_ms", 0),
+            "_memory_injector_version": msr.get("injector_version", "legacy"),
+        })
+    elif _memory_out is not None:
+        _memory_out["_memory_skipped"] = True
+        _memory_out["_memory_skip_reason"] = "recall_not_enabled"
 
     # Merge with recall stats & rebuild HARD FACTS
     if recall_stats:
@@ -241,6 +310,15 @@ def shape_context(
         parts.append("[SEMANTIC_RECALL_BEGIN]\n  (no experiences relevantes encontradas)\n[/SEMANTIC_RECALL_END]")
     parts.append("\n\n---\n\n".join(chunks))
     return "\n\n".join(parts)
+
+
+def _format_memory_items(items: list[dict]) -> str:
+    lines = []
+    for i, item in enumerate(items):
+        source = item.get("source", "?")
+        text = item.get("text", "")
+        lines.append(f"[{i+1}] [{source}] {text}")
+    return "[MEMORIA RELEVANTE]\n" + "\n".join(lines) + "\n[/MEMORIA RELEVANTE]"
 
 
 # ── HARD FACTS generator (anti-hallucination) ──────────────────────────

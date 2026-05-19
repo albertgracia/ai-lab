@@ -602,6 +602,7 @@ async def chat_completions(request: Request):
             task = node.get("capability", "general")
             wm.set_task(task)
 
+            memory_out: dict = {}
             agent_context = shape_context(
                 task,
                 selected_model or "",
@@ -612,7 +613,14 @@ async def chat_completions(request: Request):
                 selected_node=selected_node,
                 routing_reason_codes=reason_codes,
                 discovery_source=discovery_source,
+                profile_name=payload.get("_profile", ""),
+                _memory_out=memory_out,
             )
+            for key, value in memory_out.items():
+                if isinstance(value, list):
+                    payload[key] = value
+                elif value is not None:
+                    payload[key] = value
         else:
             agent_context = build_selective_context(request_text)
 
@@ -727,20 +735,6 @@ async def chat_completions(request: Request):
     upstream_payload.pop("_ai_lab_route_reason", None)
 
     upstream_payload["model"] = node["model"]
-
-    upstream_payload.setdefault(
-        "max_tokens",
-        1200 if capability == "reasoning" or node.get("capability") == "reasoning"
-        else (256 if capability == "fast" or node.get("capability") == "fast"
-        else 768)
-    )
-
-    upstream_payload.setdefault(
-        "temperature",
-        0.3 if capability == "reasoning" or node.get("capability") == "reasoning"
-        else (0.1 if capability == "fast" or node.get("capability") == "fast"
-        else 0.2)
-    )
 
     if route.family in ("minimal", "observe"):
         upstream_payload.pop("reasoning", None)

@@ -91,6 +91,23 @@ TOOL_CALL_TOTAL = Counter(
     ["tool_name", "result", "policy", "mode"],
 )
 
+MEMORY_RECALL_TOTAL = Counter(
+    "ailab_memory_recall_total",
+    "Ejecuciones de recall por politica y si hubo hit",
+    ["policy", "hit"],
+)
+MEMORY_CHARS_INJECTED = Histogram(
+    "ailab_memory_chars_injected",
+    "Caracteres inyectados por recall",
+    ["policy"],
+    buckets=(100, 250, 500, 800, 1200, 2000, 4000, 8000),
+)
+MEMORY_ITEMS_TOTAL = Counter(
+    "ailab_memory_items_total",
+    "Items de memoria recuperados por politica y fuente",
+    ["policy", "source"],
+)
+
 DEFAULT_ROUTE_FAMILIES = (
     "minimal",
     "observe",
@@ -131,6 +148,15 @@ def record_profile_metrics(profile: str, route_family: str, model: str) -> None:
 
 def record_tool_call_metric(tool_name: str, result: str, policy: str, mode: str) -> None:
     TOOL_CALL_TOTAL.labels(tool_name=tool_name or "unknown", result=result, policy=policy or "unknown", mode=mode or "unknown").inc()
+
+
+def record_memory_metrics(ctx: dict, policy_name: str) -> None:
+    hit = "true" if ctx.get("memories", 0) > 0 else "false"
+    MEMORY_RECALL_TOTAL.labels(policy=policy_name or "unknown", hit=hit).inc()
+    if not ctx.get("skipped", True):
+        MEMORY_CHARS_INJECTED.labels(policy=policy_name or "unknown").observe(float(ctx.get("chars", 0)))
+    for source in ctx.get("sources", []) or []:
+        MEMORY_ITEMS_TOTAL.labels(policy=policy_name or "unknown", source=source).inc()
 
 
 def prime_profile_metrics(profiles: tuple[str, ...] = ("chat", "coding", "analysis", "observe", "agent")) -> None:
