@@ -106,6 +106,25 @@ def apply_tool_policy(payload: dict, policy: dict) -> dict:
         except ImportError:
             pass
 
+    def _sanitize_bash(tool: dict) -> bool:
+        """Returns True if bash tool passes sanitization."""
+        if _tool_name(tool) != "bash":
+            return True
+        try:
+            from runtime.policies.tools.bash_sanitizer import sanitize_bash_command
+            fn = tool.get("function", {}) if isinstance(tool.get("function"), dict) else {}
+            cmd = str(fn.get("arguments", "") or fn.get("command", ""))
+            safe, warnings, needs_confirm = sanitize_bash_command(cmd, policy)
+            if safe is None:
+                for w in warnings:
+                    _audit_tool("bash", "tool_call_blocked_by_policy", f"bash_sanitizer: {w}")
+                return False
+            if needs_confirm and not p.get("_tool_requires_confirmation"):
+                p["_tool_requires_confirmation"] = True
+            return True
+        except ImportError:
+            return True
+
     p = dict(payload)
     master = _read_blocked_master()
     mode = policy.get("mode", "disabled")
@@ -149,6 +168,8 @@ def apply_tool_policy(payload: dict, policy: dict) -> dict:
             if policy_allowed and name not in policy_allowed:
                 _audit_tool(name, "tool_call_blocked_by_policy", "not_in_allowed")
                 continue
+            if not _sanitize_bash(tool):
+                continue
             _audit_tool(name, "tool_call_allowed")
             filtered.append(tool)
         if filtered:
@@ -180,6 +201,8 @@ def apply_tool_policy(payload: dict, policy: dict) -> dict:
                 continue
             if name in policy_blocked:
                 _audit_tool(name, "tool_call_blocked_by_policy", "policy_blocked")
+                continue
+            if not _sanitize_bash(tool):
                 continue
             _audit_tool(name, "tool_call_allowed")
             filtered.append(tool)
