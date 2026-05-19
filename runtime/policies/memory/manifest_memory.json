@@ -1,6 +1,6 @@
 {
-  "version": "23A.1",
-  "description": "Mapeo de perfiles cognitivos a politicas de memoria. Controla que perfiles pueden activar semantic recall, episodic recall y runtime state injection.",
+  "version": "23B.1",
+  "description": "Mapeo de perfiles cognitivos a politicas de memoria. Controla que perfiles pueden activar semantic recall, episodic recall y runtime state injection. Incluye memory family isolation (FASE 23B.4) y retencion por familia para decay (FASE 23B.6).",
   "default": "light_policy.json",
   "profiles": {
     "chat": "light_policy.json",
@@ -8,5 +8,37 @@
     "analysis": "full_policy.json",
     "observe": "minimal_policy.json",
     "agent": "full_policy.json"
+  },
+  "families": {
+    "incidents": {
+      "scope": "operational",
+      "retention_days": 30,
+      "min_score": 0.6
+    },
+    "routing_history": {
+      "scope": "operational",
+      "retention_days": 7,
+      "min_score": 0.5
+    },
+    "cognitive_history": {
+      "scope": "conversational",
+      "retention_days": 14,
+      "min_score": 0.45
+    },
+    "agent_knowledge": {
+      "scope": "knowledge",
+      "retention_days": 180,
+      "min_score": 0.4
+    },
+    "optimizer_history": {
+      "scope": "learning",
+      "retention_days": 90,
+      "min_score": 0.45
+    },
+    "episodic": {
+      "scope": "conversational",
+      "retention_days": 7,
+      "min_score": 0.5
+    }
   }
 }

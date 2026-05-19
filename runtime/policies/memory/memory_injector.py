@@ -20,16 +20,47 @@ except ImportError:
     _get_memory_policy = None  # type: ignore[assignment]
     _HAVE_MEMORY_LOADER = False
 
+# ── FASE 23B.1: normalized skip reasons ────────────────────────────
+SKIP_CONTAMINATION = "contamination_gate"
+SKIP_MINIMAL_GUARD = "hard_guard_minimal"
+SKIP_BUDGET_EXCEEDED = "budget_exceeded"
+SKIP_LOW_SCORE = "low_score"
+SKIP_FAMILY_MISMATCH = "family_mismatch"
+SKIP_QUERY_SHORT = "query_too_short"
+SKIP_NO_SOURCES = "no_sources"
+SKIP_DISABLED = "semantic_recall_disabled"
+
+
+def _load_family_config() -> dict:
+    try:
+        import json
+        manifest = json.loads((_POLICIES_DIR / "manifest_memory.json").read_text(encoding="utf-8"))
+        return manifest.get("families", {})
+    except Exception:
+        return {}
+
+
+def _effective_score(semantic_score: float, source: str, timestamp: int, usefulness: float = 1.0) -> float:
+    """FASE 23B.6: effective score with freshness decay."""
+    families = _load_family_config()
+    family = families.get(source, {})
+    retention = family.get("retention_days", 30)
+    age_days = (time.time() - timestamp) / 86400 if timestamp else 0
+    freshness = max(0.1, 1.0 - age_days / max(retention, 1))
+    return semantic_score * freshness * usefulness
+
 
 def _should_skip(policy: dict, query_text: str) -> tuple[bool, str]:
     if not policy.get("semantic_recall"):
-        return True, "semantic_recall_disabled"
+        return True, SKIP_DISABLED
+    if policy.get("policy") == "minimal":
+        return True, SKIP_MINIMAL_GUARD
     words = len(query_text.split())
     min_words = policy.get("min_query_words", 4)
     if words < min_words:
-        return True, f"query_too_short ({words} < {min_words})"
+        return True, SKIP_QUERY_SHORT
     if not policy.get("sources"):
-        return True, "no_sources_configured"
+        return True, SKIP_NO_SOURCES
     return False, ""
 
 
@@ -77,14 +108,15 @@ def build_memory_context(policy: dict, query_text: str, task_type: str = "genera
             for r in results:
                 if not isinstance(r, dict):
                     continue
-                score = float(r.get("score", 0) or 0)
+                raw_score = float(r.get("score", 0) or 0)
+                payload = r.get("payload", {}) if isinstance(r.get("payload"), dict) else {}
+                ts = int(payload.get("timestamp", r.get("timestamp", 0)) or 0)
+                score = _effective_score(raw_score, collection, ts)
                 if score < min_score:
                     continue
-                payload = r.get("payload", {}) if isinstance(r.get("payload"), dict) else {}
                 text = payload.get("summary") or payload.get("content") or payload.get("text") or ""
                 if not text:
                     continue
-                ts = int(payload.get("timestamp", r.get("timestamp", 0)) or 0)
                 items.append({
                     "text": str(text)[:400],
                     "score": score,
@@ -105,7 +137,7 @@ def build_memory_context(policy: dict, query_text: str, task_type: str = "genera
                 ts = int(ep.get("timestamp", 0) or 0)
                 items.append({
                     "text": str(text)[:400],
-                    "score": 0.65,
+                    "score": _effective_score(0.65, "episodic", ts),
                     "source": "episodic",
                     "timestamp": ts,
                 })
@@ -113,6 +145,24 @@ def build_memory_context(policy: dict, query_text: str, task_type: str = "genera
             pass
 
     items.sort(key=lambda i: i["score"], reverse=True)
+
+    # FASE 23B.1: contamination gate — skip if too many low-quality hits
+    if items:
+        contamination = sum(1 for i in items if i["score"] < 0.15) / len(items)
+        if contamination > 0.2:
+            try:
+                from runtime.telemetry.prometheus_metrics import MEMORY_CONTAMINATION
+                MEMORY_CONTAMINATION.labels(policy=policy.get("policy", "unknown")).observe(contamination)
+            except ImportError:
+                pass
+            return {
+                "items": [],
+                "memories": 0, "chars": 0,
+                "top_score": 0.0, "avg_score": 0.0, "hit_ratio": 0.0,
+                "sources": [],
+                "skipped": True, "skip_reason": SKIP_CONTAMINATION,
+                "retrieval_ms": int((time.time() - t_start) * 1000),
+            }
 
     if len(items) > max_memories:
         items = items[:max_memories]
@@ -146,6 +196,11 @@ def build_memory_context(policy: dict, query_text: str, task_type: str = "genera
             "skipped": False,
         }
         record_memory_metrics(ctx, policy.get("policy", "unknown"))
+        try:
+            from runtime.telemetry.prometheus_metrics import MEMORY_QUALITY_SCORE
+            MEMORY_QUALITY_SCORE.labels(policy=policy.get("policy", "unknown")).observe(float(avg_score))
+        except ImportError:
+            pass
     except ImportError:
         pass
 
