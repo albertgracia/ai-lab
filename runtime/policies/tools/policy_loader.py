@@ -128,6 +128,8 @@ def apply_tool_policy(payload: dict, policy: dict) -> dict:
     if mode == "disabled":
         for tool in tools:
             _audit_tool(_tool_name(tool) or "unknown", "tool_call_blocked_by_policy", "mode=disabled")
+        p["_tool_budget_original"] = len(tools)
+        p["_tool_budget_limit"] = policy.get("max_tool_calls", 0)
         p.pop("tools", None)
         p.pop("tool_choice", None)
 
@@ -151,9 +153,15 @@ def apply_tool_policy(payload: dict, policy: dict) -> dict:
             filtered.append(tool)
         if filtered:
             p["tools"] = filtered
-            if len(filtered) > policy.get("max_tool_calls", 5):
-                p["tools"] = filtered[: policy["max_tool_calls"]]
+            budget = policy.get("max_tool_calls", 5)
+            p["_tool_budget_original"] = len(tools)
+            p["_tool_budget_limit"] = budget
+            if len(filtered) > budget:
+                p["tools"] = filtered[:budget]
+                p["_tool_budget_exceeded"] = True
         else:
+            p["_tool_budget_original"] = len(tools)
+            p["_tool_budget_limit"] = policy.get("max_tool_calls", 5)
             p.pop("tools", None)
             p.pop("tool_choice", None)
 
@@ -177,9 +185,15 @@ def apply_tool_policy(payload: dict, policy: dict) -> dict:
             filtered.append(tool)
         if filtered:
             p["tools"] = filtered
-            if len(filtered) > policy.get("max_tool_calls", 20):
-                p["tools"] = filtered[: policy["max_tool_calls"]]
+            budget = policy.get("max_tool_calls", 20)
+            p["_tool_budget_original"] = len(tools)
+            p["_tool_budget_limit"] = budget
+            if len(filtered) > budget:
+                p["tools"] = filtered[:budget]
+                p["_tool_budget_exceeded"] = True
         else:
+            p["_tool_budget_original"] = len(tools)
+            p["_tool_budget_limit"] = policy.get("max_tool_calls", 20)
             p.pop("tools", None)
             p.pop("tool_choice", None)
 
