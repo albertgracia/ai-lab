@@ -18,6 +18,8 @@ from runtime.state.system_state import build_system_state
 from runtime.gateway.tool_call_parser import parse_tool_calls_from_text, repair_tool_call_arguments, tool_call_is_dangerous
 from runtime.gateway.tool_request_classifier import (
     build_observe_context,
+    build_observe_context_compact,
+    build_capability_answer,
     classify_chat_route,
     build_minimal_greeting_messages,
     build_minimal_report_messages,

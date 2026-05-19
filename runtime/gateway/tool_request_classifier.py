@@ -230,6 +230,80 @@ def _is_reasoning_request(text: str) -> bool:
     return keyword_count >= 2
 
 
+def _is_capability_question(text: str) -> bool:
+    t = (text or "").lower()
+    if not t:
+        return False
+    return any(k in t for k in (
+        "qué puedes hacer", "que puedes hacer",
+        "qué herramientas puedes usar", "que herramientas puedes usar",
+        "qué sabes hacer", "que sabes hacer",
+        "cómo puedes ayudar", "como puedes ayudar",
+    ))
+
+
+def is_creative_request(text_or_payload: Any) -> bool:
+    """FASE 26.2.4: Detecta peticiones de escritura creativa/longform."""
+    if isinstance(text_or_payload, dict):
+        text = _last_user_text(text_or_payload)
+    else:
+        text = str(text_or_payload or "")
+    t = text.lower()
+    if not t:
+        return False
+    return any(k in t for k in (
+        "historia", "relato", "cuento", "cyberpunk",
+        "poema", "ficción", "novela",
+        "escribe una introducción extensa", "escribe una introduccion extensa",
+        "continúa esta historia", "continua esta historia",
+    ))
+
+
+def build_capability_answer() -> str:
+    """FASE 26.2.3: Respuesta estatica con capacidades del AI-LAB."""
+    return (
+        "Puedo ayudarte a: "
+        "- explicar errores tecnicos y tracebacks "
+        "- revisar y corregir codigo "
+        "- preparar informes y resumenes "
+        "- analizar arquitectura y tradeoffs "
+        "- leer archivos, hacer grep, ejecutar comandos readonly (bash) si lo pides explicitamente "
+        "- proponer cambios sin ejecutarlos directamente "
+        "- generar codigo, scripts, configuraciones "
+        "No ejecuto herramientas sin peticion explicita. "
+        "No muestro HARD_FACTS ni datos internos del runtime salvo que lo pidas."
+    )
+
+
+def build_observe_context_compact() -> str:
+    """FASE 26.2.1: Contexto observado ultra-compacto sin HARD_FACTS."""
+    try:
+        from runtime.control.control_plane import get_control_state
+        state = get_control_state() or {}
+        return json.dumps({
+            "mode": state.get("mode", "unknown"),
+            "router": state.get("router_health", "unknown"),
+            "gateway": state.get("gateway_health", "unknown"),
+            "active_node": state.get("active_node", "NO DISPONIBLE"),
+            "models_loaded": (state.get("models_loaded") or [])[:3],
+            "route_summary": state.get("route_summary", {}),
+            "governance_blocks": state.get("governance_blocks", 0),
+        }, ensure_ascii=False, default=str)
+    except Exception:
+        pass
+    try:
+        from runtime.state.runtime_state import get_runtime_state
+        s = get_runtime_state() or {}
+        return json.dumps({
+            "runtime": "AI-LAB Cognitive Runtime",
+            "status": s.get("status", "unknown"),
+            "active_node": s.get("active_node", "NO DISPONIBLE"),
+            "mode": s.get("mode", "unknown"),
+        }, ensure_ascii=False, default=str)
+    except Exception:
+        return '{"runtime": "AI-LAB", "status": "operational"}'
+
+
 def is_report_request_heavy(text_or_payload: Any) -> bool:
     """FASE 26.1.2: Detecta informes tecnicos pesados que requieren qwen2.5-14b."""
     if isinstance(text_or_payload, dict):
@@ -469,8 +543,14 @@ def build_minimal_report_messages(user_text: str) -> list[dict[str, str]]:
             "content": (
                 "Responde en espanol, directo y util. "
                 "Genera un informe breve en 5-8 lineas. "
-                "No uses HARD_FACTS, no uses herramientas y no inventes datos. "
-                "Si falta algo, marca NO DISPONIBLE."
+                "Usa unicamente los datos disponibles en OBSERVED_RUNTIME o en el contexto proporcionado. "
+                "No muestres bloques HARD_FACTS ni JSON al usuario. "
+                "Si un dato no esta disponible, estructura la respuesta asi: "
+                "NO DISPONIBLE: [lista de campos faltantes]. "
+                "No inventes disponibilidad, SLA, autenticacion, autorizacion, roles, ubicacion, "
+                "usuarios, sesiones, roadmap futuro, ni certificaciones (ISO/SOC2). "
+                "Si faltan muchos datos, di 'Informacion parcial — datos limitados en runtime' "
+                "y ofrece estructura con campos NO DISPONIBLE."
             ),
         },
         {"role": "user", "content": user_text},
@@ -497,6 +577,10 @@ def classify_chat_route(
         return RuntimeRoute(family="report", variant="heavy", reason="heavy report request")
     if is_report_request:
         return RuntimeRoute(family="minimal", variant="report", reason="light report request")
+    if _is_capability_question(text):
+        return RuntimeRoute(family="minimal", variant="capability", reason="capability question")
+    if is_creative_request(text):
+        return RuntimeRoute(family="minimal", variant="creative", reason="creative writing")
     if is_casual_request(text):
         return RuntimeRoute(family="minimal", variant="casual", reason="casual request")
     if greeting_fastpath:

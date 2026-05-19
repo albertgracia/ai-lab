@@ -156,6 +156,15 @@ REPORT_REQUESTS_BY_MODEL = Counter(
     ["model", "type"],
 )
 
+CAPABILITY_ANSWERS_TOTAL = Counter(
+    "ailab_capability_answers_total",
+    "Respuestas de capacidad (que-puedes-hacer) sin pasar por LM Studio",
+)
+CREATIVE_REQUESTS_TOTAL = Counter(
+    "ailab_creative_requests_total",
+    "Peticiones de escritura creativa/longform",
+)
+
 DEFAULT_ROUTE_FAMILIES = (
     "minimal",
     "observe",

@@ -42,7 +42,7 @@ from runtime.distributed.execution_coordinator import (
 
 from runtime.gateway.stream_sanitizer import relay_stream
 from runtime.gateway.tool_call_parser import extract_tool_calls_from_message, filter_dangerous_tool_calls, repair_tool_call_arguments, parse_tool_calls
-from runtime.gateway.tool_request_classifier import build_minimal_report_messages, build_observe_context, classify_chat_route, is_report_request, is_report_request_heavy, sanitize_observe_output, sanitize_payload_messages, sanitize_prompt_text, should_use_greeting_fastpath, should_use_tool_fastpath, strip_question_tool
+from runtime.gateway.tool_request_classifier import build_minimal_report_messages, build_observe_context, build_observe_context_compact, build_capability_answer, classify_chat_route, is_report_request, is_report_request_heavy, sanitize_observe_output, sanitize_payload_messages, sanitize_prompt_text, should_use_greeting_fastpath, should_use_tool_fastpath, strip_question_tool
 from runtime.gateway.gateway_metrics import (
     load_metrics,
     record_request,
@@ -436,6 +436,18 @@ def inject_agent_context(payload):
         payload["max_tokens"] = min(int(payload.get("max_tokens", 512) or 512), 512)
         payload["temperature"] = min(float(payload.get("temperature", 0.1) or 0.1), 0.2)
         system_prompt = None
+    elif route.family == "minimal" and route.variant == "capability":
+        payload.pop("tools", None)
+        payload.pop("tool_choice", None)
+        payload["_capability_answer"] = build_capability_answer()
+        system_prompt = None
+    elif route.family == "minimal" and route.variant == "creative":
+        payload.pop("tools", None)
+        payload.pop("tool_choice", None)
+        payload["model"] = "qwen2.5-coder-14b-instruct"
+        payload["max_tokens"] = min(int(payload.get("max_tokens", 2048) or 2048), 2048)
+        payload["temperature"] = min(float(payload.get("temperature", 0.7) or 0.7), 0.8)
+        system_prompt = "Eres un escritor creativo en espanol. Desarrolla la peticion sin excusas. Si el texto es muy largo, entrega una primera parte clara y ofrece continuar."
     elif route.family == "report":
         payload.pop("tools", None)
         payload.pop("tool_choice", None)
@@ -443,7 +455,16 @@ def inject_agent_context(payload):
         payload["messages"] = build_minimal_report_messages(user_text)
         payload["max_tokens"] = min(int(payload.get("max_tokens", 1024) or 1024), 1024)
         payload["temperature"] = min(float(payload.get("temperature", 0.3) or 0.3), 0.3)
-        system_prompt = None
+        system_prompt = (
+            "Eres el perfil de informe tecnico del AI-LAB. "
+            "Responde en espanol de forma clara y estructurada. "
+            "Usa unicamente los datos disponibles en OBSERVED_RUNTIME. "
+            "No muestres bloques HARD_FACTS ni JSON al usuario. "
+            "Si un dato no esta disponible, marca NO DISPONIBLE. "
+            "No inventes: porcentajes, disponibilidad, SLA, "
+            "autenticacion, autorizacion, roles, ubicacion, "
+            "usuarios, sesiones ni roadmap futuro."
+        )
     elif route.family == "minimal" and route.variant == "casual":
         payload["temperature"] = min(float(payload.get("temperature", 0.2) or 0.2), 0.2)
         system_prompt = (
@@ -925,6 +946,19 @@ class GatewayHandler(BaseHTTPRequestHandler):
 
             payload["_request_id"] = _request_id
             payload = inject_agent_context(payload)
+
+            # FASE 26.2.3: capability answers — early return, no LM Studio
+            capability_answer = payload.pop("_capability_answer", None)
+            if capability_answer:
+                self._send_json(200, {
+                    "id": f"chatcmpl-capability-{_request_id}",
+                    "object": "chat.completion",
+                    "created": int(time.time()),
+                    "model": "llama-3.1-8b-instruct",
+                    "choices": [{"index": 0, "message": {"role": "assistant", "content": capability_answer}, "finish_reason": "stop"}],
+                    "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+                })
+                return
 
             # FASE 22B.4: confirmation gate for write/agentic tools
             if payload.get("_tool_requires_confirmation"):
