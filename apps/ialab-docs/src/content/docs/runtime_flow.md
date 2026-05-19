@@ -1,101 +1,67 @@
 ---
-title: "Runtime Flow — Flujo completo de una peticion"
-summary: "Recorrido completo de una peticion desde Open WebUI hasta la GPU, pasando por Router API, Gateway y LM Studio."
-order: 5
+title: "Runtime Flow — Flujo del AI-LAB (CP-22B+)"
+summary: "Diagrama actualizado del flujo completo del AI-LAB desde OpenCode/OpenWebUI hasta LM Studio, pasando por perfiles cognitivos, politicas de herramientas y memoria."
+order: 12
 ---
 
-
-## Diagrama de Flujo
-
-```
-Usuario
-   │
-   ▼
-Open WebUI (:3000)
-   │ POST /api/chat/completions
-   │ model: ailab-router/auto
-   ▼
-ROUTER API (:8083)
-   │
-   ├── 1. Recibe peticion
-   ├── 2. CORS check
-   ├── 3. Extrae capability del modelo (auto/fast/coding/reasoning)
-   ├── 4. build_system_state() → actualiza estado del cluster
-   ├── 5. select_node(request_text, capability)
-   │       ├── infer_task() → detecta tipo de tarea
-   │       ├── select_best_node() → elige nodo optimo
-   │       └── choose_model_for_node() → selecciona modelo
-   ├── 6. build_selective_context() → contexto RAG
-   ├── 7. Construye payload con system prompt + contexto
-   └── 8. Envia a LM Studio
-        │
-        ▼
-   GATEWAY (:8008)
-   │
-   ├── 1. Recibe peticion del Router API
-   ├── 2. choose_model(task_type) → selecciona modelo
-   ├── 3. inject_agent_context() → anyade prompt del agente
-   ├── 4. Rate limit check
-   ├── 5. Envia a LM Studio
-   │       │ POST /v1/chat/completions
-   │       │ model: qwen2.5-coder-14b-instruct
-   │       ▼
-   └── LM STUDIO (RX9070 :1234)
-        │
-        ├── 1. Carga/usa modelo en VRAM
-        ├── 2. Procesa prompt
-        ├── 3. Genera respuesta (streaming o completa)
-        └── 4. Devuelve respuesta
-             │
-             ▼
-   ROUTER API
-   │
-   ├── 1. Recibe respuesta de LM Studio
-   ├── 2. Sanitiza stream (elimina reasoning_content)
-   ├── 3. Aplica CORS headers
-   └── 4. Devuelve streaming SSE a Open WebUI
-        │
-        ▼
-   USUARIO
-   │ Recibe respuesta en Open WebUI
-```
-
-## Flujo de Eventos (Fase 8)
-
-Cada paso del flujo emite eventos al Event Bus:
+## Entrada
 
 ```
-1. request_started    → event_bus.emit()
-2. routing_decision   → event_bus.emit()
-3. model_selected     → event_bus.emit()
-4. request_finished   → event_bus.emit()
-5. session_created    → event_bus.emit()
-                        │
-                        ▼
-                   Event Stream SSE
-                        │
-                   ┌────┴────┐
-                   │         │
-              Dashboard    Frontend
-              Grafana      Astro
+OpenWebUI (:3000) / OpenCode / curl
+    │
+    │ POST /v1/chat/completions
+    ▼
+Router API (:8083) o Gateway (:8008)
 ```
 
-## Tiempos Tipicos
+## Rutas y modelos
 
-| Paso | Tiempo | Notas |
-|---|---|---|
-| Routing decision | <5ms | Capacidad-aware |
-| Context loading | <10ms | RAG + archivos core |
-| LM Studio prompt eval | 1-2 ms/token | Depende del modelo |
-| LM Studio generation | 20-30 ms/token | Depende del modelo |
-| Stream sanitization | <1ms | Inline en el stream |
-| Total (50 tokens) | 1-2s | Con modelo 14B en RX9070 |
+| Ruta virtual | Perfil | Modelo | Nodo |
+|-------------|--------|--------|------|
+| `ailab-router/auto` (minimal/casual/greet) | observe | llama-3.1-8b-instruct | RX9070 |
+| `ailab-router/auto` (fast/general) | chat | qwen2.5-coder-14b-instruct | RX9070 |
+| `ailab-router/auto` (coding) | coding | qwen2.5-coder-14b-instruct | RX9070 |
+| `ailab-router/auto` (reasoning) | analysis | qwen2.5-coder-32b-instruct | RX9070 |
+| `ailab-router/auto` (tool_use) | agent | qwen3.6-27b | RX9070 |
 
-## Modelos y Rutas
+## Flujo completo
 
-| Ruta API | Modelo | Nodo | VRAM |
-|---|---|---|---|
-| `ailab-router/auto` | Seleccion automatica | — | — |
-| `ailab-router/fast` | Llama 3.1 8B / Qwen 14B | RX9070 | 16 GB |
-| `ailab-router/coding` | Qwen 2.5 Coder 14B / 32B | RX9070/RX7900XT | 16-20 GB |
-| `ailab-router/reasoning` | Qwen 2.5 Coder 32B | RX7900XT | 20 GB |
+```
+1. Clasificacion de intencion (is_greeting, is_casual, is_report, is_tool_request)
+   └─ tool_request_classifier.py (word-boundary token matching)
+
+2. Asignacion de perfil via manifest_profiles.json
+   ├─ minimal/casual/greet/observe → observe_profile (llama-3.1-8b, 96-256 tokens)
+   ├─ fast/general → chat_profile (qwen2.5-14b, 512 tokens)
+   ├─ coding → coding_profile (qwen2.5-14b, 1024 tokens)
+   ├─ reasoning → analysis_profile (qwen2.5-32b, 2048 tokens)
+   └─ tool_use/tool_fastpath → agent_profile (qwen3.6-27b, 2048 tokens)
+
+3. Politica de herramientas via manifest_tools.json
+   ├─ disabled → pop tools (minimal/observe/chat/analysis)
+   ├─ readonly → filtrar allowed_names (coding)
+   └─ agentic → preservar con confirmation gate (tool_use)
+
+4. Politica de memoria via manifest_memory.json (FASE 23A)
+   ├─ minimal → sin recall (observe)
+   ├─ light → 1 memoria, 800 chars, solo incidents (chat, coding)
+   └─ full → 5 memorias, episodic, runtime state (analysis, agent)
+
+5. Bash sanitizer (FASE 22B)
+   └─ shlex.split() token scanning. Pipes/redirects bloqueados por modo.
+
+6. Gateway confirmation gate (FASE 22B)
+   └─ 428 Precondition Required para write tools en modo agentic
+
+7. POST a LM Studio (192.168.1.50:1234/v1)
+
+8. Sanitizacion de respuesta (tool_call filtering, reasoning stripping)
+
+9. Respuesta SSE/JSON a OpenWebUI/OpenCode
+```
+
+## Modelos por GPU
+
+| Nodo | IP | Modelos cargados | VRAM |
+|------|----|-----------------|------|
+| RX9070 | 192.168.1.50:1234 | llama-3.1-8b, qwen2.5-14b, qwen2.5-32b, qwen3.6-27b, nomic-embed | 16 GB |

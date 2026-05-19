@@ -1,14 +1,12 @@
 ---
 title: "Open WebUI — Conexion al AI-LAB Router"
-summary: "Configuracion de Open WebUI para usar el Router API del AI-LAB con enrutamiento capability-aware."
+summary: "Configuracion de Open WebUI para usar el Router API del AI-LAB con enrutamiento declarativo por perfiles cognitivos y politicas de herramientas."
 order: 14
 ---
 
 ## Descripcion
 
-Open WebUI es el frontend unificado del AI-LAB. Esta conectado al Router API
-(`ailab-router`) para enrutar las peticiones de los usuarios al modelo optimo
-segun el tipo de tarea.
+Open WebUI es el frontend unificado del AI-LAB. Esta conectado al Router API (`ailab-router`) para enrutar las peticiones de los usuarios al perfil y modelo optimo segun el tipo de tarea.
 
 ## Configuracion de Conexion
 
@@ -24,26 +22,34 @@ En Open WebUI (Ajustes -> Conexiones), anadir una nueva conexion OpenAI:
 
 ### Modelos disponibles
 
-Una vez configurada la conexion, los siguientes modelos apareceran en el
-selector de Open WebUI:
+Una vez configurada la conexion, los siguientes modelos apareceran en el selector de Open WebUI:
 
-| Modelo | Tipo | Nodo GPU | VRAM | Uso recomendado |
+| Modelo | Perfil | Modelo real | Nodo GPU | Uso recomendado |
 |---|---|---|---|---|
-| `ailab-router/auto` | Routing automatico | — | — | Seleccion por keyword |
-| `ailab-router/fast` | Respuesta rapida | RX9070 (1.50) | 16 GB | Mantenimiento, consultas simples |
-| `ailab-router/coding` | Programacion | RX7900XT (1.60) | 20 GB | Codigo, debugging, refactor |
-| `ailab-router/reasoning` | Razonamiento | RX7900XT (1.60) | 20 GB | Arquitectura, problemas complejos |
+| `ailab-router/auto` | Routing automatico | Segun ruta | RX9070 (.50) | Chat general |
+| `ailab-router/fast` | chat | qwen2.5-coder-14b | RX9070 (.50) | Respuestas rapidas |
+| `ailab-router/coding` | coding | qwen2.5-coder-14b | RX9070 (.50) | Codigo, debugging |
+| `ailab-router/reasoning` | analysis | qwen2.5-coder-32b | RX9070 (.50) | Arquitectura, analisis |
+| `ailab-router/auto` + tools | agent | qwen3.6-27b | RX9070 (.50) | Herramientas, tool_use |
+
+### Rutas adicionales (gestion interna del router)
+
+| Ruta | Perfil | Modelo | Uso |
+|------|--------|--------|-----|
+| minimal/casual/greeting | observe | llama-3.1-8b | Saludos, preguntas simples |
+| observe | observe | llama-3.1-8b | Observacion ligera |
+| general | chat | qwen2.5-14b | Conversacion general |
 
 ## Routing Interno
 
 Cuando Open WebUI envia una peticion al Router API, este:
 
-1. Analiza la tarea (keyword detection)
-2. Selecciona el nodo GPU optimo (capability-aware)
-3. Elige el modelo adecuado segun disponibilidad
-4. Envia la peticion a LM Studio en el nodo correspondiente
-5. Sanitiza la respuesta (elimina `reasoning_content`)
-6. Devuelve el streaming SSE a Open WebUI
+1. Clasifica la intencion (greeting, casual, report, observe, tool, general)
+2. Asigna un perfil cognitivo via `manifest_profiles.json`
+3. Aplica politica de herramientas via `manifest_tools.json` (disabled/readonly/agentic)
+4. Aplica politica de memoria via `manifest_memory.json` (minimal/light/full)
+5. Selecciona el modelo segun el perfil
+6. Sanitiza la respuesta y mantiene compatibilidad con el formato OpenAI/SSE
 
 ## Arquitectura
 
@@ -54,33 +60,38 @@ Open WebUI (:3000)
     v
 Router API (:8083)
     |
-    | capability-aware routing
+    | perfil cognitivo + politica de herramientas + politica de memoria
     v
 Gateway (:8008)
     |
-    | seleccion de modelo
+    | seleccion de modelo + confirmation gate (428)
     v
 LM Studio (:1234)
     |
     | GPU Node
     v
-RX9070 / RX7900XT
+RX9070 (llama-3.1-8b / qwen2.5-14b / qwen2.5-32b / qwen3.6-27b)
 ```
+
+## Comportamiento de herramientas
+
+- Rutas sin tools (minimal/casual/greeting/observe/chat/coding): tools eliminadas por politica `disabled`
+- Coding con tools: `readonly_policy` — solo read, glob, grep, list, webfetch
+- Tool_use: `agent_policy` — tools completas con confirmation gate 428 para write
 
 ## Troubleshooting
 
 ### Error: "Fallo al conectar al servidor de herramientas"
 
-Este error aparece en Open WebUI al configurar la conexion como "Servidor de
-Herramientas". **No es necesario** configurarlo como tal. Solo hay que
-configurarlo como **Conexion OpenAI** normal.
+Configurar como **Conexion OpenAI** normal, no como Servidor de Herramientas.
 
-### Error: "Error en la respuesta previa"
+### Respuestas con HARD_FACTS inesperado
 
-Ocurre cuando el modelo genera contenido en `reasoning_content` en lugar de
-`content`. El Router API sanitiza el stream para evitar este problema.
-Si persiste, usar `ailab-router/fast` que utiliza Llama 3.1 8B (modelo sin
-razonamiento interno).
+Usar `ailab-router/fast` o `ailab-router/coding`. Las rutas ligeras no usan HARD_FACTS.
+
+### Tool calls no funcionan
+
+Asegurar que el modelo `ailab-router/auto` con `tool_choice=auto` y `tools` en el payload activa el perfil `agent`.
 
 ### No aparecen los modelos en el selector
 

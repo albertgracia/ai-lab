@@ -35,21 +35,43 @@ Seleccionar automáticamente:
 ```mermaid
 graph TD
 
-A[Usuario] --> B[Router API]
+A[Usuario] --> B[Router API / Gateway]
 
-B --> C[Analizador de intención]
+B --> C[Classifier: greeting/casual/report/observe/tool/general]
 
-C --> D[Consulta simple]
-C --> E[Reasoning complejo]
-C --> F[Embeddings]
-C --> G[Grounding]
+C --> D[minimal/casual/greet/observe]
+C --> E[fast/general/chat]
+C --> F[coding]
+C --> G[reasoning]
+C --> H[tool_use/tool_fastpath]
 
-D --> H[Modelo pequeño]
-E --> I[Modelo reasoning]
-F --> J[Embedding model]
-G --> K[Qdrant]
+D --> I[observe_profile → llama-3.1-8b]
+E --> J[chat_profile → qwen2.5-14b]
+F --> K[coding_profile → qwen2.5-14b]
+G --> L[analysis_profile → qwen2.5-32b]
+H --> M[agent_profile → qwen3.6-27b]
 
-H --> L[Respuesta]
-I --> L
-J --> L
-K --> L
+I --> N[disabled_policy → sin tools]
+J --> N
+K --> O[readonly_policy → tools limitadas]
+L --> N
+M --> P[agent_policy → tools completas + 428 gate]
+
+N --> Q[minimal_policy → sin memoria]
+O --> Q
+P --> R[full_policy → memoria completa]
+
+Q --> S[LM Studio RX9070]
+R --> S
+S --> T[Respuesta]
+```
+
+## Perfiles por ruta
+
+| Ruta | Perfil | Modelo | Tools | Memoria |
+|------|--------|--------|-------|---------|
+| minimal/casual/greeting/observe | observe | llama-3.1-8b | disabled | minimal |
+| fast/general/chat | chat | qwen2.5-14b | disabled | light |
+| coding | coding | qwen2.5-14b | readonly | light |
+| reasoning | analysis | qwen2.5-32b | disabled | full |
+| tool_use/tool_fastpath | agent | qwen3.6-27b | agentic | full |

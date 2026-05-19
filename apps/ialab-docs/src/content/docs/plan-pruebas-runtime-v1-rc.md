@@ -1,10 +1,19 @@
 ---
-title: "Plan de pruebas - AI-LAB Cognitive Operations Runtime v1 RC"
-summary: "Checklist operativa de validacion de grounding, routing, memoria cognitiva, execute safety y aprendizaje adaptativo."
+title: "Plan de pruebas - AI-LAB v1 RC (HISTORICO)"
+summary: "RESULTADOS DE PRUEBAS — AI-LAB v1 RC (marzo 2026). No reflejan el estado actual CP-22B+. Varios bugs aqui documentados ya fueron resueltos en FASEs 20-22. Conservado como referencia historica."
 order: 28
 ---
 
-## Objetivo
+> **ESTE DOCUMENTO ES HISTORICO — v1 RC (marzo 2026).**
+> Bugs resueltos desde entonces:
+> - `fast` ahora usa qwen2.5-14b (no llama-3.1-8b) — FASE 20A
+> - `reasoning` ahora usa qwen2.5-32b (no 14b) — FASE 20A
+> - ProviderModelNotFoundError en OpenCode/Gateway — resuelto FASE 21
+> - Empty reply from server en approve command — reemplazado por 428 confirmation gate FASE 22B
+> - HARD_FACTS ya no es universal — FASE 20B+20C
+> - Plan Mode eliminado — FASE 20B
+
+---## Objetivo
 
 Validar estabilidad, grounding, routing, memoria cognitiva, execute safety y aprendizaje adaptativo del runtime.
 

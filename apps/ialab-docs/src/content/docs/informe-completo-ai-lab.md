@@ -137,22 +137,25 @@ El runtime es el nucleo operativo cognitivo.
 
 - gateway OpenAI-compatible con sanitizacion, rate limit y sesiones
 - routing por capacidades y scoring adaptativo
-- fastpath tool-aware para `tool_use` en router, con contexto minimo cuando aplica
-- memoria episodica y recall controlado con Qdrant
-- quality gate para evitar contaminacion de contexto
-- modos `readonly`, `plan`, `observe`, `build`, `execute`
-- policy `EXECUTE v1` con whitelist estricta
+- perfiles cognitivos declarativos (`runtime/profiles/`): chat, coding, analysis, observe, agent
+- politicas de herramientas (`runtime/policies/tools/`): 3 modos (disabled/readonly/agentic)
+- bash sanitizer con `shlex.split()` token scanning
+- confirmation gate 428 para write tools
+- politicas de memoria (`runtime/policies/memory/`): minimal, light, full
+- memory injector con feature flag `AI_LAB_ENABLE_MEMORY_INJECTOR`
+- observabilidad 3 canales: stdout, audit, Prometheus
 - live state y snapshots persistentes
 - heartbeat del cluster y discovery de nodos LM Studio
 - analytics de salud, sesiones, routing y eventos
 - optimizador autonomo con recomendaciones y cola de acciones
 
-### Fase 15
+### FASE 20-22 (CP-22B-STABLE)
 
-- test `tool_use`: `~3.0s` media
-- produccion local `tool_use`: `~3.0s` media
-- gateway: `tool_calls` estructurado y estable
-- saludo trivial: respuesta breve sin `HARD_FACTS`
+- modelos estabilizados: llama-3.1-8b (observe), qwen2.5-14b (chat/coding), qwen2.5-32b (reasoning), qwen3.6-27b (agent)
+- HARD_FACTS solo en reasoning/analysis
+- Plan Mode eliminado
+- wrappers legacy limpiados
+- 26 hardcodes eliminados, protecciones de seguridad mantenidas
 - `sudo reboot`: bloqueado por policy
 
 ### Punto de control
@@ -184,13 +187,14 @@ El runtime es el nucleo operativo cognitivo.
 - `governance_state`: `NORMAL | ELEVATED | DEGRADED | LOCKDOWN` segun bloqueos, fallbacks, Qdrant
 - `/api/control/runtime` ultra-compacto para status bars, CLI checks, mobile
 
-### Estado vivo actual
+### Estado vivo actual (CP-22B+)
 
-- modo runtime: `plan`
-- cluster health: `healthy`
-- nodos online: `2`
-- nodo offline detectado: `192.168.1.250`
-- nodos GPU activos: `192.168.1.50` y `192.168.1.60`
+- routing gobernado por perfiles cognitivos (`manifest_profiles.json`)
+- herramientas gobernadas por politicas (`manifest_tools.json`, 3 modos)
+- memoria gobernada por politicas (`manifest_memory.json`, feature flag)
+- nodo GPU activo: `192.168.1.50` (RX9070, 16 GB VRAM)
+- LM Studio: `http://192.168.1.50:1234/v1`
+- nodo GPU secundario: `192.168.1.60` (RX7900XT, 20 GB VRAM)
 
 ## Stacks Docker
 

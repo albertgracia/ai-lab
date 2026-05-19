@@ -68,7 +68,11 @@ runtime/prompts/
 
 ## FASE 21 — Perfiles cognitivos
 
-**Estado:** 21A completada — policy bundles + loader + routing
+**Estado:** 21A + 21A.1 + 21B completadas (CP-21B-STABLE)
+
+- 21A: Policy bundles declarativos en `runtime/profiles/`
+- 21A.1: Observabilidad de perfiles (stdout + audit + Prometheus)
+- 21B: De-hardcoding progresivo (26 hardcodes eliminados, 7 protegidos)
 
 **Objetivo:** Crear perfiles de comportamiento sin romper el routing existente.
 
@@ -88,19 +92,32 @@ No mezclarlas es lo que mantiene AI-LAB estable.
 
 ## FASE 22 — Tool Runtime controlado
 
-**Objetivo:** Evitar tool_calls fantasma y activar herramientas solo por política explícita.
+**Estado:** 22A + 22B completadas (CP-22B-STABLE)
+
+- 22A: Politicas declarativas (`runtime/policies/tools/`): disabled/readonly/agentic
+- 22B: Bash sanitizer (`shlex.split()`), confirmation gate 428, auditoria por tool_call
+- 22B.1: Fix clasificador greetings (word-boundary token matching)
 
 ---
 
 ## FASE 23 — Memoria semántica estable
 
-**Objetivo:** Inyectar contexto útil sin contaminar prompts ni provocar drift.
+**Estado:** 23A completada (CP-23A-MEMORY-SAFE)
+
+- `runtime/policies/memory/`: 3 politicas (minimal/light/full)
+- Memory injector con items API + feature flag `AI_LAB_ENABLE_MEMORY_INJECTOR`
+- Skip rules (query < N palabras → sin Qdrant)
+- Episodic solo en full policy
 
 ---
 
 ## FASE 24 — Observabilidad cognitiva
 
-**Objetivo:** Métricas de routing, modelo usado, tokens, latencia, fallback, wrappers y calidad.
+**Estado:** avanzada (3 canales activos)
+
+- stdout: `profile=chat route=cognitive model=qwen2.5-14b`
+- Audit: `governance_audit.jsonl` con `profile_applied`, `tool_call_allowed`
+- Prometheus: `ailab_profile_total`, `ailab_tool_call_total`, `ailab_memory_recall_total`
 
 ---
 
