@@ -85,6 +85,12 @@ PROFILE_TOTAL = Counter(
     ["profile", "route_family", "model"],
 )
 
+TOOL_CALL_TOTAL = Counter(
+    "ailab_tool_call_total",
+    "Tool calls procesadas por nombre, resultado y politica",
+    ["tool_name", "result", "policy", "mode"],
+)
+
 DEFAULT_ROUTE_FAMILIES = (
     "minimal",
     "observe",
@@ -121,6 +127,10 @@ def record_route_family_metrics(
 
 def record_profile_metrics(profile: str, route_family: str, model: str) -> None:
     PROFILE_TOTAL.labels(profile=profile, route_family=route_family, model=model or "unknown").inc()
+
+
+def record_tool_call_metric(tool_name: str, result: str, policy: str, mode: str) -> None:
+    TOOL_CALL_TOTAL.labels(tool_name=tool_name or "unknown", result=result, policy=policy or "unknown", mode=mode or "unknown").inc()
 
 
 def prime_profile_metrics(profiles: tuple[str, ...] = ("chat", "coding", "analysis", "observe", "agent")) -> None:

@@ -105,6 +105,11 @@ def apply_tool_policy(payload: dict, policy: dict) -> dict:
             })
         except ImportError:
             pass
+        try:
+            from runtime.telemetry.prometheus_metrics import record_tool_call_metric
+            record_tool_call_metric(tool_name, result, policy.get("policy", "unknown"), mode)
+        except ImportError:
+            pass
 
     def _sanitize_bash(tool: dict) -> bool:
         """Returns True if bash tool passes sanitization."""
