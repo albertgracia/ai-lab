@@ -150,6 +150,12 @@ COMPLETION_EMPTY_AFTER_TRUNCATION = Counter(
     "Completions truncadas y vacias (finish_reason=length, sin contenido)",
 )
 
+REPORT_REQUESTS_BY_MODEL = Counter(
+    "ailab_report_requests_by_model_total",
+    "Peticiones de informe por modelo y tipo (heavy/light)",
+    ["model", "type"],
+)
+
 DEFAULT_ROUTE_FAMILIES = (
     "minimal",
     "observe",

@@ -230,6 +230,24 @@ def _is_reasoning_request(text: str) -> bool:
     return keyword_count >= 2
 
 
+def is_report_request_heavy(text_or_payload: Any) -> bool:
+    """FASE 26.1.2: Detecta informes tecnicos pesados que requieren qwen2.5-14b."""
+    if isinstance(text_or_payload, dict):
+        text = _last_user_text(text_or_payload)
+    else:
+        text = str(text_or_payload or "")
+    t = text.lower()
+    if not t:
+        return False
+    return any(k in t for k in (
+        "informe técnico", "informe tecnico",
+        "estructura general",
+        "documento técnico", "documento tecnico",
+        "detallado",
+        "exhaustivo",
+    ))
+
+
 def is_report_request(text_or_payload: Any) -> bool:
     if isinstance(text_or_payload, dict):
         text = _last_user_text(text_or_payload)
@@ -475,8 +493,10 @@ def classify_chat_route(
 
     if _is_reasoning_request(text):
         return RuntimeRoute(family="cognitive", variant="reasoning", reason="reasoning keywords")
+    if is_report_request_heavy(text):
+        return RuntimeRoute(family="report", variant="heavy", reason="heavy report request")
     if is_report_request:
-        return RuntimeRoute(family="minimal", variant="report", reason="report request")
+        return RuntimeRoute(family="minimal", variant="report", reason="light report request")
     if is_casual_request(text):
         return RuntimeRoute(family="minimal", variant="casual", reason="casual request")
     if greeting_fastpath:

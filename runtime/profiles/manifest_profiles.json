@@ -19,12 +19,13 @@
     "opencode_minimal": "observe_profile.json",
     "opencode_chat": "chat_profile.json",
     "opencode_coding": "coding_profile.json",
-    "opencode_reasoning": "analysis_profile.json"
+    "opencode_reasoning": "analysis_profile.json",
+    "report": "chat_profile.json"
   },
   "overrides": {
     "minimal": { "inference": { "max_tokens": 96 } },
     "casual": { "inference": { "max_tokens": 96 } },
     "greeting": { "inference": { "max_tokens": 96 } },
-    "report": { "inference": { "max_tokens": 512 } }
+    "report": { "inference": { "max_tokens": 1024 } }
   }
 }

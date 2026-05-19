@@ -23,6 +23,7 @@ from runtime.gateway.tool_request_classifier import (
     build_minimal_report_messages,
     build_minimal_tool_messages,
     is_report_request,
+    is_report_request_heavy,
     strip_question_tool,
     sanitize_payload_messages,
     sanitize_prompt_text,
@@ -547,7 +548,7 @@ async def chat_completions(request: Request):
         proxy_payload.pop("_ai_lab_route_variant", None)
         proxy_payload.pop("_ai_lab_route_reason", None)
         proxy_payload["model"] = "auto"
-        proxy_payload["max_tokens"] = min(int(proxy_payload.get("max_tokens", 64) or 64), 64)
+        proxy_payload["max_tokens"] = min(int(proxy_payload.get("max_tokens", 256) or 256), 256)
         proxy_payload["temperature"] = 0
         proxy_response = requests.post(
             "http://127.0.0.1:8008/v1/chat/completions",
