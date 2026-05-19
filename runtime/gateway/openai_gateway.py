@@ -444,7 +444,7 @@ def inject_agent_context(payload):
     elif route.family == "minimal" and route.variant == "creative":
         payload.pop("tools", None)
         payload.pop("tool_choice", None)
-        payload["model"] = "qwen2.5-coder-14b-instruct"
+        payload["model"] = "qwen/qwen2.5-coder-14b-instruct"
         payload["max_tokens"] = min(int(payload.get("max_tokens", 2048) or 2048), 2048)
         payload["temperature"] = min(float(payload.get("temperature", 0.7) or 0.7), 0.8)
         system_prompt = "Eres un escritor creativo en espanol. Desarrolla la peticion sin excusas. Si el texto es muy largo, entrega una primera parte clara y ofrece continuar."
@@ -988,7 +988,6 @@ class GatewayHandler(BaseHTTPRequestHandler):
             payload["_request_id"] = _request_id
             route_family = payload.pop("_ai_lab_route_family", "cognitive")
             route_variant = payload.pop("_ai_lab_route_variant", "")
-            route_variant = payload.pop("_ai_lab_route_variant", "")
             payload.pop("_ai_lab_route_reason", None)
             payload["_trace_family"] = route_family
 
@@ -1006,15 +1005,11 @@ class GatewayHandler(BaseHTTPRequestHandler):
             observe_fastpath = detect_intent(observe_user_text).mode == "observe" and not should_use_tool_fastpath(payload)
 
             selected_model = choose_model(task_type)
-            if route_variant == "creative":
-                selected_model = "qwen2.5-coder-14b-instruct"
+            if route_variant == "creative" or route_family == "report":
+                selected_model = "qwen/qwen2.5-coder-14b-instruct"
             elif route_family in {"minimal", "observe"}:
                 selected_model = "llama-3.1-8b-instruct"
-            if route_family == "report":
-                selected_model = "qwen2.5-coder-14b-instruct"
-            if route_family in {"minimal", "observe"}:
-                selected_model = "llama-3.1-8b-instruct"
-            elif (current_mode() == "observe" or observe_fastpath) and not should_use_tool_fastpath(payload):
+            if (current_mode() == "observe" or observe_fastpath) and not should_use_tool_fastpath(payload):
                 selected_model = "llama-3.1-8b-instruct"
             elif should_use_greeting_fastpath(payload):
                 selected_model = "llama-3.1-8b-instruct"
