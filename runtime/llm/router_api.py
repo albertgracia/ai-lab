@@ -1203,6 +1203,47 @@ async def api_incidents_timeline(days: int = 7, bucket: str = "day"):
     }
 
 
+@app.get("/api/memory/replay")
+async def api_memory_replay(limit: int = 10):
+    """FASE 23B.2: Memory replay inspector — muestra que memorias se inyectaron,
+    por que, cuanto costaron y que score tenian."""
+    try:
+        from runtime.memory.episodic_memory import read_episodes
+        from runtime.memory.memory_usefulness import get_usefulness_stats
+    except ImportError:
+        return {"error": "memory modules not available", "replay": [], "stats": {}}
+
+    episodes = read_episodes(limit=limit * 3)
+    replay_items = []
+    for ep in episodes:
+        payload = ep.get("payload", {}) if isinstance(ep.get("payload"), dict) else {}
+        mem = payload.get("memories", payload.get("matches", 0))
+        ch = payload.get("chars", payload.get("chars_injected", 0))
+        replay_items.append({
+            "timestamp": ep.get("timestamp"),
+            "event_type": ep.get("event_type", "?"),
+            "query": ep.get("summary", "")[:200],
+            "route_family": payload.get("route_family", payload.get("family", "?")),
+            "profile": payload.get("profile", "?"),
+            "model": payload.get("model", "?"),
+            "node": payload.get("node", "?"),
+            "items_injected": mem,
+            "chars_injected": ch,
+            "token_cost": int(ch / 2.8) if ch else 0,
+            "avg_score": payload.get("avg_score", 0),
+            "top_score": payload.get("top_score", 0),
+            "contamination_risk": payload.get("contamination_risk", 0),
+            "policy": payload.get("policy", "?"),
+            "sources": payload.get("sources", payload.get("collections_used", [])),
+            "skipped": payload.get("skipped", False),
+            "skip_reason": payload.get("skip_reason", ""),
+        })
+        if len(replay_items) >= limit:
+            break
+    stats = get_usefulness_stats(days=7)
+    return {"stats": stats, "count": len(replay_items), "replay": replay_items}
+
+
 @app.get("/api/memory/quality")
 async def api_memory_quality(q: str = "", collection: str = "incidents", limit: int = 10):
     """Relevance quality metrics for a single query.
