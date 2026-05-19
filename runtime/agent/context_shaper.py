@@ -9,6 +9,7 @@ Replaces the hard 40K-char limit of ``selective_context`` with:
 Designed to plug into ``router_api.py`` via try/except ImportError fallback.
 """
 
+import os
 import time
 from pathlib import Path
 
