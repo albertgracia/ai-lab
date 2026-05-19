@@ -243,6 +243,19 @@ def shape_context(
                             "injector_version": "23A",
                         }
                     }
+                    # FASE 23B.1: record recall outcome for quality tracking
+                    try:
+                        from runtime.memory.memory_usefulness import record_recall_outcome
+                        noise = 1.0 - memory_ctx.get("avg_score", 0)
+                        record_recall_outcome(
+                            query_text=query_text[:200],
+                            helpful=memory_ctx["memories"] > 0,
+                            noise_score=min(1.0, noise),
+                            latency_cost_ms=memory_ctx.get("retrieval_ms", 0),
+                            context_ratio=memory_ctx["chars"] / max(memory_policy.get("max_chars", 1), 1),
+                        )
+                    except ImportError:
+                        pass
             except Exception as exc:
                 print(
                     f"FASE23A_ERROR memory_injector_failed profile={profile_name or task_type} "
@@ -303,6 +316,45 @@ def shape_context(
         hard_facts = _build_hard_facts(extra_json=_hard_extra)
 
     budget_info = f"BUDGET: budget={budget} chars, used={used}/{budget} ({used/max(budget,1)*100:.0f}%) [HARD_FACTS]"
+
+    # FASE 23B.3.2: active hard caps — truncate when context exceeds budget
+    CHARS_PER_TOKEN = 2.8
+    _CONTEXT_CAP_TOKENS = {"minimal": 300, "light": 1200, "full": 4000}
+    msr_policy = recall_stats.get("semantic_recall", {}).get("policy", "unknown")
+    cap_tokens = _CONTEXT_CAP_TOKENS.get(msr_policy, 1200)
+    cap_chars = int(cap_tokens * CHARS_PER_TOKEN)
+
+    # Estimate total context
+    recall_chars = len(recall_block)
+    chunks_chars = sum(len(c) for c in chunks)
+    total_chars = len(hard_facts) + len(budget_info) + recall_chars + chunks_chars
+
+    if total_chars > cap_chars:
+        excess = total_chars - cap_chars
+        # Priority: truncate recall_block first (advisory), then chunks (source files)
+        if recall_chars > 0 and excess > 0:
+            cut = min(recall_chars, excess)
+            recall_block = recall_block[:recall_chars - cut] + f"\n[...truncado {cut} chars por hard cap {msr_policy}]"
+            excess -= cut
+        if chunks and excess > 0:
+            for i in range(len(chunks) - 1, -1, -1):
+                if excess <= 0:
+                    break
+                c = chunks[i]
+                cut = min(len(c), excess)
+                chunks[i] = c[:len(c) - cut] + f"\n[...truncado {cut} chars]"
+                excess -= cut
+        print(
+            f"FASE23B_HARD_CAP policy={msr_policy} cap={cap_tokens}t total={total_chars}chars "
+            f"excess={total_chars - cap_chars}chars → TRUNCATED",
+            flush=True,
+        )
+        try:
+            from runtime.telemetry.prometheus_metrics import CONTEXT_CAP_EXCEEDED
+            CONTEXT_CAP_EXCEEDED.labels(policy=msr_policy).inc()
+        except ImportError:
+            pass
+
     parts = [hard_facts, budget_info]
     if recall_block:
         parts.append(recall_block)
