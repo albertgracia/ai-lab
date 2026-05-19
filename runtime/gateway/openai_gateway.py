@@ -531,10 +531,37 @@ def sanitize_completion_response(data):
         if current_mode() == "observe" and isinstance(message.get("content"), str):
             message["content"] = sanitize_observe_output(message.get("content"))
 
+        # FASE 26.1.1: preserve valid content even if finish_reason="length"
+        finish = choice.get("finish_reason", "stop") if isinstance(choice, dict) else "stop"
+        content_len = len(message.get("content") or "")
+
         if not message.get("content") and not tool_calls:
-            message["content"] = (
-                "Respuesta generada, pero el contenido final "
-                "llegó vacío desde el modelo."
+            if finish == "length":
+                message["content"] = (
+                    "La respuesta fue truncada por limite de tokens antes de generar contenido visible. "
+                    "Reintenta con un limite mayor o usa un perfil de informe."
+                )
+                try:
+                    from runtime.telemetry.prometheus_metrics import COMPLETION_EMPTY_AFTER_TRUNCATION
+                    COMPLETION_EMPTY_AFTER_TRUNCATION.inc()
+                except ImportError:
+                    pass
+            else:
+                message["content"] = (
+                    "Respuesta generada, pero el contenido final "
+                    "llegó vacío desde el modelo."
+                )
+
+        if finish == "length" and content_len > 0:
+            try:
+                from runtime.telemetry.prometheus_metrics import COMPLETION_TRUNCATED
+                COMPLETION_TRUNCATED.labels(route_family="unknown").inc()
+            except ImportError:
+                pass
+            print(
+                f"FASE26.1.1 completion_truncated_but_valid "
+                f"finish_reason=length chars={content_len}",
+                flush=True,
             )
 
     return data

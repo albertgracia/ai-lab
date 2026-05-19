@@ -140,6 +140,16 @@ CONFIRMATION_REQUIRED = Counter(
     "Veces que se requirio confirmacion (428) para write tools",
 )
 
+COMPLETION_TRUNCATED = Counter(
+    "ailab_completion_truncated_total",
+    "Completions truncadas con contenido valido (finish_reason=length)",
+    ["route_family"],
+)
+COMPLETION_EMPTY_AFTER_TRUNCATION = Counter(
+    "ailab_completion_empty_after_truncation_total",
+    "Completions truncadas y vacias (finish_reason=length, sin contenido)",
+)
+
 DEFAULT_ROUTE_FAMILIES = (
     "minimal",
     "observe",

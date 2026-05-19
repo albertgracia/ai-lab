@@ -25,6 +25,6 @@
     "minimal": { "inference": { "max_tokens": 96 } },
     "casual": { "inference": { "max_tokens": 96 } },
     "greeting": { "inference": { "max_tokens": 96 } },
-    "report": { "inference": { "max_tokens": 96 } }
+    "report": { "inference": { "max_tokens": 512 } }
   }
 }
