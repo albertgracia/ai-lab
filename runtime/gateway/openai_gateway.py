@@ -854,6 +854,27 @@ class GatewayHandler(BaseHTTPRequestHandler):
             )
 
             payload = inject_agent_context(payload)
+
+            # FASE 22B.4: confirmation gate for write/agentic tools
+            if payload.get("_tool_requires_confirmation"):
+                write_names = {"write", "edit", "rm", "mv", "cp", "dd", "tee", "bash"}
+                tools = payload.get("tools") or []
+                write_tools = [
+                    (t.get("function") or {}).get("name", "")
+                    for t in tools if isinstance(t, dict)
+                    and ((t.get("function") or {}).get("name", "") in write_names)
+                ]
+                if write_tools:
+                    payload["_tool_confirmation_pending"] = True
+                    self._send_json(428, {
+                        "error": "confirmation_required",
+                        "message": "Esta solicitud contiene herramientas de escritura. Confirma explicitamente para continuar.",
+                        "tool_policy": payload.get("_tool_policy"),
+                        "tool_mode": payload.get("_tool_mode"),
+                        "tool_names": write_tools,
+                    })
+                    return
+
             route_family = payload.pop("_ai_lab_route_family", "cognitive")
             payload.pop("_ai_lab_route_variant", None)
             payload.pop("_ai_lab_route_reason", None)
