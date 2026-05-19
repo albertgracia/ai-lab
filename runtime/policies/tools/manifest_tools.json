@@ -1,0 +1,12 @@
+{
+  "version": "22A.1",
+  "description": "Mapeo de perfiles cognitivos a politicas de herramientas.",
+  "default": "disabled_policy.json",
+  "profiles": {
+    "chat": "disabled_policy.json",
+    "coding": "readonly_policy.json",
+    "analysis": "disabled_policy.json",
+    "observe": "disabled_policy.json",
+    "agent": "agent_policy.json"
+  }
+}

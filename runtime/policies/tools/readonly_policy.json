@@ -1,0 +1,11 @@
+{
+  "policy": "readonly",
+  "version": "22A.1",
+  "description": "Solo herramientas de lectura. Sin escritura, sin shell peligroso. Stripping agresivo en 22A.",
+  "mode": "readonly",
+  "requires_confirmation": false,
+  "max_tool_calls": 5,
+  "allowed_names": ["read", "glob", "grep", "list", "webfetch"],
+  "blocked_names": ["write", "edit", "task", "bash", "rm", "shutdown", "reboot"],
+  "audit_required": true
+}

@@ -1,0 +1,18 @@
+{
+  "version": "22A.1",
+  "description": "Lista maestra global de comandos bloqueados permanentemente. Estos comandos nunca pasan, independientemente del perfil o politica.",
+  "blocked_names": [
+    "rm -rf /",
+    "mkfs",
+    "shutdown",
+    "reboot",
+    "dd if=",
+    ":(){ :|:& };:",
+    "chmod 777 /",
+    "> /dev/sda",
+    "sudo rm",
+    "sudo shutdown",
+    "sudo reboot"
+  ],
+  "blocked_tool_types": ["shell_exec", "sudo", "kernel_write"]
+}

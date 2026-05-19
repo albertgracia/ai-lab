@@ -1,0 +1,11 @@
+{
+  "policy": "disabled",
+  "version": "22A.1",
+  "description": "Sin herramientas. Todas las tools son eliminadas del payload.",
+  "mode": "disabled",
+  "requires_confirmation": false,
+  "max_tool_calls": 0,
+  "allowed_names": [],
+  "blocked_names": [],
+  "audit_required": false
+}

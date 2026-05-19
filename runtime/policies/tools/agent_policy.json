@@ -1,0 +1,11 @@
+{
+  "policy": "agent",
+  "version": "22A.1",
+  "description": "Herramientas completas con confirmacion explicita para acciones destructivas.",
+  "mode": "agentic",
+  "requires_confirmation": true,
+  "max_tool_calls": 20,
+  "allowed_names": [],
+  "blocked_names": [],
+  "audit_required": true
+}

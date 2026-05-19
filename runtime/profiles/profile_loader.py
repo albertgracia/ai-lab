@@ -134,9 +134,16 @@ def apply_profile(payload: dict, route_family: str) -> dict:
     p.setdefault("top_p", inference.get("top_p", 0.95))
 
     # ── tools ────────────────────────────────────────────────────────
-    if not tools_cfg.get("allowed", False):
-        p.pop("tools", None)
-        p.pop("tool_choice", None)
+    # FASE 22A: apply tool policy from declarative config
+    try:
+        from runtime.policies.tools.policy_loader import get_policy_for_profile, apply_tool_policy
+        tool_policy = get_policy_for_profile(profile.get("profile", "unknown"))
+        p = apply_tool_policy(p, tool_policy)
+    except ImportError:
+        # legacy fallback (FASE 21A)
+        if not tools_cfg.get("allowed", False):
+            p.pop("tools", None)
+            p.pop("tool_choice", None)
 
     # ── reasoning ────────────────────────────────────────────────────
     if reasoning_cfg.get("policy") == "disabled":
@@ -145,5 +152,6 @@ def apply_profile(payload: dict, route_family: str) -> dict:
     # ── profile metadata (for observability) ─────────────────────────
     p["_profile"] = profile.get("profile", "unknown")
     p["_profile_version"] = profile.get("version", "0")
+    p["_profile_manifest"] = "21A"
 
     return p
