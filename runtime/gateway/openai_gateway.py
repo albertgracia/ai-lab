@@ -987,9 +987,10 @@ class GatewayHandler(BaseHTTPRequestHandler):
 
             payload["_request_id"] = _request_id
             route_family = payload.pop("_ai_lab_route_family", "cognitive")
-            payload["_trace_family"] = route_family
-            payload.pop("_ai_lab_route_variant", None)
+            route_variant = payload.pop("_ai_lab_route_variant", "")
+            route_variant = payload.pop("_ai_lab_route_variant", "")
             payload.pop("_ai_lab_route_reason", None)
+            payload["_trace_family"] = route_family
 
             requested_model = payload.get(
                 "model",
@@ -1005,7 +1006,9 @@ class GatewayHandler(BaseHTTPRequestHandler):
             observe_fastpath = detect_intent(observe_user_text).mode == "observe" and not should_use_tool_fastpath(payload)
 
             selected_model = choose_model(task_type)
-            if route_family in {"minimal", "observe"}:
+            if route_variant == "creative":
+                selected_model = "qwen2.5-coder-14b-instruct"
+            elif route_family in {"minimal", "observe"}:
                 selected_model = "llama-3.1-8b-instruct"
             if route_family == "report":
                 selected_model = "qwen2.5-coder-14b-instruct"
