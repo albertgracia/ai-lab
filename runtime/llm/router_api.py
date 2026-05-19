@@ -413,7 +413,14 @@ async def chat_completions(request: Request):
         # 1. Strip question tool always
         tools = payload.get("tools")
         if isinstance(tools, list):
+            old_len = len(tools)
             payload["tools"] = [t for t in tools if (t.get("function", {}).get("name", "") if isinstance(t.get("function"), dict) else "") != "question"]
+            if len(payload["tools"]) < old_len:
+                try:
+                    from runtime.telemetry.prometheus_metrics import TOOL_QUESTION_STRIPPED
+                    TOOL_QUESTION_STRIPPED.inc()
+                except ImportError:
+                    pass
         # 2. No tool_use without explicit tools
         if not payload.get("tools"):
             payload.pop("tool_choice", None)

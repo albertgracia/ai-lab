@@ -899,6 +899,11 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 ]
                 if write_tools:
                     payload["_tool_confirmation_pending"] = True
+                    try:
+                        from runtime.telemetry.prometheus_metrics import CONFIRMATION_REQUIRED
+                        CONFIRMATION_REQUIRED.inc()
+                    except ImportError:
+                        pass
                     self._send_json(428, {
                         "error": "confirmation_required",
                         "message": "Esta solicitud contiene herramientas de escritura. Confirma explicitamente para continuar.",

@@ -108,6 +108,38 @@ MEMORY_ITEMS_TOTAL = Counter(
     ["policy", "source"],
 )
 
+MEMORY_CONTAMINATION = Histogram(
+    "ailab_memory_contamination_risk",
+    "Riesgo de contaminacion del recall (proporcion de items con score < 0.15)",
+    ["policy"],
+    buckets=(0.05, 0.1, 0.15, 0.2, 0.3, 0.5, 0.8),
+)
+MEMORY_QUALITY_SCORE = Histogram(
+    "ailab_memory_quality_score",
+    "Puntuacion media de calidad del recall",
+    ["policy"],
+    buckets=(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9),
+)
+
+CONTEXT_CAP_EXCEEDED = Counter(
+    "ailab_context_cap_exceeded_total",
+    "Veces que el contexto total excedio el hard cap por politica (shadow mode)",
+    ["policy"],
+)
+
+TOOL_EMPTY_ARGUMENTS = Counter(
+    "ailab_tool_empty_arguments_total",
+    "Bash tools bloqueadas por arguments vacios",
+)
+TOOL_QUESTION_STRIPPED = Counter(
+    "ailab_tool_question_stripped_total",
+    "Veces que se elimino la question tool del payload",
+)
+CONFIRMATION_REQUIRED = Counter(
+    "ailab_confirmation_required_total",
+    "Veces que se requirio confirmacion (428) para write tools",
+)
+
 DEFAULT_ROUTE_FAMILIES = (
     "minimal",
     "observe",

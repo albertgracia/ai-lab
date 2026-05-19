@@ -122,6 +122,11 @@ def apply_tool_policy(payload: dict, policy: dict) -> dict:
             # FASE 26: reject bash tools with empty arguments
             if not cmd.strip():
                 _audit_tool("bash", "tool_call_blocked_by_policy", "empty_arguments")
+                try:
+                    from runtime.telemetry.prometheus_metrics import TOOL_EMPTY_ARGUMENTS
+                    TOOL_EMPTY_ARGUMENTS.inc()
+                except ImportError:
+                    pass
                 return False
             safe, warnings, needs_confirm = sanitize_bash_command(cmd, policy)
             if safe is None:
