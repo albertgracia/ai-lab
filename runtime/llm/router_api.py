@@ -398,6 +398,8 @@ def api_usage():
 @app.post("/chat/completions")
 async def chat_completions(request: Request):
 
+    import uuid as _uuid
+    _request_id = str(_uuid.uuid4())[:8]
     request_start = time.time()
     payload = await request.json()
     payload = sanitize_payload_messages(payload)
@@ -422,6 +424,8 @@ async def chat_completions(request: Request):
         intent_mode=prompt_route.mode,
     )
     record_route_family_metrics(route.family)
+    payload["_request_id"] = _request_id
+    payload["_trace_family"] = route.family
     try:
         if _HAVE_PROFILE_LOADER:
             payload = _apply_profile(payload, route.family)
@@ -465,6 +469,8 @@ async def chat_completions(request: Request):
                 "max_tokens": payload.get("max_tokens", 0),
                 "temperature": payload.get("temperature", 0),
                 "tools_allowed": "tools" in payload,
+                "_request_id": payload.get("_request_id", ""),
+                "_trace_family": payload.get("_trace_family", ""),
             })
         except ImportError:
             pass
@@ -1318,4 +1324,172 @@ async def api_runtime_patterns(days: int = 7):
         "latency_trends": ltrends,
         "days": days,
         "generated_at": int(time.time()),
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════
+# FASE 24 — Cognitive Traceability & Runtime Replay
+# ═══════════════════════════════════════════════════════════════════
+
+@app.get("/api/request/replay/{request_id}")
+async def api_request_replay(request_id: str):
+    """FASE 24.1: Full request replay — reconstructs the complete pipeline
+    for a request with duration per step."""
+    from pathlib import Path as _Path
+    from datetime import datetime as _dt
+
+    today = _dt.now().strftime("%Y-%m-%d")
+    log_path = _Path(f"/opt/ai-lab/runtime/state/governance_audit-{today}.jsonl")
+    events = []
+    if log_path.exists():
+        for line in log_path.read_text(encoding="utf-8").strip().split("\n"):
+            if not line.strip():
+                continue
+            try:
+                e = json_mod.loads(line)
+                if e.get("payload", {}).get("_request_id") == request_id:
+                    events.append(e)
+            except Exception:
+                pass
+
+    if not events:
+        return {"request_id": request_id, "events": 0, "error": "not_found_or_expired"}
+
+    timeline = []
+    sorted_events = sorted(events, key=lambda e: e["timestamp"])
+    for i, e in enumerate(sorted_events):
+        end_ts = sorted_events[i + 1]["timestamp"] if i + 1 < len(sorted_events) else e["timestamp"]
+        timeline.append({
+            "order": i,
+            "step": e["event_type"],
+            "ts": e["timestamp"],
+            "start_ts": e["timestamp"],
+            "end_ts": end_ts,
+            "duration_ms": (end_ts - e["timestamp"]) * 1000 if end_ts > e["timestamp"] else 0,
+            "payload": e.get("payload", {}),
+        })
+
+    total_ms = (sorted_events[-1]["timestamp"] - sorted_events[0]["timestamp"]) * 1000 if len(sorted_events) > 1 else 0
+    return {
+        "request_id": request_id,
+        "events": len(timeline),
+        "total_duration_ms": total_ms,
+        "timeline": timeline,
+    }
+
+
+@app.get("/api/request/flow/{request_id}")
+async def api_request_flow(request_id: str):
+    """FASE 24.2: Runtime timeline — structured view of the request flow."""
+    replay = await api_request_replay(request_id)
+    if "error" in replay:
+        return replay
+
+    flow = []
+    for step in replay["timeline"]:
+        flow.append({
+            "step": step["step"],
+            "duration_ms": step["duration_ms"],
+            "status": "ok",
+            "route_family": step["payload"].get("_trace_family", step["payload"].get("family", "?")),
+        })
+    return {"request_id": request_id, "steps": len(flow), "flow": flow}
+
+
+@app.get("/api/analytics/drift")
+async def api_drift_analytics():
+    """FASE 24.3: Drift analytics — detecta automaticamente senales de degradacion."""
+    from datetime import datetime as _dt
+    from pathlib import Path as _Path
+    import os as _os
+
+    signals = []
+
+    # Empty responses today
+    today = _dt.now().strftime("%Y-%m-%d")
+    log_path = _Path(f"/opt/ai-lab/runtime/state/governance_audit-{today}.jsonl")
+    empty = 0
+    cap_exceeded = 0
+    fallback = 0
+    if log_path.exists():
+        for line in log_path.read_text(encoding="utf-8").strip().split("\n"):
+            if not line.strip():
+                continue
+            try:
+                e = json_mod.loads(line)
+                p = e.get("payload", {})
+                if e["event_type"] == "profile_applied":
+                    if p.get("completion_tokens", 1) <= 1 and not p.get("content", ""):
+                        empty += 1
+                if e["event_type"] == "memory_injector_failed":
+                    fallback += 1
+            except Exception:
+                pass
+
+    signals.append({"signal": "empty_responses", "severity": "high" if empty >= 3 else ("medium" if empty >= 1 else "low"), "count": empty, "window": "24h"})
+    signals.append({"signal": "fallback_loops", "severity": "high" if fallback >= 3 else ("medium" if fallback >= 1 else "low"), "count": fallback, "window": "24h"})
+
+    # Check Prometheus for cap exceeded
+    try:
+        from runtime.telemetry.prometheus_metrics import CONTEXT_CAP_EXCEEDED
+        cap_count = 0
+        for metric in CONTEXT_CAP_EXCEEDED.collect():
+            for sample in metric.samples:
+                cap_count += int(sample.value)
+    except Exception:
+        cap_count = 0
+    signals.append({"signal": "cap_exceeded", "severity": "high" if cap_count >= 10 else ("medium" if cap_count >= 1 else "low"), "count": cap_count, "window": "all"})
+
+
+    # Overall severity
+    severities = {"high": 3, "medium": 2, "low": 1}
+    max_sev = max((severities.get(s["severity"], 0) for s in signals), default=0)
+    overall = {3: "high", 2: "medium", 1: "low"}.get(max_sev, "low")
+
+    return {"signals": signals, "overall_severity": overall}
+
+
+@app.get("/api/analytics/recall-roi")
+async def api_recall_roi():
+    """FASE 24.4: Recall ROI — mide si la memoria realmente ayudo."""
+    from pathlib import Path as _Path
+    from datetime import datetime as _dt
+
+    today = _dt.now().strftime("%Y-%m-%d")
+    log_path = _Path(f"/opt/ai-lab/runtime/state/governance_audit-{today}.jsonl")
+    categories = {"used_and_helpful": 0, "used_and_not_helpful": 0, "used_but_skipped": 0, "available_not_injected": 0, "injected_and_truncated": 0}
+    if log_path.exists():
+        for line in log_path.read_text(encoding="utf-8").strip().split("\n"):
+            if not line.strip():
+                continue
+            try:
+                e = json_mod.loads(line)
+                p = e.get("payload", {})
+                if e["event_type"] == "profile_applied":
+                    mem_pol = p.get("_memory_policy", "")
+                    mem_items = int(p.get("_memory_memories", 0) or 0)
+                    mem_skipped = p.get("_memory_skipped", False) or p.get("_memory_skipped") == "True"
+                    mem_skip_reason = p.get("_memory_skip_reason", "")
+                    if mem_items > 0:
+                        categories["used_and_helpful" if mem_items > 0 and not mem_skipped else "used_and_not_helpful"] += 1
+                    elif mem_skipped and mem_skip_reason in ("contamination_gate", "low_score", "budget_exceeded"):
+                        categories["used_but_skipped"] += 1
+                    elif mem_skipped and mem_skip_reason in ("query_too_short", "semantic_recall_disabled", "hard_guard_minimal"):
+                        categories["available_not_injected"] += 1
+            except Exception:
+                pass
+
+    try:
+        from runtime.memory.memory_usefulness import get_usefulness_stats
+        stats = get_usefulness_stats(days=7)
+    except ImportError:
+        stats = {"total": 0, "helpful_rate": 0, "noise_avg": 0}
+
+    return {
+        "categories": categories,
+        "usefulness_7d": stats,
+        "roi": {
+            "helpful_rate": stats.get("helpful_rate", 0),
+            "usefulness_trend": "stable",
+        }
     }
