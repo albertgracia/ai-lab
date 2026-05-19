@@ -119,6 +119,10 @@ def apply_tool_policy(payload: dict, policy: dict) -> dict:
             from runtime.policies.tools.bash_sanitizer import sanitize_bash_command
             fn = tool.get("function", {}) if isinstance(tool.get("function"), dict) else {}
             cmd = str(fn.get("arguments", "") or fn.get("command", ""))
+            # FASE 26: reject bash tools with empty arguments
+            if not cmd.strip():
+                _audit_tool("bash", "tool_call_blocked_by_policy", "empty_arguments")
+                return False
             safe, warnings, needs_confirm = sanitize_bash_command(cmd, policy)
             if safe is None:
                 for w in warnings:

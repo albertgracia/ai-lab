@@ -206,6 +206,30 @@ def _last_user_text(payload: dict[str, Any]) -> str:
     return str(payload.get("input", "") or payload.get("query", "") or "")
 
 
+_REASONING_KEYWORDS = (
+    "analisis profundo",
+    "análisis profundo",
+    "arquitectura",
+    "riesgos",
+    "auditoria",
+    "auditoría",
+    "deep analysis",
+    "reasoning",
+    "tradeoffs",
+    "riesgos arquitectura",
+)
+
+
+def _is_reasoning_request(text: str) -> bool:
+    t = (text or "").lower().strip()
+    if not t:
+        return False
+    if any(kw in t for kw in ("analisis profundo", "análisis profundo", "deep analysis")):
+        return True
+    keyword_count = sum(1 for kw in _REASONING_KEYWORDS if kw in t)
+    return keyword_count >= 2
+
+
 def is_report_request(text_or_payload: Any) -> bool:
     if isinstance(text_or_payload, dict):
         text = _last_user_text(text_or_payload)
@@ -449,6 +473,8 @@ def classify_chat_route(
     """Segment chat requests into explicit runtime families."""
     text = user_text or request_text
 
+    if _is_reasoning_request(text):
+        return RuntimeRoute(family="cognitive", variant="reasoning", reason="reasoning keywords")
     if is_report_request:
         return RuntimeRoute(family="minimal", variant="report", reason="report request")
     if is_casual_request(text):
@@ -457,6 +483,8 @@ def classify_chat_route(
         return RuntimeRoute(family="minimal", variant="greeting", reason="greeting fastpath")
     if mode_name == "observe" or intent_mode == "observe":
         return RuntimeRoute(family="observe", variant="observe", reason="observe mode")
+    if _is_reasoning_request(text):
+        return RuntimeRoute(family="cognitive", variant="reasoning", reason="reasoning keywords")
     if tool_fastpath:
         return RuntimeRoute(family="tool_fastpath", variant="tool", reason="tool fastpath")
     if text.strip():

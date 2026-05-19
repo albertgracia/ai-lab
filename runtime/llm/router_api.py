@@ -407,9 +407,9 @@ async def chat_completions(request: Request):
 
     # FASE 25: OpenCode production guard — executed BEFORE classifier
     _client = request.headers.get("X-AI-LAB-Client", payload.get("_client", ""))
-    if "opencode" in _client.lower():
-        payload["_client"] = "opencode"
-        payload["_client_profile"] = "opencode"
+    if "opencode" in _client.lower() or "openwebui" in _client.lower():
+        payload["_client"] = "opencode" if "opencode" in _client.lower() else "openwebui"
+        payload["_client_profile"] = payload["_client"]
         # 1. Strip question tool always
         tools = payload.get("tools")
         if isinstance(tools, list):
@@ -420,7 +420,7 @@ async def chat_completions(request: Request):
             payload.pop("tools", None)
         # 3. Suppress HARD_FACTS unless explicit deep analysis
         user_text = get_last_user_message(payload)
-        hf_keywords = ("razonamiento", "auditoría", "arquitectura", "debug profundo", "analiza la arquitectura")
+        hf_keywords = ("razonamiento", "auditoría", "arquitectura", "debug profundo", "analiza la arquitectura", "analisis profundo", "análisis profundo")
         if not any(kw in (user_text or "").lower() for kw in hf_keywords):
             payload["_suppress_hard_facts"] = True
         payload["_wrapper_suppressed"] = True

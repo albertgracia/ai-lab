@@ -335,9 +335,9 @@ def sanitize_text(value):
 def inject_agent_context(payload):
     payload = sanitize_payload_messages(payload)
 
-    # FASE 25: OpenCode production guard
-    if payload.get("_client") == "opencode":
-        payload["_client_profile"] = "opencode"
+    # FASE 25+26: OpenCode/OpenWebUI production guard
+    if payload.get("_client") in ("opencode", "openwebui"):
+        payload["_client_profile"] = payload["_client"]
         tools = payload.get("tools")
         if isinstance(tools, list):
             payload["tools"] = [t for t in tools if (t.get("function", {}).get("name", "") if isinstance(t.get("function"), dict) else "") != "question"]
@@ -877,9 +877,13 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 raw_body.decode("utf-8")
             )
 
-            # FASE 25: detect OpenCode client from headers
-            if "opencode" in str(self.headers.get("User-Agent", "")).lower() or "opencode" in str(self.headers.get("X-AI-LAB-Client", "")).lower():
+            # FASE 25/26: detect OpenCode/OpenWebUI client from headers
+            ua = str(self.headers.get("User-Agent", "")).lower()
+            xclient = str(self.headers.get("X-AI-LAB-Client", "")).lower()
+            if "opencode" in ua or "opencode" in xclient:
                 payload["_client"] = "opencode"
+            elif "openwebui" in ua or "openwebui" in xclient:
+                payload["_client"] = "openwebui"
 
             payload["_request_id"] = _request_id
             payload = inject_agent_context(payload)
