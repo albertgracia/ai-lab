@@ -165,6 +165,78 @@ CREATIVE_REQUESTS_TOTAL = Counter(
     "Peticiones de escritura creativa/longform",
 )
 
+# ── FASE 27.1: latency & throughput ──────────────────────────────
+FIRST_TOKEN_LATENCY = Histogram(
+    "ailab_first_token_latency_ms",
+    "Tiempo hasta el primer token (TTFB)",
+    ["model"],
+    buckets=(50, 100, 250, 500, 1000, 2000, 5000, 10000, 30000),
+)
+REQUEST_TOTAL_LATENCY = Histogram(
+    "ailab_request_total_latency_ms",
+    "Latencia total de request (end-to-end)",
+    ["route_family"],
+    buckets=(50, 100, 250, 500, 1000, 2000, 5000, 10000, 30000),
+)
+COMPLETION_STREAM_DURATION = Histogram(
+    "ailab_completion_stream_duration_ms",
+    "Duracion del stream de completion (ultimo chunk - primer token)",
+    ["model"],
+    buckets=(100, 500, 1000, 2000, 5000, 10000, 20000, 60000),
+)
+COLD_START_TOTAL = Counter(
+    "ailab_cold_start_total",
+    "Cold starts detectados (modelo no estaba en memoria)",
+    ["model"],
+)
+GPU_ACTIVE_REQUESTS = Gauge(
+    "ailab_gpu_active_requests",
+    "Requests activas en GPU (estimado por requests en vuelo)",
+)
+GPU_ESTIMATED_UTILIZATION = Gauge(
+    "ailab_gpu_estimated_utilization_pct",
+    "Utilizacion GPU estimada (requests activas / capacidad concurrente)",
+)
+
+# ── FASE 27.1.1: streaming stabilization ─────────────────────────
+STREAM_CHUNKS_TOTAL = Counter(
+    "ailab_stream_chunks_total",
+    "Chunks SSE emitidos",
+)
+STREAM_EMPTY_CHUNKS = Counter(
+    "ailab_stream_empty_chunks_total",
+    "Chunks SSE vacios",
+)
+STREAM_STALLS = Counter(
+    "ailab_stream_stalls_total",
+    "Stalls de stream (>5s entre chunks)",
+)
+STREAM_FINISH_INCONSISTENT = Counter(
+    "ailab_stream_finish_inconsistent_total",
+    "finish_reason inconsistente en stream",
+)
+
+# ── FASE 27.5: prompt governance ─────────────────────────────────
+PROMPT_CHECKSUM_CHANGES = Counter(
+    "ailab_prompt_checksum_changes_total",
+    "Cambios detectados en prompts versionados",
+    ["prompt_name"],
+)
+
+# ── FASE 27.3: quality guard ─────────────────────────────────────
+QUALITY_SCORE = Histogram(
+    "ailab_quality_score",
+    "Puntuacion de calidad de respuesta",
+    ["route_family"],
+    buckets=(0, 25, 50, 75, 100),
+)
+HALLUCINATION_RISK = Histogram(
+    "ailab_hallucination_risk",
+    "Riesgo de alucinacion estimado",
+    ["route_family"],
+    buckets=(0, 10, 20, 50, 100),
+)
+
 DEFAULT_ROUTE_FAMILIES = (
     "minimal",
     "observe",

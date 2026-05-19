@@ -1523,3 +1523,14 @@ async def api_recall_roi():
             "usefulness_trend": "stable",
         }
     }
+
+
+@app.get("/api/runtime/profiles/status")
+async def api_profiles_status():
+    """FASE 27.6: Estado de congelacion de perfiles cognitivos."""
+    from pathlib import Path as _Path
+    state_path = _Path("/opt/ai-lab/runtime/profiles/profile_manifest_state.json")
+    if state_path.exists():
+        import json as _json
+        return _json.loads(state_path.read_text(encoding="utf-8"))
+    return {"error": "profile_manifest_state.json not found"}

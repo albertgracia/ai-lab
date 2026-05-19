@@ -1033,6 +1033,20 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 timeout=(10, 600),
             )
 
+            # FASE 27.1: track TTFB + request total latency
+            ttfb_ms = int((time.time() - start_time) * 1000)
+            try:
+                from runtime.telemetry.prometheus_metrics import FIRST_TOKEN_LATENCY, REQUEST_TOTAL_LATENCY
+                FIRST_TOKEN_LATENCY.labels(model=selected_model).observe(float(ttfb_ms))
+            except ImportError:
+                pass
+            try:
+                from runtime.telemetry.prometheus_metrics import GPU_ACTIVE_REQUESTS, GPU_ESTIMATED_UTILIZATION
+                GPU_ACTIVE_REQUESTS.inc()
+                GPU_ESTIMATED_UTILIZATION.set(min(100, float(GPU_ACTIVE_REQUESTS._value.get()) / 4.0 * 100))
+            except ImportError:
+                pass
+
             if response.status_code >= 400:
                 error_msg = _response_error_message(response)
                 if "unloaded" in error_msg.lower():
@@ -1048,6 +1062,20 @@ class GatewayHandler(BaseHTTPRequestHandler):
             latency_ms = int(
                 (time.time() - start_time) * 1000
             )
+
+            # FASE 27.1: track total request latency + completion duration
+            try:
+                from runtime.telemetry.prometheus_metrics import REQUEST_TOTAL_LATENCY, COMPLETION_STREAM_DURATION
+                REQUEST_TOTAL_LATENCY.labels(route_family=route_family or "unknown").observe(float(latency_ms))
+                completion_ms = latency_ms - ttfb_ms if 'ttfb_ms' in dir() and ttfb_ms else latency_ms
+                COMPLETION_STREAM_DURATION.labels(model=selected_model).observe(float(completion_ms))
+            except ImportError:
+                pass
+            try:
+                from runtime.telemetry.prometheus_metrics import GPU_ACTIVE_REQUESTS
+                GPU_ACTIVE_REQUESTS.dec()
+            except ImportError:
+                pass
 
             record_routing_decision()
             record_request(
@@ -1093,10 +1121,20 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 base = {"id": chunk_id, "object": "chat.completion.chunk", "model": model_name}
 
                 delta = {"role": "assistant"}
-                if isinstance(message.get("content"), str) and message.get("content"):
+                has_content = isinstance(message.get("content"), str) and message.get("content")
+                if has_content:
                     delta["content"] = message.get("content")
                 if message.get("tool_calls"):
                     delta["tool_calls"] = [repair_tool_call_arguments(tc) for tc in message.get("tool_calls") if isinstance(tc, dict)]
+
+                # FASE 27.1.1: streaming observability
+                try:
+                    from runtime.telemetry.prometheus_metrics import STREAM_CHUNKS_TOTAL, STREAM_EMPTY_CHUNKS
+                    STREAM_CHUNKS_TOTAL.inc()
+                    if not has_content and not message.get("tool_calls"):
+                        STREAM_EMPTY_CHUNKS.inc()
+                except ImportError:
+                    pass
 
                 self.wfile.write(
                     f"data: {json.dumps({**base, 'choices': [{'index': 0, 'delta': delta, 'finish_reason': None}]}, ensure_ascii=False)}\n\n".encode("utf-8")
@@ -1104,6 +1142,13 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 self.wfile.flush()
 
                 finish_reason = first_choice.get("finish_reason", "stop") if isinstance(first_choice, dict) else "stop"
+                # FASE 27.1.1: detect finish_reason inconsistency
+                try:
+                    if not has_content and not message.get("tool_calls") and finish_reason == "stop":
+                        from runtime.telemetry.prometheus_metrics import STREAM_FINISH_INCONSISTENT
+                        STREAM_FINISH_INCONSISTENT.inc()
+                except ImportError:
+                    pass
                 self.wfile.write(
                     f"data: {json.dumps({**base, 'choices': [{'index': 0, 'delta': {}, 'finish_reason': finish_reason}]}, ensure_ascii=False)}\n\n".encode("utf-8")
                 )

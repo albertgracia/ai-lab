@@ -1,0 +1,13 @@
+{
+  "checkpoint": "CP-27-PROFILE-FREEZE",
+  "profiles": {
+    "minimal": {"stable": true, "last_validated": "2026-05-19"},
+    "report": {"stable": true, "last_validated": "2026-05-19"},
+    "coding": {"stable": true, "last_validated": "2026-05-19"},
+    "chat": {"stable": false, "reason": "en evolucion UX"},
+    "observe": {"stable": false, "reason": "en evolucion UX"},
+    "analysis": {"stable": false, "reason": "necesita burn-in"},
+    "agent": {"stable": false, "reason": "tools en evolucion"},
+    "creative": {"stable": false, "reason": "nuevo, en validacion"}
+  }
+}
