@@ -49,30 +49,15 @@ def build_runtime_descriptor() -> RuntimeStateDescriptor:
     return descriptor
 
 
-def build_model_status_map() -> dict[str, ModelStatus]:
-    status_map: dict[str, ModelStatus] = {}
+def build_model_status_map() -> dict[str, str]:
     try:
-        from runtime.state.lmstudio_state import get_models, LMSTUDIO_NODES
-
-        for node in LMSTUDIO_NODES:
-            if node.get("enabled", False) is False:
-                for model_id in node.get("models", []):
-                    status_map[model_id] = ModelStatus.DISABLED
-                continue
-
-            models = get_models(node.get("url", ""))
-            for m in models:
-                model_id = m.get("id", "") or m.get("model", "")
-                if not model_id:
-                    continue
-                if _is_model_actively_serving(m):
-                    status_map[model_id] = ModelStatus.ACTIVE
-                else:
-                    status_map[model_id] = ModelStatus.LOADED
+        from runtime.state.lmstudio_state import get_model_tracker
+        tracker = get_model_tracker()
+        tracker.rebuild_from_nodes()
+        raw = tracker.to_dict()
+        return {k: v["status"] for k, v in raw.items()}
     except Exception:
-        pass
-
-    return status_map
+        return {}
 
 
 def _resolve_maturity_level() -> RuntimeMaturityLevel:

@@ -867,3 +867,21 @@ def record_maturity_phase(phase: str) -> None:
         RUNTIME_MATURITY_PHASE.set(phase_num)
     except (ValueError, AttributeError):
         RUNTIME_MATURITY_PHASE.set(0.0)
+
+
+# ── FASE 30B: Model State Awareness Metrics ────────────
+RUNTIME_MODEL_STATE = Gauge(
+    "ailab_runtime_model_state",
+    "Current operational state per model (0=discoverable, 1=loaded, 2=active, 3=disabled, 4=unavailable)",
+    ["model", "status"],
+)
+
+
+def record_model_state(model_id: str, status: str) -> None:
+    state_map = {
+        "discoverable": 0, "loaded": 1, "active": 2,
+        "disabled": 3, "unavailable": 4,
+    }
+    RUNTIME_MODEL_STATE.labels(model=model_id, status=status).set(
+        float(state_map.get(status, 0))
+    )

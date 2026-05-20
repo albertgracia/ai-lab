@@ -975,6 +975,17 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 self._send_json(500, {"error": "maturity_unavailable", "detail": str(exc)})
             return
 
+        if self.path == "/runtime/models/state":
+            try:
+                from runtime.state.lmstudio_state import get_model_tracker
+                tracker = get_model_tracker()
+                tracker.rebuild_from_nodes()
+                self._send_json(200, tracker.to_dict())
+            except Exception as exc:
+                record_error_legacy(self.path, exc)
+                self._send_json(500, {"error": "models_state_unavailable", "detail": str(exc)})
+            return
+
         if self.path == "/runtime/topology":
             self._send_json(
                 200,
