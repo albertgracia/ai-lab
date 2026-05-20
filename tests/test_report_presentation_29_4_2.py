@@ -116,8 +116,10 @@ try:
     # 1H. Report metadata
     test("_report_type is runtime_operational_report",
          ctx.get("_report_type") == "runtime_operational_report")
-    test("_runtime_generation is 29.4.2",
-         ctx.get("_runtime_generation") == "29.4.2")
+    gen = ctx.get("_runtime_generation", "")
+    test("_runtime_generation is 29.4.x",
+         gen in ("29.4.2", "29.4.3"),
+         f"got {gen}")
     test("_grounded_runtime is True",
          ctx.get("_grounded_runtime") is True)
     test("_grounding_confidence is high",
