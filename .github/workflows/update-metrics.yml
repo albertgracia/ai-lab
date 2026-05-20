@@ -16,8 +16,9 @@ jobs:
           curl -s http://localhost:8084/api/status.json > apps/ialab-docs/public/api/status.json
       - name: Commit and push
         run: |
+          git remote set-url origin git@github.com:albertgracia/ai-lab.git
           git config user.name 'AI-LAB Bot'
           git config user.email 'bot@ai-lab.local'
           git add -f apps/ialab-docs/public/api/
           git diff --cached --quiet || git commit -m 'chore: update public metrics [skip ci]'
-          git push origin main
+          git push origin HEAD:main
