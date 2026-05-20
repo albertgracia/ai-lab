@@ -165,6 +165,8 @@ FASE 21B → de-hardcoding progresivo       ✅ CP-21B-STABLE
 FASE 22A → tool runtime policies          ⏭
 FASE 28.0 → simulation-only mode                        ✅
 FASE 28.1 → planner runtime skeleton                     ✅ CP-28.1-PLANNER-RUNTIME-SKELETON-STABLE
+FASE 28.2 → executor readonly runtime                    ✅ CP-28.2-READONLY-EXECUTOR-STABLE
+FASE 28.2-B → readonly executor burn-in                  ✅ CP-28.2-B-READONLY-BURNIN-STABLE
 FASE 29.4.2 → report presentation fix                    ✅ CP-29.4.2-REPORT-PRESENTATION-STABLE
 ```
 

@@ -54,9 +54,15 @@ from runtime.context.report_runtime_context import format_report_runtime_context
 from runtime.gateway.gateway_metrics import (
     load_metrics,
     record_request,
-    record_error,
+    record_error as record_error_legacy,
 )
-from runtime.telemetry.prometheus_metrics import GOVERNANCE_BLOCKED, GOVERNANCE_BLOCKED_BY_REASON, prime_route_family_metrics, record_route_family_metrics
+from runtime.errors import (
+    build_error_event, emit_error, classify_exception,
+    RuntimeErrorCategory, classify_timeout_stage,
+)
+
+record_error = record_error_legacy  # legacy compat for existing call sites
+from runtime.telemetry.prometheus_metrics import GOVERNANCE_BLOCKED, GOVERNANCE_BLOCKED_BY_REASON, TOOL_PARALLEL_BLOCKED, prime_route_family_metrics, record_route_family_metrics
 from prometheus_client import generate_latest as prom_generate_latest, REGISTRY as prom_REGISTRY
 from collections import defaultdict
 import threading
@@ -92,6 +98,20 @@ except ImportError:
     _circuit_breakers = None
     _HAVE_SLO = False
 
+
+def _slo_is_enabled() -> bool:
+    return os.environ.get("AI_LAB_ENABLE_SLO_ENFORCEMENT", "false").lower() in ("true", "1", "yes")
+
+
+_DISABLED_SLO_PAYLOAD = {
+    "enabled": False,
+    "state": "disabled",
+    "mode": "passive",
+    "enforcement": False,
+    "reason": "slo_enforcement_disabled",
+}
+
+
 # ── FASE 28.1: Planner Runtime Skeleton ──
 os.environ.setdefault("AI_LAB_ENABLE_PLANNER", "false")
 os.environ.setdefault("AI_LAB_PLANNER_DRY_RUN", "true")
@@ -106,8 +126,35 @@ except ImportError:
     _planner = None  # type: ignore[assignment]
     _HAVE_PLANNER = False
 
+# ── FASE 28.2: Executor Readonly Runtime ──
+try:
+    from runtime.agentic.readonly_executor import RealReadonlyExecutor, ENABLE_EXECUTOR as _EXECUTOR_ENABLED, DRY_RUN as _EXECUTOR_DRY_RUN
+    from runtime.agentic.execution_context import RuntimeExecutionContext, ExecutionMode, DryRunReason
+    _HAVE_EXECUTOR = True
+except ImportError:
+    _RealReadonlyExecutor = None  # type: ignore[assignment]
+    _HAVE_EXECUTOR = False
+
+# ── FASE 28.3: Sandbox Write Runtime ──
+os.environ.setdefault("AI_LAB_ENABLE_SANDBOX_WRITE", "false")
+
+try:
+    from runtime.agentic.sandbox_executor import SandboxWriteExecutor, ENABLE_SANDBOX_WRITE as _SANDBOX_ENABLED, DRY_RUN as _SANDBOX_DRY_RUN
+    from runtime.agentic.mutation_context import MutationExecutionContext
+    _HAVE_SANDBOX_EXECUTOR = True
+except ImportError:
+    _SandboxWriteExecutor = None  # type: ignore[assignment]
+    _HAVE_SANDBOX_EXECUTOR = False
+
 AI_LAB_ENABLE_PLANNER = os.environ.get("AI_LAB_ENABLE_PLANNER", "false").lower() == "true"
 AI_LAB_PLANNER_DRY_RUN = os.environ.get("AI_LAB_PLANNER_DRY_RUN", "true").lower() != "false"
+AI_LAB_ENABLE_SANDBOX_WRITE = os.environ.get("AI_LAB_ENABLE_SANDBOX_WRITE", "false").lower() == "true"
+
+
+def _has_sandbox_intents(intents: list) -> bool:
+    from runtime.agentic.sandbox_registry import SANDBOX_WRITE_INTENTS
+    return any(getattr(i, "intent", "") in SANDBOX_WRITE_INTENTS for i in intents)
+
 
 _warmed_models = set()
 
@@ -450,47 +497,17 @@ def inject_agent_context(payload):
             if _HAVE_PROFILE_METRICS:
                 record_profile_metrics(profile, route.family, payload.get("model", "?"))
     except Exception:
-        pass
+            emit_error(build_error_event(
+                RuntimeError("format_report_runtime_context failed"),
+                category=RuntimeErrorCategory.GATEWAY_INTERNAL,
+                origin_stage="reporting", component="gateway",
+                source_file=__file__,
+            ))
 
-    try:
-        from runtime.audit.audit_logger import audit_event
-        audit_event(
-            "route_family_selected",
-            {
-                "family": route.family,
-                "variant": route.variant,
-                "reason": route.reason,
-                "model": payload.get("model", "default"),
-                "mode": mode_name,
-            },
-        )
-    except ImportError:
-        pass
-
-    if payload.get("_profile_source") == "profile_loader":
-        try:
-            from runtime.audit.audit_logger import audit_event
-            audit_event("profile_applied", {
-                "profile": payload.get("_profile", "unknown"),
-                "version": payload.get("_profile_version", "0"),
-                "source": "profile_loader",
-                "route": route.family,
-                "model": payload.get("model", "unknown"),
-                "max_tokens": payload.get("max_tokens", 0),
-                "temperature": payload.get("temperature", 0),
-                "tools_allowed": "tools" in payload,
-                "_request_id": payload.get("_request_id", ""),
-                "_trace_family": payload.get("_trace_family", ""),
-            })
-        except ImportError:
-            pass
-
-    _report_runtime = None
-    _report_grounded_target = None
     if route.family in ("minimal", "report") and route.variant in ("report", "heavy"):
         try:
-            _report_runtime = format_report_runtime_context()
             _report_grounded_target = extract_target_ip(user_text)
+            _report_runtime = format_report_runtime_context(target_ip=_report_grounded_target)
             payload["_report_grounded"] = True
             if _report_grounded_target:
                 payload["_report_grounded_target"] = _report_grounded_target
@@ -498,12 +515,18 @@ def inject_agent_context(payload):
                 from runtime.telemetry.prometheus_metrics import (
                     REPORT_GROUNDING_TOTAL, REPORT_MISSING_FIELDS_TOTAL,
                     REPORT_TARGET_IP_TOTAL, REPORT_UNGROUNDED_TOTAL,
+                    REPORT_RUNTIME_IDENTITY_MATCH,
+                    REPORT_RUNTIME_IDENTITY_MISMATCH,
                 )
                 REPORT_GROUNDING_TOTAL.inc()
                 if _report_grounded_target:
                     REPORT_TARGET_IP_TOTAL.inc()
                 import json as _json
                 _ctx = _json.loads(_report_runtime)
+                if _ctx.get("target_runtime_match"):
+                    REPORT_RUNTIME_IDENTITY_MATCH.inc()
+                elif _ctx.get("target_runtime_ip"):
+                    REPORT_RUNTIME_IDENTITY_MISMATCH.inc()
                 _miss = _ctx.get("missing_fields", [])
                 if _miss:
                     REPORT_MISSING_FIELDS_TOTAL.labels(count=str(len(_miss))).inc()
@@ -650,6 +673,17 @@ def sanitize_completion_response(data):
                 message["tool_calls"] = [repair_tool_call_arguments(tc) for tc in safe_tool_calls if isinstance(tc, dict)]
                 message["content"] = None
 
+        # FASE 29.4.4-D: normalize >1 tool_calls to single call
+        final_calls = message.get("tool_calls")
+        if isinstance(final_calls, list) and len(final_calls) > 1:
+            TOOL_PARALLEL_BLOCKED.inc()
+            emit_error(build_error_event(
+                RuntimeError("parallel tool calls blocked"),
+                category=RuntimeErrorCategory.TOOL_PARALLEL_UNSUPPORTED,
+                origin_stage="governance", component="gateway",
+            ))
+            message["tool_calls"] = [final_calls[0]]
+
         message.pop("reasoning_content", None)
 
         content = message.get("content", "")
@@ -787,12 +821,12 @@ class GatewayHandler(BaseHTTPRequestHandler):
             )
             return
 
-        # FASE 29.4: SLO health endpoint
+        # FASE 29.4.4-C: SLO health endpoint — always responds 200
         if self.path == "/slo/health":
-            if _HAVE_SLO:
+            if _HAVE_SLO and _slo_is_enabled():
                 self._send_json(200, _slo_manager.get_runtime_health())
             else:
-                self._send_json(503, {"error": "slo_module_unavailable"})
+                self._send_json(200, _DISABLED_SLO_PAYLOAD)
             return
 
         if self.path == "/metrics":
@@ -982,10 +1016,11 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 )
 
             except Exception as exc:
-                record_error(
-                    self.path,
-                    exc,
-                )
+                record_error_legacy(self.path, exc)
+                emit_error(build_error_event(
+                    exc, origin_stage="upstream", component="gateway",
+                    source_file=__file__, slo_impact=True,
+                ))
 
                 self._send_json(
                     502,
@@ -1163,6 +1198,14 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     record_disabled_model_selection(original, "disabled_model_redirect")
                 except ImportError:
                     pass
+                emit_error(build_error_event(
+                    RuntimeError(f"disabled model {original} redirected to {selected_model}"),
+                    category=RuntimeErrorCategory.MODEL_DISABLED,
+                    origin_stage="routing", component="gateway",
+                    source_file=__file__,
+                    model=selected_model, route_type=route_family,
+                    slo_impact=False,
+                ))
 
             # FASE 29.4: Degradation-based model override
             if _HAVE_SLO:
@@ -1208,6 +1251,8 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 upstream_payload["stream"] = True
             else:
                 upstream_payload.pop("stream", None)
+
+            upstream_payload["parallel_tool_calls"] = False
 
             response = requests.post(
                 f"{get_active_backend()['url']}/chat/completions",
@@ -1351,7 +1396,13 @@ class GatewayHandler(BaseHTTPRequestHandler):
                         if _HAVE_SLO and chunk_count and chunk_count > 0:
                             _circuit_breakers.record_success(selected_model)
                     except Exception as exc:
-                        record_error(self.path, exc)
+                        record_error_legacy(self.path, exc)
+                        emit_error(build_error_event(
+                            exc, origin_stage="streaming", component="gateway",
+                            source_file=__file__, streaming=True,
+                            model=selected_model, route_type=route_family,
+                            slo_impact=True, latency_ms=latency_ms,
+                        ))
                         record_route_family_metrics(route_family, count=False, latency_ms=latency_ms, error=True)
                         if _HAVE_SLO:
                             _circuit_breakers.record_failure(selected_model)
@@ -1361,7 +1412,13 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 try:
                     data = response.json()
                 except Exception as exc:
-                    record_error(self.path, exc)
+                    record_error_legacy(self.path, exc)
+                    emit_error(build_error_event(
+                        exc, category=RuntimeErrorCategory.UPSTREAM_INVALID_RESPONSE,
+                        origin_stage="upstream", component="gateway",
+                        source_file=__file__, streaming=False,
+                        model=selected_model, route_type=route_family,
+                    ))
                     record_route_family_metrics(route_family, count=False, latency_ms=latency_ms, error=True)
                     self._send_json(502, {"error": "gateway_stream_decode_failed", "detail": str(exc)})
                     return
@@ -1430,7 +1487,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
 
             data = sanitize_completion_response(data)
 
-            # FASE 28.0: Agentic Pipeline (simulation-only) — BEFORE sending response
+            # FASE 28.2: Agentic Pipeline — READONLY EXECUTION — BEFORE sending response
             _agentic_content = ""
             _agentic_choices = data.get("choices", [])
             for _ac in _agentic_choices:
@@ -1451,7 +1508,9 @@ class GatewayHandler(BaseHTTPRequestHandler):
                         record_agentic_plan, record_agentic_dry_run,
                         record_agentic_risk_score, record_agentic_execution,
                         record_agentic_action, record_agentic_execution_duration,
+                        record_executor_dry_run, record_executor_validation_failure,
                     )
+                    from runtime.agentic.execution_context import RuntimeExecutionContext, ExecutionMode, DryRunReason
 
                     plan = Planner.plan(intents, request_id=payload.get("_request_id", ""))
                     record_agentic_plan(route_family or "unknown", len(intents))
@@ -1466,17 +1525,63 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     timeline.add_event("plan_generated", "planning", {"intent_count": len(intents)})
                     timeline.add_event("dry_run_completed", "evaluated", dry_run.to_dict())
 
+                    _simulation_only = True
+                    _execution_dry_run = True
+                    _dry_run_reason = DryRunReason.FEATURE_FLAG.value
+
                     if dry_run.blocked:
                         timeline.transition(WorkflowState.FAILED)
                     elif dry_run.requires_approval:
                         timeline.transition(WorkflowState.AWAITING_APPROVAL)
+                    elif AI_LAB_ENABLE_SANDBOX_WRITE and _HAVE_SANDBOX_EXECUTOR and _has_sandbox_intents(intents):
+                        _execution_dry_run = False
+                        _simulation_only = False
+                        _dry_run_reason = None
+                        ctx = MutationExecutionContext(
+                            execution_id=plan.plan_id[:8] if plan.plan_id else "",
+                            mode=ExecutionMode.SANDBOX_WRITE,
+                            dry_run=False,
+                            phase="28.3",
+                        )
+                        execution = SandboxWriteExecutor.execute(plan, timeline, ctx=ctx)
+                        record_agentic_execution("completed", "sandbox_write")
+                        for ar in execution.actions_results:
+                            record_agentic_action(ar.tool, ar.status, ar.intent)
+                        record_agentic_execution_duration("sandbox_write", execution.total_duration_ms)
+                        verifier = Verifier.verify(plan, dry_run, execution)
+                        timeline.add_event("verifier_completed", "done", verifier.to_dict())
+                    elif AI_LAB_ENABLE_PLANNER and not AI_LAB_PLANNER_DRY_RUN and _HAVE_EXECUTOR:
+                        _execution_dry_run = False
+                        _simulation_only = False
+                        _dry_run_reason = None
+                        ctx = RuntimeExecutionContext(
+                            execution_id=plan.plan_id[:8] if plan.plan_id else "",
+                            mode=ExecutionMode.READONLY,
+                            dry_run=False,
+                        )
+                        execution = RealReadonlyExecutor.execute(plan, timeline, ctx=ctx)
+                        record_agentic_execution("completed", "readonly")
+                        for ar in execution.actions_results:
+                            record_agentic_action(ar.tool, ar.status, ar.intent)
+                        record_agentic_execution_duration("readonly", execution.total_duration_ms)
+                        verifier = Verifier.verify(plan, dry_run, execution)
+                        timeline.add_event("verifier_completed", "done", verifier.to_dict())
                     else:
-                        execution = SimulationExecutor.execute(plan, timeline)
+                        # Dry-run / simulation-only path
+                        if AI_LAB_PLANNER_DRY_RUN:
+                            _dry_run_reason = DryRunReason.READONLY_PHASE.value
+                        ctx = RuntimeExecutionContext(
+                            execution_id=plan.plan_id[:8] if plan.plan_id else "",
+                            mode=ExecutionMode.READONLY,
+                            dry_run=True,
+                            dry_run_reason=_dry_run_reason,
+                        )
+                        execution = SimulationExecutor.execute_with_context(plan, timeline, ctx)
                         record_agentic_execution("simulated_success", "simulation_only")
+                        record_executor_dry_run(_dry_run_reason)
                         for ar in execution.actions_results:
                             record_agentic_action(ar.tool, ar.status, ar.intent)
                         record_agentic_execution_duration("simulating", execution.total_duration_ms)
-
                         verifier = Verifier.verify(plan, dry_run, execution)
                         timeline.add_event("verifier_completed", "done", verifier.to_dict())
 
@@ -1494,12 +1599,22 @@ class GatewayHandler(BaseHTTPRequestHandler):
                             "intent_count": len(intents),
                             "risk": dry_run.overall_risk,
                             "blocked": dry_run.blocked,
-                            "simulation_only": True,
+                            "simulation_only": _simulation_only,
+                            "execution_mode": ctx.mode.value if ctx else "readonly",
+                            "dry_run": _execution_dry_run,
+                            "dry_run_reason": _dry_run_reason,
                         })
                     except ImportError:
                         pass
             except Exception as e:
                 print(f"AGENTIC ERROR: {e}", flush=True)
+                emit_error(build_error_event(
+                    e, category=RuntimeErrorCategory.WORKFLOW_INVALID_STATE,
+                    origin_stage="agentic", component="gateway",
+                    source_file=__file__,
+                    model=selected_model if 'selected_model' in dir() else None,
+                    route_type=route_family, slo_impact=False,
+                ))
 
             self._send_json(
                 response.status_code,
@@ -1571,7 +1686,15 @@ class GatewayHandler(BaseHTTPRequestHandler):
             if _HAVE_SLO and 'selected_model' in dir() and selected_model:
                 _circuit_breakers.record_failure(selected_model)
                 _slo_state.record_timeout(True)
-            record_error(self.path, exc)
+            record_error_legacy(self.path, exc)
+            _stage = classify_timeout_stage(exc)
+            emit_error(build_error_event(
+                exc, origin_stage=_stage, component="gateway",
+                source_file=__file__, streaming=stream_enabled,
+                model=selected_model if 'selected_model' in dir() else None,
+                route_type=route_family, slo_impact=True,
+                latency_ms=latency_ms,
+            ))
             record_route_family_metrics(route_family, count=False, latency_ms=latency_ms, error=True)
             self._send_json(502, {"error": "backend_unreachable", "detail": str(exc)})
             try:
@@ -1587,7 +1710,14 @@ class GatewayHandler(BaseHTTPRequestHandler):
             latency_ms = int((time.time() - start_time) * 1000)
             if _HAVE_SLO and 'selected_model' in dir() and selected_model:
                 _circuit_breakers.record_failure(selected_model)
-            record_error(self.path, exc)
+            record_error_legacy(self.path, exc)
+            emit_error(build_error_event(
+                exc, origin_stage="gateway", component="gateway",
+                source_file=__file__, streaming=stream_enabled,
+                model=selected_model if 'selected_model' in dir() else None,
+                route_type=route_family, slo_impact=True,
+                latency_ms=latency_ms,
+            ))
             record_route_family_metrics(route_family, count=False, latency_ms=latency_ms, error=True)
             self._send_json(500, {"error": "gateway_error", "detail": str(exc)})
             try:

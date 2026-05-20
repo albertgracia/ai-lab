@@ -131,6 +131,10 @@ TOOL_EMPTY_ARGUMENTS = Counter(
     "ailab_tool_empty_arguments_total",
     "Bash tools bloqueadas por arguments vacios",
 )
+TOOL_PARALLEL_BLOCKED = Counter(
+    "ailab_tool_parallel_call_blocked_total",
+    "Parallel tool calls blocked — model only supports single calls",
+)
 TOOL_QUESTION_STRIPPED = Counter(
     "ailab_tool_question_stripped_total",
     "Veces que se elimino la question tool del payload",
@@ -615,6 +619,18 @@ REPORT_UNGROUNDED_TOTAL = Counter(
     [],
 )
 
+# ── FASE 29.4.3: Runtime Identity Grounding Metrics ────────────
+REPORT_RUNTIME_IDENTITY_MATCH = Counter(
+    "ailab_report_runtime_identity_match_total",
+    "Report requests where target IP matches primary runtime IP",
+    [],
+)
+REPORT_RUNTIME_IDENTITY_MISMATCH = Counter(
+    "ailab_report_runtime_identity_mismatch_total",
+    "Report requests where target IP does NOT match primary runtime IP",
+    [],
+)
+
 # ── FASE 29.4.2: Report Presentation Classification Metrics ────
 REPORT_MODEL_CLASSIFICATION_TOTAL = Counter(
     "ailab_report_model_classification_total",
@@ -631,6 +647,131 @@ REPORT_DATA_QUALITY_TOTAL = Counter(
     "Report data quality level: complete/partial/minimal",
     ["quality"],
 )
+
+# ── FASE 28.2: Executor Readonly Runtime Metrics ────────────
+EXECUTOR_COMMANDS_TOTAL = Counter(
+    "ailab_executor_commands_total",
+    "Comandos ejecutados por el readonly executor",
+    ["result", "risk"],
+)
+EXECUTOR_BLOCKED_TOTAL = Counter(
+    "ailab_executor_blocked_total",
+    "Comandos bloqueados por el executor",
+    ["reason"],
+)
+EXECUTOR_GOVERNANCE_BLOCKS = Counter(
+    "ailab_executor_governance_blocks_total",
+    "Acciones bloqueadas por governance del executor",
+    ["intent"],
+)
+EXECUTOR_DRY_RUN_TOTAL = Counter(
+    "ailab_executor_dry_run_total",
+    "Dry-runs del executor por modo",
+    ["reason"],
+)
+EXECUTOR_DURATION = Histogram(
+    "ailab_executor_duration_ms",
+    "Duracion de ejecucion del executor",
+    ["mode"],
+    buckets=(10, 50, 100, 500, 1000, 5000, 15000, 30000),
+)
+EXECUTOR_VALIDATION_FAILURES = Counter(
+    "ailab_executor_validation_failures_total",
+    "Fallos de validacion de comandos en el executor",
+    ["reason"],
+)
+
+# ── FASE 28.2: Recorders ───────────────────────────────────
+
+def record_executor_command(result: str, risk: str) -> None:
+    EXECUTOR_COMMANDS_TOTAL.labels(result=result, risk=risk).inc()
+
+
+def record_executor_blocked(reason: str) -> None:
+    EXECUTOR_BLOCKED_TOTAL.labels(reason=reason).inc()
+
+
+def record_executor_governance_block(intent: str) -> None:
+    EXECUTOR_GOVERNANCE_BLOCKS.labels(intent=intent).inc()
+
+
+def record_executor_dry_run(reason: str) -> None:
+    EXECUTOR_DRY_RUN_TOTAL.labels(reason=reason).inc()
+
+
+def record_executor_duration(mode: str, duration_ms: float) -> None:
+    EXECUTOR_DURATION.labels(mode=mode).observe(float(duration_ms))
+
+
+def record_executor_validation_failure(reason: str) -> None:
+    EXECUTOR_VALIDATION_FAILURES.labels(reason=reason).inc()
+
+
+# ── FASE 28.3: Sandbox Write Runtime Metrics ─────────────
+SANDBOX_MUTATIONS_TOTAL = Counter(
+    "ailab_sandbox_mutations_total",
+    "Mutaciones ejecutadas en el sandbox",
+    ["type", "result"],
+)
+SANDBOX_ROLLBACKS_TOTAL = Counter(
+    "ailab_sandbox_rollbacks_total",
+    "Rollbacks ejecutados en el sandbox",
+    ["reason"],
+)
+SANDBOX_POLICY_DENIED_TOTAL = Counter(
+    "ailab_sandbox_policy_denied_total",
+    "Operaciones sandbox denegadas por governance",
+    ["intent", "reason"],
+)
+SANDBOX_ARTIFACTS_TOTAL = Gauge(
+    "ailab_sandbox_artifacts_total",
+    "Numero total de artefactos registrados en el sandbox",
+)
+SANDBOX_ESCAPE_ATTEMPTS_TOTAL = Counter(
+    "ailab_sandbox_escape_attempts_total",
+    "Intentos de escape del sandbox detectados",
+    ["detection_method"],
+)
+SANDBOX_CHECKSUM_MISMATCH_TOTAL = Counter(
+    "ailab_sandbox_checksum_mismatch_total",
+    "Checksums que no coinciden tras restore en sandbox",
+)
+SANDBOX_MUTATION_DURATION_SECONDS = Histogram(
+    "ailab_sandbox_mutation_duration_seconds",
+    "Duracion de las mutaciones sandbox",
+    ["type"],
+    buckets=(0.01, 0.05, 0.1, 0.5, 1.0, 2.0, 5.0),
+)
+
+# ── FASE 28.3: Recorders ────────────────────────────────
+
+def record_sandbox_mutation(mutation_type: str, result: str) -> None:
+    SANDBOX_MUTATIONS_TOTAL.labels(type=mutation_type, result=result).inc()
+
+
+def record_sandbox_rollback(reason: str) -> None:
+    SANDBOX_ROLLBACKS_TOTAL.labels(reason=reason).inc()
+
+
+def record_sandbox_policy_denied(intent: str, reason: str) -> None:
+    SANDBOX_POLICY_DENIED_TOTAL.labels(intent=intent, reason=reason).inc()
+
+
+def record_sandbox_artifact() -> None:
+    SANDBOX_ARTIFACTS_TOTAL.inc()
+
+
+def record_sandbox_escape_attempt(method: str) -> None:
+    SANDBOX_ESCAPE_ATTEMPTS_TOTAL.labels(detection_method=method).inc()
+
+
+def record_sandbox_checksum_mismatch() -> None:
+    SANDBOX_CHECKSUM_MISMATCH_TOTAL.inc()
+
+
+def record_sandbox_mutation_duration(mutation_type: str, seconds: float) -> None:
+    SANDBOX_MUTATION_DURATION_SECONDS.labels(type=mutation_type).observe(float(seconds))
+
 
 # ── FASE 29.3.1: Routing Tightening Recorders ──
 
