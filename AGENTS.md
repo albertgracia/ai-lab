@@ -399,18 +399,19 @@ FASE 29.4.4-B → error taxonomy burn-in (147/148)          ✅ CP-29.4.4-B-ERRO
 FASE 29.4.4-C → SLO health endpoint always-on             ✅ CP-29.4.4-C-SLO-HEALTH-ENDPOINT-STABLE
 FASE 29.4.4-D → parallel tool call hardening                ✅ CP-29.4.4-D-PARALLEL-TOOLCALL-HARDENING-STABLE
 FASE 30A → runtime state foundation & maturity descriptors  ✅ CP-30A-RUNTIME-STATE-FOUNDATION-STABLE
+FASE 30B → model state awareness (active/loaded/discoverable) ✅ CP-30B-MODEL-STATE-AWARE-STABLE
 ```
 
-Tags git: 28 tags desde `CP-21B-STABLE` hasta `CP-30A-RUNTIME-STATE-FOUNDATION-STABLE`.
+Tags git: 29 tags desde `CP-21B-STABLE` hasta `CP-30B-MODEL-STATE-AWARE-STABLE`.
 
 **Deuda saldada:** FASE 29.4.4-C — `/slo/health` ahora responde 200 siempre, con payload disabled cuando enforcement=false.
 
 ## Próximo: Runtime Maturity Before Multi-GPU (Prioridad cambiada 20/05/26)
 
 **Checkpoint actual:** "Runtime Operational Identity"
-**Estado:** 🟢 Runtime estable | 🟢 Governance estable | 🟢 Taxonomy estable | 🟢 Burn-in estable | 🟢 Runtime state foundation (FASE 30A) | 🟡 Model state (30B) + Degraded mode (30C) pendientes | 🔵 Multi-GPU postergado
+**Estado:** 🟢 Runtime estable | 🟢 Governance estable | 🟢 Taxonomy estable | 🟢 Burn-in estable | 🟢 Runtime state foundation (FASE 30A) | 🟢 Model state awareness (FASE 30B) | 🟡 Degraded mode (30C) pendiente | 🔵 Multi-GPU postergado
 
-**Razón:** FASE 30A completada — runtime ya tiene identidad operacional: `RuntimeStateDescriptor`, `runtime_generation`, `TemporalState`, endpoint `/runtime/maturity`, y 2 métricas Prometheus. RULE-30A-1 (active≠loaded) y RULE-30A-2 (temporal awareness) establecidas como principios arquitectónicos.
+**Razón:** FASE 30A + 30B completadas — runtime tiene identidad operacional y estado de modelos. RULE-30B-1 a 30B-6 establecidas. `ModelStatusTracker` con TTL, alias normalization, DISABLED priority. 29 tags git.
 
 ### FASES PRIORITARIAS (próxima sesión)
 
