@@ -1530,6 +1530,89 @@ async def api_recall_roi():
     }
 
 
+# ═══════════════════════════════════════════════════════════════════
+# FASE 28.2 — Executor Readonly Runtime Endpoints
+# ═══════════════════════════════════════════════════════════════════
+
+@app.get("/agentic/executions")
+async def agentic_executions(limit: int = 50):
+    """FASE 28.2: Read execution audit trail."""
+    from runtime.agentic.execution_audit import read_execution_audit
+    entries = read_execution_audit(limit=limit)
+    return {
+        "count": len(entries),
+        "entries": entries,
+        "generated_at": int(time.time()),
+    }
+
+
+@app.get("/agentic/executions/stats")
+async def agentic_executions_stats():
+    """FASE 28.2: Execution audit statistics."""
+    from runtime.agentic.execution_audit import get_audit_stats
+    return get_audit_stats()
+
+
+@app.get("/agentic/state")
+async def agentic_state():
+    """FASE 28.2: Current executor runtime state."""
+    from runtime.agentic.execution_context import CURRENT_EXECUTION_MODE
+    from runtime.agentic.readonly_executor import ENABLE_EXECUTOR, DRY_RUN
+    return {
+        "execution_mode": CURRENT_EXECUTION_MODE.value,
+        "executor_enabled": ENABLE_EXECUTOR,
+        "dry_run": DRY_RUN,
+        "phase": "28.3",
+        "safe_commands_count": 0,
+        "blocked_commands_count": 0,
+        "generated_at": int(time.time()),
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════
+# FASE 28.3 — Sandbox Write Runtime Endpoints
+# ═══════════════════════════════════════════════════════════════════
+
+@app.get("/agentic/artifacts")
+async def agentic_artifacts(limit: int = 50):
+    """FASE 28.3: List sandbox artifacts."""
+    from runtime.agentic.artifact_registry import ArtifactRegistry
+    entries = ArtifactRegistry.list(limit=limit)
+    return {
+        "count": len(entries),
+        "entries": entries,
+        "generated_at": int(time.time()),
+    }
+
+
+@app.get("/agentic/artifacts/{artifact_id}")
+async def agentic_artifact(artifact_id: str):
+    """FASE 28.3: Get specific artifact by ID."""
+    from runtime.agentic.artifact_registry import ArtifactRegistry
+    entry = ArtifactRegistry.get(artifact_id)
+    if entry is None:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail=f"artifact {artifact_id} not found")
+    return {
+        "artifact": entry,
+        "lineage": ArtifactRegistry.get_lineage(artifact_id),
+        "generated_at": int(time.time()),
+    }
+
+
+@app.get("/agentic/rollback/{workflow_id}")
+async def agentic_rollback_info(workflow_id: str):
+    """FASE 28.3: Get rollback info for a workflow."""
+    from runtime.agentic.artifact_registry import ArtifactRegistry
+    artifacts = ArtifactRegistry.get_by_workflow(workflow_id)
+    return {
+        "workflow_id": workflow_id,
+        "artifact_count": len(artifacts),
+        "rollback_available": any(a.get("checksum_sha256", "") for a in artifacts),
+        "generated_at": int(time.time()),
+    }
+
+
 @app.get("/api/runtime/profiles/status")
 async def api_profiles_status():
     """FASE 27.6: Estado de congelacion de perfiles cognitivos."""
