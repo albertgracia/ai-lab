@@ -12,6 +12,11 @@ import os
 import time
 import threading
 
+from runtime.errors import (
+    build_error_event, emit_error,
+    RuntimeErrorCategory,
+)
+
 FEATURE_FLAG = "AI_LAB_REAL_STREAMING"
 
 # FASE 29.4: MAX_CONCURRENT_STREAMS can be overridden by adaptive concurrency
@@ -25,6 +30,10 @@ _streams_lock = threading.Lock()
 _total_streams = 0
 _interrupted_streams = 0
 _override_max_streams: int | None = None
+
+_AI_LAB_ERROR_TIMEOUT_ENFORCEMENT = os.environ.get(
+    "AI_LAB_ERROR_TIMEOUT_ENFORCEMENT", "false"
+).lower() == "true"
 
 
 def is_real_streaming_enabled() -> bool:
@@ -88,6 +97,13 @@ def relay_stream(upstream, handler, model: str = "unknown"):
         handler.wfile.write(b"data: [DONE]\n\n")
         handler.wfile.flush()
         _interrupted_streams += 1
+        emit_error(build_error_event(
+            RuntimeError("stream_limit_exceeded: too many concurrent streams"),
+            category=RuntimeErrorCategory.STREAM_BACKPRESSURE,
+            origin_stage="streaming", component="stream_sanitizer",
+            source_file=__file__, streaming=True,
+            model=model,
+        ))
         return
 
     _total_streams += 1
@@ -108,6 +124,15 @@ def relay_stream(upstream, handler, model: str = "unknown"):
                     record_stream_first_chunk(model, first_chunk_ms)
                 except ImportError:
                     pass
+                # DRY RUN: observe first_chunk timeout without cutting stream
+                if first_chunk_ms > FIRST_CHUNK_TIMEOUT_SEC * 1000:
+                    emit_error(build_error_event(
+                        RuntimeError(f"first_chunk_timeout: {first_chunk_ms}ms > {FIRST_CHUNK_TIMEOUT_SEC}s"),
+                        category=RuntimeErrorCategory.LMSTUDIO_TIMEOUT,
+                        origin_stage="streaming", component="stream_sanitizer",
+                        source_file=__file__, streaming=True,
+                        model=model, latency_ms=first_chunk_ms,
+                    ))
 
             handler.wfile.write(chunk)
             handler.wfile.flush()
@@ -120,10 +145,22 @@ def relay_stream(upstream, handler, model: str = "unknown"):
                 _interrupted_streams += 1
                 break
 
-    except (BrokenPipeError, ConnectionResetError, OSError):
+    except (BrokenPipeError, ConnectionResetError, OSError) as exc:
         _interrupted_streams += 1
-    except Exception:
+        emit_error(build_error_event(
+            exc, category=RuntimeErrorCategory.CLIENT_DISCONNECT,
+            origin_stage="streaming", component="stream_sanitizer",
+            source_file=__file__, streaming=True,
+            model=model,
+        ))
+    except Exception as exc:
         _interrupted_streams += 1
+        emit_error(build_error_event(
+            exc, category=RuntimeErrorCategory.STREAM_INTERRUPTED,
+            origin_stage="streaming", component="stream_sanitizer",
+            source_file=__file__, streaming=True,
+            model=model,
+        ))
         try:
             handler.wfile.write(b"data: [STREAM_ERROR]\n\n")
             handler.wfile.flush()
