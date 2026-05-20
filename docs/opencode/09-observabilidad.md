@@ -1,5 +1,5 @@
 # INFORME DE IMPLEMENTACIÓN: Stack de Observabilidad AI-LAB
-## Grafana 12.0.2 + Node Exporter + cAdvisor + Prometheus/Loki
+## Grafana 13.0.1 + Node Exporter + cAdvisor + Prometheus/Loki
 ### Fecha: 13 de mayo de 2026
 
 ---
@@ -8,13 +8,20 @@
 
 | Componente | Estado | Puerto | Versión |
 |-----------|--------|--------|---------|
-| **Grafana** | ✅ Operativo | 3001 | 12.0.2 |
+| **Grafana** | ✅ Operativo | 3000 | 13.0.1 |
 | **Node Exporter** | ✅ Operativo | 9100 | v1.9.1 |
 | **cAdvisor** | ✅ Operativo | 8081 | v0.52.1 |
 | **Datasource Prometheus** | ✅ Configurado | → 192.168.1.40:9090 | — |
 | **Datasource Loki** | ✅ Configurado | → 192.168.1.40:3100 | — |
 | **Dashboard Node Exporter Full** | ✅ Importado | ID 1860 | — |
 | **Dashboard cAdvisor** | ✅ Importado | ID 14282 | — |
+
+### Estado actual
+
+- Grafana activo en `http://192.168.1.40:3000`.
+- El Grafana antiguo fue retirado.
+- `promtail` escucha `192.168.1.30:1514/tcp` para `unifi-ids`.
+- Loki recibe `job="unifi-ids"` y los dashboards migrados usan el datasource correcto.
 
 ---
 
@@ -56,8 +63,8 @@
 │  │                                                                  │   │
 │  │  ┌────────────────┐  ┌────────────────┐  ┌──────────────────┐   │   │
 │  │  │   Grafana      │  │  Node Exporter │  │    cAdvisor      │   │   │
-│  │  │   :3001        │  │  :9100         │  │   :8081          │   │   │
-│  │  │   v12.0.2      │  │  v1.9.1        │  │   v0.52.1        │   │   │
+│  │  │   .40:3000     │  │  :9100         │  │   :8081          │   │   │
+│  │  │   v13.0.1      │  │  v1.9.1        │  │   v0.52.1        │   │   │
 │  │  │                │  │                │  │                  │   │   │
 │  │  │  datasources:  │  │  1334 métricas │  │  918 métricas    │   │   │
 │  │  │  → .40:9090 🔗 │  │  CPU/RAM/disco │  │  por contenedor  │   │   │
@@ -90,11 +97,11 @@ mkdir -p /opt/ai-lab/stacks/observability/grafana/data
 ```yaml
 services:
   grafana:
-    image: grafana/grafana:12.0.2
+    image: grafana/grafana:13.0.1
     container_name: grafana
     restart: unless-stopped
     ports:
-      - "3001:3000"
+      - "3000:3000"
     environment:
       TZ: Europe/Madrid
       GF_SECURITY_ADMIN_PASSWORD: "CAMBIAR"
@@ -272,7 +279,7 @@ curl http://localhost:9100/metrics | head -5
 curl http://localhost:8081/metrics | head -5
 
 # Grafana
-curl http://localhost:3001/api/health
+curl http://192.168.1.40:3000/api/health
 ```
 
 ### 5.3. Targets en Prometheus
@@ -285,7 +292,7 @@ Buscar: ai-lab-node, ai-lab-cadvisor → deben aparecer UP
 ### 5.4. Acceso a Grafana
 
 ```
-URL:  http://192.168.1.30:3001
+URL:  http://192.168.1.40:3000
 User: admin
 Pass: 19682507 (configurado en docker-compose.yml)
 ```
@@ -375,12 +382,13 @@ El 13/05/2026 se migraron 6 dashboards desde `labrazahome.grafana.net` a Grafana
 |-----|--------|-----------|
 | **docker** | Docker service discovery via socket | Logs de todos los contenedores (traefik, ollama, qdrant, open-webui, portainer, grafana, node-exporter, cadvisor) |
 | **journald** | Lectura de `/var/log/journal` | Logs del sistema Ubuntu (systemd, sshd, cron, kernel) |
-| **unifi-ids** | Syslog UDP `:1514` → RFC5424 | Eventos de seguridad del Cloud Gateway Fiber (IDS/IPS) |
+| **unifi-ids** | Syslog TCP `:1514` → RFC5424 | Eventos de seguridad del Cloud Gateway Fiber (IDS/IPS) |
 
 ### Correcciones aplicadas
 
 1. **Docker logs:** inicialmente rechazados por Loki por timestamps antiguos (previos al deploy). Resuelto automáticamente tras el primer purge.
-2. **Syslog IDS:** Promtail espera RFC5424 por defecto. UniFi Gateway configurado para enviar a `192.168.1.30:1514` UDP.
+2. **Syslog IDS:** Promtail espera RFC5424 por defecto. UniFi Gateway configurado para enviar a `192.168.1.30:1514` TCP.
+3. **SMART disks NAS-N5:** `smartctl-exporter` reactivado en `192.168.1.200:9633` y el panel de temperaturas de disco restaurado.
 
 ### Origen de los logs
 
@@ -391,7 +399,7 @@ UniFi Gateway (.1)                        NAS-N5 (.250)
        ▼                                        ▼
 ┌─────────────────┐                   ┌─────────────────┐
 │ Promtail :1514   │                   │   Alloy         │
-│ UDP → Loki       │                   │ → Loki (.40)    │
+│ TCP → Loki       │                   │ → Loki (.40)    │
 └────────┬────────┘                   └────────┬────────┘
          │                                     │
          ▼                                     ▼
@@ -548,23 +556,45 @@ cp -r /opt/ai-lab/snapshots/pre-observability-20260513_140622/stacks.backup /opt
 |-----------|--------|
 | Blackbox Exporter (ping, HTTP, TCP checks) | 📋 Planificado |
 | Alertmanager (notificaciones) | 📋 Planificado |
-| GPU exporters (AMD RX7900XT, RX9070 vía WMI) | 📋 Planificado |
+| GPU exporters (AMD RX7900XT, RX9070 vía WMI/PowerShell) | ✅ Operativo |
 | Dashboard personalizado AI-LAB (estado clúster cognitivo) | 📋 Planificado |
 | Alertas de infraestructura (disco, RAM, latencia) | 📋 Planificado |
 | Grafana vía Traefik (HTTPS + dominio) | 📋 Planificado |
 
 ---
 
-## 12. ACCESOS RÁPIDOS
+## 12. CIERRE OPERATIVO
+
+### Cambios resueltos recientemente
+
+- Grafana consolidado en `192.168.1.40:3000`.
+- Eliminado el Grafana antiguo.
+- Corregido `Labrazahome — Logs` con el datasource Loki `fflfh9qp8mxogc`.
+- Corregidos los PromQL inválidos de `AI-LAB Overview`, `AI-LAB Runtime`, `AI-LAB GPUs` y `AI-LAB Infrastructure`.
+- Restaurado `windows_gpu_*` en `.50:9182` activando el collector `gpu` de `windows_exporter`.
+- Restaurado `gpu_metrics.ps1` en `.60:9183` con labels entre comillas y task directa con `powershell.exe`.
+- Verificados `GPU AI Metrics`, `AI-LAB GPUs` y `metricas.labrazahome.com/gpus` con RX9070 + RX7900XT.
+- Ajustado `promtail` para recibir `unifi-ids` por `TCP :1514`.
+
+### Estado final
+
+- Prometheus: `192.168.1.40:9090`.
+- Loki: `192.168.1.40:3100`.
+- Grafana: `192.168.1.40:3000`.
+- `unifi-ids` llega a Loki y se visualiza desde Grafana.
+
+---
+
+## 13. ACCESOS RÁPIDOS
 
 | Servicio | URL |
 |----------|-----|
-| **Grafana** | http://192.168.1.30:3001 (admin / 19682507) |
+| **Grafana** | http://192.168.1.40:3000 (admin / 19682507) |
 | **Prometheus** | http://192.168.1.40:9090 |
 | **Prometheus Targets** | http://192.168.1.40:9090/targets |
 | **Open WebUI** | http://192.168.1.30:3000 |
 | **Portainer** | http://192.168.1.30:9000 |
 | **Loki** | http://192.168.1.40:3100 |
-| **Promtail** | .30:1514/udp (syslog IDS) / .30 (Docker + journald) |
+| **Promtail** | .30:1514/tcp (syslog IDS) / .30 (Docker + journald) |
 | **unpoller** | http://192.168.1.40:9130 |
 | **Dozzle** | http://192.168.1.40:8080 |

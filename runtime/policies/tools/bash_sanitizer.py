@@ -28,6 +28,8 @@ def sanitize_bash_command(command: str, policy: dict) -> tuple[str | None, list[
     """
     if not command or not isinstance(command, str):
         return None, ["empty or invalid command"], False
+    if not command or not isinstance(command, str):
+        return None, ["empty or invalid command"], False
 
     try:
         tokens = shlex.split(command)

@@ -6,7 +6,7 @@
     "minimal": "minimal_prompt.md",
     "casual": "minimal_prompt.md",
     "greeting": "minimal_prompt.md",
-    "report": "minimal_prompt.md",
+    "report": "report_prompt.md",
     "observe": "observe_prompt.md",
     "fast": "chat_prompt.md",
     "general": "chat_prompt.md",

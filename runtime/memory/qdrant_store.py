@@ -16,26 +16,140 @@ try:
 except ImportError:
     _HAVE_REQUESTS = False
 
+try:
+    from runtime.telemetry.prometheus_metrics import (
+        EMBEDDING_INPUT_CHARS,
+        EMBEDDING_TRUNCATIONS,
+        RECALL_QUERY_CHARS,
+    )
+except ImportError:
+    EMBEDDING_INPUT_CHARS = None
+    EMBEDDING_TRUNCATIONS = None
+    RECALL_QUERY_CHARS = None
+
 # ── config (overridable via env) ──────────────────────────────────────
 QDRANT_HOST = "http://127.0.0.1:6333"
 LM_STUDIO_EMBED_URL = "http://192.168.1.50:1234/v1/embeddings"
 EMBED_MODEL = "text-embedding-nomic-embed-text-v1.5"
 EMBED_BATCH_SIZE = 10
 EMBED_TIMEOUT = 5
+MAX_EMBED_QUERY_CHARS = 1200
+MAX_EMBED_FIELD_CHARS = 240
+EMBED_SCOPE_OPERATIONAL = "operational"
+EMBED_SCOPE_CONVERSATIONAL = "conversational"
+EMBED_SCOPE_KNOWLEDGE = "knowledge"
+
+OPERATIONAL_COLLECTIONS = {
+    "routing_history",
+    "cognitive_history",
+    "optimizer_history",
+    "incidents",
+    "runtime_snapshots",
+    "working_memory",
+}
+
+KNOWLEDGE_COLLECTIONS = {
+    "agent_knowledge",
+}
 
 # ── helpers ───────────────────────────────────────────────────────────
 
-def _text_for_embedding(payload: dict) -> str:
-    """Build a flat text string from a payload for embedding.
+def _embedding_scope_for(collection: str, payload: dict, scope: str | None = None) -> str:
+    if scope in {EMBED_SCOPE_OPERATIONAL, EMBED_SCOPE_CONVERSATIONAL, EMBED_SCOPE_KNOWLEDGE}:
+        return scope
+    if collection in OPERATIONAL_COLLECTIONS:
+        return EMBED_SCOPE_OPERATIONAL
+    if collection in KNOWLEDGE_COLLECTIONS:
+        return EMBED_SCOPE_KNOWLEDGE
+    if payload.get("role") or payload.get("conversation_id"):
+        return EMBED_SCOPE_CONVERSATIONAL
+    if payload.get("path") or payload.get("content"):
+        return EMBED_SCOPE_KNOWLEDGE
+    return EMBED_SCOPE_OPERATIONAL
 
-    Joins key fields into a single searchable sentence.
-    """
+
+def _text_for_embedding(payload: dict, scope: str = EMBED_SCOPE_OPERATIONAL) -> str:
+    """Build a compact text string from a payload for embedding."""
+    if scope == EMBED_SCOPE_CONVERSATIONAL:
+        keys = ("role", "user_text", "assistant_text", "message", "summary", "task_type", "model", "topic")
+    elif scope == EMBED_SCOPE_KNOWLEDGE:
+        keys = ("path", "type", "title", "tags", "summary", "content", "message")
+    else:
+        keys = (
+            "event_type",
+            "task_type",
+            "model",
+            "node",
+            "host",
+            "severity",
+            "latency_ms",
+            "context_size",
+            "budget_used",
+            "files_used",
+            "success",
+            "stream",
+            "failover",
+            "message",
+            "error",
+        )
+
     parts = []
-    for key in ("event_type", "message", "task_type", "model", "node", "host"):
+    for key in keys:
         val = payload.get(key)
         if val:
-            parts.append(str(val))
-    return " | ".join(parts) if parts else json.dumps(payload, ensure_ascii=False)
+            text = _flatten_text(val)
+            if text:
+                parts.append(f"{key}:{text}")
+
+    text = " | ".join(parts) if parts else json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+    return _normalize_embedding_text(text)[0]
+
+
+def _flatten_text(value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        text = value
+    elif isinstance(value, (list, tuple)):
+        text = json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+    elif isinstance(value, dict):
+        text = json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+    else:
+        text = str(value)
+
+    text = " ".join(text.split()).strip()
+    if len(text) > MAX_EMBED_FIELD_CHARS:
+        text = text[:MAX_EMBED_FIELD_CHARS].rstrip()
+    return text
+
+
+def _normalize_embedding_text(text: str, *, limit: int = MAX_EMBED_QUERY_CHARS) -> tuple[str, bool]:
+    normalized = " ".join((text or "").split()).strip()
+    if len(normalized) <= limit:
+        return normalized, False
+    return normalized[:limit].rstrip(), True
+
+
+def _record_embedding_input(text: str, *, truncated: bool = False) -> None:
+    if EMBEDDING_INPUT_CHARS is not None:
+        try:
+            EMBEDDING_INPUT_CHARS.set(len(text))
+        except Exception:
+            pass
+    if truncated and EMBEDDING_TRUNCATIONS is not None:
+        try:
+            EMBEDDING_TRUNCATIONS.inc()
+        except Exception:
+            pass
+
+
+def _record_recall_query(text: str) -> None:
+    normalized, _ = _normalize_embedding_text(text)
+    if RECALL_QUERY_CHARS is not None:
+        try:
+            RECALL_QUERY_CHARS.set(len(normalized))
+        except Exception:
+            pass
 
 
 def _collection_path(name: str) -> Path:
@@ -49,9 +163,11 @@ def get_embedding(text: str) -> list[float] | None:
     if not _HAVE_REQUESTS:
         return None
     try:
+        normalized, truncated = _normalize_embedding_text(text)
+        _record_embedding_input(normalized, truncated=truncated)
         resp = _req.post(
             LM_STUDIO_EMBED_URL,
-            json={"model": EMBED_MODEL, "input": text},
+            json={"model": EMBED_MODEL, "input": normalized},
             timeout=EMBED_TIMEOUT,
         )
         if resp.status_code == 200:
@@ -69,7 +185,11 @@ def get_embeddings_batch(texts: list[str]) -> list[list[float]] | None:
     if not texts:
         return []
     try:
-        batch = texts[:EMBED_BATCH_SIZE]
+        batch = []
+        for text in texts[:EMBED_BATCH_SIZE]:
+            normalized, truncated = _normalize_embedding_text(text)
+            _record_embedding_input(normalized, truncated=truncated)
+            batch.append(normalized)
         resp = _req.post(
             LM_STUDIO_EMBED_URL,
             json={"model": EMBED_MODEL, "input": batch},
@@ -166,9 +286,11 @@ def store_event(collection: str, payload: dict, embedding: list[float] | None = 
     Returns True on success (Qdrant or JSONL-only fallback).
     """
     point_id = str(uuid.uuid4())
+    point_payload = dict(payload)
+    point_payload.setdefault("embedding_scope", _embedding_scope_for(collection, point_payload))
     point = {
         "id": point_id,
-        "payload": payload,
+        "payload": point_payload,
     }
     if embedding:
         point["vector"] = embedding
@@ -178,7 +300,7 @@ def store_event(collection: str, payload: dict, embedding: list[float] | None = 
         jl_path = _collection_path(collection)
         jl_path.parent.mkdir(parents=True, exist_ok=True)
         with open(jl_path, "a") as f:
-            f.write(json.dumps({"id": point_id, "payload": payload, "timestamp": time.time()}, ensure_ascii=False) + "\n")
+            f.write(json.dumps({"id": point_id, "payload": point_payload, "timestamp": time.time()}, ensure_ascii=False) + "\n")
     except Exception:
         pass
 
@@ -193,11 +315,20 @@ def store_event(collection: str, payload: dict, embedding: list[float] | None = 
     return True
 
 
-def store_embedding(collection: str, payload: dict) -> bool:
+def store_embedding(collection: str, payload: dict, scope: str | None = None) -> bool:
     """Generate embedding from payload text and store in Qdrant."""
-    text = _text_for_embedding(payload)
+    effective_scope = _embedding_scope_for(collection, payload, scope)
+    text = _text_for_embedding(payload, effective_scope)
     embedding = get_embedding(text)
     return store_event(collection, payload, embedding)
+
+
+def store_operational_embedding(collection: str, payload: dict) -> bool:
+    return store_embedding(collection, payload, scope=EMBED_SCOPE_OPERATIONAL)
+
+
+def store_conversational_embedding(collection: str, payload: dict) -> bool:
+    return store_embedding(collection, payload, scope=EMBED_SCOPE_CONVERSATIONAL)
 
 
 # ── scroll (non-semantic, for analytics) ─────────────────────────────
@@ -266,6 +397,7 @@ def search_collection(collection: str, query_text: str, limit: int = 5, threshol
     """Semantic search across a Qdrant collection."""
     if not _HAVE_REQUESTS:
         return []
+    _record_recall_query(query_text)
     embedding = get_embedding(query_text)
     if not embedding:
         return []
@@ -302,6 +434,7 @@ def recall(query_text: str, limit: int = 3, threshold: float = 0.0) -> list[dict
     Returns top results across all collections with collection name.
     """
     results = []
+    _record_recall_query(query_text)
     for coll in ("routing_history", "cognitive_history", "incidents"):
         hits = search_collection(coll, query_text, limit=limit, threshold=threshold)
         for h in hits:

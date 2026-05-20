@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 import json
+from pathlib import Path
 import re
 from typing import Any
 
@@ -25,17 +26,22 @@ _FULL_CONTEXT_MARKERS = (
 )
 
 _GREETING_MARKERS = (
-    "hola",
-    "hello",
-    "hi",
-    "buenas",
-    "buenos dias",
-    "buenas tardes",
-    "buenas noches",
-    "hey",
-    "gracias",
-    "thanks",
-    "ok",
+    # Spanish greetings
+    "hola", "buenas", "buenos dias", "buenas tardes", "buenas noches",
+    "gracias", "adios", "hasta luego", "nos vemos", "chao", "saludos",
+    "que tal", "como estas", "cómo estás", "como va", "cómo va",
+    "buen dia", "buen día",
+    # Spanish short confirmations
+    "ok", "okey", "vale", "genial", "perfecto", "claro", "entendido",
+    "de acuerdo", "si", "sí", "no", "nop", "nope", "ya", "listo",
+    "venga", "dale", "bien", "correcto", "exacto", "excelente",
+    "fenomenal", "estupendo", "magnifico", "magnífico",
+    # English
+    "hello", "hi", "hey", "thanks", "thank you", "bye", "goodbye",
+    "good morning", "good afternoon", "good evening", "see you",
+    "cheers", "alright", "nice", "great", "awesome", "cool",
+    "yes", "yeah", "yep", "nope", "sure", "got it", "okay",
+    "understood", "fine", "done", "ready",
 )
 
 _CASUAL_MARKERS = (
@@ -401,12 +407,105 @@ def is_greeting_request(payload: dict[str, Any]) -> bool:
     if not tokens:
         return False
 
-    greeting_words = {"hi", "hello", "hola", "hey", "buenas", "gracias", "thanks", "ok"}
+    greeting_words = {"hi", "hello", "hola", "hey", "buenas", "gracias", "thanks", "ok",
+                      "adios", "bye", "vale", "genial", "perfecto", "claro", "entendido",
+                      "si", "sí", "no", "yes", "yeah", "nope", "saludos", "chao", "listo",
+                      "venga", "dale", "bien", "okey", "okay", "ya", "bueno", "excelente"}
 
     if len(tokens) <= 2 and tokens[0] in greeting_words:
         return True
 
+    # FASE 29.3.1: detect single-token greetings/confirmations even if not in exact markers
+    if len(tokens) == 1 and len(text) <= 15:
+        return True
+
     return False
+
+
+# ── FASE 29.3.1: Short prompt heuristic ──────────────────────
+
+_SHORT_ARCHITECTURE_KEYWORDS = (
+    "analiza", "debug", "implementa", "arquitectura", "refactoriza",
+    "optimiza", "diseña", "diseña un", "corrige", "explica el codigo",
+    "escribe una funcion", "escribe un script", "crea un", "desarrolla",
+    "stacktrace", "traceback", "exception", "error en linea",
+    "multi-file", "multi-paso", "refactor", "compile", "compila",
+)
+
+_LLAMA_SAFE_PATTERNS = (
+    "que es", "qué es", "como funciona", "cómo funciona",
+    "para que sirve", "para qué sirve", "definicion", "definición",
+    "resume", "explica en", "dime", "cuentame", "cuéntame",
+    "hola", "gracias", "adios",
+)
+
+
+def is_lightweight_prompt(text: str) -> bool:
+    """FASE 29.3.1: Deterministic heuristic — true if prompt should use llama-3.1-8b."""
+    t = text.strip().lower()
+    if not t:
+        return True
+
+    # Short prompts (< 120 chars) without technical keywords → llama
+    if len(t) < 120:
+        # Check for code fences
+        if "```" in t or "`" in t:
+            return False
+        # Check for architecture/coding keywords
+        for kw in _SHORT_ARCHITECTURE_KEYWORDS:
+            if kw in t:
+                return False
+        return True
+
+    # Long prompts with only safe patterns → still llama
+    safe_count = sum(1 for p in _LLAMA_SAFE_PATTERNS if p in t)
+    arch_count = sum(1 for k in _SHORT_ARCHITECTURE_KEYWORDS if k in t)
+    if safe_count > 0 and arch_count == 0 and "```" not in t:
+        return True
+
+    return False
+
+
+# ── FASE 29.3.1: Qwen escalation reasons ─────────────────────
+
+QWEN_ESCALATION_REASONS = {
+    "coding_explicit": "code fences, function writing, or explicit coding request",
+    "architecture_deep": "multi-step analysis or architecture keywords",
+    "debugging": "stacktrace, traceback, or error debugging",
+    "long_context": "prompt > 500 chars with technical content",
+    "multi_step": "multi-file or multi-paso indicators",
+    "structured_output": "markdown table, JSON output, or structured generation",
+    "creative_long": "long-form creative writing request",
+    "reasoning_deep": "explicit reasoning or analisis profundo request",
+    "report_technical": "technical report with structured sections required",
+}
+
+
+def get_qwen_escalation_reason(text: str) -> str | None:
+    """Returns the reason why qwen2.5-14b should be used, or None if llama is sufficient."""
+    t = text.strip().lower()
+    if not t:
+        return None
+
+    if "```" in t or "`" in t:
+        return "coding_explicit"
+    for kw in ("escribe una funcion", "escribe un script", "corrige este codigo",
+               "debug", "stacktrace", "traceback", "exception in"):
+        if kw in t:
+            return "debugging" if any(k in t for k in ("debug", "stacktrace", "traceback", "exception")) else "coding_explicit"
+    for kw in _SHORT_ARCHITECTURE_KEYWORDS:
+        if kw in t:
+            return "architecture_deep"
+    if len(t) > 500:
+        return "long_context"
+    for kw in ("analiza", "razona", "compara", "evalua", "evalúa"):
+        if kw in t and len(t) > 80:
+            return "reasoning_deep"
+    if any(kw in t for kw in ("informe", "report", "documentacion", "documentación")):
+        return "report_technical"
+
+    # Default: llama is sufficient
+    return None
 
 
 def is_casual_request(text_or_payload: Any) -> bool:
@@ -536,23 +635,43 @@ def build_minimal_greeting_messages(user_text: str) -> list[dict[str, str]]:
     ]
 
 
-def build_minimal_report_messages(user_text: str) -> list[dict[str, str]]:
+REPORT_PROMPT_PATH = Path(__file__).resolve().parent.parent / "prompts" / "report_prompt.md"
+
+_REPORT_PROMPT_CACHE: str | None = None
+
+
+def _load_report_prompt() -> str:
+    global _REPORT_PROMPT_CACHE
+    if _REPORT_PROMPT_CACHE is not None:
+        return _REPORT_PROMPT_CACHE
+    try:
+        if REPORT_PROMPT_PATH.exists():
+            _REPORT_PROMPT_CACHE = REPORT_PROMPT_PATH.read_text(encoding="utf-8", errors="ignore").strip()
+            if _REPORT_PROMPT_CACHE:
+                return _REPORT_PROMPT_CACHE
+    except Exception:
+        pass
+    _REPORT_PROMPT_CACHE = (
+        "Responde en espanol, directo y util. "
+        "Genera un informe breve en 5-8 lineas. "
+        "Usa unicamente los datos disponibles en OBSERVED_RUNTIME o en el contexto proporcionado. "
+        "No muestres bloques HARD_FACTS ni JSON al usuario. "
+        "Si un dato no esta disponible, marca NO DISPONIBLE."
+    )
+    return _REPORT_PROMPT_CACHE
+
+
+def build_minimal_report_messages(
+    user_text: str,
+    observed_runtime: str | None = None,
+) -> list[dict[str, str]]:
+    system_prompt = _load_report_prompt()
+    if observed_runtime:
+        system_prompt += (
+            f"\n\nOBSERVED_RUNTIME: {observed_runtime}"
+        )
     return [
-        {
-            "role": "system",
-            "content": (
-                "Responde en espanol, directo y util. "
-                "Genera un informe breve en 5-8 lineas. "
-                "Usa unicamente los datos disponibles en OBSERVED_RUNTIME o en el contexto proporcionado. "
-                "No muestres bloques HARD_FACTS ni JSON al usuario. "
-                "Si un dato no esta disponible, estructura la respuesta asi: "
-                "NO DISPONIBLE: [lista de campos faltantes]. "
-                "No inventes disponibilidad, SLA, autenticacion, autorizacion, roles, ubicacion, "
-                "usuarios, sesiones, roadmap futuro, ni certificaciones (ISO/SOC2). "
-                "Si faltan muchos datos, di 'Informacion parcial — datos limitados en runtime' "
-                "y ofrece estructura con campos NO DISPONIBLE."
-            ),
-        },
+        {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_text},
     ]
 

@@ -1,6 +1,6 @@
 ---
 title: "Fix — Resiliencia ante Model Unloaded de LM Studio"
-summary: "Diagnostico y solucion del error 'Model unloaded.' que afectaba a OpenCode y OpenWebUI tras FASE 18. El modelo se descargaba por TTL de LM Studio y el router no manejaba correctamente el streaming con errores."
+summary: "Diagnostico y solucion del error 'Model unloaded.' que afectaba a OpenCode y OpenWebUI tras FASE 18. El modelo se descargaba por TTL de LM Studio y el router/gateway necesitaban compatibilidad SSE estable con retry y fallback."
 order: 37
 ---
 
@@ -41,13 +41,15 @@ El router eliminaba `"stream": true` del payload para evitar los errores en SSE,
 
 ### Router API (`runtime/llm/router_api.py`)
 
-- **Siempre manda no-streaming a LM Studio**: evita que los errores lleguen dentro del SSE
-- **SSE wrapper**: si el cliente pidió `stream: true`, el router envuelve el JSON de LM Studio en chunks SSE (`data: {...}\n\n` + `data: [DONE]\n\n`)
 - **Retry + fallback**: si LM Studio responde 400 con `"unloaded"` o `"invalid model identifier"`, reintenta automáticamente. Si el reintento falla, redirige a `192.168.1.50:1234` con `llama-3.1-8b-instruct`
+- **SSE compatible para cliente**: el router devuelve chunks OpenAI/SSE válidos al cliente, pero no rompe el payload interno del backend
+- **No reenvía `stream=true` al backend**: LM Studio recibe completaciones estables y el streaming se resuelve aguas arriba
 
 ### Gateway (`runtime/gateway/openai_gateway.py`)
 
-- Mismo patrón: siempre no-streaming a LM Studio + retry en `"Model unloaded."`
+- Mismo patrón: limpia `stream` antes de hablar con LM Studio
+- Retry en `"Model unloaded."`
+- Devuelve SSE compatible al cliente cuando se pidió streaming
 
 ### OpenWebUI (`stacks/ai-core/docker-compose.yml`)
 
@@ -82,6 +84,10 @@ done
 - OpenWebUI: responde correctamente via router AI-LAB
 - Curl: ambas rutas (SSE y JSON) estables
 - 0 errores, 0 "Model unloaded." residual
+
+## Actualización posterior
+
+Más tarde se detectó un segundo problema operativo en la capa de interacción: algunas respuestas de resumen intentaban usar la herramienta `question` con `questions` serializado como string. Eso se documentó aparte en `parche-opencode-router-gateway.md` para evitar confundir un bug de herramienta con un bug de runtime.
 
 ## Archivos modificados
 

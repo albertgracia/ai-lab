@@ -18,14 +18,14 @@ DISCOVERED_NODES_FILE = Path(
 
 TASK_MODEL_PREFERENCES = {
     "reasoning": [
-        "qwen3.6",
+        # FASE 29.3: qwen3.6-27b disabled — three-model-runtime
         "qwen3.5",
         "qwen",
         "deepseek",
         "reasoning",
     ],
     "tool_use": [
-        "qwen3.6",
+        # FASE 29.3: qwen3.6-27b disabled
         "qwen",
         "tool",
         "function",
@@ -56,7 +56,7 @@ TASK_MODEL_PREFERENCES = {
         "creative",
     ],
     "orchestration": [
-        "qwen3.6",
+        # FASE 29.3: qwen3.6-27b disabled
         "qwen3.5",
         "qwen",
         "deepseek",
@@ -136,7 +136,8 @@ def infer_model_capabilities(model_name):
         capabilities.add("vision")
         capabilities.add("multimodal")
 
-    if "tool" in name or "function" in name or "qwen3.6" in name:
+    # FASE 29.3: qwen3.6 removed from tool_use auto-detection
+    if "tool" in name or "function" in name:
         capabilities.add("tool_use")
 
     if "4b" in name or "8b" in name or "9b" in name or "mini" in name:

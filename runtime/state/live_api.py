@@ -5,6 +5,9 @@ from pathlib import Path
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from runtime.event_bus import emit
 import time as _time
+from runtime.gateway.tool_request_classifier import classify_api_route
+from runtime.telemetry.prometheus_metrics import record_route_family_metrics
+from prometheus_client import generate_latest, REGISTRY
 
 HOST = "0.0.0.0"; PORT = 8084
 STATE_DIR = Path("/opt/ai-lab/runtime/state")
@@ -258,6 +261,8 @@ class APIHandler(BaseHTTPRequestHandler):
             self._handle_control_snapshot_detail(self.path.rsplit("/", 1)[-1])
         elif self.path == "/api/control/recover":
             self._handle_control_recover()
+        elif self.path == "/metrics":
+            self._metrics()
         else: self._send_error(404)
     def do_POST(self):
         parsed = urllib.parse.urlparse(self.path)
@@ -435,6 +440,14 @@ class APIHandler(BaseHTTPRequestHandler):
         self.send_response(code); self.end_headers(); self.wfile.write(json.dumps({"error":msg}).encode())
     def log_message(self, fmt, *args): pass
 
+    def _metrics(self):
+        body = generate_latest(REGISTRY)
+        self.send_response(200)
+        self.send_header("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
     # ── Memory Recall handlers (DIA 3) ──────────────────────────────
 
     def _parse_qs(self) -> dict:
@@ -443,6 +456,7 @@ class APIHandler(BaseHTTPRequestHandler):
 
     def _handle_memory_search(self):
         try:
+            record_route_family_metrics("cognitive")
             from runtime.memory.qdrant_store import search_collection as _sc
             from runtime.memory.qdrant_collections import COLLECTION_SCHEMAS
             qs = self._parse_qs()
@@ -460,6 +474,7 @@ class APIHandler(BaseHTTPRequestHandler):
 
     def _handle_incidents_search(self):
         try:
+            record_route_family_metrics("cognitive")
             from runtime.memory.qdrant_store import search_collection as _sc
             qs = self._parse_qs()
             query = qs.get("q", [""])[0]
@@ -474,6 +489,7 @@ class APIHandler(BaseHTTPRequestHandler):
 
     def _handle_runtime_recall(self):
         try:
+            record_route_family_metrics("cognitive")
             from runtime.memory.qdrant_store import recall as _recall
             qs = self._parse_qs()
             query = qs.get("q", [""])[0]
@@ -612,14 +628,16 @@ class APIHandler(BaseHTTPRequestHandler):
 
     def _handle_learning_patterns(self):
         try:
+            record_route_family_metrics("learning")
             from runtime.memory.pattern_learner import run_all
             patterns = run_all(days=7)
-            self._json({"count": len(patterns), "patterns": patterns})
+            self._json({"route_family": classify_api_route(self.path).family, "count": len(patterns), "patterns": patterns})
         except ImportError as e:
             self._json({"error": f"pattern_learner not available: {e}"})
 
     def _handle_learning_recommendations(self):
         try:
+            record_route_family_metrics("learning")
             from runtime.memory.pattern_learner import run_all
             from runtime.learning.context_efficiency import batch_evaluate
             from runtime.learning.recommendation_engine import generate_recommendations
@@ -631,26 +649,28 @@ class APIHandler(BaseHTTPRequestHandler):
             efficiency = batch_evaluate(cognitive) if cognitive else None
             perf = get_model_performance()
             recs = generate_recommendations(patterns, efficiency, perf)
-            self._json({"count": len(recs), "recommendations": recs})
+            self._json({"route_family": classify_api_route(self.path).family, "count": len(recs), "recommendations": recs})
         except ImportError as e:
             self._json({"error": f"recommendation engine not available: {e}"})
 
     def _handle_learning_context_efficiency(self):
         try:
+            record_route_family_metrics("learning")
             from runtime.learning.context_efficiency import batch_evaluate, summarize_efficiency
             from runtime.cognitive.cognitive_history import read_history
             cognitive = read_history(30)
             if not cognitive:
-                self._json({"samples": 0, "avg_efficiency": 0, "error": "no cognitive records"})
+                self._json({"route_family": classify_api_route(self.path).family, "samples": 0, "avg_efficiency": 0, "error": "no cognitive records"})
                 return
             results = batch_evaluate(cognitive)
             summary = summarize_efficiency(results)
-            self._json({"summary": summary, "details": results[:20]})
+            self._json({"route_family": classify_api_route(self.path).family, "summary": summary, "details": results[:20]})
         except ImportError as e:
             self._json({"error": f"context_efficiency not available: {e}"})
 
     def _handle_learning_recall_threshold(self):
         try:
+            record_route_family_metrics("learning")
             qs = self._parse_qs()
             collection = qs.get("collection", ["incidents"])[0]
             query = qs.get("q", ["node failure"])[0]
@@ -664,6 +684,7 @@ class APIHandler(BaseHTTPRequestHandler):
             threshold = optimize_recall_threshold(results)
 
             self._json({
+                "route_family": classify_api_route(self.path).family,
                 "collection": collection,
                 "query": query,
                 "quality": quality,

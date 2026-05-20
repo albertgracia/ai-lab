@@ -163,6 +163,9 @@ FASE 21A → perfiles cognitivos            ✅
 FASE 21A.1 → observabilidad de perfiles   ✅
 FASE 21B → de-hardcoding progresivo       ✅ CP-21B-STABLE
 FASE 22A → tool runtime policies          ⏭
+FASE 28.0 → simulation-only mode                        ✅
+FASE 28.1 → planner runtime skeleton                     ✅ CP-28.1-PLANNER-RUNTIME-SKELETON-STABLE
+FASE 29.4.2 → report presentation fix                    ✅ CP-29.4.2-REPORT-PRESENTATION-STABLE
 ```
 
 ## Nota final

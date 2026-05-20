@@ -12,7 +12,7 @@ $ARGUMENTS
 
 1. **NO CODE WRITING** - This command creates plan file only
 2. **Use project-planner agent** - NOT Antigravity Agent's native Plan mode
-3. **Socratic Gate** - Ask clarifying questions before planning
+3. **Socratic Gate** - Ask clarifying questions before planning when the task is ambiguous; skip this for direct summaries, status checks, and reports
 4. **Dynamic Naming** - Plan file named based on task
 
 ---

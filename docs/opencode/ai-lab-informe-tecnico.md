@@ -187,6 +187,7 @@ El motor de workflows distribuidos implementa:
 |------------|-----------|------|
 | **Ollama** | Inferencia CPU local, embeddings, automatización, fallback | CPU |
 | **LM Studio** | Backend de inferencia GPU externo | GPU (API OpenAI-compatible) |
+| **GPU telemetry** | Observabilidad de nodos RX9070/RX7900XT | `windows_exporter` + `gpu_metrics.ps1` |
 
 **Integración:**
 - API unificada compatible con OpenAI
@@ -195,9 +196,9 @@ El motor de workflows distribuidos implementa:
 
 ---
 
-## 7. OBSERVABILIDAD (EN PROGRESO)
+## 7. OBSERVABILIDAD
 
-### 7.1. Stack Planificado
+### 7.1. Stack Implementado
 
 | Componente | Función |
 |------------|---------|
@@ -214,6 +215,14 @@ El motor de workflows distribuidos implementa:
 - **Anomaly Detection** — Detección de anomalías en infraestructura
 - **Historical Analysis** — Análisis histórico de rendimiento
 - **Telemetry-aware Orchestration** — Orquestación basada en telemetría en tiempo real
+
+### 7.3. Estado actual
+
+- Grafana operativo en `192.168.1.40:3000`.
+- Prometheus operativo en `192.168.1.40:9090`.
+- Loki operativo en `192.168.1.40:3100`.
+- `promtail` recibe `unifi-ids` por `TCP :1514` en `192.168.1.30`.
+- Telemetría GPU operativa en `9182` (`windows_gpu_*`) y `9183` (`gpu_temperature_celsius`, `gpu_smalldata`, `gpu_power_watts`).
 
 ---
 
@@ -349,7 +358,7 @@ Coordinación autónoma distribuida entre agentes especializados.
 | Inferencia GPU | LM Studio (API OpenAI) |
 | Vector DB | Qdrant |
 | Embeddings | sentence-transformers |
-| Observabilidad | Prometheus + Grafana + Loki (planificado) |
+| Observabilidad | Prometheus + Grafana + Loki (operativo) |
 | Versionado | Git (self-hosted) |
 
 ---

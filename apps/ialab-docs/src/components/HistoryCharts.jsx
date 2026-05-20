@@ -11,10 +11,16 @@ import {
 
 export default function HistoryCharts() {
   const [data, setData] = useState([]);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     fetch("/api/history.json")
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) {
+          throw new Error(`history_${r.status}`);
+        }
+        return r.json();
+      })
       .then((json) => {
         const rows = [];
 
@@ -30,8 +36,16 @@ export default function HistoryCharts() {
         }
 
         setData(rows);
+        setError("");
+      })
+      .catch(() => {
+        setError("No se pudo cargar el histórico");
       });
   }, []);
+
+  if (error) {
+    return <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">{error}</div>;
+  }
 
   return (
     <div className="space-y-10">

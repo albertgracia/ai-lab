@@ -139,9 +139,28 @@ No mezclarlas es lo que mantiene AI-LAB estable.
 
 ---
 
-## FASE 28 — Runtime autónomo seguro
+## FASE 28 — Governed Agentic Runtime
 
-**Objetivo:** Workflows agentic con permisos, dry-run, aprobación humana y rollback.
+**Objetivo:** Workflows agentic seguros, gobernados y reversibles. Action Intent Layer, approval con tickets firmados, risk determinista, rollback transaccional, sandbox multicapa.
+
+**Subfases (10):**
+
+```
+28.0 → Simulation-Only Mode           (3-5 días) 🔥 CRÍTICA
+28.1 → Action Intent Layer + Planner  (2-3 días)
+28.2 → Governance + Risk Determinista (1-2 días)
+28.3 → Approval Gate + Tickets        (1-2 días)
+28.4 → Replay + Plan Diffing          (1-2 días)
+28.5 → Verifier (ampliado)            (1-2 días)
+28.6 → Executor (readonly primero)    (2-3 días)
+28.7 → Rollback + Transactions        (1-2 días)
+28.8 → Sandbox (write + hardening)    (2-3 días)
+28.9 → Observabilidad + Dashboards    (1-2 días)
+28.10 → Burn-in + Agent Profile Stable (3-5 días)
+```
+
+**Principio:** LLM propone → runtime evalúa → humano aprueba → sandbox ejecuta.
+**Documento completo:** [FASE 28 — Governed Agentic Runtime](/docs/fase-28-governed-agentic-runtime)
 
 ---
 

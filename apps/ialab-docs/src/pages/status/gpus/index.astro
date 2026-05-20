@@ -11,6 +11,12 @@ import Layout from "../../../layouts/Layout.astro";
       </p>
     </header>
 
+    <section class="rounded-xl border border-zinc-800 bg-zinc-950/80 p-5 text-sm text-zinc-400">
+      <span class="font-bold text-emerald-400" id="gpu-source">LIVE</span>
+      · <span id="gpu-updated">última actualización: --</span>
+      · <span id="gpu-summary">GPU nodes: --</span>
+    </section>
+
     <section id="gpu-cards" class="grid gap-6 md:grid-cols-2">
       <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
         <h2 class="text-xl font-bold text-orange-400">RX9070</h2>
@@ -19,7 +25,7 @@ import Layout from "../../../layouts/Layout.astro";
           <div><p class="text-xs text-zinc-500">VRAM Usada</p><p class="text-2xl font-black text-white" id="rx9070-vram">--</p></div>
           <div><p class="text-xs text-zinc-500">Temp Core</p><p class="text-2xl font-black text-white" id="rx9070-temp">--</p></div>
           <div><p class="text-xs text-zinc-500">Power</p><p class="text-2xl font-black text-white" id="rx9070-power">--</p></div>
-          <div><p class="text-xs text-zinc-500">Estado</p><p class="text-2xl font-black text-emerald-400" id="rx9070-status">ONLINE</p></div>
+          <div><p class="text-xs text-zinc-500">Estado</p><p class="text-2xl font-black text-emerald-400" id="rx9070-status">--</p></div>
         </div>
       </div>
       <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
@@ -29,7 +35,7 @@ import Layout from "../../../layouts/Layout.astro";
           <div><p class="text-xs text-zinc-500">VRAM Usada</p><p class="text-2xl font-black text-white" id="rx7900xt-vram">--</p></div>
           <div><p class="text-xs text-zinc-500">Temp Core</p><p class="text-2xl font-black text-white" id="rx7900xt-temp">--</p></div>
           <div><p class="text-xs text-zinc-500">Power</p><p class="text-2xl font-black text-white" id="rx7900xt-power">--</p></div>
-          <div><p class="text-xs text-zinc-500">Estado</p><p class="text-2xl font-black text-red-400" id="rx7900xt-status">OFFLINE</p></div>
+          <div><p class="text-xs text-zinc-500">Estado</p><p class="text-2xl font-black text-red-400" id="rx7900xt-status">--</p></div>
         </div>
       </div>
     </section>
@@ -42,21 +48,65 @@ import Layout from "../../../layouts/Layout.astro";
 </Layout>
 
 <script>
+  function setText(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  }
+
+  function pickNumber(node, keys) {
+    for (const key of keys) {
+      const value = node?.[key];
+      if (typeof value === "number" && Number.isFinite(value)) return value;
+    }
+    return null;
+  }
+
   async function refreshGPUs() {
     try {
-            const isPublic = window.location.hostname === "ai-lab.labrazahome.com" || window.location.hostname.includes("pages.dev");
-      const apiUrl = isPublic ? "/api/status.json" : "/api/status.json";
-      const res = await fetch(apiUrl, { cache: "no-store" });
+      const res = await fetch("/api/status.json", { cache: "no-store" });
+      if (!res.ok) throw new Error(`status_${res.status}`);
+
       const data = await res.json();
       const gpu = Array.isArray(data.gpu) ? data.gpu : [];
-      for (const g of gpu) {
-        const prefix = g.node === "RX9070" ? "rx9070" : "rx7900xt";
-        document.getElementById(prefix + "-vram").textContent = (g.vram_used_gib || 0) + " / " + (g.vram_total_gib || 0) + " GiB";
-        document.getElementById(prefix + "-status").textContent = g.vram_total_gib > 0 ? "ONLINE" : "OFFLINE";
-        document.getElementById(prefix + "-status").className = "text-2xl font-black " + (g.vram_total_gib > 0 ? "text-emerald-400" : "text-red-400");
+      const nodes = [
+        { prefix: "rx9070", name: "RX9070" },
+        { prefix: "rx7900xt", name: "RX7900XT" },
+      ];
+
+      for (const node of nodes) {
+        const g = gpu.find((item) => item.node === node.name);
+        if (!g) {
+          setText(`${node.prefix}-vram`, "--");
+          setText(`${node.prefix}-temp`, "--");
+          setText(`${node.prefix}-power`, "--");
+          setText(`${node.prefix}-status`, "OFFLINE");
+          document.getElementById(`${node.prefix}-status`).className = "text-2xl font-black text-red-400";
+          continue;
+        }
+
+        const vramUsed = pickNumber(g, ["vram_used_gib", "vram_used"]);
+        const vramTotal = pickNumber(g, ["vram_total_gib", "vram_total"]);
+        const temp = pickNumber(g, ["temp", "temp_celsius", "gpu_temp"]);
+        const power = pickNumber(g, ["power", "power_watts"]);
+
+        setText(`${node.prefix}-vram`, `${vramUsed ?? 0} / ${vramTotal ?? 0} GiB`);
+        setText(`${node.prefix}-temp`, temp === null ? "--" : `${temp.toFixed(0)} °C`);
+        setText(`${node.prefix}-power`, power === null ? "--" : `${power.toFixed(0)} W`);
+        setText(`${node.prefix}-status`, (vramTotal ?? 0) > 0 ? "ONLINE" : "OFFLINE");
+        document.getElementById(`${node.prefix}-status`).className = `text-2xl font-black ${(vramTotal ?? 0) > 0 ? "text-emerald-400" : "text-red-400"}`;
       }
+
+      setText("gpu-source", "LIVE");
+      setText("gpu-updated", `última actualización: ${new Date().toISOString().slice(11, 19)} UTC`);
+      setText("gpu-summary", `GPU nodes: ${gpu.length}`);
       document.getElementById("gpu-raw").textContent = JSON.stringify(gpu, null, 2);
-    } catch {}
+    } catch {
+      setText("gpu-source", "OFFLINE");
+      setText("gpu-updated", "última actualización: error de lectura");
+      setText("gpu-summary", "GPU nodes: --");
+      const raw = document.getElementById("gpu-raw");
+      if (raw) raw.textContent = "No se pudo leer /api/status.json";
+    }
   }
   refreshGPUs();
   setInterval(refreshGPUs, 10000);

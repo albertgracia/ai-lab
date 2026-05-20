@@ -53,6 +53,46 @@ def _extract_argument_text(arguments: Any) -> str:
         return str(arguments)
 
 
+def _normalize_jsonish_value(value: Any) -> Any:
+    if isinstance(value, str):
+        stripped = value.strip()
+        if stripped.startswith("[") or stripped.startswith("{"):
+            try:
+                return _normalize_jsonish_value(json.loads(stripped))
+            except Exception:
+                return value
+        return value
+    if isinstance(value, list):
+        return [_normalize_jsonish_value(item) for item in value]
+    if isinstance(value, dict):
+        return {key: _normalize_jsonish_value(item) for key, item in value.items()}
+    return value
+
+
+def normalize_tool_arguments(arguments: Any) -> Any:
+    if isinstance(arguments, str):
+        try:
+            arguments = json.loads(arguments)
+        except Exception:
+            return arguments
+    return _normalize_jsonish_value(arguments)
+
+
+def repair_tool_call_arguments(tool_call: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(tool_call, dict):
+        return tool_call
+    function = tool_call.get("function") if isinstance(tool_call.get("function"), dict) else {}
+    arguments = function.get("arguments", {})
+    repaired = normalize_tool_arguments(arguments)
+    return {
+        **tool_call,
+        "function": {
+            **function,
+            "arguments": json.dumps(repaired, ensure_ascii=False),
+        },
+    }
+
+
 def tool_call_is_dangerous(tool_call: dict[str, Any]) -> tuple[bool, str]:
     fn = tool_call.get("function") if isinstance(tool_call.get("function"), dict) else {}
     name = str(fn.get("name", "")).strip().lower()
@@ -90,7 +130,7 @@ def parse_tool_calls_from_text(text: str | None) -> list[dict[str, Any]]:
             try:
                 parsed = json.loads(body)
                 if isinstance(parsed, dict):
-                    arguments = parsed
+                    arguments = normalize_tool_arguments(parsed)
                 else:
                     raise ValueError("tool call body is not an object")
             except Exception:
@@ -100,21 +140,23 @@ def parse_tool_calls_from_text(text: str | None) -> list[dict[str, Any]]:
                         param_name = (param_match.group("name") or "").strip()
                         param_value = (param_match.group("value") or "").strip()
                         if param_name:
-                            arguments[param_name] = param_value
+                            arguments[param_name] = normalize_tool_arguments(param_value)
                 else:
                     arguments = {"text": body}
                     if TOOL_MALFORMED:
                         TOOL_MALFORMED.inc()
 
         tool_calls.append(
-            {
-                "id": f"toolcall-{index+1}",
-                "type": "function",
-                "function": {
-                    "name": name,
-                    "arguments": json.dumps(arguments, ensure_ascii=False),
-                },
-            }
+            repair_tool_call_arguments(
+                {
+                    "id": f"toolcall-{index+1}",
+                    "type": "function",
+                    "function": {
+                        "name": name,
+                        "arguments": arguments,
+                    },
+                }
+            )
         )
 
     return tool_calls

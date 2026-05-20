@@ -229,7 +229,8 @@ User: "Add mobile support to the web app"
 
 ### With Socratic Gate
 
-- **Auto-routing does NOT bypass Socratic Gate**
+- **Auto-routing does NOT bypass Socratic Gate for ambiguous build/edit tasks**
+- **Summary/status/report requests are exempt** and must answer directly
 - If task is unclear, still ask questions first
 - Then route to appropriate agent
 

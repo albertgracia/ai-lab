@@ -10,15 +10,42 @@ Usage:
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
 _PROMPTS_DIR = Path(__file__).resolve().parent
 _MANIFEST_PATH = _PROMPTS_DIR / "manifest.json"
+_STATE_DIR = Path("/opt/ai-lab/runtime/state")
+_CHECKSUMS_FILE = _STATE_DIR / "prompt_checksums.json"
 
 _cache: dict[str, str] = {}
 _manifest: dict | None = None
 _manifest_mtime: float = 0.0
+
+def _check_prompt_checksum(name: str, content: str) -> None:
+    """Detect prompt checksum changes and emit metric."""
+    current = hashlib.md5(content.encode("utf-8")).hexdigest()
+    try:
+        if _CHECKSUMS_FILE.exists():
+            snap = json.loads(_CHECKSUMS_FILE.read_text(encoding="utf-8"))
+        else:
+            snap = {}
+    except Exception:
+        snap = {}
+    previous = snap.get(name, "")
+    if previous and previous != current:
+        try:
+            from runtime.telemetry.prometheus_metrics import PROMPT_CHECKSUM_CHANGES
+            PROMPT_CHECKSUM_CHANGES.labels(prompt=name).inc()
+        except ImportError:
+            pass
+    snap[name] = current
+    try:
+        _STATE_DIR.mkdir(parents=True, exist_ok=True)
+        _CHECKSUMS_FILE.write_text(json.dumps(snap, indent=2), encoding="utf-8")
+    except OSError:
+        pass
 
 
 def _read_manifest() -> dict:
@@ -42,7 +69,9 @@ def _load_prompt_file(name: str) -> str:
     path = _PROMPTS_DIR / name
     if not path.exists():
         raise FileNotFoundError(f"Prompt file not found: {path}")
-    return path.read_text(encoding="utf-8").strip()
+    text = path.read_text(encoding="utf-8").strip()
+    _check_prompt_checksum(name, text)
+    return text
 
 
 def load_prompt(name: str) -> str:

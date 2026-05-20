@@ -147,11 +147,14 @@ import Layout from "../../../layouts/Layout.astro";
     try {
 
       const isPublic = window.location.hostname === "ai-lab.labrazahome.com" || window.location.hostname.includes("pages.dev");
-      const apiUrl = isPublic ? "/api/analytics.json" : "https://blog-ai-lab.labrazahome.com/api/analytics";
+      const apiUrl = isPublic ? "/api/analytics.json" : "/api/analytics";
       const res = await fetch(apiUrl, {
         cache: "no-store",
-        headers: isPublic ? {} : {"CF-Access-Client-Id": "3093bf6c93d1c8dbb6ab65db21941ac0.access", "CF-Access-Client-Secret": "e54c05bb3496e0ff55c55b6af63c456aa6b7d5171a74f42aeebd3facefe30a1c"}
       });
+
+      if (!res.ok) {
+        throw new Error(`analytics_${res.status}`);
+      }
 
       const d = await res.json();
 
@@ -207,7 +210,12 @@ import Layout from "../../../layouts/Layout.astro";
 
       }
 
-    } catch {}
+    } catch {
+      const reasons = document.getElementById("health-reasons");
+      reasons.innerHTML = "<p class='text-red-400'>No se pudo leer /api/analytics</p>";
+      document.getElementById("health-level").textContent = "OFFLINE";
+      document.getElementById("health-number").textContent = "--";
+    }
 
   }
 

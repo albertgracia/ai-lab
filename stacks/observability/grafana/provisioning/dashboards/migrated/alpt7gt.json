@@ -1330,7 +1330,7 @@
         {
           "datasource": {
             "type": "loki",
-            "uid": "P8E80F9AEF21F6940"
+            "uid": "fflfh9qp8mxogc"
           },
           "description": "Frecuencia de eventos IDS de UniFi a lo largo del tiempo. El color indica la intensidad de eventos de seguridad. Correlacionar con horas de alta actividad WAN para detectar ataques vs. tr\u00e1fico leg\u00edtimo.",
           "fieldConfig": {
@@ -1410,9 +1410,9 @@
               "app": "grafana-assistant-app",
               "datasource": {
                 "type": "loki",
-                "uid": "P8E80F9AEF21F6940"
+                "uid": "fflfh9qp8mxogc"
               },
-              "expr": "count_over_time({service_name=\"unifi-ids\"}[$__auto])",
+              "expr": "count_over_time({job=\"unifi-ids\"}[$__auto])",
               "instant": false,
               "legendFormat": "",
               "queryType": "range",
@@ -2333,7 +2333,7 @@
         {
           "datasource": {
             "type": "loki",
-            "uid": "P8E80F9AEF21F6940"
+            "uid": "fflfh9qp8mxogc"
           },
           "description": "Eventos de todos los servicios cr\u00edticos superpuestos en el tiempo. Busca correlaci\u00f3n temporal: \u00bfcuando el Z-score de CPU supera +2\u03c3, hay picos de errores nginx? \u00bfLos eventos IDS coinciden con picos WAN?",
           "fieldConfig": {
@@ -2422,9 +2422,9 @@
               "app": "grafana-assistant-app",
               "datasource": {
                 "type": "loki",
-                "uid": "P8E80F9AEF21F6940"
+                "uid": "fflfh9qp8mxogc"
               },
-              "expr": "count_over_time({service_name=\"unifi-ids\"}[$__auto])",
+              "expr": "count_over_time({job=\"unifi-ids\"}[$__auto])",
               "instant": false,
               "legendFormat": "\ud83d\udee1\ufe0f IDS eventos",
               "queryType": "range",
@@ -2435,7 +2435,7 @@
               "app": "grafana-assistant-app",
               "datasource": {
                 "type": "loki",
-                "uid": "P8E80F9AEF21F6940"
+                "uid": "fflfh9qp8mxogc"
               },
               "expr": "count_over_time({service_name=\"nginx-proxy\"}[$__auto])",
               "instant": false,
@@ -2448,7 +2448,7 @@
               "app": "grafana-assistant-app",
               "datasource": {
                 "type": "loki",
-                "uid": "P8E80F9AEF21F6940"
+                "uid": "fflfh9qp8mxogc"
               },
               "expr": "count_over_time({service_name=\"docker\"}[$__auto])",
               "instant": false,
@@ -2461,7 +2461,7 @@
               "app": "grafana-assistant-app",
               "datasource": {
                 "type": "loki",
-                "uid": "P8E80F9AEF21F6940"
+                "uid": "fflfh9qp8mxogc"
               },
               "expr": "count_over_time({service_name=\"windows-eventlog\"}[$__auto])",
               "instant": false,
@@ -2474,7 +2474,7 @@
               "app": "grafana-assistant-app",
               "datasource": {
                 "type": "loki",
-                "uid": "P8E80F9AEF21F6940"
+                "uid": "fflfh9qp8mxogc"
               },
               "expr": "count_over_time({service_name=\"cloudflare-tunnel\"}[$__auto])",
               "instant": false,
@@ -2490,7 +2490,7 @@
         {
           "datasource": {
             "type": "loki",
-            "uid": "P8E80F9AEF21F6940"
+            "uid": "fflfh9qp8mxogc"
           },
           "description": "Eventos IDS de UniFi en tiempo real. Cada l\u00ednea es una posible amenaza detectada por el sistema de detecci\u00f3n de intrusiones del gateway.",
           "gridPos": {
@@ -2523,9 +2523,9 @@
               "app": "grafana-assistant-app",
               "datasource": {
                 "type": "loki",
-                "uid": "P8E80F9AEF21F6940"
+                "uid": "fflfh9qp8mxogc"
               },
-              "expr": "{service_name=\"unifi-ids\"}",
+              "expr": "{job=\"unifi-ids\"}",
               "instant": false,
               "legendFormat": "",
               "queryType": "range",
@@ -2539,7 +2539,7 @@
         {
           "datasource": {
             "type": "loki",
-            "uid": "P8E80F9AEF21F6940"
+            "uid": "fflfh9qp8mxogc"
           },
           "description": "Logs de nginx, Docker y Windows Event Log con filtro de errores. Busca patrones temporales: errores que aparecen justo despu\u00e9s de picos de CPU o WAN.",
           "gridPos": {
@@ -2572,7 +2572,7 @@
               "app": "grafana-assistant-app",
               "datasource": {
                 "type": "loki",
-                "uid": "P8E80F9AEF21F6940"
+                "uid": "fflfh9qp8mxogc"
               },
               "expr": "{service_name=~\"nginx-proxy|docker|windows-eventlog\"} |= ``",
               "instant": false,
@@ -2588,7 +2588,7 @@
         {
           "datasource": {
             "type": "loki",
-            "uid": "P8E80F9AEF21F6940"
+            "uid": "fflfh9qp8mxogc"
           },
           "description": "Actividad de todos los servicios de infraestructura del homelab: wordpress, mariadb, redis, prometheus, grafana. Picos de actividad correlacionados con la carga del sistema.",
           "fieldConfig": {
@@ -2678,7 +2678,7 @@
               "app": "grafana-assistant-app",
               "datasource": {
                 "type": "loki",
-                "uid": "P8E80F9AEF21F6940"
+                "uid": "fflfh9qp8mxogc"
               },
               "expr": "sum by(service_name) (count_over_time({service_name=~\"wordpress-site|mariadb-web|redis-cache|prometheus|grafana|nginx-proxy\"}[$__auto]))",
               "instant": false,

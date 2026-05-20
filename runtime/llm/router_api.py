@@ -1,6 +1,13 @@
 import sys
 sys.path.insert(0, "/opt/ai-lab")
 
+# FASE 29.0: Hardening — router NEVER binds to gateway port
+import os as _os
+_ROUTER_PORT = int(_os.environ.get("AI_LAB_ROUTER_PORT", "8083"))
+if _ROUTER_PORT == 8008:
+    print("FATAL: Router cannot bind to gateway port 8008. Set AI_LAB_ROUTER_PORT env var.", file=sys.stderr)
+    sys.exit(1)
+
 import time
 from typing import Any, Dict
 
@@ -34,7 +41,7 @@ from runtime.gateway.tool_request_classifier import (
     should_use_tool_fastpath,
 )
 
-from runtime.telemetry.prometheus_metrics import HARD_FACTS_HITS, GOVERNANCE_BLOCKED, GOVERNANCE_BLOCKED_BY_REASON, ROUTER_REQUESTS, prime_route_family_metrics, record_route_family_metrics
+from runtime.telemetry.prometheus_metrics import HARD_FACTS_HITS, GOVERNANCE_BLOCKED, GOVERNANCE_BLOCKED_BY_REASON, ROUTER_REQUESTS, record_route_family_metrics
 
 from runtime.agent.selective_context import (
     build_selective_context
@@ -75,8 +82,6 @@ try:
     ensure_collections()
 except ImportError:
     pass
-
-prime_route_family_metrics()
 
 # ── optional: working memory + context shaper (FASE 8.7) ────────────
 try:

@@ -5,7 +5,7 @@
 
   "prompt": "tool_use_prompt.md",
   "model": {
-    "default": "qwen3.6-27b",
+    "default": "qwen2.5-coder-14b-instruct",
     "fallback": "qwen2.5-coder-14b-instruct"
   },
 

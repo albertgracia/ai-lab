@@ -7,6 +7,7 @@ from typing import Any
 
 _EMBEDDING_MARKERS = ("embed", "embedding", "nomic")
 _VISION_MARKERS = ("vision", "moondream", "llava", "vqa", "ocr")
+_TOOL_USE_MARKERS = ("tool", "tool-use", "tool_use", "function_call", "function calling", "tool_calls")  # FASE 29.3: qwen3.6 removed
 _CODING_MARKERS = ("coder", "code", "deepseek-coder")
 _REASONING_MARKERS = (
     "reasoning",
@@ -60,6 +61,7 @@ def classify_model(model_id: str) -> dict[str, Any]:
 
     embedding = _contains_any(model, _EMBEDDING_MARKERS)
     vision = _contains_any(model, _VISION_MARKERS)
+    tool_use = _contains_any(model, _TOOL_USE_MARKERS)
     coding = _contains_any(model, _CODING_MARKERS)
     reasoning = _contains_any(model, _REASONING_MARKERS)
     fast = _contains_any(model, _FAST_MARKERS)
@@ -75,6 +77,10 @@ def classify_model(model_id: str) -> dict[str, Any]:
     elif coding and reasoning:
         model_type = "reasoning"
         skills = ["reasoning", "analysis", "architecture", "coding"]
+        chat_eligible = True
+    elif tool_use:
+        model_type = "tool_use"
+        skills = ["tool-use", "reasoning", "analysis", "architecture"]
         chat_eligible = True
     elif coding:
         model_type = "coding"
@@ -100,6 +106,8 @@ def classify_model(model_id: str) -> dict[str, Any]:
         confidence = 0.88
     elif coding or reasoning:
         confidence = 0.82
+    elif tool_use:
+        confidence = 0.86
     elif fast:
         confidence = 0.74
     if size_b:
@@ -114,6 +122,7 @@ def classify_model(model_id: str) -> dict[str, Any]:
         "chat_eligible": chat_eligible,
         "embedding": embedding,
         "vision": vision,
+        "tool_use": tool_use,
         "confidence": round(confidence, 2),
         "source": "heuristic",
     }

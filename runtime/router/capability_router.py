@@ -10,9 +10,10 @@ MODEL_CAPABILITIES = {
     "qwen2.5-coder-14b-instruct": {
         "reasoning": 8, "coding": 10, "speed": 8, "memory": 9, "node": "rx9070",
     },
-    "qwen3.6-27b": {
-        "reasoning": 10, "coding": 10, "speed": 6, "memory": 10, "node": "rx9070",
-    },
+    # FASE 29.3: qwen3.6-27b disabled — three-model-runtime simplification
+    # "qwen3.6-27b": {
+    #     "reasoning": 10, "coding": 10, "speed": 6, "memory": 10, "node": "rx9070",
+    # },
     "qwen2.5-coder-32b-instruct": {
         "reasoning": 9, "coding": 10, "speed": 4, "memory": 5, "node": "rx7900xt",
     },
@@ -22,7 +23,7 @@ MODEL_CAPABILITIES = {
 _USE_REGISTRY = False
 try:
     from runtime.models.model_registry import (
-        MODEL_REGISTRY, best_for_task, score_model,
+        MODEL_REGISTRY, best_for_task, score_model, normalize_model_id,
     )
     from runtime.models.model_classifier import classify_model
     _USE_REGISTRY = True
@@ -64,12 +65,18 @@ def choose_model(task_type="general"):
                 for model in node.get("models", []):
                     model_id = model.get("id") if isinstance(model, dict) else model
                     if model_id:
+                        # FASE 29.3: normalize and check if disabled in registry
+                        normalized = normalize_model_id(model_id)
+                        reg_entry = MODEL_REGISTRY.get(normalized, MODEL_REGISTRY.get(model_id, {}))
+                        if not reg_entry.get("enabled", True):
+                            continue
                         candidates.append(model_id)
         except Exception:
             pass
 
     if _USE_REGISTRY:
-        candidates.extend(MODEL_REGISTRY.keys())
+        # FASE 29.3: filter out disabled models
+        candidates.extend(m for m in MODEL_REGISTRY.keys() if MODEL_REGISTRY[m].get("enabled", True))
 
     if candidates:
         if task_type == "tool_use":

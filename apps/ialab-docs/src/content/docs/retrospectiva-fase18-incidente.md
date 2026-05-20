@@ -89,6 +89,14 @@ order: 38
 
 **AI-LAB v1 — Professional Operations Runtime**: estable y operativo.
 
+## Postscript de operación
+
+En la sesión posterior se corrigió un segundo frente operativo que no alteraba FASE 18 pero sí la experiencia de OpenCode:
+
+- se dejó de invocar `question` para informes y resúmenes abiertos
+- se documentó la compatibilidad SSE estable del router y el gateway
+- se registró el parche en `parche-opencode-router-gateway.md`
+
 ```bash
 # Verificación rápida
 curl -s http://192.168.1.30:8083/health

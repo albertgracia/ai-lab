@@ -29,10 +29,10 @@ const sections = [
 ];
 
 const kpis = [
-  ["Cluster Status", "Healthy", "text-emerald-400"],
-  ["GPU Nodes", "2", "text-cyan-400"],
-  ["LLM Runtime", "Active", "text-orange-400"],
-  ["Containers", "9", "text-white"],
+  { id: "kpi-cluster", label: "Cluster Status", value: "--", color: "text-emerald-400" },
+  { id: "kpi-gpus", label: "GPU Nodes", value: "--", color: "text-cyan-400" },
+  { id: "kpi-sessions", label: "Active Sessions", value: "--", color: "text-orange-400" },
+  { id: "kpi-containers", label: "Containers", value: "--", color: "text-white" },
 ];
 ---
 
@@ -53,9 +53,12 @@ const kpis = [
         observabilidad avanzada y operaciones internas.
       </p>
 
-      <div class="mt-6 rounded-xl border border-zinc-800 bg-zinc-900/80 px-5 py-4 text-sm text-zinc-400">
-        <span class="font-bold text-emerald-400">LIVE</span>
-        · última actualización visual: snapshot local · GPUs: 2 · LLM nodes: 3 · containers: 9
+      <div class="mt-6 rounded-xl border border-zinc-800 bg-zinc-900/80 px-5 py-4 text-sm text-zinc-400" id="status-summary">
+        <span class="font-bold text-emerald-400" id="status-health">LIVE</span>
+        · <span id="status-updated">última actualización: --</span>
+        · <span id="status-gpu-summary">GPUs: --</span>
+        · <span id="status-session-summary">sesiones: --</span>
+        · <span id="status-container-summary">containers: --</span>
       </div>
 
       <a href="https://metricas.labrazahome.com" class="mt-6 inline-flex rounded-xl bg-cyan-400 px-5 py-3 text-sm font-black text-zinc-950 hover:bg-cyan-300">
@@ -65,11 +68,11 @@ const kpis = [
 
     <div class="mb-12 grid gap-6 md:grid-cols-4">
       {
-        kpis.map(([label, value, color]) => (
+        kpis.map((kpi) => (
           <div class="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6 shadow-xl shadow-black/20">
-            <div class="text-sm text-zinc-500">{label}</div>
-            <div class={`mt-2 text-4xl font-black ${color}`}>
-              {value}
+            <div class="text-sm text-zinc-500">{kpi.label}</div>
+            <div id={kpi.id} class={`mt-2 text-4xl font-black ${kpi.color}`}>
+              {kpi.value}
             </div>
           </div>
         ))
@@ -104,3 +107,87 @@ const kpis = [
     </div>
   </section>
 </Layout>
+
+<script>
+  function setText(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  }
+
+  async function load() {
+    try {
+      const isPublic = window.location.hostname === "ai-lab.labrazahome.com" || window.location.hostname.includes("pages.dev");
+      const analyticsUrl = isPublic ? "/api/analytics.json" : "/api/analytics";
+
+      const [statusRes, analyticsRes] = await Promise.all([
+        fetch("/api/status.json", { cache: "no-store" }),
+        fetch(analyticsUrl, { cache: "no-store" }),
+      ]);
+
+      if (!statusRes.ok || !analyticsRes.ok) {
+        throw new Error(`status_${statusRes.status}_analytics_${analyticsRes.status}`);
+      }
+
+      const status = await statusRes.json();
+      const d = await analyticsRes.json();
+      const m = d.metrics || {};
+      const s = d.sessions || {};
+      const h = d.health || {};
+      const eb = d.event_bus || {};
+      const gpu = Array.isArray(status.gpu) ? status.gpu : [];
+      const containers = Array.isArray(status.docker?.containers) ? status.docker.containers : [];
+      const onlineGpus = gpu.filter((n) => Number(n.vram_total_gib || 0) > 0).length;
+      const totalGpus = gpu.length || Number(m.total_nodes || 0);
+      const activeSessions = Number(s.active_sessions || m.active_sessions || 0);
+      const containersRunning = containers.filter((c) => c.State === "running").length;
+      const score = Number(h.score || 0);
+      const level = h.level || (score >= 80 ? "good" : score >= 50 ? "warn" : "critical");
+      const label = level === "good" ? "Healthy" : level === "warn" ? "Degraded" : "Critical";
+
+      setText("status-health", label.toUpperCase());
+      setText("status-updated", `última actualización: ${new Date().toISOString().slice(11, 19)} UTC`);
+      setText("status-gpu-summary", `GPUs: ${onlineGpus}/${totalGpus}`);
+      setText("status-session-summary", `sesiones: ${activeSessions}`);
+      setText("status-container-summary", `containers: ${containersRunning}`);
+
+      setText("kpi-cluster", label);
+      setText("kpi-gpus", `${onlineGpus}/${totalGpus}`);
+      setText("kpi-sessions", String(activeSessions));
+      setText("kpi-containers", String(containersRunning));
+
+      document.getElementById("h-req").textContent = m.requests_total || 0;
+      document.getElementById("h-ses").textContent = s.total_sessions || 0;
+      document.getElementById("h-err").textContent = m.errors_total || 0;
+      document.getElementById("h-rout").textContent = m.routing_decisions_total || 0;
+      document.getElementById("h-str").textContent = m.streams_total || 0;
+      document.getElementById("h-lat").textContent = `${(m.last_latency_ms || 0).toFixed(0)}ms`;
+      document.getElementById("h-nod").textContent = `${m.online_nodes || 0}/${m.total_nodes || 0}`;
+      document.getElementById("h-ev").textContent = eb.total_events || 0;
+
+      document.getElementById("health-number").textContent = score;
+      document.getElementById("health-number").className = `text-5xl font-black ${score >= 80 ? "text-emerald-400" : score >= 60 ? "text-yellow-400" : score >= 40 ? "text-orange-400" : "text-red-400"}`;
+      document.getElementById("health-gauge").className = `w-36 h-36 rounded-full border-4 flex items-center justify-center ${score >= 80 ? "border-emerald-500" : score >= 60 ? "border-yellow-500" : score >= 40 ? "border-orange-500" : "border-red-500"}`;
+      document.getElementById("health-level").textContent = h.level || "--";
+
+      const reasons = document.getElementById("health-reasons");
+      if (h.reasons && h.reasons.length) {
+        reasons.innerHTML = h.reasons.map((r) => `<div>• ${r}</div>`).join("");
+      } else {
+        reasons.innerHTML = "<div class='text-emerald-400'>Sistema saludable</div>";
+      }
+    } catch {
+      setText("status-health", "OFFLINE");
+      setText("status-updated", "última actualización: error de lectura");
+      setText("status-gpu-summary", "GPUs: --");
+      setText("status-session-summary", "sesiones: --");
+      setText("status-container-summary", "containers: --");
+      setText("kpi-cluster", "Offline");
+      setText("kpi-gpus", "--");
+      setText("kpi-sessions", "--");
+      setText("kpi-containers", "--");
+    }
+  }
+
+  load();
+  setInterval(load, 15000);
+</script>

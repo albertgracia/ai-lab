@@ -24,8 +24,8 @@
       "error": "Skipped after 10 consecutive failures"
     }
   ],
-  "updated_at": 1778933723,
-  "updated_at_iso": "2026-05-16T12:15:23.659758+00:00",
+  "updated_at": 1779300789,
+  "updated_at_iso": "2026-05-20T18:13:09.706357+00:00",
   "cluster_health": "offline",
   "offline_nodes": 2,
   "discovered_nodes": [
@@ -34,11 +34,13 @@
       "port": 1234,
       "backend": "lmstudio",
       "online": true,
-      "latency_ms": 2.0,
+      "latency_ms": 2.49,
       "models": [
-        "qwen2.5-coder-14b-instruct",
+        "qwen/qwen2.5-coder-14b-instruct",
         "llama-3.1-8b-instruct",
-        "text-embedding-nomic-embed-text-v1.5"
+        "text-embedding-nomic-embed-text-v1.5",
+        "qwen/qwen3.6-27b",
+        "lmstudio-community/qwen2.5-coder-14b-instruct"
       ],
       "capabilities": [
         "backend",
@@ -48,7 +50,7 @@
         "memory",
         "reasoning"
       ],
-      "discovered_at": 1778933716,
+      "discovered_at": 1779300781,
       "status": "online"
     },
     {
@@ -59,7 +61,7 @@
       "latency_ms": null,
       "models": [],
       "capabilities": [],
-      "discovered_at": 1778933716,
+      "discovered_at": 1779300781,
       "status": "offline",
       "error": "HTTPConnectionPool(host='192.168.1.60', port=1234): Max retries exceeded with url: /v1/models (Caused by NewConnectionError(\"HTTPConnection(host='192.168.1.60', port=1234): Failed to establish a new connection: [Errno 113] No route to host\"))"
     },
@@ -71,9 +73,9 @@
       "latency_ms": null,
       "models": [],
       "capabilities": [],
-      "discovered_at": 1778933718,
+      "discovered_at": 1779300784,
       "status": "offline",
-      "error": "HTTPConnectionPool(host='192.168.1.250', port=1234): Max retries exceeded with url: /v1/models (Caused by ConnectTimeoutError(<HTTPConnection(host='192.168.1.250', port=1234) at 0x7fb25a7767a0>, 'Connection to 192.168.1.250 timed out. (connect timeout=5)'))"
+      "error": "HTTPConnectionPool(host='192.168.1.250', port=1234): Max retries exceeded with url: /v1/models (Caused by ConnectTimeoutError(<HTTPConnection(host='192.168.1.250', port=1234) at 0x7517e0a2e8b0>, 'Connection to 192.168.1.250 timed out. (connect timeout=5)'))"
     }
   ],
   "discovered_online_nodes": 1,

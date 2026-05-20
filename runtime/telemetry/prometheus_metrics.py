@@ -237,6 +237,222 @@ HALLUCINATION_RISK = Histogram(
     buckets=(0, 10, 20, 50, 100),
 )
 
+# ── FASE 28.0: Agentic Runtime Metrics ──────────────────────
+AGENTIC_PLANS_TOTAL = Counter(
+    "ailab_agentic_plans_total",
+    "Planes agentic generados",
+    ["route_family", "intent_count"],
+)
+AGENTIC_DRY_RUNS_TOTAL = Counter(
+    "ailab_agentic_dry_runs_total",
+    "Dry-runs completados",
+    ["risk_level"],
+)
+AGENTIC_RISK_SCORE = Histogram(
+    "ailab_agentic_risk_score",
+    "Puntuacion de riesgo agentic (0-3)",
+    ["route_family"],
+    buckets=(0, 1, 2, 3, 4),
+)
+AGENTIC_APPROVALS_REQUESTED = Counter(
+    "ailab_agentic_approvals_requested_total",
+    "Aprobaciones solicitadas",
+    ["approval_type"],
+)
+AGENTIC_APPROVALS_GRANTED = Counter(
+    "ailab_agentic_approvals_granted_total",
+    "Aprobaciones concedidas",
+    [],
+)
+AGENTIC_APPROVALS_REJECTED = Counter(
+    "ailab_agentic_approvals_rejected_total",
+    "Aprobaciones rechazadas",
+    [],
+)
+AGENTIC_APPROVALS_EXPIRED = Counter(
+    "ailab_agentic_approvals_expired_total",
+    "Aprobaciones expiradas por TTL",
+    [],
+)
+AGENTIC_EXECUTIONS_TOTAL = Counter(
+    "ailab_agentic_executions_total",
+    "Ejecuciones completadas",
+    ["result", "execution_mode"],
+)
+AGENTIC_ACTIONS_TOTAL = Counter(
+    "ailab_agentic_actions_total",
+    "Acciones individuales ejecutadas",
+    ["tool", "result", "intent"],
+)
+AGENTIC_EXECUTION_DURATION = Histogram(
+    "ailab_agentic_execution_duration_ms",
+    "Duracion total de ejecucion agentic",
+    ["phase"],
+    buckets=(100, 500, 1000, 5000, 15000, 30000, 60000),
+)
+AGENTIC_ROLLBACKS_TOTAL = Counter(
+    "ailab_agentic_rollbacks_total",
+    "Rollbacks ejecutados",
+    ["reason"],
+)
+AGENTIC_GOVERNANCE_BLOCKS = Counter(
+    "ailab_agentic_governance_blocks_total",
+    "Acciones bloqueadas por governance agentic",
+    ["reason"],
+)
+
+# ── FASE 28.0-C: Extended governance metrics ──
+AGENTIC_STUCK_WORKFLOWS = Counter(
+    "ailab_agentic_stuck_workflows_total",
+    "Workflows atascados en un estado",
+    ["state"],
+)
+AGENTIC_WORKFLOW_RETRIES = Counter(
+    "ailab_agentic_workflow_retries_total",
+    "Reintentos de workflow",
+    ["reason"],
+)
+AGENTIC_WORKFLOW_CANCELLATIONS = Counter(
+    "ailab_agentic_workflow_cancellations_total",
+    "Cancelaciones de workflow",
+    ["reason"],
+)
+AGENTIC_REPLAY_HASH_MISMATCH = Counter(
+    "ailab_agentic_replay_hash_mismatch_total",
+    "Mismatches de hash en replay",
+    ["field"],
+)
+
+# ── FASE 29.0: Gateway Lifecycle Metrics ────────────────────
+GATEWAY_UPTIME = Gauge(
+    "ailab_gateway_uptime_seconds",
+    "Gateway uptime in seconds",
+)
+GATEWAY_BOOT_TOTAL = Counter(
+    "ailab_gateway_boot_total",
+    "Gateway starts (boot count)",
+)
+GATEWAY_CLEAN_SHUTDOWN = Counter(
+    "ailab_gateway_clean_shutdown_total",
+    "Clean shutdowns (SIGTERM handled)",
+)
+GATEWAY_UNCLEAN_SHUTDOWN = Counter(
+    "ailab_gateway_unclean_shutdown_total",
+    "Unclean shutdowns (crash/kill)",
+)
+GATEWAY_SINGLETON_VIOLATION = Counter(
+    "ailab_gateway_singleton_violation_total",
+    "Singleton lock violations",
+)
+GATEWAY_PORT_CONFLICT = Counter(
+    "ailab_port_conflict_total",
+    "Port ownership conflicts detected",
+)
+GATEWAY_THREADS = Gauge(
+    "ailab_gateway_threads",
+    "Active thread count in gateway",
+)
+
+# ── FASE 29.3: Model Set Simplification Metrics ─────────────
+DISABLED_MODEL_SELECTION = Counter(
+    "ailab_disabled_model_selection_total",
+    "Redirecciones de modelos desactivados",
+    ["model", "reason"],
+)
+
+# ── FASE 29.3.1: Routing Tightening Metrics ──────────────────
+GREETING_FASTPATH_TOTAL = Counter(
+    "ailab_greeting_fastpath_total",
+    "Greetings routed via fastpath to llama",
+    [],
+)
+QWEN_ESCALATION_TOTAL = Counter(
+    "ailab_qwen_escalation_total",
+    "Qwen14b activations by escalation reason",
+    ["reason"],
+)
+LLAMA_FASTPATH_TOTAL = Counter(
+    "ailab_llama_fastpath_total",
+    "Lightweight prompts routed to llama",
+    [],
+)
+
+# ── FASE 29.0: Residency Metrics ────────────────────────────
+RESIDENCY_HITS = Counter(
+    "ailab_residency_hits_total",
+    "Model was already loaded in VRAM",
+    ["model"],
+)
+RESIDENCY_MISSES = Counter(
+    "ailab_residency_misses_total",
+    "Model needed loading (cold start or unloaded)",
+    ["model"],
+)
+MODEL_LOAD_SECONDS = Histogram(
+    "ailab_model_load_seconds",
+    "Time to load model into VRAM",
+    ["model"],
+    buckets=(1, 5, 10, 30, 60, 120, 300),
+)
+QUEUE_WAIT_SECONDS = Histogram(
+    "ailab_queue_wait_seconds",
+    "Time waiting for GPU slot",
+    ["model"],
+    buckets=(0.1, 0.5, 1, 5, 10, 30, 60),
+)
+TOKENS_PER_SECOND = Gauge(
+    "ailab_tokens_per_second",
+    "Estimated tokens per second throughput",
+    ["model"],
+)
+
+# ── FASE 28.1: Planner Runtime Skeleton Metrics ──────────────
+PLANNER_PLANS_TOTAL = Counter(
+    "ailab_planner_plans_total",
+    "Planes readonly generados por el planner",
+    ["plan_type"],
+)
+PLANNER_DAG_NODES_TOTAL = Histogram(
+    "ailab_planner_dag_nodes_total",
+    "Numero de nodos en DAG generados",
+    ["plan_type"],
+    buckets=(1, 2, 3, 4, 5, 6, 7, 8),
+)
+PLANNER_BLOCKED_TOTAL = Counter(
+    "ailab_planner_blocked_total",
+    "Planes bloqueados por governance",
+    ["blocked_reason"],
+)
+PLANNER_PERMISSION_SCOPE_TOTAL = Counter(
+    "ailab_planner_permission_scope_total",
+    "Distribucion de permission scopes en planes",
+    ["scope"],
+)
+PLANNER_VALIDATION_FAILURES_TOTAL = Counter(
+    "ailab_planner_validation_failures_total",
+    "Fallos de validacion en planes generados",
+    ["reason"],
+)
+
+# ── FASE 29.0: Streaming Metrics (preparatory) ──────────────
+STREAM_FIRST_CHUNK_LATENCY = Histogram(
+    "ailab_stream_first_chunk_ms",
+    "Latency to first SSE chunk",
+    ["model"],
+    buckets=(50, 100, 250, 500, 1000, 5000, 15000, 30000),
+)
+STREAM_CHUNK_CADENCE = Histogram(
+    "ailab_stream_chunk_cadence_ms",
+    "Time between consecutive SSE chunks",
+    ["model"],
+    buckets=(10, 50, 100, 250, 500, 1000),
+)
+STREAM_FINALIZATION_MISMATCH = Counter(
+    "ailab_stream_finalization_mismatch_total",
+    "finish_reason inconsistent with content end",
+    [],
+)
+
 DEFAULT_ROUTE_FAMILIES = (
     "minimal",
     "observe",
@@ -301,3 +517,185 @@ def prime_route_family_metrics(families: tuple[str, ...] = DEFAULT_ROUTE_FAMILIE
         ROUTE_FAMILY_COMPLETION_TOKENS.labels(family=fam).inc(0)
         ROUTE_FAMILY_ERRORS.labels(family=fam).inc(0)
         ROUTE_FAMILY_BLOCKED.labels(family=fam).inc(0)
+
+
+# ── FASE 28.0: Agentic metric recorders ──────────────────────
+
+def record_agentic_plan(route_family: str, intent_count: int) -> None:
+    AGENTIC_PLANS_TOTAL.labels(route_family=route_family, intent_count=str(intent_count)).inc()
+
+
+def record_agentic_dry_run(risk_level: str) -> None:
+    AGENTIC_DRY_RUNS_TOTAL.labels(risk_level=risk_level).inc()
+
+
+def record_agentic_risk_score(route_family: str, score: int) -> None:
+    AGENTIC_RISK_SCORE.labels(route_family=route_family).observe(float(score))
+
+
+def record_agentic_approval_requested(approval_type: str) -> None:
+    AGENTIC_APPROVALS_REQUESTED.labels(approval_type=approval_type).inc()
+
+
+def record_agentic_approval_granted() -> None:
+    AGENTIC_APPROVALS_GRANTED.inc()
+
+
+def record_agentic_approval_rejected() -> None:
+    AGENTIC_APPROVALS_REJECTED.inc()
+
+
+def record_agentic_approval_expired() -> None:
+    AGENTIC_APPROVALS_EXPIRED.inc()
+
+
+def record_agentic_execution(result: str, execution_mode: str) -> None:
+    AGENTIC_EXECUTIONS_TOTAL.labels(result=result, execution_mode=execution_mode).inc()
+
+
+def record_agentic_action(tool: str, result: str, intent: str) -> None:
+    AGENTIC_ACTIONS_TOTAL.labels(tool=tool, result=result, intent=intent).inc()
+
+
+def record_agentic_execution_duration(phase: str, duration_ms: int) -> None:
+    AGENTIC_EXECUTION_DURATION.labels(phase=phase).observe(float(duration_ms))
+
+
+def record_agentic_rollback(reason: str) -> None:
+    AGENTIC_ROLLBACKS_TOTAL.labels(reason=reason).inc()
+
+
+def record_agentic_governance_block(reason: str) -> None:
+    AGENTIC_GOVERNANCE_BLOCKS.labels(reason=reason).inc()
+
+
+# ── FASE 28.0-C: Extended metrics recorders ──
+
+def record_agentic_stuck_workflow(state: str) -> None:
+    AGENTIC_STUCK_WORKFLOWS.labels(state=state).inc()
+
+
+def record_agentic_workflow_retry(reason: str) -> None:
+    AGENTIC_WORKFLOW_RETRIES.labels(reason=reason).inc()
+
+
+def record_agentic_workflow_cancellation(reason: str) -> None:
+    AGENTIC_WORKFLOW_CANCELLATIONS.labels(reason=reason).inc()
+
+
+def record_agentic_replay_hash_mismatch(field: str) -> None:
+    AGENTIC_REPLAY_HASH_MISMATCH.labels(field=field).inc()
+
+
+# ── FASE 29.3: Model Set Simplification Recorders ───
+
+def record_disabled_model_selection(model: str, reason: str) -> None:
+    DISABLED_MODEL_SELECTION.labels(model=model, reason=reason).inc()
+
+
+# ── FASE 29.4.1: Report Runtime Grounding Metrics ────────────
+REPORT_GROUNDING_TOTAL = Counter(
+    "ailab_report_grounding_total",
+    "Report requests with OBSERVED_RUNTIME injected",
+    [],
+)
+REPORT_MISSING_FIELDS_TOTAL = Counter(
+    "ailab_report_missing_fields_total",
+    "Report requests with missing fields",
+    ["count"],
+)
+REPORT_TARGET_IP_TOTAL = Counter(
+    "ailab_report_target_ip_total",
+    "Report requests with detected target IP/domain",
+    [],
+)
+REPORT_UNGROUNDED_TOTAL = Counter(
+    "ailab_report_ungrounded_total",
+    "Report requests with zero observed fields",
+    [],
+)
+
+# ── FASE 29.4.2: Report Presentation Classification Metrics ────
+REPORT_MODEL_CLASSIFICATION_TOTAL = Counter(
+    "ailab_report_model_classification_total",
+    "Report model classification: active/disabled/discovered",
+    ["status"],
+)
+REPORT_NODE_CLASSIFICATION_TOTAL = Counter(
+    "ailab_report_node_classification_total",
+    "Report node classification: active/inventory",
+    ["status"],
+)
+REPORT_DATA_QUALITY_TOTAL = Counter(
+    "ailab_report_data_quality_total",
+    "Report data quality level: complete/partial/minimal",
+    ["quality"],
+)
+
+# ── FASE 29.3.1: Routing Tightening Recorders ──
+
+def record_greeting_fastpath() -> None:
+    GREETING_FASTPATH_TOTAL.inc()
+
+
+def record_qwen_escalation(reason: str) -> None:
+    QWEN_ESCALATION_TOTAL.labels(reason=reason).inc()
+
+
+def record_llama_fastpath() -> None:
+    LLAMA_FASTPATH_TOTAL.inc()
+
+
+# ── FASE 29.0: Gateway Lifecycle Recorders ──────────────────
+
+def record_gateway_boot() -> None:
+    GATEWAY_BOOT_TOTAL.inc()
+    GATEWAY_UPTIME.set(0)
+
+
+def record_gateway_clean_shutdown() -> None:
+    GATEWAY_CLEAN_SHUTDOWN.inc()
+
+
+def record_gateway_unclean_shutdown() -> None:
+    GATEWAY_UNCLEAN_SHUTDOWN.inc()
+
+
+def record_gateway_singleton_violation() -> None:
+    GATEWAY_SINGLETON_VIOLATION.inc()
+
+
+def record_port_conflict() -> None:
+    GATEWAY_PORT_CONFLICT.inc()
+
+
+def record_residency_hit(model: str) -> None:
+    RESIDENCY_HITS.labels(model=model).inc()
+
+
+def record_residency_miss(model: str) -> None:
+    RESIDENCY_MISSES.labels(model=model).inc()
+
+
+def record_model_load_time(model: str, seconds: float) -> None:
+    MODEL_LOAD_SECONDS.labels(model=model).observe(seconds)
+
+
+def record_queue_wait(model: str, seconds: float) -> None:
+    QUEUE_WAIT_SECONDS.labels(model=model).observe(seconds)
+
+
+def record_tokens_per_second(model: str, tps: float) -> None:
+    TOKENS_PER_SECOND.labels(model=model).set(tps)
+
+
+def record_stream_first_chunk(model: str, latency_ms: int) -> None:
+    STREAM_FIRST_CHUNK_LATENCY.labels(model=model).observe(float(latency_ms))
+
+
+def record_stream_chunk_cadence(model: str, cadence_ms: int) -> None:
+    STREAM_CHUNK_CADENCE.labels(model=model).observe(float(cadence_ms))
+
+
+def record_stream_finalization_mismatch() -> None:
+    STREAM_FINALIZATION_MISMATCH.inc()

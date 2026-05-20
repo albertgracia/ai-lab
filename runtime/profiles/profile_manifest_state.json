@@ -1,13 +1,46 @@
 {
   "checkpoint": "CP-27-PROFILE-FREEZE",
   "profiles": {
-    "minimal": {"stable": true, "last_validated": "2026-05-19"},
-    "report": {"stable": true, "last_validated": "2026-05-19"},
-    "coding": {"stable": true, "last_validated": "2026-05-19"},
-    "chat": {"stable": false, "reason": "en evolucion UX"},
-    "observe": {"stable": false, "reason": "en evolucion UX"},
-    "analysis": {"stable": false, "reason": "necesita burn-in"},
-    "agent": {"stable": false, "reason": "tools en evolucion"},
-    "creative": {"stable": false, "reason": "nuevo, en validacion"}
-  }
+    "minimal": {
+      "stable": true,
+      "last_validated": "2026-05-19"
+    },
+    "report": {
+      "stable": true,
+      "last_validated": "2026-05-19"
+    },
+    "coding": {
+      "stable": true,
+      "last_validated": "2026-05-19"
+    },
+    "chat": {
+      "stable": false,
+      "reason": "en evolucion UX"
+    },
+    "observe": {
+      "stable": false,
+      "reason": "en evolucion UX"
+    },
+    "analysis": {
+      "stable": false,
+      "reason": "necesita burn-in"
+    },
+    "agent": {
+      "stable": false,
+      "reason": "FASE29.3: qwen3.6-27b disabled, using qwen2.5-14b"
+    },
+    "creative": {
+      "stable": false,
+      "reason": "nuevo, en validacion"
+    }
+  },
+  "model_set": "29.3-three-model-runtime",
+  "active_models": [
+    "llama-3.1-8b-instruct",
+    "qwen2.5-coder-14b-instruct",
+    "text-embedding-nomic-embed-text-v1.5"
+  ],
+  "disabled_models": [
+    "qwen3.6-27b"
+  ]
 }

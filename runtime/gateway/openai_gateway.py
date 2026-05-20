@@ -1,5 +1,12 @@
+import os
+os.environ.setdefault("AI_LAB_ENABLE_MEMORY_INJECTOR", "true")
+os.environ.setdefault("AI_LAB_REAL_STREAMING", "true")
+
 import json
+import signal
+import sys
 import time
+import atexit
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -42,7 +49,8 @@ from runtime.distributed.execution_coordinator import (
 
 from runtime.gateway.stream_sanitizer import relay_stream
 from runtime.gateway.tool_call_parser import extract_tool_calls_from_message, filter_dangerous_tool_calls, repair_tool_call_arguments, parse_tool_calls
-from runtime.gateway.tool_request_classifier import build_minimal_report_messages, build_observe_context, build_observe_context_compact, build_capability_answer, classify_chat_route, is_report_request, is_report_request_heavy, sanitize_observe_output, sanitize_payload_messages, sanitize_prompt_text, should_use_greeting_fastpath, should_use_tool_fastpath, strip_question_tool
+from runtime.gateway.tool_request_classifier import build_minimal_report_messages, build_observe_context, build_observe_context_compact, build_capability_answer, classify_chat_route, is_report_request, is_report_request_heavy, sanitize_observe_output, sanitize_payload_messages, sanitize_prompt_text, should_use_greeting_fastpath, should_use_tool_fastpath, strip_question_tool, is_lightweight_prompt, get_qwen_escalation_reason
+from runtime.context.report_runtime_context import format_report_runtime_context, extract_target_ip
 from runtime.gateway.gateway_metrics import (
     load_metrics,
     record_request,
@@ -54,6 +62,54 @@ from collections import defaultdict
 import threading
 
 prime_route_family_metrics()
+
+# ── FASE 29.4: SLO Enforcement & Adaptive Runtime Protection ──
+try:
+    from runtime.slo import (
+        RuntimeSLOManager,
+        SLOState,
+        DegradationManager,
+        AdaptiveConcurrency,
+        PrioritySlotManager,
+        CircuitBreakerRegistry,
+        is_slo_enabled,
+        is_slo_dry_run,
+        get_lane_for_route,
+    )
+    _slo_state = SLOState()
+    _slo_manager = RuntimeSLOManager(_slo_state)
+    _degradation = DegradationManager()
+    _adaptive_concurrency = AdaptiveConcurrency()
+    _priority_slots = PrioritySlotManager()
+    _circuit_breakers = CircuitBreakerRegistry()
+    _HAVE_SLO = True
+except ImportError:
+    _slo_state = None
+    _slo_manager = None
+    _degradation = None
+    _adaptive_concurrency = None
+    _priority_slots = None
+    _circuit_breakers = None
+    _HAVE_SLO = False
+
+# ── FASE 28.1: Planner Runtime Skeleton ──
+os.environ.setdefault("AI_LAB_ENABLE_PLANNER", "false")
+os.environ.setdefault("AI_LAB_PLANNER_DRY_RUN", "true")
+
+try:
+    from runtime.agentic.planner import Planner
+    from runtime.agentic.governance_hooks import validate_plan_against_policy
+    from runtime.agentic.permissions import PermissionScope
+    _planner = Planner()
+    _HAVE_PLANNER = True
+except ImportError:
+    _planner = None  # type: ignore[assignment]
+    _HAVE_PLANNER = False
+
+AI_LAB_ENABLE_PLANNER = os.environ.get("AI_LAB_ENABLE_PLANNER", "false").lower() == "true"
+AI_LAB_PLANNER_DRY_RUN = os.environ.get("AI_LAB_PLANNER_DRY_RUN", "true").lower() != "false"
+
+_warmed_models = set()
 
 try:
     from runtime.prompts.prompt_loader import get_prompt_for_route as _load_route_prompt
@@ -429,10 +485,39 @@ def inject_agent_context(payload):
         except ImportError:
             pass
 
+    _report_runtime = None
+    _report_grounded_target = None
+    if route.family in ("minimal", "report") and route.variant in ("report", "heavy"):
+        try:
+            _report_runtime = format_report_runtime_context()
+            _report_grounded_target = extract_target_ip(user_text)
+            payload["_report_grounded"] = True
+            if _report_grounded_target:
+                payload["_report_grounded_target"] = _report_grounded_target
+            try:
+                from runtime.telemetry.prometheus_metrics import (
+                    REPORT_GROUNDING_TOTAL, REPORT_MISSING_FIELDS_TOTAL,
+                    REPORT_TARGET_IP_TOTAL, REPORT_UNGROUNDED_TOTAL,
+                )
+                REPORT_GROUNDING_TOTAL.inc()
+                if _report_grounded_target:
+                    REPORT_TARGET_IP_TOTAL.inc()
+                import json as _json
+                _ctx = _json.loads(_report_runtime)
+                _miss = _ctx.get("missing_fields", [])
+                if _miss:
+                    REPORT_MISSING_FIELDS_TOTAL.labels(count=str(len(_miss))).inc()
+                if not _ctx.get("observed_fields"):
+                    REPORT_UNGROUNDED_TOTAL.inc()
+            except ImportError:
+                pass
+        except Exception:
+            pass
+
     if route.family == "minimal" and route.variant == "report":
         payload.pop("tools", None)
         payload.pop("tool_choice", None)
-        payload["messages"] = build_minimal_report_messages(user_text)
+        payload["messages"] = build_minimal_report_messages(user_text, observed_runtime=_report_runtime)
         payload["max_tokens"] = min(int(payload.get("max_tokens", 512) or 512), 512)
         payload["temperature"] = min(float(payload.get("temperature", 0.1) or 0.1), 0.2)
         system_prompt = None
@@ -448,23 +533,19 @@ def inject_agent_context(payload):
         payload["max_tokens"] = min(int(payload.get("max_tokens", 2048) or 2048), 2048)
         payload["temperature"] = min(float(payload.get("temperature", 0.7) or 0.7), 0.8)
         system_prompt = "Eres un escritor creativo en espanol. Desarrolla la peticion sin excusas. Si el texto es muy largo, entrega una primera parte clara y ofrece continuar."
+        try:
+            from runtime.telemetry.prometheus_metrics import CREATIVE_REQUESTS_TOTAL
+            CREATIVE_REQUESTS_TOTAL.inc()
+        except ImportError:
+            pass
     elif route.family == "report":
         payload.pop("tools", None)
         payload.pop("tool_choice", None)
         payload["model"] = "qwen2.5-coder-14b-instruct"
-        payload["messages"] = build_minimal_report_messages(user_text)
+        payload["messages"] = build_minimal_report_messages(user_text, observed_runtime=_report_runtime)
         payload["max_tokens"] = min(int(payload.get("max_tokens", 1024) or 1024), 1024)
         payload["temperature"] = min(float(payload.get("temperature", 0.3) or 0.3), 0.3)
-        system_prompt = (
-            "Eres el perfil de informe tecnico del AI-LAB. "
-            "Responde en espanol de forma clara y estructurada. "
-            "Usa unicamente los datos disponibles en OBSERVED_RUNTIME. "
-            "No muestres bloques HARD_FACTS ni JSON al usuario. "
-            "Si un dato no esta disponible, marca NO DISPONIBLE. "
-            "No inventes: porcentajes, disponibilidad, SLA, "
-            "autenticacion, autorizacion, roles, ubicacion, "
-            "usuarios, sesiones ni roadmap futuro."
-        )
+        system_prompt = None
     elif route.family == "minimal" and route.variant == "casual":
         payload["temperature"] = min(float(payload.get("temperature", 0.2) or 0.2), 0.2)
         system_prompt = (
@@ -509,6 +590,22 @@ def inject_agent_context(payload):
             "\nPara solicitudes de informe, resumen, diagnóstico o auditoría, no uses la herramienta question. "
             "Genera la respuesta con los datos disponibles y marca lo que falte como NO DISPONIBLE."
         )
+
+    # FASE 27.1-B: governed memory recall injection
+    try:
+        mem_profile = payload.get("_profile", route.family)
+        from runtime.policies.memory.memory_loader import get_policy_for_profile
+        mem_policy = get_policy_for_profile(mem_profile)
+        if mem_policy.get("semantic_recall") and mem_policy.get("sources") and user_text:
+            from runtime.policies.memory.memory_injector import build_memory_context
+            mem_ctx = build_memory_context(mem_policy, user_text, route.family)
+            if not mem_ctx.get("skipped") and mem_ctx.get("items"):
+                mem_block = "MEMORIA RELEVANTE:\n" + "\n".join(
+                    f"[{i['source']}] {i['text'][:200]}" for i in mem_ctx["items"]
+                )
+                system_prompt = (system_prompt or "") + "\n\n" + mem_block
+    except ImportError:
+        pass
 
     if system_prompt is not None:
         injected = [
@@ -690,8 +787,14 @@ class GatewayHandler(BaseHTTPRequestHandler):
             )
             return
 
-        
-        
+        # FASE 29.4: SLO health endpoint
+        if self.path == "/slo/health":
+            if _HAVE_SLO:
+                self._send_json(200, _slo_manager.get_runtime_health())
+            else:
+                self._send_json(503, {"error": "slo_module_unavailable"})
+            return
+
         if self.path == "/metrics":
             metrics = load_metrics()
             prom_text = (
@@ -1008,13 +1111,82 @@ class GatewayHandler(BaseHTTPRequestHandler):
             if route_variant == "creative" or route_family == "report":
                 selected_model = "qwen/qwen2.5-coder-14b-instruct"
             elif route_family in {"minimal", "observe"}:
-                selected_model = "llama-3.1-8b-instruct"
-            if (current_mode() == "observe" or observe_fastpath) and not should_use_tool_fastpath(payload):
+                # FASE 29.3.1: but if message demands qwen14b (deep reasoning), escalate
+                escalation = get_qwen_escalation_reason(observe_user_text)
+                if escalation and route_family == "observe":
+                    selected_model = "qwen2.5-coder-14b-instruct"
+                    try:
+                        from runtime.telemetry.prometheus_metrics import record_qwen_escalation
+                        record_qwen_escalation(f"observe_override:{escalation}")
+                    except ImportError:
+                        pass
+                else:
+                    selected_model = "llama-3.1-8b-instruct"
+            # FASE 29.3.1: don't override qwen escalation with observe fastpath
+            _already_qwen = "qwen" in (selected_model or "").lower()
+            if (current_mode() == "observe" or observe_fastpath) and not should_use_tool_fastpath(payload) and not _already_qwen:
                 selected_model = "llama-3.1-8b-instruct"
             elif should_use_greeting_fastpath(payload):
                 selected_model = "llama-3.1-8b-instruct"
+                try:
+                    from runtime.telemetry.prometheus_metrics import record_greeting_fastpath
+                    record_greeting_fastpath()
+                except ImportError:
+                    pass
+            # FASE 29.3.1: Lightweight prompt heuristic — short/simple → llama
+            elif is_lightweight_prompt(observe_user_text):
+                selected_model = "llama-3.1-8b-instruct"
+                try:
+                    from runtime.telemetry.prometheus_metrics import record_llama_fastpath
+                    record_llama_fastpath()
+                except ImportError:
+                    pass
             elif task_type in ("fast", "general", "coding"):
+                escalation_reason = get_qwen_escalation_reason(observe_user_text)
+                if escalation_reason:
+                    selected_model = "qwen2.5-coder-14b-instruct"
+                    try:
+                        from runtime.telemetry.prometheus_metrics import record_qwen_escalation
+                        record_qwen_escalation(escalation_reason)
+                    except ImportError:
+                        pass
+                else:
+                    selected_model = "llama-3.1-8b-instruct"
+
+            # FASE 29.3: Hard guard — qwen3.6-27b disabled, redirect to qwen2.5-14b
+            DISABLED_MODELS = {"qwen3.6-27b", "qwen/qwen3.6-27b", "lmstudio-community/qwen3.6-27b"}
+            if selected_model in DISABLED_MODELS or "qwen3.6" in (selected_model or "").lower():
+                original = selected_model
                 selected_model = "qwen2.5-coder-14b-instruct"
+                try:
+                    from runtime.telemetry.prometheus_metrics import record_disabled_model_selection
+                    record_disabled_model_selection(original, "disabled_model_redirect")
+                except ImportError:
+                    pass
+
+            # FASE 29.4: Degradation-based model override
+            if _HAVE_SLO:
+                _degradation_level = _degradation.get_current_level()
+                if _degradation.should_force_llama(_degradation_level):
+                    selected_model = "llama-3.1-8b-instruct"
+                    _degradation.record_llama_forced("degradation_force_llama", is_slo_dry_run())
+                elif _degradation.should_pause_qwen_routing(_degradation_level):
+                    if "qwen" in (selected_model or "").lower():
+                        selected_model = "llama-3.1-8b-instruct"
+                        _degradation.record_llama_forced("degradation_pause_qwen", is_slo_dry_run())
+                elif _degradation.should_block_qwen_escalation(_degradation_level):
+                    if route_family in {"minimal", "observe"} and "qwen" in (selected_model or "").lower():
+                        selected_model = "llama-3.1-8b-instruct"
+                        _degradation.record_qwen_protection("degradation_block_escalation", is_slo_dry_run())
+
+            if selected_model not in _warmed_models:
+                _warmed_models.add(selected_model)
+                try:
+                    from runtime.telemetry.prometheus_metrics import COLD_START_TOTAL
+                    COLD_START_TOTAL.labels(model=selected_model).inc()
+                except ImportError:
+                    pass
+
             session_id = create_session(task_type, selected_model, get_active_backend()["name"])
             payload["model"] = selected_model
 
@@ -1023,13 +1195,25 @@ class GatewayHandler(BaseHTTPRequestHandler):
             )
 
             upstream_payload = dict(payload)
-            upstream_payload.pop("stream", None)
+
+            # FASE 29.2: Real Streaming — pass stream=true to LM Studio
+            _real_streaming = False
+            try:
+                from runtime.gateway.stream_sanitizer import is_real_streaming_enabled
+                _real_streaming = is_real_streaming_enabled()
+            except ImportError:
+                pass
+
+            if _real_streaming and stream_enabled:
+                upstream_payload["stream"] = True
+            else:
+                upstream_payload.pop("stream", None)
 
             response = requests.post(
                 f"{get_active_backend()['url']}/chat/completions",
                 headers=backend_headers(),
                 json=upstream_payload,
-                stream=False,
+                stream=stream_enabled if _real_streaming else False,
                 timeout=(10, 600),
             )
 
@@ -1046,6 +1230,14 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 GPU_ESTIMATED_UTILIZATION.set(min(100, float(GPU_ACTIVE_REQUESTS._value.get()) / 4.0 * 100))
             except ImportError:
                 pass
+
+            # FASE 29.4: Record TTFB to SLO state
+            if _HAVE_SLO:
+                _slo_state.record_ttfb(float(ttfb_ms))
+                _slo_state.record_gpu_state(
+                    min(1.0, float(GPU_ACTIVE_REQUESTS._value.get()) / 4.0),
+                    0.0,
+                )
 
             if response.status_code >= 400:
                 error_msg = _response_error_message(response)
@@ -1077,6 +1269,30 @@ class GatewayHandler(BaseHTTPRequestHandler):
             except ImportError:
                 pass
 
+            # FASE 29.4: Periodic SLO evaluation + adaptive concurrency
+            if _HAVE_SLO:
+                _slo_state.record_gpu_state(
+                    min(1.0, float(GPU_ACTIVE_REQUESTS._value.get()) / 4.0) if 'GPU_ACTIVE_REQUESTS' in dir() else 0.0,
+                    0.0,
+                )
+                slo_state_code = _slo_manager.evaluate_slo_state()
+                slo_snap = _slo_state.get_snapshot()
+                _degradation.evaluate_and_apply(slo_state_code, slo_snap, is_slo_dry_run())
+                _adaptive_concurrency.update(
+                    gpu_util=slo_snap["gpu_util"],
+                    vram_pressure=slo_snap["vram_pressure"],
+                    timeout_rate=slo_snap["timeout_rate"],
+                    degradation_level=_degradation.get_current_level(),
+                    dry_run=is_slo_dry_run(),
+                )
+                _slo_manager.update_metrics()
+                # Push adaptive concurrency limit to stream_sanitizer
+                try:
+                    from runtime.gateway.stream_sanitizer import set_max_streams
+                    set_max_streams(_adaptive_concurrency.get_streams_max())
+                except ImportError:
+                    pass
+
             record_routing_decision()
             record_request(
                 self.path,
@@ -1086,8 +1302,22 @@ class GatewayHandler(BaseHTTPRequestHandler):
             )
             record_model_selection(task_type, selected_model, get_active_backend()["name"], latency_ms)
 
+            # FASE 29.4: Record stream backlog
+            if _HAVE_SLO:
+                try:
+                    from runtime.gateway.stream_sanitizer import get_stream_stats
+                    _sstats = get_stream_stats()
+                    _slo_state.record_stream_metrics(
+                        backlog=max(0, _sstats.get("active_streams", 0)),
+                        active=_sstats.get("active_streams", 0),
+                    )
+                except ImportError:
+                    pass
+
             if stream_enabled:
                 if response.status_code >= 400:
+                    if _HAVE_SLO:
+                        _circuit_breakers.record_failure(selected_model)
                     record_route_family_metrics(route_family, count=False, latency_ms=latency_ms, error=True)
                     try:
                         self._send_json(
@@ -1104,6 +1334,30 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 register_stream()
                 self._send_sse_headers()
 
+                # FASE 29.2: Real Streaming path
+                if _real_streaming:
+                    try:
+                        chunk_count = relay_stream(response, self, selected_model)
+                        # Record real TTFB and metrics
+                        try:
+                            from runtime.telemetry.prometheus_metrics import record_stream_first_chunk
+                            from runtime.telemetry.prometheus_metrics import STREAM_CHUNKS_TOTAL
+                            if chunk_count:
+                                for _ in range(chunk_count):
+                                    STREAM_CHUNKS_TOTAL.inc()
+                        except ImportError:
+                            pass
+                        # FASE 29.4: circuit breaker success
+                        if _HAVE_SLO and chunk_count and chunk_count > 0:
+                            _circuit_breakers.record_success(selected_model)
+                    except Exception as exc:
+                        record_error(self.path, exc)
+                        record_route_family_metrics(route_family, count=False, latency_ms=latency_ms, error=True)
+                        if _HAVE_SLO:
+                            _circuit_breakers.record_failure(selected_model)
+                    return
+
+                # Legacy: Fake SSE path (FASE 27.1.1 — fallback when AI_LAB_REAL_STREAMING=false)
                 try:
                     data = response.json()
                 except Exception as exc:
@@ -1127,7 +1381,6 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 if message.get("tool_calls"):
                     delta["tool_calls"] = [repair_tool_call_arguments(tc) for tc in message.get("tool_calls") if isinstance(tc, dict)]
 
-                # FASE 27.1.1: streaming observability
                 try:
                     from runtime.telemetry.prometheus_metrics import STREAM_CHUNKS_TOTAL, STREAM_EMPTY_CHUNKS
                     STREAM_CHUNKS_TOTAL.inc()
@@ -1142,7 +1395,6 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 self.wfile.flush()
 
                 finish_reason = first_choice.get("finish_reason", "stop") if isinstance(first_choice, dict) else "stop"
-                # FASE 27.1.1: detect finish_reason inconsistency
                 try:
                     if not has_content and not message.get("tool_calls") and finish_reason == "stop":
                         from runtime.telemetry.prometheus_metrics import STREAM_FINISH_INCONSISTENT
@@ -1178,6 +1430,77 @@ class GatewayHandler(BaseHTTPRequestHandler):
 
             data = sanitize_completion_response(data)
 
+            # FASE 28.0: Agentic Pipeline (simulation-only) — BEFORE sending response
+            _agentic_content = ""
+            _agentic_choices = data.get("choices", [])
+            for _ac in _agentic_choices:
+                _agentic_msg = _ac.get("message", {}) if isinstance(_ac, dict) else {}
+                _agentic_content = _agentic_msg.get("content", "") if isinstance(_agentic_msg.get("content"), str) else ""
+                break
+            try:
+                from runtime.agentic.intents import IntentParser
+                intents = IntentParser.from_llm_response(_agentic_content)
+                if intents:
+                    from runtime.agentic.planner import Planner
+                    from runtime.agentic.dryrun import DryRunEngine
+                    from runtime.agentic.explainability import ExplainabilityEngine
+                    from runtime.agentic.executor import SimulationExecutor
+                    from runtime.agentic.verifier import Verifier
+                    from runtime.agentic.workflow_state import WorkflowState, WorkflowTimeline
+                    from runtime.telemetry.prometheus_metrics import (
+                        record_agentic_plan, record_agentic_dry_run,
+                        record_agentic_risk_score, record_agentic_execution,
+                        record_agentic_action, record_agentic_execution_duration,
+                    )
+
+                    plan = Planner.plan(intents, request_id=payload.get("_request_id", ""))
+                    record_agentic_plan(route_family or "unknown", len(intents))
+
+                    dry_run = DryRunEngine.run(plan)
+                    record_agentic_dry_run(dry_run.overall_risk)
+                    record_agentic_risk_score(route_family or "unknown", dry_run.risk_score)
+
+                    report = ExplainabilityEngine.explain(plan, dry_run)
+
+                    timeline = WorkflowTimeline(plan_id=plan.plan_id)
+                    timeline.add_event("plan_generated", "planning", {"intent_count": len(intents)})
+                    timeline.add_event("dry_run_completed", "evaluated", dry_run.to_dict())
+
+                    if dry_run.blocked:
+                        timeline.transition(WorkflowState.FAILED)
+                    elif dry_run.requires_approval:
+                        timeline.transition(WorkflowState.AWAITING_APPROVAL)
+                    else:
+                        execution = SimulationExecutor.execute(plan, timeline)
+                        record_agentic_execution("simulated_success", "simulation_only")
+                        for ar in execution.actions_results:
+                            record_agentic_action(ar.tool, ar.status, ar.intent)
+                        record_agentic_execution_duration("simulating", execution.total_duration_ms)
+
+                        verifier = Verifier.verify(plan, dry_run, execution)
+                        timeline.add_event("verifier_completed", "done", verifier.to_dict())
+
+                    if _agentic_choices and isinstance(_agentic_choices[0].get("message"), dict):
+                        _agentic_choices[0]["message"]["content"] = (
+                            _agentic_choices[0]["message"].get("content", "")
+                            + "\n\n" + report.to_markdown()
+                        )
+
+                    try:
+                        from runtime.audit.audit_logger import audit_event
+                        audit_event("agentic_pipeline_completed", {
+                            "plan_id": plan.plan_id,
+                            "request_id": payload.get("_request_id", ""),
+                            "intent_count": len(intents),
+                            "risk": dry_run.overall_risk,
+                            "blocked": dry_run.blocked,
+                            "simulation_only": True,
+                        })
+                    except ImportError:
+                        pass
+            except Exception as e:
+                print(f"AGENTIC ERROR: {e}", flush=True)
+
             self._send_json(
                 response.status_code,
                 data,
@@ -1190,6 +1513,10 @@ class GatewayHandler(BaseHTTPRequestHandler):
                      latency_ms=latency_ms, success=True, stream=False, failover=False)
             except ImportError:
                 pass
+
+            # FASE 29.4: Record circuit breaker success
+            if _HAVE_SLO:
+                _circuit_breakers.record_success(selected_model)
 
             usage = data.get("usage", {}) if isinstance(data, dict) else {}
             blocked = False
@@ -1207,8 +1534,43 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 blocked=blocked,
             )
 
+            # FASE 27.1-B: quality + hallucination risk scoring (lightweight heuristics)
+            try:
+                from runtime.telemetry.prometheus_metrics import QUALITY_SCORE, HALLUCINATION_RISK
+                _choices = data.get("choices", [])
+                _first = _choices[0] if _choices else {}
+                _content = _first.get("message", {}).get("content", "") if isinstance(_first, dict) else ""
+                _finish = _first.get("finish_reason", "stop") if isinstance(_first, dict) else "stop"
+                # Quality: stop=0.9, length=0.6, error/empty=0.2
+                if _finish == "stop":
+                    _qs = 0.9
+                elif _finish == "length":
+                    _qs = 0.6
+                else:
+                    _qs = 0.2
+                if blocked:
+                    _qs = min(_qs, 0.1)
+                QUALITY_SCORE.labels(route_family=route_family or "unknown").observe(float(_qs))
+                # Hallucination risk: detect NO DISPONIBLE (low risk) vs repetition (high risk)
+                _hr = 0.1
+                if isinstance(_content, str) and _content:
+                    if "NO DISPONIBLE" in _content:
+                        _hr = 0.05
+                    words = _content.lower().split()
+                    if len(words) > 10:
+                        uniq = len(set(words))
+                        repeat_ratio = 1.0 - (uniq / len(words))
+                        if repeat_ratio > 0.4:
+                            _hr = max(_hr, min(repeat_ratio, 0.8))
+                HALLUCINATION_RISK.labels(route_family=route_family or "unknown").observe(float(_hr))
+            except ImportError:
+                pass
+
         except requests.exceptions.RequestException as exc:
             latency_ms = int((time.time() - start_time) * 1000)
+            if _HAVE_SLO and 'selected_model' in dir() and selected_model:
+                _circuit_breakers.record_failure(selected_model)
+                _slo_state.record_timeout(True)
             record_error(self.path, exc)
             record_route_family_metrics(route_family, count=False, latency_ms=latency_ms, error=True)
             self._send_json(502, {"error": "backend_unreachable", "detail": str(exc)})
@@ -1223,6 +1585,8 @@ class GatewayHandler(BaseHTTPRequestHandler):
 
         except Exception as exc:
             latency_ms = int((time.time() - start_time) * 1000)
+            if _HAVE_SLO and 'selected_model' in dir() and selected_model:
+                _circuit_breakers.record_failure(selected_model)
             record_error(self.path, exc)
             record_route_family_metrics(route_family, count=False, latency_ms=latency_ms, error=True)
             self._send_json(500, {"error": "gateway_error", "detail": str(exc)})
@@ -1236,11 +1600,69 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 pass
 
 
+_shutting_down = False
+_server_ref = None
+
+
+def _handle_sigterm(signum, frame):
+    global _shutting_down, _server_ref
+    _shutting_down = True
+    print("Received signal, shutting down gracefully...", flush=True)
+    try:
+        from runtime.gateway.process_guard import release_lock
+        release_lock()
+    except ImportError:
+        pass
+    try:
+        from runtime.telemetry.prometheus_metrics import record_gateway_clean_shutdown
+        record_gateway_clean_shutdown()
+    except ImportError:
+        pass
+    if _server_ref:
+        _server_ref.shutdown()
+    sys.exit(0)
+
+
+signal.signal(signal.SIGTERM, _handle_sigterm)
+signal.signal(signal.SIGINT, _handle_sigterm)
+
+
 def run():
+    global _server_ref
+
+    # FASE 29.0: Pre-bind cleanup — kill rogue uvicorn on port 8008
+    try:
+        from runtime.gateway.process_guard import prebind_cleanup
+        prebind_cleanup()
+    except ImportError:
+        pass
+
+    # FASE 29.0: Singleton PID lock
+    try:
+        from runtime.gateway.process_guard import acquire_lock
+        if not acquire_lock():
+            print("FATAL: Another gateway instance is already running", flush=True)
+            try:
+                from runtime.telemetry.prometheus_metrics import record_gateway_singleton_violation
+                record_gateway_singleton_violation()
+            except ImportError:
+                pass
+            sys.exit(1)
+    except ImportError:
+        pass
+
+    # FASE 29.0: Register atexit cleanup
+    try:
+        from runtime.gateway.process_guard import release_lock
+        atexit.register(release_lock)
+    except ImportError:
+        pass
+
     server = ThreadingHTTPServer(
         (HOST, PORT),
         GatewayHandler,
     )
+    _server_ref = server
 
     print("AI-LAB OPENAI GATEWAY")
     print("=====================")
@@ -1249,6 +1671,12 @@ def run():
     print(f"Backend:   {backend['name']} @ {backend['url']}")
     print("Mode:      stream-aware sanitized + metrics")
     print()
+
+    try:
+        from runtime.telemetry.prometheus_metrics import record_gateway_boot
+        record_gateway_boot()
+    except ImportError:
+        pass
 
     server.serve_forever()
 

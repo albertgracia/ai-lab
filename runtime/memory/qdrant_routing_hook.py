@@ -7,12 +7,12 @@ Embeds and stores each routing event asynchronously.
 import time
 
 try:
-    from runtime.memory.qdrant_store import store_embedding, get_embedding
+    from runtime.memory.qdrant_store import store_operational_embedding, get_embedding
     from runtime.memory.qdrant_collections import event_type_for, validate_payload
     _HAVE_QDRANT = True
 except ImportError:
     _HAVE_QDRANT = False
-    store_embedding = None
+    store_operational_embedding = None
     event_type_for = None
     validate_payload = None
 
@@ -40,7 +40,7 @@ def on_routing_event(event_data: dict) -> None:
             "failover": event_data.get("failover", False),
             "error": event_data.get("error"),
         }
-        store_embedding("routing_history", payload)
+        store_operational_embedding("routing_history", payload)
     except Exception:
         pass
 
@@ -66,6 +66,6 @@ def on_cognitive_event(event_data: dict) -> None:
             "files_used_names": event_data.get("files_used_names", []),
             "working_memory_used": event_data.get("working_memory_used", False),
         }
-        store_embedding("cognitive_history", payload)
+        store_operational_embedding("cognitive_history", payload)
     except Exception:
         pass

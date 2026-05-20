@@ -163,7 +163,7 @@ When user's prompt is NOT in English:
 
 ### 🛑 GLOBAL SOCRATIC GATE (TIER 0)
 
-**MANDATORY: Every user request must pass through the Socratic Gate before ANY tool use or implementation.**
+**MANDATORY: Every user request must pass through the Socratic Gate before ANY tool use or implementation, except when the user requests a direct summary, status report, or explanation that can be answered immediately without ambiguity.**
 
 | Request Type            | Strategy       | Required Action                                                   |
 | ----------------------- | -------------- | ----------------------------------------------------------------- |
@@ -172,6 +172,12 @@ When user's prompt is NOT in English:
 | **Vague / Simple**      | Clarification  | Ask Purpose, Users, and Scope                                     |
 | **Full Orchestration**  | Gatekeeper     | **STOP** subagents until user confirms plan details               |
 | **Direct "Proceed"**    | Validation     | **STOP** → Even if answers are given, ask 2 "Edge Case" questions |
+
+**Important exception:**
+
+- If the user asks for a summary, informe, estado, explanation, or report, answer directly instead of invoking the `question` tool.
+- Only use structured questions when the task truly requires multiple-choice capture or clarification that cannot be answered from existing runtime context.
+- If `question` is used, its `questions` field must be a native array of objects, never a JSON string.
 
 **Protocol:**
 

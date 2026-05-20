@@ -48,6 +48,8 @@ MODEL_REGISTRY = {
         "gpu_ip": "192.168.1.50",
         "node": "rx9070-node",
         "priority": 40,
+        "enabled": False,
+        "disabled_reason": "FASE29.3: three-model-runtime simplification",
     },
     "deepseek-r1-qwen3-8b": {
         "display_name": "DeepSeek R1 (Qwen3 8B)",
@@ -232,6 +234,8 @@ def get_best_model(task_type, available_models=None):
     list[tuple[str, int]]  (best first)
     """
     candidates = available_models or list(MODEL_REGISTRY.keys())
+    # FASE 29.3: filter out disabled models
+    candidates = [m for m in candidates if MODEL_REGISTRY.get(m, {}).get("enabled", True)]
     scored = [(mid, score_model(task_type, mid)) for mid in candidates]
     scored.sort(key=lambda x: x[1], reverse=True)
     return scored

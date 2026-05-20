@@ -16,6 +16,10 @@ El directorio `.agent/` contiene el ecosistema de conocimiento del runtime cogni
 
 Estos archivos son cargados por el `selective_context.py` del runtime para proporcionar contexto relevante al modelo de lenguaje según la intención del usuario.
 
+### 1.1. Regla de interacción OpenCode
+
+Para informes y resúmenes abiertos, OpenCode debe responder directamente y no usar la herramienta `question` salvo que se trate de una captura estructurada real de opciones o formulario. Si se usa `question`, el campo `questions` debe ser un array nativo y no un string JSON serializado.
+
 ---
 
 ## 2. AGENTES (21)

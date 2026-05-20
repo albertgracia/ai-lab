@@ -8,14 +8,21 @@ EMBEDDING_URL = "http://192.168.1.200:1234/v1/embeddings"
 EMBEDDING_MODEL = "text-embedding-nomic-embed-text-v1.5"
 
 TOP_K = 5
+MAX_EMBED_QUERY_CHARS = 1200
+
+
+def normalize_query(text: str) -> str:
+    cleaned = " ".join((text or "").split()).strip()
+    return cleaned[:MAX_EMBED_QUERY_CHARS]
 
 
 def embed(text: str):
+    text = normalize_query(text)
     r = requests.post(
         EMBEDDING_URL,
         json={
             "model": EMBEDDING_MODEL,
-            "input": text[:8000]
+            "input": text
         },
         timeout=60
     )

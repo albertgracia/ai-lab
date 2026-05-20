@@ -7,6 +7,8 @@ allowed-tools: Read, Glob, Grep
 # Brainstorming & Communication Protocol
 
 > **MANDATORY:** Use for complex/vague requests, new features, updates.
+>
+> **Exception:** If the user asks for a summary, informe, estado, report, or direct explanation, respond directly and do not open a question round.
 
 ---
 
@@ -29,6 +31,14 @@ allowed-tools: Read, Glob, Grep
    - 👥 Users: Who will use this?
    - 📦 Scope: Must-have vs nice-to-have?
 3. **WAIT** - Get response before proceeding
+
+### ✅ Direct-Answer Exception
+
+If the request is a summary or status report:
+
+1. **ANSWER** directly with the best available evidence.
+2. **Do not** convert the request into a questionnaire.
+3. **Do not** invoke structured question tooling unless the user explicitly asks for options or clarification.
 
 ---
 

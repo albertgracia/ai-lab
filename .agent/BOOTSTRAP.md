@@ -26,6 +26,7 @@ When a task arrives:
 4. Load the minimum set of skills needed.
 5. Read the global rules before acting.
 6. If the request is vague, ask clarifying questions before coding.
+   If the request is a summary, report, or status check, answer directly instead of using the `question` tool.
 
 ## Agent Routing Guide
 

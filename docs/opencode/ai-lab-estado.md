@@ -224,16 +224,17 @@ swap:    4.0 GB (775 MB used)
 
 ## 8. OBSERVABILIDAD
 
-**Estado actual:** Pendiente de implementación
+**Estado actual:** Implementada
 
 | Componente | Estado |
 |------------|--------|
-| Prometheus | ❌ No instalado |
-| Grafana | ❌ No instalado |
-| Loki | ❌ No instalado |
-| Promtail | ❌ No instalado |
-| Node Exporter | ❌ No instalado |
-| cAdvisor | ❌ No instalado |
+| Prometheus | ✅ Operativo |
+| Grafana | ✅ Operativo |
+| Loki | ✅ Operativo |
+| Promtail | ✅ Operativo |
+| Node Exporter | ✅ Operativo |
+| cAdvisor | ✅ Operativo |
+| GPU telemetry (`9182`/`9183`) | ✅ Operativa |
 
 ---
 
@@ -263,7 +264,7 @@ swap:    4.0 GB (775 MB used)
 | **Phase 7** | Autonomous Operations — remediación autónoma, razonamiento operacional, cognición de infraestructura | 📋 Planificado |
 | **Phase 8** | Multi-Agent Coordination — agentes especializados, malla cognitiva distribuida, razonamiento cooperativo | 📋 Planificado |
 
-### 9.3. Stack de Observabilidad (Planificado)
+### 9.3. Stack de Observabilidad
 
 ```
 Prometheus → Grafana
@@ -303,7 +304,7 @@ cAdvisor   → métricas Docker
 
 | Aspecto | Estado | Recomendación |
 |---------|--------|---------------|
-| **Observabilidad** | ❌ No implementada | Instalar Prometheus + Grafana + Loki stack |
+| **Observabilidad** | ✅ Implementada | Stack operativo en `192.168.1.40`; GPU telemetry validada en `9182` + `9183` |
 | **Ejecución remota real** | ⏳ Simulación | Implementar ejecución real en nodos GPU |
 | **Failover** | ❌ No implementado | Añadir lógica de failover entre nodos |
 | **Async queues** | ❌ No implementado | Implementar colas de tareas asíncronas |
@@ -313,19 +314,18 @@ cAdvisor   → métricas Docker
 
 ### 11.3. Próximos Pasos Recomendados
 
-1. **Instalar stack de observabilidad** (Prometheus + Grafana + Loki)
-2. **Implementar ejecución remota real** en los nodos GPU vía API
-3. **Añadir failover automático** entre nodos del clúster
-4. **Implementar colas asíncronas** para tareas pesadas
-5. **Automatizar respaldo** de Qdrant y memoria episódica
-6. **Agregar más RAM** si se planean modelos > 32B en local
+1. **Implementar ejecución remota real** en los nodos GPU vía API
+2. **Añadir failover automático** entre nodos del clúster
+3. **Implementar colas asíncronas** para tareas pesadas
+4. **Automatizar respaldo** de Qdrant y memoria episódica
+5. **Agregar más RAM** si se planean modelos > 32B en local
 
 ---
 
 ## 12. CONCLUSIÓN
 
-AI-LAB se encuentra en un **estado operativo estable y funcional** en su versión Distributed Cognitive Runtime v1. Los 5 contenedores Docker están activos, los 3 nodos del clúster cognitivo responden, los sistemas de memoria (semántica + episódica) están operativos, y el runtime de gobernanza con 3 perfiles funcionales está en producción.
+AI-LAB se encuentra en un **estado operativo estable y funcional** en su versión Distributed Cognitive Runtime v1. Los 5 contenedores Docker están activos, los 3 nodos del clúster cognitivo responden, los sistemas de memoria (semántica + episódica) están operativos, la observabilidad ya está implementada, y el runtime de gobernanza con 3 perfiles funcionales está en producción.
 
-El sistema opera con **carga mínima** (22% RAM, load < 0.33), dejando margen amplio para las siguientes fases. La prioridad inmediata es la **Phase 6** (Distributed Execution Coordinator) que permitirá pasar de simulación a ejecución remota real en los nodos GPU, y el **stack de observabilidad** para telemetría del sistema.
+El sistema opera con **carga mínima** (22% RAM, load < 0.33), dejando margen amplio para las siguientes fases. La prioridad inmediata es la **Phase 6** (Distributed Execution Coordinator) que permitirá pasar de simulación a ejecución remota real en los nodos GPU.
 
 **Estado general: ✅ OPERATIVO — Carga baja — Preparado para Phase 6**

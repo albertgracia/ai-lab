@@ -1,29 +1,4 @@
 services:
-  grafana:
-    image: grafana/grafana:12.0.2
-    container_name: grafana
-    restart: unless-stopped
-    ports:
-      - "3001:3000"
-    environment:
-      TZ: Europe/Madrid
-      GF_SECURITY_ADMIN_PASSWORD: "19682507"
-      GF_USERS_ALLOW_SIGN_UP: "false"
-    volumes:
-      - ./grafana/provisioning:/etc/grafana/provisioning
-      - ./grafana/data:/var/lib/grafana
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    networks:
-      - proxy
-    labels:
-      env: homelab
-      cluster: ai-lab
-      role: observability
-
   node-exporter:
     image: prom/node-exporter:v1.9.1
     container_name: node-exporter

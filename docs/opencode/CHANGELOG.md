@@ -3,12 +3,93 @@
 
 ---
 
+### 18/05/2026 — Corrección de Socratic Gate para informes
+
+#### Estado final
+- Las peticiones de resumen/informe/estado dejan de pasar por `question`.
+- La guía de OpenCode y la capa `.agent` ahora distinguen entre aclaración real y respuestas directas.
+- Se evita el `SchemaError(Expected array, got "[...]")` al intentar serializar `questions` como string.
+
+#### Problemas resueltos
+- Falsos positivos del Socratic Gate en solicitudes abiertas de informe.
+- Uso incorrecto de `question` como herramienta genérica para resúmenes.
+
+#### Documentación actualizada
+- `.agent/OPENCODE_PROMPT.md`
+- `.agent/BOOTSTRAP.md`
+- `.agent/rules/GEMINI.md`
+- `apps/ialab-docs/src/content/docs/parche-opencode-router-gateway.md`
+
+---
+
+### 18/05/2026 — Parche OpenCode + Router/Gateway Streaming
+
+#### Estado final
+- OpenCode quedó documentado para responder informes y resúmenes de forma directa, sin usar `question` cuando la respuesta es abierta.
+- Router y gateway quedaron alineados con SSE compatible y retry ante `Model unloaded`.
+- Se añadió trazabilidad en Astro con un doc específico del parche.
+
+#### Problemas resueltos
+- `SchemaError(Expected array, got "[...]")` al pasar `questions` como string.
+- Incompatibilidad de streaming entre cliente y backend cuando LM Studio devolvía respuestas no triviales.
+- Falsos cuelgues por mezcla de JSON/SSE en el flujo de conversación.
+
+#### Documentación actualizada
+- `apps/ialab-docs/src/content/docs/parche-opencode-router-gateway.md`
+- `apps/ialab-docs/src/content/docs/fix-model-unloaded-lmstudio.md`
+- `apps/ialab-docs/src/content/docs/retrospectiva-fase18-incidente.md`
+- `apps/ialab-docs/src/content/docs/openwebui-conexion-router.md`
+
+---
+
+### 16/05/2026 — Restauración telemetría GPU
+
+#### Estado final
+- `192.168.1.50:9182` volvió a emitir `windows_gpu_*` tras reactivar el collector `gpu`.
+- `192.168.1.50:9183` y `192.168.1.60:9183` volvieron a servir métricas GPU válidas con labels citados.
+- `GPU AI Metrics`, `AI-LAB GPUs` y `metricas.labrazahome.com/gpus` quedaron verificados con RX9070 + RX7900XT.
+
+#### Problemas resueltos
+- Regresión del reboot: `windows_exporter` quedó sin `gpu` en `.50`.
+- Regresión del reboot: `gpu_metrics.ps1` en `.60` emitía labels sin comillas y Prometheus lo rechazaba.
+- `GPUExporter` pasó a ejecutarse con `powershell.exe -File gpu_metrics.ps1` directo.
+
+#### Documentación actualizada
+- `docs/opencode/09-observabilidad.md`
+- `docs/opencode/ai-lab-estado.md`
+- `docs/opencode/ai-lab-informe-tecnico.md`
+- `apps/ialab-docs/src/content/docs/telemetria-gpu-restauracion.md`
+
+---
+
+### 16/05/2026 — Consolidación de observabilidad
+
+#### Estado final
+- Grafana consolidado en `192.168.1.40:3000`.
+- Grafana antiguo retirado.
+- Prometheus y Loki operativos en `192.168.1.40:9090` y `192.168.1.40:3100`.
+- Promtail en `192.168.1.30` recibe `unifi-ids` por `TCP :1514`.
+
+#### Problemas resueltos
+- `Labrazahome — Logs` corregido con el datasource Loki `fflfh9qp8mxogc`.
+- `Labrazahome — Time-Series Analysis` corregido con el datasource Loki `fflfh9qp8mxogc` y la query `job="unifi-ids"`.
+- `Windows Server - NAS N5` restauró el panel `Temperatura SMART discos` usando `smartctl-exporter` en `192.168.1.200:9633`.
+- Dashboards `AI-LAB Overview`, `AI-LAB Runtime`, `AI-LAB GPUs` y `AI-LAB Infrastructure` corregidos.
+- Se eliminaron las referencias al Grafana antiguo en la documentación operativa.
+
+#### Documentación actualizada
+- `docs/opencode/09-observabilidad.md`
+- `docs/opencode/03-operaciones.md`
+- `docs/opencode/CHANGELOG.md`
+
+---
+
 ### 13/05/2026 — Stack de Observabilidad + Migración Dashboards
 
 #### Nuevos contenedores Docker
 | Servicio | Puerto | Versión |
 |----------|--------|---------|
-| Grafana | 3001 | 12.0.2 |
+| Grafana | 3000 | 13.0.1 |
 | Node Exporter | 9100 | v1.9.1 |
 | cAdvisor | 8081 | v0.52.1 |
 
@@ -16,7 +97,7 @@
 - `ai-lab-node` (.30:9100) — ✅ UP
 - `ai-lab-cadvisor` (.30:8081) — ✅ UP
 
-#### Dashboards en Grafana (.30:3001 — admin/19682507)
+#### Dashboards en Grafana (.40:3000 — admin/19682507)
 - Node Exporter Full (ID 1860) — provisionado
 - Cadvisor exporter (ID 14282) — provisionado
 - Labrazahome — Logs (al6k9h6) — migrado desde Cloud
@@ -79,14 +160,14 @@
 #### Nuevo contenedor
 | Servicio | Puerto | Imagen |
 |----------|--------|--------|
-| Promtail | 1514/udp, 9080 | grafana/promtail:3.4.2 |
+| Promtail | 1514/tcp, 9080 | grafana/promtail:3.4.2 |
 
 #### Fuentes de logs añadidas a Loki (.40:3100)
 | Job | Fuente | Estado |
 |-----|--------|--------|
 | `docker` | Contenedores Ubuntu (.30) vía Docker socket | ✅ |
 | `journald` | Sistema Ubuntu (.30) vía /var/log/journal | ✅ |
-| `unifi-ids` | UniFi Gateway → syslog UDP .30:1514 → Promtail → Loki | ✅ |
+| `unifi-ids` | UniFi Gateway → syslog TCP .30:1514 → Promtail → Loki | ✅ |
 
 #### Archivos de configuración creados
 - `stacks/promtail/docker-compose.yml` — contenedor Promtail
@@ -94,7 +175,7 @@
 
 #### Correcciones aplicadas
 - Dashboard Windows NAS-N5: reemplazadas 25 referencias `localhost:9182` → `192.168.1.200:9182`
-- promtail.yml ajustes: syslog listener en RFC5424 (formato que espera Promtail 3.4.2)
+- promtail.yml ajustes: syslog listener en TCP/RFC5424 (formato que espera Promtail 3.4.2)
 
 ### 13/05/2026 — Reparación Rioja Marketplace
 

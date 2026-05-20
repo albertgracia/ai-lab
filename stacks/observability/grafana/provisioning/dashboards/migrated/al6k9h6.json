@@ -25,7 +25,7 @@
     {
       "datasource": {
         "type": "loki",
-        "uid": "P8E80F9AEF21F6940"
+        "uid": "fflfh9qp8mxogc"
       },
       "description": "Rate de logs ingresados por job/fuente",
       "fieldConfig": {
@@ -113,7 +113,7 @@
           "app": "grafana-assistant-app",
           "datasource": {
             "type": "loki",
-            "uid": "P8E80F9AEF21F6940"
+            "uid": "fflfh9qp8mxogc"
           },
           "expr": "sum by(job) (rate({job=~\"docker|journald|unifi-ids\"}[$__auto]))",
           "instant": false,
@@ -129,7 +129,7 @@
     {
       "datasource": {
         "type": "loki",
-        "uid": "P8E80F9AEF21F6940"
+        "uid": "fflfh9qp8mxogc"
       },
       "fieldConfig": {
         "defaults": {
@@ -186,7 +186,7 @@
           "app": "grafana-assistant-app",
           "datasource": {
             "type": "loki",
-            "uid": "P8E80F9AEF21F6940"
+            "uid": "fflfh9qp8mxogc"
           },
           "expr": "sum(count_over_time({job=~\"docker|journald\"} |= \"error\" [24h]))",
           "instant": true,
@@ -201,7 +201,7 @@
     {
       "datasource": {
         "type": "loki",
-        "uid": "P8E80F9AEF21F6940"
+        "uid": "fflfh9qp8mxogc"
       },
       "fieldConfig": {
         "defaults": {
@@ -258,7 +258,7 @@
           "app": "grafana-assistant-app",
           "datasource": {
             "type": "loki",
-            "uid": "P8E80F9AEF21F6940"
+            "uid": "fflfh9qp8mxogc"
           },
           "expr": "sum(count_over_time({job=~\"docker|journald\"} |= \"warn\" [24h]))",
           "instant": true,
@@ -273,7 +273,7 @@
     {
       "datasource": {
         "type": "loki",
-        "uid": "P8E80F9AEF21F6940"
+        "uid": "fflfh9qp8mxogc"
       },
       "fieldConfig": {
         "defaults": {
@@ -361,7 +361,7 @@
           "app": "grafana-assistant-app",
           "datasource": {
             "type": "loki",
-            "uid": "P8E80F9AEF21F6940"
+            "uid": "fflfh9qp8mxogc"
           },
           "expr": "sum by(job) (rate({job=~\"docker|journald\"} |~ \"(?i)(error|critical|fatal)\" [$__auto]))",
           "instant": false,
@@ -389,7 +389,7 @@
     {
       "datasource": {
         "type": "loki",
-        "uid": "P8E80F9AEF21F6940"
+        "uid": "fflfh9qp8mxogc"
       },
       "description": "Todos los logs de contenedores Docker",
       "gridPos": {
@@ -420,7 +420,7 @@
           "app": "grafana-assistant-app",
           "datasource": {
             "type": "loki",
-            "uid": "P8E80F9AEF21F6940"
+            "uid": "fflfh9qp8mxogc"
           },
           "expr": "{job=\"docker\", container_name=~\"$container_name\"}",
           "instant": false,
@@ -435,7 +435,7 @@
     {
       "datasource": {
         "type": "loki",
-        "uid": "P8E80F9AEF21F6940"
+        "uid": "fflfh9qp8mxogc"
       },
       "description": "Rate de logs Docker con errores destacados",
       "fieldConfig": {
@@ -523,7 +523,7 @@
           "app": "grafana-assistant-app",
           "datasource": {
             "type": "loki",
-            "uid": "P8E80F9AEF21F6940"
+            "uid": "fflfh9qp8mxogc"
           },
           "expr": "sum by(container_name) (rate({job=\"docker\", container_name=~\"$container_name\"}[$__auto]))",
           "instant": false,
@@ -536,7 +536,7 @@
           "app": "grafana-assistant-app",
           "datasource": {
             "type": "loki",
-            "uid": "P8E80F9AEF21F6940"
+            "uid": "fflfh9qp8mxogc"
           },
           "expr": "sum by(container_name) (rate({job=\"docker\", container_name=~\"$container_name\"} |~ \"(?i)(error|fatal|critical)\" [$__auto]))",
           "instant": false,
@@ -552,7 +552,7 @@
     {
       "datasource": {
         "type": "loki",
-        "uid": "P8E80F9AEF21F6940"
+        "uid": "fflfh9qp8mxogc"
       },
       "description": "Solo errores y warnings de Docker",
       "gridPos": {
@@ -583,7 +583,7 @@
           "app": "grafana-assistant-app",
           "datasource": {
             "type": "loki",
-            "uid": "P8E80F9AEF21F6940"
+            "uid": "fflfh9qp8mxogc"
           },
           "expr": "{job=\"docker\", container_name=~\"$container_name\"} |~ \"(?i)(error|warn|fatal|critical)\"",
           "instant": false,
@@ -610,7 +610,7 @@
     {
       "datasource": {
         "type": "loki",
-        "uid": "P8E80F9AEF21F6940"
+        "uid": "fflfh9qp8mxogc"
       },
       "description": "Logs del sistema Ubuntu v\u00eda journald/systemd",
       "gridPos": {
@@ -641,7 +641,7 @@
           "app": "grafana-assistant-app",
           "datasource": {
             "type": "loki",
-            "uid": "P8E80F9AEF21F6940"
+            "uid": "fflfh9qp8mxogc"
           },
           "expr": "{job=\"journald\"}",
           "instant": false,
@@ -656,7 +656,7 @@
     {
       "datasource": {
         "type": "loki",
-        "uid": "P8E80F9AEF21F6940"
+        "uid": "fflfh9qp8mxogc"
       },
       "fieldConfig": {
         "defaults": {
@@ -743,7 +743,7 @@
           "app": "grafana-assistant-app",
           "datasource": {
             "type": "loki",
-            "uid": "P8E80F9AEF21F6940"
+            "uid": "fflfh9qp8mxogc"
           },
           "expr": "rate({job=\"journald\"}[$__auto])",
           "instant": false,
@@ -756,7 +756,7 @@
           "app": "grafana-assistant-app",
           "datasource": {
             "type": "loki",
-            "uid": "P8E80F9AEF21F6940"
+            "uid": "fflfh9qp8mxogc"
           },
           "expr": "rate({job=\"journald\"} |~ \"(?i)(error|fail|critical)\" [$__auto])",
           "instant": false,
@@ -772,7 +772,7 @@
     {
       "datasource": {
         "type": "loki",
-        "uid": "P8E80F9AEF21F6940"
+        "uid": "fflfh9qp8mxogc"
       },
       "description": "Errores y fallos del sistema operativo",
       "gridPos": {
@@ -803,7 +803,7 @@
           "app": "grafana-assistant-app",
           "datasource": {
             "type": "loki",
-            "uid": "P8E80F9AEF21F6940"
+            "uid": "fflfh9qp8mxogc"
           },
           "expr": "{job=\"journald\"} |~ \"(?i)(error|fail|critical|denied)\"",
           "instant": false,
@@ -830,7 +830,7 @@
     {
       "datasource": {
         "type": "loki",
-        "uid": "P8E80F9AEF21F6940"
+        "uid": "fflfh9qp8mxogc"
       },
       "description": "Logs del router Unifi Cloud Gateway Fiber - IDS/IPS",
       "gridPos": {
@@ -861,7 +861,7 @@
           "app": "grafana-assistant-app",
           "datasource": {
             "type": "loki",
-            "uid": "P8E80F9AEF21F6940"
+            "uid": "fflfh9qp8mxogc"
           },
           "expr": "{job=\"unifi-ids\"}",
           "instant": false,
@@ -876,7 +876,7 @@
     {
       "datasource": {
         "type": "loki",
-        "uid": "P8E80F9AEF21F6940"
+        "uid": "fflfh9qp8mxogc"
       },
       "fieldConfig": {
         "defaults": {
@@ -963,7 +963,7 @@
           "app": "grafana-assistant-app",
           "datasource": {
             "type": "loki",
-            "uid": "P8E80F9AEF21F6940"
+            "uid": "fflfh9qp8mxogc"
           },
           "expr": "sum(rate({job=\"unifi-ids\"}[$__auto]))",
           "instant": false,
@@ -976,7 +976,7 @@
           "app": "grafana-assistant-app",
           "datasource": {
             "type": "loki",
-            "uid": "P8E80F9AEF21F6940"
+            "uid": "fflfh9qp8mxogc"
           },
           "expr": "sum(rate({job=\"unifi-ids\"} |~ \"(?i)(block|drop|deny|threat|intrusion)\" [$__auto]))",
           "instant": false,
@@ -1003,7 +1003,7 @@
         },
         "datasource": {
           "type": "loki",
-          "uid": "P8E80F9AEF21F6940"
+          "uid": "fflfh9qp8mxogc"
         },
         "hide": 0,
         "includeAll": true,

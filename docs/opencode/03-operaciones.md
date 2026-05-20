@@ -211,11 +211,12 @@ python3 /opt/ai-lab/runtime/nodes/healthcheck.py
 cat /opt/ai-lab/runtime/state/cluster_state.json
 ```
 
-### 6.3. Stack de Observabilidad (Planificado)
-Una vez instalado:
-- **Grafana**: `http://192.168.1.30:3001`
-- **Prometheus**: `http://192.168.1.30:9090`
-- Dashboards preconfigurados para métricas del sistema
+### 6.3. Stack de Observabilidad
+- **Grafana**: `http://192.168.1.40:3000`
+- **Prometheus**: `http://192.168.1.40:9090`
+- **Loki**: `http://192.168.1.40:3100`
+- **Promtail**: `192.168.1.30:1514/tcp` para `unifi-ids`
+- Dashboards preconfigurados para métricas y logs del sistema
 
 ---
 
