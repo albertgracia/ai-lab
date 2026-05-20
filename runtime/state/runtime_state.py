@@ -48,4 +48,20 @@ def get_runtime_state():
         state["maturity"] = descriptor.to_dict()
     except Exception:
         state["maturity"] = None
+    try:
+        from runtime.state.lmstudio_state import get_model_tracker
+        tracker = get_model_tracker()
+        tracker.rebuild_from_nodes()
+        state["model_state"] = tracker.to_dict()
+    except Exception:
+        state["model_state"] = None
+    try:
+        from runtime.slo.degradation import DegradationManager
+        from runtime.slo.runtime_slo import is_slo_enabled
+        _dummy_mgr = DegradationManager()
+        state["degraded_mode"] = _dummy_mgr.get_degraded_state().to_dict()
+        state["slo_enabled"] = is_slo_enabled()
+    except Exception:
+        state["degraded_mode"] = None
+        state["slo_enabled"] = False
     return state

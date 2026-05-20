@@ -32,6 +32,8 @@ def build_runtime_descriptor() -> RuntimeStateDescriptor:
     role = _resolve_topology_role()
     generation_phase = _resolve_generation_phase()
 
+    degraded_mode = _resolve_degraded_mode()
+
     descriptor = RuntimeStateDescriptor(
         phase=generation_phase,
         maturity=maturity,
@@ -42,6 +44,7 @@ def build_runtime_descriptor() -> RuntimeStateDescriptor:
         topology_role=role,
         temporal=temporal,
         generation_ts=now,
+        degraded_mode=degraded_mode,
     )
 
     _DESCRIPTOR_CACHE = descriptor
@@ -133,7 +136,17 @@ def _resolve_topology_role() -> TopologyRole:
 
 
 def _resolve_generation_phase() -> str:
-    return "30A"
+    return "30C"
+
+
+def _resolve_degraded_mode() -> dict | None:
+    try:
+        from runtime.slo.degradation import DegradationManager
+        mgr = DegradationManager()
+        return mgr.get_degraded_state().to_dict()
+    except Exception:
+        pass
+    return None
 
 
 def _is_model_actively_serving(model_info: dict) -> bool:

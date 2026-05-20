@@ -11,6 +11,7 @@ class RuntimePhase(str, Enum):
     PHASE_29_3 = "29.3"
     PHASE_29_4 = "29.4"
     PHASE_30A = "30A"
+    PHASE_30C = "30C"
 
 
 class RuntimeMaturityLevel(str, Enum):
@@ -103,9 +104,10 @@ class RuntimeStateDescriptor:
     topology_role: TopologyRole
     temporal: TemporalState = field(default_factory=TemporalState)
     generation_ts: float = field(default_factory=time.time)
+    degraded_mode: dict | None = None
 
     def to_dict(self) -> dict:
-        return {
+        result = {
             "runtime_generation": {
                 "phase": self.phase,
                 "maturity": self.maturity.value,
@@ -118,3 +120,6 @@ class RuntimeStateDescriptor:
             "temporal": self.temporal.to_dict(),
             "generated_at": self.generation_ts,
         }
+        if self.degraded_mode is not None:
+            result["degraded_mode"] = self.degraded_mode
+        return result

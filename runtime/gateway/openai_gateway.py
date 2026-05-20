@@ -965,6 +965,28 @@ class GatewayHandler(BaseHTTPRequestHandler):
             self.wfile.write(body)
             return
 
+        if self.path == "/runtime/degraded-state":
+            disabled_state = None
+            try:
+                from runtime.slo import is_slo_enabled
+                if not is_slo_enabled():
+                    from runtime.slo import build_disabled_degraded_state
+                    disabled_state = build_disabled_degraded_state()
+            except Exception:
+                pass
+            if disabled_state is not None:
+                self._send_json(200, disabled_state.to_dict())
+                return
+            try:
+                from runtime.slo import DegradationManager, is_slo_enabled
+                _dummy = DegradationManager()
+                state = _dummy.get_degraded_state()
+                self._send_json(200, state.to_dict())
+            except Exception as exc:
+                record_error_legacy(self.path, exc)
+                self._send_json(500, {"error": "degraded_state_unavailable", "detail": str(exc)})
+            return
+
         if self.path == "/runtime/maturity":
             try:
                 from runtime.maturity import build_runtime_descriptor

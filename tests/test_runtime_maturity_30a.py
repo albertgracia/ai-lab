@@ -282,7 +282,7 @@ def test_descriptor_to_dict_includes_generated_at():
 def test_build_runtime_descriptor_returns_valid():
     desc = build_runtime_descriptor()
     assert isinstance(desc, RuntimeStateDescriptor)
-    assert desc.phase == "30A"
+    assert desc.phase in ("30A", "30C")
     assert isinstance(desc.maturity, RuntimeMaturityLevel)
     assert isinstance(desc.mode, RuntimeMode)
     assert isinstance(desc.topology_role, TopologyRole)
@@ -291,7 +291,7 @@ def test_build_runtime_descriptor_returns_valid():
 def test_build_runtime_descriptor_to_dict_roundtrip():
     desc = build_runtime_descriptor()
     d = desc.to_dict()
-    assert d["runtime_generation"]["phase"] == "30A"
+    assert d["runtime_generation"]["phase"] in ("30A", "30C")
     assert d["runtime_generation"]["maturity"] in (
         "booting", "stabilizing", "operational", "degraded", "emergency", "shutdown"
     )
@@ -314,7 +314,7 @@ def test_build_runtime_descriptor_json_serializable():
     json_str = json.dumps(d)
     assert json_str
     parsed = json.loads(json_str)
-    assert parsed["runtime_generation"]["phase"] == "30A"
+    assert parsed["runtime_generation"]["phase"] in ("30A", "30C")
 
 
 def test_build_runtime_descriptor_temporal_touched():
