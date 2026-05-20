@@ -840,3 +840,30 @@ def record_stream_chunk_cadence(model: str, cadence_ms: int) -> None:
 
 def record_stream_finalization_mismatch() -> None:
     STREAM_FINALIZATION_MISMATCH.inc()
+
+
+# ── FASE 30A: Runtime State & Maturity Metrics ────────────
+RUNTIME_MATURITY_STATE = Gauge(
+    "ailab_runtime_maturity_state",
+    "Current runtime maturity level (0=booting, 1=stabilizing, 2=operational, 3=degraded, 4=emergency, 5=shutdown)",
+)
+RUNTIME_MATURITY_PHASE = Gauge(
+    "ailab_runtime_maturity_phase",
+    "Current runtime implementation phase encoded as numeric gauge",
+)
+
+
+def record_maturity_state(maturity: str) -> None:
+    state_map = {
+        "booting": 0, "stabilizing": 1, "operational": 2,
+        "degraded": 3, "emergency": 4, "shutdown": 5,
+    }
+    RUNTIME_MATURITY_STATE.set(float(state_map.get(maturity, 2)))
+
+
+def record_maturity_phase(phase: str) -> None:
+    try:
+        phase_num = float(phase.replace("A", ".5").replace("B", ".6").replace("C", ".7"))
+        RUNTIME_MATURITY_PHASE.set(phase_num)
+    except (ValueError, AttributeError):
+        RUNTIME_MATURITY_PHASE.set(0.0)

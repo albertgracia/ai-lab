@@ -42,4 +42,10 @@ def update_runtime_state(
 def get_runtime_state():
     state = dict(RUNTIME_STATE)
     state["mode"] = _current_runtime_mode()
+    try:
+        from runtime.maturity import build_runtime_descriptor
+        descriptor = build_runtime_descriptor()
+        state["maturity"] = descriptor.to_dict()
+    except Exception:
+        state["maturity"] = None
     return state

@@ -965,6 +965,16 @@ class GatewayHandler(BaseHTTPRequestHandler):
             self.wfile.write(body)
             return
 
+        if self.path == "/runtime/maturity":
+            try:
+                from runtime.maturity import build_runtime_descriptor
+                descriptor = build_runtime_descriptor()
+                self._send_json(200, descriptor.to_dict())
+            except Exception as exc:
+                record_error_legacy(self.path, exc)
+                self._send_json(500, {"error": "maturity_unavailable", "detail": str(exc)})
+            return
+
         if self.path == "/runtime/topology":
             self._send_json(
                 200,
