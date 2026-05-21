@@ -504,6 +504,7 @@ def inject_agent_context(payload):
                 source_file=__file__,
             ))
 
+    _report_runtime = None
     if route.family in ("minimal", "report") and route.variant in ("report", "heavy"):
         try:
             _report_grounded_target = extract_target_ip(user_text)
@@ -1197,6 +1198,8 @@ class GatewayHandler(BaseHTTPRequestHandler):
         start_time = time.time()
 
         try:
+            stream_enabled = False
+
             content_length = int(
                 self.headers.get(
                     "Content-Length",
@@ -1369,9 +1372,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
             session_id = create_session(task_type, selected_model, get_active_backend()["name"])
             payload["model"] = selected_model
 
-            stream_enabled = bool(
-                payload.get("stream", False)
-            )
+            stream_enabled = bool(payload.get("stream", False))
 
             upstream_payload = dict(payload)
 
