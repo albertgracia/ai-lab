@@ -60,10 +60,13 @@ class RuntimeSensorFusionSnapshot:
     domain_confidence: dict[str, str] = field(default_factory=dict)
     observed_sources: list[str] = field(default_factory=list)
     missing_sources: list[str] = field(default_factory=list)
+    stale_sources: list[str] = field(default_factory=list)
     expected_offline_targets: list[dict] = field(default_factory=list)
     unexpected_down_targets: list[dict] = field(default_factory=list)
     last_scrape_seconds_ago: dict[str, float] = field(default_factory=dict)
     context_size_bytes: int = 0
+    _gpu_metrics_cache: dict | None = None
+    _global_confidence: str = "unknown"
 
     def to_dict(self, max_chars: int = SENSOR_FUSION_MAX_CHARS) -> dict[str, Any]:
         base = {
@@ -303,7 +306,7 @@ class SensorFusionEngine:
         unexpected_down = []
 
         if rx9070_status == "up":
-            gpu_metrics = snapshot._gpu_metrics_cache or {}
+            gpu_metrics = getattr(snapshot, '_gpu_metrics_cache', None) or {}
             active_gpus.append({
                 "name": "RX9070",
                 "host": "192.168.1.50",
@@ -349,22 +352,24 @@ class SensorFusionEngine:
         observed_weight = 0
         domain_confs: dict[str, str] = {}
 
+        expected_offline_jobs = {t.get("job", "") for t in snapshot.expected_offline_targets}
+        unexpected_down_jobs = {t.get("job", "") for t in snapshot.unexpected_down_targets}
+        expected_offline_domains = set()
+
         for domain, priority in DOMAIN_PRIORITY.items():
             w = priority.value
             total_weight += w
             if domain in snapshot.observed_sources:
                 observed_weight += w
                 domain_confs[domain] = "high"
-            elif domain in snapshot.expected_offline_targets:
+            elif any(domain in job for job in expected_offline_jobs):
                 observed_weight += w
                 domain_confs[domain] = "medium"
+                expected_offline_domains.add(domain)
+            elif any(domain in job for job in unexpected_down_jobs):
+                domain_confs[domain] = "low"
             else:
-                conf = "low"
-                for t in snapshot.unexpected_down_targets:
-                    if t.get("job", "").startswith(domain):
-                        conf = "low"
-                        break
-                domain_confs[domain] = conf
+                domain_confs[domain] = "low"
 
         snapshot.domain_confidence = domain_confs
 

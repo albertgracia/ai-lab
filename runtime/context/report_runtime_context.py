@@ -229,6 +229,7 @@ def build_report_runtime_context(target_ip: str | None = None) -> dict[str, Any]
 
         ctx["runtime_topology"] = _snap.topology.to_dict()
         ctx["domain_confidence"] = _snap.domain_confidence
+        ctx["stale_sources"] = getattr(_snap, 'stale_sources', [])
 
         for dom, state in _snap.derived_state.items():
             if dom in ("gpu_nodes", "gateway", "control_plane", "system_node", "lmstudio_models"):
@@ -262,17 +263,20 @@ def build_report_runtime_context(target_ip: str | None = None) -> dict[str, Any]
         except Exception:
             missing.append("operational_summary")
 
-        # update context size metric
+        # update context size and sensor fusion metrics
         try:
             from runtime.telemetry.prometheus_metrics import (
                 record_observed_runtime_size,
                 record_sensor_fusion,
                 record_sensor_fusion_duration,
+                record_sensor_fusion_missing,
             )
             import json as _size_json
             _ctx_json = _size_json.dumps(ctx, ensure_ascii=False, default=str)
             record_observed_runtime_size(len(_ctx_json))
             record_sensor_fusion("all", "ok")
+            for _msrc in _snap.missing_sources:
+                record_sensor_fusion_missing(_msrc)
         except ImportError:
             pass
 
