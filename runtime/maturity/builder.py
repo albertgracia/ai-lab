@@ -172,7 +172,7 @@ def build_topology_snapshot() -> dict:
 
 
 def _resolve_generation_phase() -> str:
-    return "30G"
+    return "30H"
 
 
 def _resolve_governance_level() -> GovernanceLevel:

@@ -1634,12 +1634,17 @@ class GatewayHandler(BaseHTTPRequestHandler):
             data = sanitize_completion_response(data, route_family=_sanitize_route, model=_sanitize_model, profile=_sanitize_profile)
 
             # FASE 30G: sanitize report output for forbidden tool recommendations
+            # FASE 30H: evidence guard for epistemological discipline
             if _sanitize_route in ("report", "minimal"):
                 for _choice in data.get("choices", []):
                     _msg = _choice.get("message", {}) if isinstance(_choice, dict) else {}
                     _content = _msg.get("content", "")
                     if isinstance(_content, str) and _content:
-                        _cleaned, _found = sanitize_report_output(_content)
+                        _report_json = _report_runtime if _report_runtime else None
+                        _cleaned, _found = sanitize_report_output(
+                            _content,
+                            runtime_context_json=_report_json,
+                        )
                         if _found:
                             _msg["content"] = _cleaned
                             try:
@@ -1647,7 +1652,32 @@ class GatewayHandler(BaseHTTPRequestHandler):
                                     record_report_forbidden_recommendation,
                                 )
                                 for _tool in _found:
+                                    if _tool.startswith("model_not_in_observed:") or _tool.startswith("gpu_not_in_observed:") or _tool.startswith("security_tool_not_in_runtime:") or _tool.startswith("external_platform_not_in_runtime:") or _tool.startswith("unknown_model:") or _tool.startswith("unknown_ip:") or _tool.startswith("unknown_host:"):
+                                        continue
                                     record_report_forbidden_recommendation(_tool)
+                            except ImportError:
+                                pass
+                        # FASE 30H: record evidence guard metrics
+                        if _report_json:
+                            try:
+                                from runtime.telemetry.prometheus_metrics import (
+                                    record_report_evidence_guard,
+                                    record_report_unverified_claim,
+                                    record_report_evidence_score,
+                                    record_report_hallucination_suppressed,
+                                )
+                                record_report_evidence_guard()
+                                _evidence_claims = [c for c in _found if c.startswith((
+                                    "model_not_in_observed:", "gpu_not_in_observed:",
+                                    "security_tool_not_in_runtime:", "external_platform_not_in_runtime:",
+                                    "unknown_model:", "unknown_ip:", "unknown_host:",
+                                ))]
+                                if _evidence_claims:
+                                    record_report_unverified_claim(len(_evidence_claims))
+                                    _evidence_score = max(0.0, 1.0 - (0.15 * len(_evidence_claims)))
+                                    record_report_evidence_score(_evidence_score)
+                                    if len(_evidence_claims) >= 5:
+                                        record_report_hallucination_suppressed()
                             except ImportError:
                                 pass
 

@@ -75,6 +75,9 @@ runtime/
 !runtime/tools/tool_metrics.py
 !runtime/telemetry/prometheus_metrics.py
 !runtime/memory/memory_usefulness.py
+!runtime/context/evidence_guard.py
+!runtime/context/report_runtime_context.py
+!runtime/context/__init__.py
 sessions/
 
 

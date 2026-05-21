@@ -115,9 +115,9 @@ def test_runtime_phase_has_30G():
     assert RuntimePhase.PHASE_30G.value == "30G"
 
 
-def test_resolve_generation_phase_returns_30g():
+def test_resolve_generation_phase_returns_30h():
     phase = _resolve_generation_phase()
-    assert phase == "30G"
+    assert phase == "30H"
 
 
 # ── Metric recorders ─────────────────────────────────────────────

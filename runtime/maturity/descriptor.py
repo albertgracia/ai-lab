@@ -14,6 +14,7 @@ class RuntimePhase(str, Enum):
     PHASE_30C = "30C"
     PHASE_30D = "30D"
     PHASE_30G = "30G"
+    PHASE_30H = "30H"
 
 
 class RuntimeMaturityLevel(str, Enum):

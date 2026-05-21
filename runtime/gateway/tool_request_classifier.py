@@ -700,7 +700,10 @@ _FORBIDDEN_PATTERNS: list[tuple[re.Pattern, str]] = [
 ]
 
 
-def sanitize_report_output(content: str) -> tuple[str, list[str]]:
+def sanitize_report_output(
+    content: str,
+    runtime_context_json: str | None = None,
+) -> tuple[str, list[str]]:
     if not content:
         return "", []
     found_tools: list[str] = []
@@ -712,11 +715,26 @@ def sanitize_report_output(content: str) -> tuple[str, list[str]]:
         note = (
             "\n\n---\n"
             "[DISCIPLINA OPERACIONAL] El runtime de AI-LAB "
-            "no incluye las herramientas externas mencionadas en esta sección. "
+            "no incluye las herramientas externas mencionadas en esta seccion. "
             "Las referencias a herramientas no presentes en el stack activo "
             "no reflejan el entorno real observado."
         )
         content = content.rstrip() + note
+
+    # FASE 30H: evidence guard — epistemologica discipline
+    if runtime_context_json:
+        try:
+            from runtime.context.evidence_guard import sanitize_unverified_claims
+            evidence = sanitize_unverified_claims(
+                content,
+                runtime_context_json=runtime_context_json,
+            )
+            if evidence.unverified_claims:
+                content = evidence.sanitized_text
+                found_tools.extend(evidence.unverified_claims)
+        except ImportError:
+            pass
+
     return content, found_tools
 
 

@@ -871,8 +871,50 @@ REPORT_FORBIDDEN_RECOMMENDATION_BLOCKED = Counter(
 )
 
 
+# ── FASE 30H: Runtime Evidence Enforcement Metrics ──────────
+REPORT_EVIDENCE_GUARD_TOTAL = Counter(
+    "ailab_report_evidence_guard_total",
+    "Veces que el evidence guard fue invocado en reportes",
+    [],
+)
+REPORT_UNVERIFIED_CLAIM_TOTAL = Counter(
+    "ailab_report_unverified_claim_total",
+    "Afirmaciones no verificadas detectadas por el evidence guard",
+    ["count"],
+)
+REPORT_EVIDENCE_SCORE = Histogram(
+    "ailab_report_evidence_score",
+    "Puntuacion de evidencia del reporte (1.0 = todas verificadas)",
+    [],
+    buckets=(0.0, 0.1, 0.25, 0.4, 0.5, 0.6, 0.7, 0.8, 0.85, 0.9, 0.95, 1.0),
+)
+REPORT_HALLUCINATION_SUPPRESSED_TOTAL = Counter(
+    "ailab_report_hallucination_suppressed_total",
+    "Veces que se suprimio un reporte con riesgo de alucinacion alto",
+    [],
+)
+
+
 def record_report_forbidden_recommendation(tool: str) -> None:
     REPORT_FORBIDDEN_RECOMMENDATION_BLOCKED.labels(tool=tool or "unknown").inc()
+
+
+# ── FASE 30H: Evidence Guard Recorders ──────────────────────
+
+def record_report_evidence_score(score: float) -> None:
+    REPORT_EVIDENCE_SCORE.observe(float(score))
+
+
+def record_report_evidence_guard() -> None:
+    REPORT_EVIDENCE_GUARD_TOTAL.inc()
+
+
+def record_report_unverified_claim(count: int) -> None:
+    REPORT_UNVERIFIED_CLAIM_TOTAL.labels(count=str(count)).inc()
+
+
+def record_report_hallucination_suppressed() -> None:
+    REPORT_HALLUCINATION_SUPPRESSED_TOTAL.inc()
 
 
 # ── FASE 30A: Runtime State & Maturity Metrics ────────────
