@@ -174,6 +174,19 @@ No mezclarlas es lo que mantiene AI-LAB estable.
 
 **Objetivo final:** Laboratorio IA local-first, multi-modelo, observable, reversible y usable en producción doméstica/técnica.
 
+### Subfases completadas
+
+| Subfase | Checkpoint | Descripción |
+|---------|------------|-------------|
+| 30A | CP-30A-RUNTIME-STATE-FOUNDATION-STABLE | Runtime state foundation & maturity descriptors |
+| 30B | CP-30B-MODEL-STATE-AWARE-STABLE | Model state awareness (active/loaded/discoverable) |
+| 30H | CP-30H-RUNTIME-EVIDENCE-ENFORCEMENT-STABLE | Evidence enforcement, denylists, NO DISPONIBLE |
+| 30I | CP-30I-RUNTIME-SENSOR-FUSION-STABLE | Sensor fusion Prometheus-backed, 13 dominios, GPU metrics en vivo |
+
+### Próximas
+
+- **Multi-GPU (FASE 31A)**: RX7900XT bring-up, scheduler contracts, warm pool, cognitive route placement
+
 ---
 
 ## Arquitectura objetivo final

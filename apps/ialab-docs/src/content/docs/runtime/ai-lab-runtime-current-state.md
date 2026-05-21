@@ -45,12 +45,13 @@ Nodo apagado — previsto para FASE 31A
 | ailab-live-state | — | State snapshot | Snapshot periódico |
 | ailab-runner | — | GitHub Actions Runner | CI/CD |
 
-## Endpoints always-on (8/8)
+## Endpoints always-on (9/9)
 
 | Endpoint | Propósito |
 |----------|-----------|
 | GET /health | Salud del gateway |
 | GET /slo/health | Estado SLO completo |
+| GET /runtime/sensors | Snapshot completo de sensor fusion (FASE 30I) |
 | GET /runtime/maturity | Descriptores de madurez del runtime |
 | GET /runtime/topology | Topología y dominio de fallo |
 | GET /runtime/governance | Visibilidad de decisiones governance |
@@ -68,6 +69,7 @@ Nodo apagado — previsto para FASE 31A
 | Grafana provisioning | /home/albert/docker/monitorizacion/grafana/provisioning/ | Dashboards JSON auto-load |
 
 100+ métricas `ailab_*`, 15 dashboards, 19 alertas activas.
+Sensor fusion: 13 dominios observados, 4 métricas nuevas (`ailab_sensor_fusion_*`, `ailab_observed_runtime_context_size_bytes`).
 
 ## Checkpoints principales
 
@@ -89,8 +91,9 @@ CP-30E-GOVERNANCE-VISIBILITY-STABLE
 CP-30F-ROUTE-SEMANTICS-STABLE
 CP-30G-OPERATIONAL-REPORTING-STABLE
 CP-30H-RUNTIME-EVIDENCE-ENFORCEMENT-STABLE
+CP-30I-RUNTIME-SENSOR-FUSION-STABLE
 ```
 
 ## Fase actual
 
-**30H** — Runtime Evidence Enforcement. 157 tests PASS. 38 tags desde CP-21B-STABLE.
+**30I** — Runtime Sensor Fusion. 186 tests PASS. 30 tags desde CP-21B-STABLE.

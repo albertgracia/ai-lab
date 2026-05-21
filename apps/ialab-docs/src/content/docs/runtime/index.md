@@ -22,7 +22,8 @@ order: 1
 | 30F | Cognitive route semantics |
 | 30G | Operational reporting discipline |
 | 30H | Runtime evidence enforcement |
+| 30I | Runtime sensor fusion (Prometheus-backed, 13 dominios, GPU metrics en vivo) |
 
 ## Checkpoint actual
 
-**CP-30H-RUNTIME-EVIDENCE-ENFORCEMENT-STABLE** — FASE 30H completada, evidence guard operativo, 157 tests PASS.
+**CP-30I-RUNTIME-SENSOR-FUSION-STABLE** — FASE 30I completada, sensor fusion con 13 dominios, 29 tests PASS, endpoint /runtime/sensors operativo.

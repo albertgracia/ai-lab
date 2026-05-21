@@ -126,6 +126,33 @@ evidence_guard.py
     └── UNKNOWN_HOSTS            → IPs y hostnames no observados
 ```
 
+## FASE 30I — Runtime Sensor Fusion
+
+Checkpoint: **CP-30I-RUNTIME-SENSOR-FUSION-STABLE**
+
+Nueva fase fundacional del runtime observacional. Introduce:
+
+- `PrometheusQueryClient` — cliente Prometheus con cache TTL 5s, timeout 2s
+- `SensorFusionEngine` — fusión de 13 dominios con confidence per-domain
+- `RuntimeSensorFusionSnapshot` — observed_data + derived_state separados
+- `RuntimeTopologyState` — topología derivada de targets Prometheus
+- `OperationalSummaryBuilder` — resúmenes route-family-aware
+- Endpoint `/runtime/sensors` — always-on 200
+- GPU metrics dinámicas: temperatura, carga, potencia, ventilador, reloj
+- 4 métricas Prometheus nuevas
+
+### Cambio conceptual
+
+Antes de 30I, OBSERVED_RUNTIME se construía desde archivos de estado (sintético). Después de 30I, se construye desde Prometheus (evidencia viva).
+
+### Relación con otras fases
+
+- **30A** → runtime_generation + TemporalState (30I añade sensor_generation y freshness)
+- **30D** → taxonomía de dominios de fallo (30I implementa topología dinámica)
+- **30H** → evidence guard con datos sintéticos (30I reemplaza fuente con Prometheus)
+
 ### Ver también
 
+- [FASE 30I — Runtime Sensor Fusion](/docs/runtime/30i-runtime-sensor-fusion/) — documentación detallada
+- [Trust Boundaries](/docs/governance/runtime-trust-boundaries/) — límites de confianza
 - [Evidence Enforcement](/docs/governance/evidence-enforcement/) — documentación detallada de FASE 30H
