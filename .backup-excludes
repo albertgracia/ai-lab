@@ -1,0 +1,15 @@
+backups/
+snapshots/
+.venv/
+node_modules/
+dist/
+__pycache__/
+.git/
+actions-runner/
+*.log
+tmp/
+coverage/
+.pytest_cache/
+.cache/
+*.tmp
+*.bak

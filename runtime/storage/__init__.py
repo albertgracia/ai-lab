@@ -1,0 +1,33 @@
+from runtime.storage.archive_manager import (
+    ArchiveCandidate,
+    ArchiveManifest,
+    ArchiveValidationResult,
+    build_archive_manifest,
+    classify_snapshot_tier,
+    compute_archive_integrity,
+    create_archive_layout,
+    detect_recursive_backup,
+    estimate_backup_size,
+    generate_storage_inventory,
+    move_to_archive,
+    validate_backup_targets,
+    validate_nas_archive_root,
+    write_archive_manifest,
+)
+
+__all__ = [
+    "ArchiveCandidate",
+    "ArchiveManifest",
+    "ArchiveValidationResult",
+    "build_archive_manifest",
+    "classify_snapshot_tier",
+    "compute_archive_integrity",
+    "create_archive_layout",
+    "detect_recursive_backup",
+    "estimate_backup_size",
+    "generate_storage_inventory",
+    "move_to_archive",
+    "validate_backup_targets",
+    "validate_nas_archive_root",
+    "write_archive_manifest",
+]

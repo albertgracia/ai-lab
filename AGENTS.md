@@ -233,6 +233,16 @@ No tag without commit. No phase closed with dirty working tree. A partir de ahor
 
 Esta regla tiene prioridad sobre velocidad de implementación. La trazabilidad Git forma parte del runtime governance.
 
+## Storage Hardening Rules
+
+- `RULE-STORAGE-1`: Nunca generar backups dentro de rutas ya archivables.
+- `RULE-STORAGE-2`: Todo backup debe usar `.backup-excludes`.
+- `RULE-STORAGE-3`: `/opt/ai-lab/backups` queda deprecated.
+- `RULE-STORAGE-4`: Archives completos solo en `/mnt/opencode/ai-lab-archives`.
+- `RULE-STORAGE-5`: Snapshots no pueden contener `backups`, `.venv`, `node_modules`, `.git`, caches ni artifacts temporales.
+- `RULE-STORAGE-6`: Todo archive debe generar manifest JSON.
+- `RULE-STORAGE-7`: Detect recursion BEFORE copy, not after.
+
 ---
 
 ## Runtime Maturity Rules
