@@ -1416,6 +1416,16 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     slo_impact=False,
                 ))
 
+            # FASE 30H.1: respect explicit model request from payload
+            # (allows burn-in / testing with specific models bypassing routing)
+            _rm_lower = requested_model.lower() if isinstance(requested_model, str) else ""
+            _sm_lower = selected_model.lower() if isinstance(selected_model, str) else ""
+            if _rm_lower and _rm_lower != _sm_lower:
+                if _rm_lower in ("qwen/qwen2.5-coder-14b-instruct", "qwen2.5-coder-14b-instruct"):
+                    selected_model = "qwen/qwen2.5-coder-14b-instruct"
+                elif _rm_lower == "llama-3.1-8b-instruct":
+                    selected_model = "llama-3.1-8b-instruct"
+
             # FASE 29.4: Degradation-based model override
             if _HAVE_SLO:
                 _degradation_level = _degradation.get_current_level()
