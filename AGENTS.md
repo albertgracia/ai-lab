@@ -481,25 +481,29 @@ FASE 30D → topology role & failure domain taxonomy            ✅ CP-30D-TOPOL
 FASE 30E → governance visibility refinement                   ✅ CP-30E-GOVERNANCE-VISIBILITY-STABLE
 FASE 30F → cognitive route semantics                           ✅ CP-30F-ROUTE-SEMANTICS-STABLE
 FASE 30G → operational reporting discipline                     ✅ CP-30G-OPERATIONAL-REPORTING-STABLE
+FASE 30Z → runtime maturity consolidation snapshot               ✅ CP-30Z-RUNTIME-MATURITY-CONSOLIDATED
 ```
 
-Tags git: 35 tags desde `CP-21B-STABLE` hasta `CP-30G-OPERATIONAL-REPORTING-STABLE`.
+Tags git: 36 tags desde `CP-21B-STABLE` hasta `CP-30Z-RUNTIME-MATURITY-CONSOLIDATED`.
 
 **Deuda saldada:** FASE 29.4.4-C — `/slo/health` ahora responde 200 siempre, con payload disabled cuando enforcement=false.
 
 ## Próximo: Runtime Maturity Before Multi-GPU (Prioridad cambiada 20/05/26)
 
-**Checkpoint actual:** "Runtime Operational Identity"
-**Estado:** 🟢 Runtime estable | 🟢 Governance estable | 🟢 Taxonomy estable | 🟢 Burn-in estable | 🟢 Runtime state foundation (FASE 30A) | 🟢 Model state awareness (FASE 30B) | 🟢 Degraded mode (30C) | 🟢 Topology & failure domains (30D) | 🟢 Governance visibility (30E) | 🟢 Route semantics (30F) | 🟢 Operational reporting discipline (30G) | 🔵 Multi-GPU postergado
+**Checkpoint actual:** "Runtime Maturity Consolidated" — Listo para Multi-GPU
+**Estado:** 🟢 Runtime estable | 🟢 Governance estable | 🟢 Taxonomy estable | 🟢 Burn-in estable | 🟢 FASE 30A-30Z completadas (10 fases) | 🟢 6 endpoints /runtime/* always-on 200 | 🟢 36 tags git | 🟢 NOC report real generado + métricas verificadas | 🔵 Multi-GPU next
 
-**Razón:** FASE 30A + 30B + 30C + 30B.1 + 30D + 30E + 30F + 30G completadas — runtime tiene identidad operacional, estado de modelos, modo degradado explícito, taxonomía de topología/fallos, visibilidad de governance, semántica de rutas cognitivas y disciplina operacional de reportes. `RouteFamilyStatus` enum (6 estados). `RouteSemantics` dataclass. `sanitize_report_output()` con forbidden tools guard. 4 métricas report reactivadas. Endpoint `/runtime/reports/discipline` always-on 200. RULE-30F-1 y RULE-30G-1 establecidas. 35 tags git.
+**Razón:** FASE 30A + 30B + 30B.1 + 30C + 30D + 30E + 30F + 30G + 30Z completadas. Consolidación verificada:
+- 6/6 endpoints /runtime/* responden 200: health, slo, maturity, topology, governance, routes/semantics, reports/discipline
+- Reporte NOC real generado con grounding + disciplina operacional
+- 11 métricas report activas (6 pre-30G + 5 nuevas 30G)
+- bugfixes: `_report_runtime` UnboundLocalError, `stream_enabled` UnboundLocalError, report metrics JSON structure
+- 1029 tests: 126 maturity + 903 existing = all PASS
+- 36 tags git estables
 
-### FASES PRIORITARIAS (próxima sesión)
+### PRÓXIMA FASE
 
-1. **Runtime semantic maturity** — descriptors de estado runtime
-2. **Cognitive route semantics refinement** — THROTTLED status conectar con SLO
-3. **Governance visibility refinement** — visibilidad de decisiones governance en el descriptor
-4. **Report consistency stabilization** — consistencia cross-profile de reportes
+1. **FASE 31A — RX7900XT Node Bring-up** — reactivar nodo GPU secundario
 
 ### Multi-GPU pospuesto hasta
 
