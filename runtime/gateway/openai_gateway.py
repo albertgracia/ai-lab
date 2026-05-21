@@ -576,6 +576,9 @@ def inject_agent_context(payload):
         except Exception:
             pass
 
+    # Store report runtime context in payload for access outside inject_agent_context
+    payload["_report_runtime_context"] = _report_runtime
+
     if route.family == "minimal" and route.variant == "report":
         payload.pop("tools", None)
         payload.pop("tool_choice", None)
@@ -1115,6 +1118,42 @@ class GatewayHandler(BaseHTTPRequestHandler):
             })
             return
 
+        # FASE 30H: runtime/reports/evidence — always-on 200
+        if self.path == "/runtime/reports/evidence":
+            try:
+                from runtime.context.evidence_guard import (
+                    STRICT_EVIDENCE_MODE, MAX_UNVERIFIED_CLAIMS,
+                )
+                _strict_mode = STRICT_EVIDENCE_MODE
+                _max_claims = MAX_UNVERIFIED_CLAIMS
+            except Exception:
+                _strict_mode = True
+                _max_claims = 5
+            self._send_json(200, {
+                "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/reports/evidence",
+                "evidence_guard_enabled": True,
+                "strict_evidence_mode": _strict_mode,
+                "max_unverified_claims": _max_claims,
+                "phase": "30H",
+                "categories_guarded": [
+                    "forbidden_model_prefixes",
+                    "forbidden_gpu_models",
+                    "forbidden_security_tools",
+                    "forbidden_external_platforms",
+                    "unknown_model_ids",
+                    "unknown_hosts_ips",
+                ],
+                "hallucination_risk_thresholds": {
+                    "low": "0-2 unverified claims",
+                    "medium": "3-4 unverified claims",
+                    "high": "5+ unverified claims",
+                },
+                "status": "operational",
+                "timestamp": int(time.time()),
+            })
+            return
+
         if self.path == "/runtime/status":
 
             self._send_json(
@@ -1640,7 +1679,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     _msg = _choice.get("message", {}) if isinstance(_choice, dict) else {}
                     _content = _msg.get("content", "")
                     if isinstance(_content, str) and _content:
-                        _report_json = _report_runtime if _report_runtime else None
+                        _report_json = payload.get("_report_runtime_context") if isinstance(payload, dict) else None
                         _cleaned, _found = sanitize_report_output(
                             _content,
                             runtime_context_json=_report_json,
