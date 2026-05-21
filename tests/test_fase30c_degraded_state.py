@@ -378,7 +378,7 @@ def test_builder_phase_current():
     from runtime.maturity.builder import build_runtime_descriptor
     descriptor = build_runtime_descriptor()
     d = descriptor.to_dict()
-    assert d["runtime_generation"]["phase"] in ("30C", "30D")
+    assert d["runtime_generation"]["phase"] in ("30C", "30D", "30E")
 
 
 # ── Endpoint integration ────────────────────────────────────────

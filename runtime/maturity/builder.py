@@ -7,6 +7,8 @@ from runtime.maturity.descriptor import (
     RuntimeMode,
     TopologyRole,
     FailureDomain,
+    GovernanceLevel,
+    GovVisibility,
     RuntimeStateDescriptor,
     TemporalState,
     ModelStatus,
@@ -35,19 +37,22 @@ def build_runtime_descriptor() -> RuntimeStateDescriptor:
     generation_phase = _resolve_generation_phase()
 
     degraded_mode = _resolve_degraded_mode()
+    gov_level = _resolve_governance_level()
+    gov_visibility = build_governance_visibility()
 
     descriptor = RuntimeStateDescriptor(
         phase=generation_phase,
         maturity=maturity,
         topology_mode="single-node",
         scheduler_mode="static",
-        governance_level="enforced",
+        governance_level=gov_level.value,
         mode=mode,
         topology_role=role,
         failure_domain=failure_domain,
         temporal=temporal,
         generation_ts=now,
         degraded_mode=degraded_mode,
+        gov_visibility=gov_visibility,
     )
 
     _DESCRIPTOR_CACHE = descriptor
@@ -165,7 +170,118 @@ def build_topology_snapshot() -> dict:
 
 
 def _resolve_generation_phase() -> str:
-    return "30D"
+    return "30E"
+
+
+def _resolve_governance_level() -> GovernanceLevel:
+    try:
+        from runtime.control.control_plane import get_governance_state
+        op_state = get_governance_state()
+        mapping = {
+            "NORMAL": GovernanceLevel.ENFORCED,
+            "ELEVATED": GovernanceLevel.ENFORCED,
+            "DEGRADED": GovernanceLevel.DEGRADED,
+            "LOCKDOWN": GovernanceLevel.LOCKDOWN,
+        }
+        return mapping.get(op_state, GovernanceLevel.ENFORCED)
+    except Exception:
+        pass
+
+    return GovernanceLevel.ENFORCED
+
+
+def _resolve_governance_operational_state() -> str:
+    try:
+        from runtime.control.control_plane import get_governance_state
+        return get_governance_state()
+    except Exception:
+        return "unavailable"
+
+
+def _resolve_gateway_governance_counters() -> dict[str, int]:
+    counters = {}
+    try:
+        from runtime.gateway.openai_gateway import (
+            BLOCKED_PROMPTS, SANITIZATIONS, RATE_LIMIT_HITS,
+            CONTEXT_OVERFLOWS, HALLUCINATION_GUARDS, PARSER_FAILURES,
+        )
+        counters["blocked_prompts"] = BLOCKED_PROMPTS
+        counters["sanitizations"] = SANITIZATIONS
+        counters["rate_limit_hits"] = RATE_LIMIT_HITS
+        counters["context_overflows"] = CONTEXT_OVERFLOWS
+        counters["hallucination_guards"] = HALLUCINATION_GUARDS
+        counters["parser_failures"] = PARSER_FAILURES
+    except Exception:
+        pass
+    try:
+        from runtime.telemetry.prometheus_metrics import (
+            GOVERNANCE_BLOCKED, GOVERNANCE_BLOCKED_BY_REASON,
+        )
+        counters["governance_blocked_total"] = int(GOVERNANCE_BLOCKED._value.get())
+        for label in GOVERNANCE_BLOCKED_BY_REASON._metrics:
+            v = int(GOVERNANCE_BLOCKED_BY_REASON.labels(label)._value.get())
+            if v:
+                counters[f"blocked_reason_{label}"] = v
+    except Exception:
+        pass
+    return counters
+
+
+def _resolve_active_policies() -> list[str]:
+    policies = []
+    try:
+        from pathlib import Path
+        policy_dir = Path("/opt/ai-lab/runtime/policies")
+        if policy_dir.exists():
+            for f in sorted(policy_dir.iterdir()):
+                if f.suffix in (".py", ".md") and f.name != "__init__.py":
+                    policies.append(f.name)
+        memory_dir = policy_dir / "memory"
+        if memory_dir.exists():
+            for f in sorted(memory_dir.iterdir()):
+                if f.suffix in (".py", ".md", ".json"):
+                    policies.append(f"memory/{f.name}")
+        tools_dir = policy_dir / "tools"
+        if tools_dir.exists():
+            for f in sorted(tools_dir.iterdir()):
+                if f.suffix in (".py", ".md", ".json"):
+                    policies.append(f"tools/{f.name}")
+    except Exception:
+        pass
+    return policies
+
+
+def build_governance_visibility() -> GovVisibility | None:
+    try:
+        op_state = _resolve_governance_operational_state()
+        level = _resolve_governance_level()
+        counters = _resolve_gateway_governance_counters()
+        policies = _resolve_active_policies()
+
+        blocked_total = sum(counters.values())
+
+        temporal = TemporalState()
+        temporal.touch()
+
+        return GovVisibility(
+            level=level,
+            operational_state=op_state,
+            source="control_plane",
+            blocked_total=blocked_total,
+            blocks_by_reason=counters,
+            active_policies=policies,
+            temporal=temporal,
+        )
+    except Exception:
+        pass
+    return GovVisibility(
+        level=GovernanceLevel.ENFORCED,
+        operational_state="unavailable",
+        source="fallback",
+        blocked_total=0,
+        blocks_by_reason={},
+        active_policies=[],
+    )
 
 
 def _resolve_degraded_mode() -> dict | None:

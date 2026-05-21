@@ -951,6 +951,22 @@ class GatewayHandler(BaseHTTPRequestHandler):
             self.wfile.write(body)
             return
 
+        if self.path == "/runtime/governance":
+            try:
+                from runtime.maturity.builder import build_governance_visibility
+                gov = build_governance_visibility()
+                data = gov.to_dict() if hasattr(gov, 'to_dict') else {"level": "unknown", "operational_state": "unavailable", "source": "fallback"}
+            except Exception:
+                data = {"level": "unknown", "operational_state": "unavailable", "source": "fallback", "blocked_total": 0, "blocks_by_reason": {}, "active_policies": [], "error": "governance_visibility_unavailable"}
+            body = json.dumps(data, ensure_ascii=False).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+
         if self.path == "/api/v1/episodic":
             data = {
                 "total": EPISODIC_TOTAL,

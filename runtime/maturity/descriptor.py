@@ -90,6 +90,8 @@ class GovernanceLevel(str, Enum):
     PASSIVE = "passive"
     OBSERVABLE = "observable"
     ENFORCED = "enforced"
+    DEGRADED = "degraded"
+    LOCKDOWN = "lockdown"
 
 
 class ModelStatus(str, Enum):
@@ -139,6 +141,30 @@ class TemporalState:
 
 
 @dataclass
+class GovVisibility:
+    level: GovernanceLevel = GovernanceLevel.ENFORCED
+    operational_state: str = "unknown"
+    source: str = "control_plane"
+    blocked_total: int = 0
+    blocks_by_reason: dict = field(default_factory=dict)
+    active_policies: list[str] = field(default_factory=list)
+    temporal: TemporalState = field(default_factory=TemporalState)
+    last_decision_at: float | None = None
+
+    def to_dict(self) -> dict:
+        return {
+            "level": self.level.value,
+            "operational_state": self.operational_state,
+            "source": self.source,
+            "blocked_total": self.blocked_total,
+            "blocks_by_reason": dict(self.blocks_by_reason),
+            "active_policies": list(self.active_policies),
+            "temporal": self.temporal.to_dict(),
+            "last_decision_at": self.last_decision_at,
+        }
+
+
+@dataclass
 class RuntimeStateDescriptor:
     phase: str
     maturity: RuntimeMaturityLevel
@@ -151,6 +177,7 @@ class RuntimeStateDescriptor:
     temporal: TemporalState = field(default_factory=TemporalState)
     generation_ts: float = field(default_factory=time.time)
     degraded_mode: dict | None = None
+    gov_visibility: GovVisibility | None = None
 
     def to_dict(self) -> dict:
         result = {
@@ -169,4 +196,6 @@ class RuntimeStateDescriptor:
         }
         if self.degraded_mode is not None:
             result["degraded_mode"] = self.degraded_mode
+        if self.gov_visibility is not None:
+            result["gov_visibility"] = self.gov_visibility.to_dict()
         return result

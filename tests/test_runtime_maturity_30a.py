@@ -9,9 +9,9 @@ from runtime.maturity.descriptor import (
     RuntimePhase, RuntimeMaturityLevel, RuntimeMode,
     TopologyRole, FailureDomain, NodeTopology,
     SchedulerState, GovernanceLevel,
-    TemporalState, RuntimeStateDescriptor, ModelStatus,
+    TemporalState, RuntimeStateDescriptor, ModelStatus, GovVisibility,
 )
-from runtime.maturity.builder import build_runtime_descriptor, build_model_status_map, build_topology_snapshot
+from runtime.maturity.builder import build_runtime_descriptor, build_model_status_map, build_topology_snapshot, build_governance_visibility
 
 
 # ── RuntimePhase ────────────────────────────────────────────────
@@ -369,7 +369,7 @@ def test_descriptor_to_dict_includes_generated_at():
 def test_build_runtime_descriptor_returns_valid():
     desc = build_runtime_descriptor()
     assert isinstance(desc, RuntimeStateDescriptor)
-    assert desc.phase in ("30A", "30C", "30D")
+    assert desc.phase in ("30A", "30C", "30D", "30E")
     assert isinstance(desc.maturity, RuntimeMaturityLevel)
     assert isinstance(desc.mode, RuntimeMode)
     assert isinstance(desc.topology_role, TopologyRole)
@@ -379,7 +379,7 @@ def test_build_runtime_descriptor_returns_valid():
 def test_build_runtime_descriptor_to_dict_roundtrip():
     desc = build_runtime_descriptor()
     d = desc.to_dict()
-    assert d["runtime_generation"]["phase"] in ("30A", "30C", "30D")
+    assert d["runtime_generation"]["phase"] in ("30A", "30C", "30D", "30E")
     assert d["runtime_generation"]["maturity"] in (
         "booting", "stabilizing", "operational", "degraded", "emergency", "shutdown"
     )
@@ -408,7 +408,7 @@ def test_build_runtime_descriptor_json_serializable():
     json_str = json.dumps(d)
     assert json_str
     parsed = json.loads(json_str)
-    assert parsed["runtime_generation"]["phase"] in ("30A", "30C", "30D")
+    assert parsed["runtime_generation"]["phase"] in ("30A", "30C", "30D", "30E")
     assert "failure_domain" in parsed
 
 
@@ -485,3 +485,112 @@ def test_build_topology_snapshot_nodes_have_failure_domain():
     for node in snap["nodes"]:
         assert "failure_domain" in node
         assert "role" in node
+
+
+# ── GovernanceLevel (FASE 30E) ──────────────────────────────────
+
+def test_governance_level_has_five_levels():
+    assert len(GovernanceLevel) == 5
+
+
+def test_governance_level_new_values():
+    assert GovernanceLevel.DEGRADED.value == "degraded"
+    assert GovernanceLevel.LOCKDOWN.value == "lockdown"
+
+
+# ── GovVisibility (FASE 30E) ────────────────────────────────────
+
+def test_gov_visibility_defaults():
+    gv = GovVisibility()
+    assert gv.level == GovernanceLevel.ENFORCED
+    assert gv.operational_state == "unknown"
+    assert gv.source == "control_plane"
+    assert gv.blocked_total == 0
+    assert gv.blocks_by_reason == {}
+    assert gv.active_policies == []
+    assert gv.last_decision_at is None
+
+
+def test_gov_visibility_to_dict():
+    gv = GovVisibility(
+        level=GovernanceLevel.ENFORCED,
+        operational_state="NORMAL",
+        source="control_plane",
+        blocked_total=42,
+        blocks_by_reason={"blocked_prompts": 10, "sanitizations": 32},
+        active_policies=["execution_policy.py", "evidence_policy.md"],
+    )
+    d = gv.to_dict()
+    assert d["level"] == "enforced"
+    assert d["operational_state"] == "NORMAL"
+    assert d["source"] == "control_plane"
+    assert d["blocked_total"] == 42
+    assert d["blocks_by_reason"]["blocked_prompts"] == 10
+    assert "temporal" in d
+    assert d["last_decision_at"] is None
+
+
+def test_gov_visibility_fallback_source():
+    gv = GovVisibility(
+        level=GovernanceLevel.ENFORCED,
+        operational_state="unavailable",
+        source="fallback",
+    )
+    assert gv.source == "fallback"
+
+
+def test_gov_visibility_with_last_decision():
+    import time
+    now = time.time()
+    gv = GovVisibility(last_decision_at=now)
+    assert gv.last_decision_at == now
+    assert gv.to_dict()["last_decision_at"] == now
+
+
+def test_descriptor_includes_gov_visibility_when_set():
+    desc = RuntimeStateDescriptor(
+        phase="30E",
+        maturity=RuntimeMaturityLevel.OPERATIONAL,
+        topology_mode="single-node",
+        scheduler_mode="static",
+        governance_level="enforced",
+        mode=RuntimeMode.COGNITIVE,
+        topology_role=TopologyRole.PRIMARY_CONTROL_PLANE,
+        gov_visibility=GovVisibility(operational_state="NORMAL"),
+    )
+    d = desc.to_dict()
+    assert "gov_visibility" in d
+    assert d["gov_visibility"]["operational_state"] == "NORMAL"
+
+
+def test_descriptor_omits_gov_visibility_when_none():
+    desc = RuntimeStateDescriptor(
+        phase="30E",
+        maturity=RuntimeMaturityLevel.OPERATIONAL,
+        topology_mode="single-node",
+        scheduler_mode="static",
+        governance_level="enforced",
+        mode=RuntimeMode.COGNITIVE,
+        topology_role=TopologyRole.PRIMARY_CONTROL_PLANE,
+    )
+    d = desc.to_dict()
+    assert "gov_visibility" not in d
+
+
+def test_build_governance_visibility_returns_gov_visibility():
+    gv = build_governance_visibility()
+    assert isinstance(gv, GovVisibility)
+    assert gv.level in (GovernanceLevel.ENFORCED, GovernanceLevel.DEGRADED, GovernanceLevel.LOCKDOWN)
+    assert gv.operational_state in ("NORMAL", "ELEVATED", "DEGRADED", "LOCKDOWN", "unavailable")
+
+
+def test_build_governance_visibility_has_source():
+    gv = build_governance_visibility()
+    assert gv.source in ("control_plane", "fallback")
+
+
+def test_build_runtime_descriptor_includes_gov_visibility():
+    desc = build_runtime_descriptor()
+    d = desc.to_dict()
+    assert "gov_visibility" in d
+    assert d["gov_visibility"]["source"] in ("control_plane", "fallback")

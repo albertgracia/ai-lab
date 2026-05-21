@@ -291,6 +291,18 @@ Cada nodo en la topología debe tener un failure_domain explícito que determine
 El endpoint /runtime/topology debe responder 200 aunque el backend de inferencia esté offline.
 La topología separa rol (qué hace) de failure_domain (qué pasa si falla).
 
+12. Governance visibility must be always-on
+El endpoint /runtime/governance debe responder 200 siempre, incluso si control_plane no está disponible.
+El payload debe incluir source (control_plane | fallback) para distinguir datos reales de fallback.
+
+13. Governance level must be dynamic, not hardcoded
+El governance_level en el descriptor de madurez debe resolverse desde control_plane.get_governance_state():
+- NORMAL   → ENFORCED
+- ELEVATED → ENFORCED
+- DEGRADED → DEGRADED
+- LOCKDOWN → LOCKDOWN
+Prohibido hardcodear "enforced" en builder.py.
+
 ---
 
 # Runtime Configuration Philosophy
@@ -461,22 +473,23 @@ FASE 30B → model state awareness (active/loaded/discoverable) ✅ CP-30B-MODEL
 FASE 30C → single-node explicit degraded mode                ✅ CP-30C-DEGRADED-MODE-EXPLICIT-STABLE
 FASE 30B.1 → completion truncation + multi-gpu triggers       ✅ CP-30B.1-COMPLETION-METADATA-STABLE
 FASE 30D → topology role & failure domain taxonomy            ✅ CP-30D-TOPOLOGY-FAILURE-DOMAIN-STABLE
+FASE 30E → governance visibility refinement                   ✅ CP-30E-GOVERNANCE-VISIBILITY-STABLE
 ```
 
-Tags git: 32 tags desde `CP-21B-STABLE` hasta `CP-30D-TOPOLOGY-FAILURE-DOMAIN-STABLE`.
+Tags git: 33 tags desde `CP-21B-STABLE` hasta `CP-30E-GOVERNANCE-VISIBILITY-STABLE`.
 
 **Deuda saldada:** FASE 29.4.4-C — `/slo/health` ahora responde 200 siempre, con payload disabled cuando enforcement=false.
 
 ## Próximo: Runtime Maturity Before Multi-GPU (Prioridad cambiada 20/05/26)
 
 **Checkpoint actual:** "Runtime Operational Identity"
-**Estado:** 🟢 Runtime estable | 🟢 Governance estable | 🟢 Taxonomy estable | 🟢 Burn-in estable | 🟢 Runtime state foundation (FASE 30A) | 🟢 Model state awareness (FASE 30B) | 🟢 Degraded mode (30C) | 🟢 Topology & failure domains (30D) | 🔵 Multi-GPU postergado
+**Estado:** 🟢 Runtime estable | 🟢 Governance estable | 🟢 Taxonomy estable | 🟢 Burn-in estable | 🟢 Runtime state foundation (FASE 30A) | 🟢 Model state awareness (FASE 30B) | 🟢 Degraded mode (30C) | 🟢 Topology & failure domains (30D) | 🟢 Governance visibility (30E) | 🔵 Multi-GPU postergado
 
-**Razón:** FASE 30A + 30B + 30C + 30B.1 + 30D completadas — runtime tiene identidad operacional, estado de modelos, modo degradado explícito y taxonomía de topología/fallos. RULE-30B-1 a 30B-6 establecidas. RULE-30C-1 a 30C-7 establecidas. RULE-30D-1 a 30D-2 establecidas. `FailureDomain` y `NodeTopology` integrados en descriptor y endpoint. 32 tags git.
+**Razón:** FASE 30A + 30B + 30C + 30B.1 + 30D + 30E completadas — runtime tiene identidad operacional, estado de modelos, modo degradado explícito, taxonomía de topología/fallos y visibilidad de governance. GovernanceLevel ampliado a 5 niveles (PASSIVE, OBSERVABLE, ENFORCED, DEGRADED, LOCKDOWN). `GovVisibility` con source, blocked counters, active policies. Governance level dinámico desde control_plane. Endpoint `/runtime/governance` always-on 200. 33 tags git.
 
 ### FASES PRIORITARIAS (próxima sesión)
 
-1. **FASE 30E — Governance visibility refinement** — visibilidad de decisiones governance en el descriptor
+1. **FASE 30F — Cognitive route semantics** — semántica operacional por route-family
 2. **FASE 30E — Governance visibility refinement** — visibilidad de decisiones governance en el descriptor
 3. **FASE 30F — Cognitive route semantics** — semántica operacional por route-family
 4. **FASE 30G — Operational reporting discipline** — reportes NOC con semántica operacional
