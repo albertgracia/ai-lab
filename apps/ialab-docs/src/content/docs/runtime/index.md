@@ -1,29 +1,34 @@
 ---
-title: "Runtime AI-LAB"
-summary: "Documentación del runtime de AI-LAB: estado actual, capa de madurez, topología, modelos activos y baseline pre-Multi-GPU."
-order: 1
+title: "Runtime"
+summary: "Baseline oficial del runtime observacional de AI-LAB antes de Multi-GPU: estado actual, madurez, sensor fusion, semántica y contrato observado."
+order: 2
 ---
 
 ## Qué contiene
 
-- **Estado actual del runtime** — control-plane, backend, modelos activos, servicios, endpoints y checkpoints principales
-- **Capa de madurez del runtime** (FASE 30A-30H) — runtime generation, model state awareness, degraded mode, governance visibility, route semantics, operational reporting, evidence enforcement
-- **Baseline pre-Multi-GPU** — por qué se pospuso, qué se cerró, estado listo para FASE 31A
+- **Runtime Current State**: estado operativo real del runtime, nodos activos, inventory y servicios.
+- **Runtime Maturity Layer**: transición desde un runtime hardcoded a un runtime observacional y evidence-bound.
+- **Runtime Sensor Fusion**: diseño y cierre de FASE 30I.
+- **Runtime Sensor Semantics**: normalización 30I-D de observed vs derived, freshness, confidence y source_of_truth.
+- **GPU Operational Summaries**: summaries compactos para respuestas cortas GPU.
+- **Observed Runtime Contract**: contrato de `OBSERVED_RUNTIME` como interfaz cognitiva del runtime.
 
 ## Fases cubiertas
 
-| FASE | Descripción |
-|------|-------------|
-| 30A | Runtime state foundation & maturity descriptors |
-| 30B | Model state awareness (active/loaded/discoverable) |
-| 30C | Single-node explicit degraded mode |
-| 30D | Topology role & failure domain taxonomy |
-| 30E | Governance visibility refinement |
-| 30F | Cognitive route semantics |
-| 30G | Operational reporting discipline |
-| 30H | Runtime evidence enforcement |
-| 30I | Runtime sensor fusion (Prometheus-backed, 13 dominios, GPU metrics en vivo) |
+- `30I`
+- `30I-B`
+- `30I-C`
+- `30I-D`
 
 ## Checkpoint actual
 
-**CP-30I-RUNTIME-SENSOR-FUSION-STABLE** — FASE 30I completada, sensor fusion con 13 dominios, 29 tests PASS, endpoint /runtime/sensors operativo.
+**CP-30I-D-SENSOR-SEMANTICS-NORMALIZED-STABLE**
+
+## Estado estable
+
+El runtime expone un contrato operativo suficiente para responder preguntas sobre GPUs, topología, modelos y confianza sin inventar infraestructura.
+
+## Próximos pasos
+
+- Afinar presentación compacta de respuestas GPU cortas.
+- Mantener la semántica estable como prerequisito para scheduler Multi-GPU.

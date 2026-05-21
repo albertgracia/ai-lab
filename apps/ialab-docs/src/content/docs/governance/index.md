@@ -7,7 +7,8 @@ order: 2
 ## Qué contiene
 
 - **Evidence enforcement** (FASE 30H) — catálogo de evidencia, strict evidence mode, denylists, supresión de alucinaciones, NO DISPONIBLE
-- **Trust boundaries** (FASE 30I) — límites de confianza del runtime, confidence per-domain, observed/derived separation
+- **Runtime trust boundaries** — límites de confianza del runtime, confidence per-domain, observed/derived separation
+- **Archive governance** — manifests, exclusiones, recursividad y storage hygiene como parte del runtime governance
 - **Governance visibility** (FASE 30E) — transparencia de decisiones de gobernanza
 - **Tool policies** (FASE 22A-22B) — 3 modos de tools, bash sanitizer, confirmation gate
 
@@ -21,4 +22,4 @@ order: 2
 
 ## Checkpoint actual
 
-**CP-30I-RUNTIME-SENSOR-FUSION-STABLE** — sensor fusion con 13 dominios, confidence per-domain, trust boundaries definidas y 29 tests PASS.
+**CP-30I-D-SENSOR-SEMANTICS-NORMALIZED-STABLE** — trust boundaries normalizadas, confidence por dominio y evidence catalog alineado con sensor summaries.

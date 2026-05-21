@@ -1,46 +1,35 @@
 ---
 title: "Arquitectura del Runtime"
-summary: "Documentación arquitectónica del runtime AI-LAB: observability fabric, sensor topology, evidence pipeline y diseño del sistema."
+summary: "Arquitectura del runtime observacional: observability fabric, sensor fusion pipeline, evidence-bound runtime, storage archive policy y baseline pre-Multi-GPU."
 order: 3
 ---
 
 ## Qué contiene
 
-- **Runtime Observability Fabric** — tejido de observabilidad del runtime: Prometheus como sistema nervioso, sensor fusion, evidence pipeline y topología dinámica
-- **Runtime Sensor Topology** — topología dinámica derivada de sensores Prometheus, clasificación de nodos GPU, modos de topología y transiciones
-- **Runtime Evidence Pipeline** — pipeline completo de evidencia desde Prometheus hasta el LLM, con observed/derived separation, confidence scoring y sanitización
+- **Runtime Observability Fabric** — tejido de observabilidad del runtime.
+- **Sensor Fusion Pipeline** — flujo completo de sensores hasta summaries operacionales.
+- **Evidence-Bound Runtime** — disciplina operacional para que el LLM no invente infraestructura.
+- **Storage Archive Policy** — governance del archive histórico y separación de tiers.
+- **Pre-Multi-GPU Baseline** — baseline estable antes de scheduler y placement Multi-GPU.
 
-## Capas arquitectónicas
+## Fases cubiertas
 
-```mermaid
-flowchart LR
-    subgraph PHYSICAL[Physical Layer]
-        P[Prometheus 192.168.1.40]
-        L[LM Studio 192.168.1.50]
-        G[Gateway 192.168.1.30]
-    end
-    
-    subgraph ACQUISITION[Acquisition Layer]
-        QC[PrometheusQueryClient]
-        LC[LM Studio Client]
-    end
-    
-    subgraph FUSION[Fusion Layer]
-        SF[SensorFusionEngine]
-        SB[OperationalSummaryBuilder]
-    end
-    
-    subgraph COGNITIVE[Cognitive Layer]
-        RR[OBSERVED_RUNTIME]
-        EG[Evidence Guard]
-        LLM[qwen2.5-14b]
-    end
-    
-    PHYSICAL --> ACQUISITION
-    ACQUISITION --> FUSION
-    FUSION --> COGNITIVE
-```
+- `30H`
+- `30I`
+- `30I-B`
+- `30I-C`
+- `30I-D`
+- `STORAGE-HARDENING`
 
 ## Checkpoint actual
 
-**CP-30I-RUNTIME-SENSOR-FUSION-STABLE** — sensor fusion runtime con arquitectura de 4 capas, 13 dominios, confidence per-domain.
+**CP-DOC-30I-RUNTIME-SENSOR-FUSION-DOCS-STABLE**
+
+## Estado estable
+
+La arquitectura ya tiene capa de evidencia, contrato de sensores y política de archive. No es todavía una arquitectura Multi-GPU.
+
+## Próximos pasos
+
+- mantener la baseline pre-Multi-GPU
+- no mezclar scheduler con observability contract
