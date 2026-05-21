@@ -991,3 +991,42 @@ def record_model_state(model_id: str, status: str) -> None:
     RUNTIME_MODEL_STATE.labels(model=model_id, status=status).set(
         float(state_map.get(status, 0))
     )
+
+
+# ── FASE 30I: Runtime Sensor Fusion Metrics ─────────────
+SENSOR_FUSION_TOTAL = Counter(
+    "ailab_sensor_fusion_total",
+    "Sensor fusion collection events by source and status",
+    ["source", "status"],
+)
+SENSOR_FUSION_DURATION_MS = Histogram(
+    "ailab_sensor_fusion_duration_ms",
+    "Duration of sensor fusion per source in ms",
+    ["source"],
+    buckets=(5, 10, 25, 50, 100, 250, 500, 1000),
+)
+SENSOR_FUSION_MISSING_TOTAL = Counter(
+    "ailab_sensor_fusion_missing_source_total",
+    "Missing sources during sensor fusion collection",
+    ["source"],
+)
+OBSERVED_RUNTIME_CONTEXT_SIZE = Gauge(
+    "ailab_observed_runtime_context_size_bytes",
+    "Size in bytes of the OBSERVED_RUNTIME JSON snapshot",
+)
+
+
+def record_sensor_fusion(source: str, status: str) -> None:
+    SENSOR_FUSION_TOTAL.labels(source=source, status=status).inc()
+
+
+def record_sensor_fusion_duration(source: str, duration_ms: float) -> None:
+    SENSOR_FUSION_DURATION_MS.labels(source=source).observe(float(duration_ms))
+
+
+def record_sensor_fusion_missing(source: str) -> None:
+    SENSOR_FUSION_MISSING_TOTAL.labels(source=source).inc()
+
+
+def record_observed_runtime_size(size_bytes: int) -> None:
+    OBSERVED_RUNTIME_CONTEXT_SIZE.set(float(size_bytes))

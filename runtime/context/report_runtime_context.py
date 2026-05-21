@@ -5,7 +5,7 @@ import urllib.parse
 from pathlib import Path
 from typing import Any
 
-REPORT_MAX_CHARS: int = 12_000
+REPORT_MAX_CHARS: int = 16_000
 
 _CONFIG_DIR = Path("/opt/ai-lab/config")
 
@@ -217,6 +217,67 @@ def build_report_runtime_context(target_ip: str | None = None) -> dict[str, Any]
             observed.extend(["health_score", "health_level", "health_reasons"])
     except Exception:
         missing.append("health_score")
+
+    # FASE 30I: Runtime Sensor Fusion — observed + derived + topology
+    try:
+        from runtime.context.sensor_fusion import SensorFusionEngine
+        _engine = SensorFusionEngine()
+        _snap = _engine.collect()
+
+        _snap_dict = _snap.to_dict(max_chars=8000)
+        ctx["sensor_snapshot"] = _snap_dict
+
+        ctx["runtime_topology"] = _snap.topology.to_dict()
+        ctx["domain_confidence"] = _snap.domain_confidence
+
+        for dom, state in _snap.derived_state.items():
+            if dom in ("gpu_nodes", "gateway", "control_plane", "system_node", "lmstudio_models"):
+                ctx[f"sensor_{dom}"] = state
+
+        observed.append("sensor_snapshot")
+        observed.append("runtime_topology")
+        observed.append("domain_confidence")
+
+        # enrich evidence_catalog with sensor data
+        ctx.setdefault("evidence_catalog", {})
+        ctx["evidence_catalog"]["gpu_online"] = any(
+            g.get("expected_offline") is False or g.get("status") == "online"
+            for g in _snap.topology.active_gpus
+        )
+        ctx["evidence_catalog"]["prometheus_targets"] = {
+            "total": len(_snap.observed_sources) + len(_snap.missing_sources),
+            "up": len(_snap.observed_sources),
+            "expected_offline": [t.get("name", t.get("job", "?")) for t in _snap.expected_offline_targets],
+            "unexpected_down": [t.get("name", t.get("job", "?")) for t in _snap.unexpected_down_targets],
+        }
+
+        # operational summary
+        try:
+            from runtime.context.summary_builder import OperationalSummaryBuilder
+            _route_family = "report"
+            _summary = OperationalSummaryBuilder.build(_snap, _route_family)
+            if _summary:
+                ctx["operational_summary"] = _summary
+                observed.append("operational_summary")
+        except Exception:
+            missing.append("operational_summary")
+
+        # update context size metric
+        try:
+            from runtime.telemetry.prometheus_metrics import (
+                record_observed_runtime_size,
+                record_sensor_fusion,
+                record_sensor_fusion_duration,
+            )
+            import json as _size_json
+            _ctx_json = _size_json.dumps(ctx, ensure_ascii=False, default=str)
+            record_observed_runtime_size(len(_ctx_json))
+            record_sensor_fusion("all", "ok")
+        except ImportError:
+            pass
+
+    except Exception:
+        missing.append("sensor_fusion")
 
     ctx["inference_nodes"] = {
         "active": _get_active_nodes(),

@@ -78,6 +78,9 @@ runtime/
 !runtime/context/evidence_guard.py
 !runtime/context/report_runtime_context.py
 !runtime/context/__init__.py
+!runtime/context/prometheus_client.py
+!runtime/context/sensor_fusion.py
+!runtime/context/summary_builder.py
 sessions/
 
 

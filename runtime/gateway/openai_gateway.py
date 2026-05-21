@@ -1124,6 +1124,39 @@ class GatewayHandler(BaseHTTPRequestHandler):
             )
             return
 
+        # FASE 30I: Runtime Sensor Fusion — always-on 200
+        if self.path == "/runtime/sensors":
+            try:
+                from runtime.context.sensor_fusion import SensorFusionEngine
+                from runtime.context.summary_builder import OperationalSummaryBuilder
+                _snap = SensorFusionEngine().collect()
+                _snap_dict = _snap.to_dict()
+                _gpu_summary = OperationalSummaryBuilder._gpu_summary(_snap)
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/sensors",
+                    "timestamp": time.time(),
+                    "topology": _snap.topology.to_dict(),
+                    "observed_sources": _snap.observed_sources,
+                    "missing_sources": _snap.missing_sources,
+                    "expected_offline": [t.get("name", t.get("job", "?")) for t in _snap.expected_offline_targets],
+                    "unexpected_down": [t.get("name", t.get("job", "?")) for t in _snap.unexpected_down_targets],
+                    "domain_confidence": _snap.domain_confidence,
+                    "gpu_summary": _gpu_summary,
+                    "derived_state": {k: v for k, v in _snap.derived_state.items() if k in ("gpu_nodes", "gateway", "control_plane")},
+                    "freshness": {k: f"{v:.1f}s ago" for k, v in _snap.last_scrape_seconds_ago.items()},
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/sensors",
+                    "error": str(exc),
+                    "timestamp": time.time(),
+                })
+            return
+
         if self.path == "/runtime/reports/discipline":
             try:
                 from runtime.gateway.tool_request_classifier import FORBIDDEN_TOOL_RECOMMENDATIONS
