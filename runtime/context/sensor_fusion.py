@@ -136,6 +136,119 @@ class SensorFusionEngine:
         self._compute_domain_confidence(snapshot)
         return snapshot
 
+    def build_gpu_operational_summary(self) -> dict[str, Any]:
+        """
+        Build compact GPU operational summary for LLM consumption.
+        Prioritizes real sensor data over static inventory.
+        Returns compact dict with essential GPU information.
+        """
+        # Collect fresh snapshot to ensure we have latest data
+        snapshot = self.collect()
+        
+        # Start with base summary
+        summary = {
+            "observed_at": snapshot.timestamp,
+        }
+        
+        # Process GPU nodes data
+        gpu_nodes_data = snapshot.observed_data.get("gpu_nodes", {})
+        if not isinstance(gpu_nodes_data, dict):
+            return {"error": "NO DISPONIBLE", "observed_at": snapshot.timestamp}
+        
+        # Extract RX9070 data if available
+        rx9070_data = gpu_nodes_data.get("rx9070", {})
+        rx7900xt_data = gpu_nodes_data.get("rx7900xt", {})
+        gpu_metrics = gpu_nodes_data.get("gpu_metrics", {})
+        
+        # Determine active GPU status
+        if rx9070_data.get("status") == "up":
+            summary.update({
+                "name": "RX9070",
+                "host": "192.168.1.50",
+                "status": "online",
+                "topology_role": "active_inference_backend",
+                "expected_offline": False,
+            })
+            
+            # Add GPU metrics (even if empty)
+            metrics = {}
+            if isinstance(gpu_metrics, dict) and gpu_metrics:
+                # Map Prometheus metric names to friendly names
+                metric_mapping = {
+                    "temp_gpu_core_c": "temperature_c",
+                    "load_gpu_core": "gpu_load_percent", 
+                    "power_gpu_package_w": "power_watts",
+                    "fan_gpu_fan_rpm": "fan_rpm",
+                    "gpu_memory_used": "vram_used_gb",
+                    "gpu_memory_total": "vram_total_gb"
+                }
+                
+                for prom_name, friendly_name in metric_mapping.items():
+                    if prom_name in gpu_metrics:
+                        value = gpu_metrics[prom_name]
+                        # Convert memory from MB to GB
+                        if "memory" in prom_name or "vram" in friendly_name:
+                            value = round(value / 1024, 2)
+                        metrics[friendly_name] = value
+                
+                # Calculate free VRAM if we have both used and total
+                if "vram_used_gb" in metrics and "vram_total_gb" in metrics:
+                    metrics["vram_free_gb"] = round(
+                        metrics["vram_total_gb"] - metrics["vram_used_gb"], 2
+                    )
+            
+            summary["gpu_metrics"] = metrics
+            
+            # Add source of truth information
+            summary["source_of_truth"] = ["prometheus"]
+            if gpu_metrics.get("source_of_truth") == "prometheus":
+                summary["source_of_truth"].append("gpu_exporter")
+            
+            # Add freshness from last scrape
+            last_scrape = snapshot.last_scrape_seconds_ago.get("ai-lab-gpu-rx9070")
+            if last_scrape is not None:
+                if last_scrape < 10:
+                    summary["freshness"] = "fresh"
+                elif last_scrape < 60:
+                    summary["freshness"] = "stale"
+                else:
+                    summary["freshness"] = "expired"
+            else:
+                summary["freshness"] = "unknown"
+                
+            # Add confidence from domain confidence
+            summary["confidence"] = snapshot.domain_confidence.get("gpu_nodes", "unknown")
+            
+        else:
+            # RX9070 is down or not available
+            summary.update({
+                "name": "RX9070",
+                "host": "192.168.1.50",
+                "status": "offline" if rx9070_data.get("status") == "down" else "unknown",
+                "topology_role": "inactive",
+                "expected_offline": False,
+                "gpu_metrics": {},
+                "source_of_truth": ["prometheus"],
+                "freshness": "unknown",
+                "confidence": "low"
+            })
+        
+        # Add RX7900XT information (always present as inventory)
+        if rx7900xt_data.get("expected_offline", False):
+            summary["inventory_gpu"] = {
+                "name": "RX7900XT",
+                "host": "192.168.1.60",
+                "status": "offline",
+                "topology_role": "inventory_offline",
+                "expected_offline": True,
+                "gpu_metrics": {},  # No active metrics for inventory GPU
+                "source_of_truth": ["prometheus"],
+                "freshness": "unknown",
+                "confidence": "low"
+            }
+        
+        return summary
+
     def _store_observed(self, snapshot: RuntimeSensorFusionSnapshot, domain: str, data: dict | None, priority: SensorPriority) -> None:
         if data is not None:
             snapshot.observed_data[domain] = data

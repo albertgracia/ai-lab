@@ -466,6 +466,41 @@ def is_lightweight_prompt(text: str) -> bool:
     return False
 
 
+# ── FASE 30I-C: GPU runtime intent detection ─────────────────────
+
+GPU_RUNTIME_INTENT_PATTERNS = (
+    "gpu",
+    "rx9070",
+    "rx7900xt", 
+    "temperatura",
+    "temperatura gpu",
+    "vram",
+    "vram usada",
+    "vram libre",
+    "potencia",
+    "consumo",
+    "consumo gpu",
+    "fan",
+    "fan rpm",
+    "watts",
+    "load gpu",
+    "gpu load",
+    "gpu state",
+    "estado gpu",
+    "estado de gpu",
+)
+
+def detect_gpu_runtime_intent(user_text: str) -> bool:
+    """
+    Detect if user is asking about GPU runtime status.
+    Used to prioritize sensor fusion data over static inventory.
+    """
+    if not user_text:
+        return False
+    t = user_text.lower().strip()
+    return any(pattern in t for pattern in GPU_RUNTIME_INTENT_PATTERNS)
+
+
 # ── FASE 29.3.1: Qwen escalation reasons ─────────────────────
 
 QWEN_ESCALATION_REASONS = {

@@ -218,70 +218,80 @@ def build_report_runtime_context(target_ip: str | None = None) -> dict[str, Any]
     except Exception:
         missing.append("health_score")
 
-    # FASE 30I: Runtime Sensor Fusion — observed + derived + topology
-    try:
-        from runtime.context.sensor_fusion import SensorFusionEngine
-        _engine = SensorFusionEngine()
-        _snap = _engine.collect()
-
-        _snap_dict = _snap.to_dict(max_chars=8000)
-        ctx["sensor_snapshot"] = _snap_dict
-
-        ctx["runtime_topology"] = _snap.topology.to_dict()
-        ctx["domain_confidence"] = _snap.domain_confidence
-        ctx["stale_sources"] = getattr(_snap, 'stale_sources', [])
-
-        for dom, state in _snap.derived_state.items():
-            if dom in ("gpu_nodes", "gateway", "control_plane", "system_node", "lmstudio_models"):
-                ctx[f"sensor_{dom}"] = state
-
-        observed.append("sensor_snapshot")
-        observed.append("runtime_topology")
-        observed.append("domain_confidence")
-
-        # enrich evidence_catalog with sensor data
-        ctx.setdefault("evidence_catalog", {})
-        ctx["evidence_catalog"]["gpu_online"] = any(
-            g.get("expected_offline") is False or g.get("status") == "online"
-            for g in _snap.topology.active_gpus
-        )
-        ctx["evidence_catalog"]["prometheus_targets"] = {
-            "total": len(_snap.observed_sources) + len(_snap.missing_sources),
-            "up": len(_snap.observed_sources),
-            "expected_offline": [t.get("name", t.get("job", "?")) for t in _snap.expected_offline_targets],
-            "unexpected_down": [t.get("name", t.get("job", "?")) for t in _snap.unexpected_down_targets],
-        }
-
-        # operational summary
+        # FASE 30I: Runtime Sensor Fusion — observed + derived + topology
         try:
-            from runtime.context.summary_builder import OperationalSummaryBuilder
-            _route_family = "report"
-            _summary = OperationalSummaryBuilder.build(_snap, _route_family)
-            if _summary:
-                ctx["operational_summary"] = _summary
-                observed.append("operational_summary")
-        except Exception:
-            missing.append("operational_summary")
+            from runtime.context.sensor_fusion import SensorFusionEngine
+            _engine = SensorFusionEngine()
+            _snap = _engine.collect()
 
-        # update context size and sensor fusion metrics
-        try:
-            from runtime.telemetry.prometheus_metrics import (
-                record_observed_runtime_size,
-                record_sensor_fusion,
-                record_sensor_fusion_duration,
-                record_sensor_fusion_missing,
+            _snap_dict = _snap.to_dict(max_chars=8000)
+            ctx["sensor_snapshot"] = _snap_dict
+
+            # FASE 30I-C: Add GPU operational summaries
+            try:
+                _gpu_summary = _engine.build_gpu_operational_summary()
+                ctx["gpu_operational_summaries"] = _gpu_summary
+                # Also add to sensor_snapshot for consistency
+                if isinstance(ctx["sensor_snapshot"], dict):
+                    ctx["sensor_snapshot"]["gpu_operational_summaries"] = _gpu_summary
+            except Exception:
+                pass
+
+            ctx["runtime_topology"] = _snap.topology.to_dict()
+            ctx["domain_confidence"] = _snap.domain_confidence
+            ctx["stale_sources"] = getattr(_snap, 'stale_sources', [])
+
+            for dom, state in _snap.derived_state.items():
+                if dom in ("gpu_nodes", "gateway", "control_plane", "system_node", "lmstudio_models"):
+                    ctx[f"sensor_{dom}"] = state
+
+            observed.append("sensor_snapshot")
+            observed.append("runtime_topology")
+            observed.append("domain_confidence")
+
+            # enrich evidence_catalog with sensor data
+            ctx.setdefault("evidence_catalog", {})
+            ctx["evidence_catalog"]["gpu_online"] = any(
+                g.get("expected_offline") is False or g.get("status") == "online"
+                for g in _snap.topology.active_gpus
             )
-            import json as _size_json
-            _ctx_json = _size_json.dumps(ctx, ensure_ascii=False, default=str)
-            record_observed_runtime_size(len(_ctx_json))
-            record_sensor_fusion("all", "ok")
-            for _msrc in _snap.missing_sources:
-                record_sensor_fusion_missing(_msrc)
-        except ImportError:
-            pass
+            ctx["evidence_catalog"]["prometheus_targets"] = {
+                "total": len(_snap.observed_sources) + len(_snap.missing_sources),
+                "up": len(_snap.observed_sources),
+                "expected_offline": [t.get("name", t.get("job", "?")) for t in _snap.expected_offline_targets],
+                "unexpected_down": [t.get("name", t.get("job", "?")) for t in _snap.unexpected_down_targets],
+            }
 
-    except Exception:
-        missing.append("sensor_fusion")
+            # operational summary
+            try:
+                from runtime.context.summary_builder import OperationalSummaryBuilder
+                _route_family = "report"
+                _summary = OperationalSummaryBuilder.build(_snap, _route_family)
+                if _summary:
+                    ctx["operational_summary"] = _summary
+                    observed.append("operational_summary")
+            except Exception:
+                missing.append("operational_summary")
+
+            # update context size and sensor fusion metrics
+            try:
+                from runtime.telemetry.prometheus_metrics import (
+                    record_observed_runtime_size,
+                    record_sensor_fusion,
+                    record_sensor_fusion_duration,
+                    record_sensor_fusion_missing,
+                )
+                import json as _size_json
+                _ctx_json = _size_json.dumps(ctx, ensure_ascii=False, default=str)
+                record_observed_runtime_size(len(_ctx_json))
+                record_sensor_fusion("all", "ok")
+                for _msrc in _snap.missing_sources:
+                    record_sensor_fusion_missing(_msrc)
+            except ImportError:
+                pass
+
+        except Exception:
+            missing.append("sensor_fusion")
 
     ctx["inference_nodes"] = {
         "active": _get_active_nodes(),
