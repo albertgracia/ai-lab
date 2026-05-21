@@ -825,7 +825,7 @@ def build_minimal_report_messages(
     system_prompt = _load_report_prompt()
     if observed_runtime:
         system_prompt += (
-            f"\n\nOBSERVED_RUNTIME: {observed_runtime}"
+            f"\n\nOBSERVED_RUNTIME_BEGIN\n{observed_runtime}\nOBSERVED_RUNTIME_END"
         )
     return [
         {"role": "system", "content": system_prompt},

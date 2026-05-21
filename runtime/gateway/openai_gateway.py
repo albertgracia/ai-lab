@@ -580,22 +580,12 @@ def inject_agent_context(payload):
     # Store report runtime context in payload for access outside inject_agent_context
     payload["_report_runtime_context"] = _report_runtime
 
-    # FASE 30H.1: auto-inject minimal runtime context if runtime intent detected
-    # but _report_runtime is None (observe/cognitive/analysis routes)
+    # FASE 30H.2: build real runtime context if runtime intent detected
+    # replaces FASE 30H.1 synthetic minimal context with format_report_runtime_context()
     if _report_runtime is None and detect_runtime_grounded_intent(user_text):
-        import json as _auto_json
-        _auto_ctx = {
-            "runtime_identity": "ubuntu-ialab@192.168.1.30",
-            "runtime_hostname": "ubuntu-ialab",
-            "primary_runtime_ip": "192.168.1.30",
-            "primary_runtime_role": "primary-control-plane",
-            "grounded_runtime": True,
-            "synthetic": True,
-            "source": "runtime_intent_detector",
-        }
-        payload["_report_runtime_context"] = _auto_json.dumps(_auto_ctx)
+        _report_runtime = format_report_runtime_context()
+        payload["_report_runtime_context"] = _report_runtime
         payload["_report_grounded"] = True
-        _report_runtime = payload["_report_runtime_context"]
         try:
             from runtime.telemetry.prometheus_metrics import (
                 record_runtime_context_autoinjected,
@@ -696,6 +686,14 @@ def inject_agent_context(payload):
                 system_prompt = (system_prompt or "") + "\n\n" + mem_block
     except ImportError:
         pass
+
+    # FASE 30H.2: inject OBSERVED_RUNTIME into system_prompt for non-report routes
+    # report routes use build_minimal_report_messages() which already handles this
+    if payload.get("_report_grounded") and payload.get("_report_runtime_context") and system_prompt is not None and not payload.get("_observed_runtime_injected"):
+        system_prompt += (
+            f"\n\nOBSERVED_RUNTIME_BEGIN\n{payload['_report_runtime_context']}\nOBSERVED_RUNTIME_END"
+        )
+        payload["_observed_runtime_injected"] = True
 
     if system_prompt is not None:
         injected = [
@@ -1416,16 +1414,6 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     slo_impact=False,
                 ))
 
-            # FASE 30H.1: respect explicit model request from payload
-            # (allows burn-in / testing with specific models bypassing routing)
-            _rm_lower = requested_model.lower() if isinstance(requested_model, str) else ""
-            _sm_lower = selected_model.lower() if isinstance(selected_model, str) else ""
-            if _rm_lower and _rm_lower != _sm_lower:
-                if _rm_lower in ("qwen/qwen2.5-coder-14b-instruct", "qwen2.5-coder-14b-instruct"):
-                    selected_model = "qwen/qwen2.5-coder-14b-instruct"
-                elif _rm_lower == "llama-3.1-8b-instruct":
-                    selected_model = "llama-3.1-8b-instruct"
-
             # FASE 29.4: Degradation-based model override
             if _HAVE_SLO:
                 _degradation_level = _degradation.get_current_level()
@@ -1440,6 +1428,16 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     if route_family in {"minimal", "observe"} and "qwen" in (selected_model or "").lower():
                         selected_model = "llama-3.1-8b-instruct"
                         _degradation.record_qwen_protection("degradation_block_escalation", is_slo_dry_run())
+
+            # FASE 30H.1: respect explicit model request from payload (AFTER degradation)
+            # so burn-in / testing with specific models can override routing + degradation
+            _rm_lower = requested_model.lower() if isinstance(requested_model, str) else ""
+            _sm_lower = selected_model.lower() if isinstance(selected_model, str) else ""
+            if _rm_lower and _rm_lower != _sm_lower:
+                if _rm_lower in ("qwen/qwen2.5-coder-14b-instruct", "qwen2.5-coder-14b-instruct"):
+                    selected_model = "qwen/qwen2.5-coder-14b-instruct"
+                elif _rm_lower == "llama-3.1-8b-instruct":
+                    selected_model = "llama-3.1-8b-instruct"
 
             if selected_model not in _warmed_models:
                 _warmed_models.add(selected_model)
