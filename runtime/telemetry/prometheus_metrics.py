@@ -877,6 +877,12 @@ REPORT_EVIDENCE_GUARD_TOTAL = Counter(
     "Veces que el evidence guard fue invocado en reportes",
     [],
 )
+
+REPORT_EVIDENCE_GUARD_SCOPED_TOTAL = Counter(
+    "ailab_report_evidence_guard_scoped_total",
+    "Evidence guard executions with scope labels",
+    ["action", "model", "route_family", "guard_scope"],
+)
 REPORT_UNVERIFIED_CLAIM_TOTAL = Counter(
     "ailab_report_unverified_claim_total",
     "Afirmaciones no verificadas detectadas por el evidence guard",
@@ -900,6 +906,31 @@ def record_report_forbidden_recommendation(tool: str) -> None:
 
 
 # ── FASE 30H: Evidence Guard Recorders ──────────────────────
+
+RUNTIME_CONTEXT_AUTOINJECTED_TOTAL = Counter(
+    "ailab_runtime_context_autoinjected_total",
+    "Veces que se auto-inyecto contexto runtime minimo por deteccion de intencion",
+    [],
+)
+
+
+def record_runtime_context_autoinjected() -> None:
+    RUNTIME_CONTEXT_AUTOINJECTED_TOTAL.inc()
+
+
+def record_report_evidence_guard_scoped(
+    action: str,
+    model: str | None = None,
+    route_family: str | None = None,
+    guard_scope: str | None = None,
+) -> None:
+    REPORT_EVIDENCE_GUARD_SCOPED_TOTAL.labels(
+        action=action or "unknown",
+        model=model or "unknown",
+        route_family=route_family or "unknown",
+        guard_scope=guard_scope or "fallback_disabled",
+    ).inc()
+
 
 def record_report_evidence_score(score: float) -> None:
     REPORT_EVIDENCE_SCORE.observe(float(score))

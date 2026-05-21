@@ -49,7 +49,7 @@ from runtime.distributed.execution_coordinator import (
 
 from runtime.gateway.stream_sanitizer import relay_stream
 from runtime.gateway.tool_call_parser import extract_tool_calls_from_message, filter_dangerous_tool_calls, repair_tool_call_arguments, parse_tool_calls
-from runtime.gateway.tool_request_classifier import build_minimal_report_messages, build_observe_context, build_observe_context_compact, build_capability_answer, classify_chat_route, is_report_request, is_report_request_heavy, sanitize_observe_output, sanitize_payload_messages, sanitize_prompt_text, sanitize_report_output, should_use_greeting_fastpath, should_use_tool_fastpath, strip_question_tool, is_lightweight_prompt, get_qwen_escalation_reason, FORBIDDEN_TOOL_RECOMMENDATIONS
+from runtime.gateway.tool_request_classifier import build_minimal_report_messages, build_observe_context, build_observe_context_compact, build_capability_answer, classify_chat_route, is_report_request, is_report_request_heavy, sanitize_observe_output, sanitize_payload_messages, sanitize_prompt_text, sanitize_report_output, should_use_greeting_fastpath, should_use_tool_fastpath, strip_question_tool, is_lightweight_prompt, get_qwen_escalation_reason, should_apply_evidence_guard, detect_runtime_grounded_intent, FORBIDDEN_TOOL_RECOMMENDATIONS
 from runtime.context.report_runtime_context import format_report_runtime_context, extract_target_ip
 from runtime.gateway.gateway_metrics import (
     load_metrics,
@@ -465,6 +465,7 @@ def inject_agent_context(payload):
             user_text = msg.get("content", "")
             break
 
+    payload["_user_text"] = user_text
     payload = strip_question_tool(payload, user_text)
     prompt_route = detect_intent(user_text)
     observe_fastpath = prompt_route.mode == "observe" and not should_use_tool_fastpath(payload)
@@ -578,6 +579,30 @@ def inject_agent_context(payload):
 
     # Store report runtime context in payload for access outside inject_agent_context
     payload["_report_runtime_context"] = _report_runtime
+
+    # FASE 30H.1: auto-inject minimal runtime context if runtime intent detected
+    # but _report_runtime is None (observe/cognitive/analysis routes)
+    if _report_runtime is None and detect_runtime_grounded_intent(user_text):
+        import json as _auto_json
+        _auto_ctx = {
+            "runtime_identity": "ubuntu-ialab@192.168.1.30",
+            "runtime_hostname": "ubuntu-ialab",
+            "primary_runtime_ip": "192.168.1.30",
+            "primary_runtime_role": "primary-control-plane",
+            "grounded_runtime": True,
+            "synthetic": True,
+            "source": "runtime_intent_detector",
+        }
+        payload["_report_runtime_context"] = _auto_json.dumps(_auto_ctx)
+        payload["_report_grounded"] = True
+        _report_runtime = payload["_report_runtime_context"]
+        try:
+            from runtime.telemetry.prometheus_metrics import (
+                record_runtime_context_autoinjected,
+            )
+            record_runtime_context_autoinjected()
+        except ImportError:
+            pass
 
     if route.family == "minimal" and route.variant == "report":
         payload.pop("tools", None)
@@ -1416,6 +1441,8 @@ class GatewayHandler(BaseHTTPRequestHandler):
 
             session_id = create_session(task_type, selected_model, get_active_backend()["name"])
             payload["model"] = selected_model
+            payload["_ai_lab_selected_model"] = selected_model
+            payload["_ai_lab_route_family"] = route_family
 
             stream_enabled = bool(payload.get("stream", False))
 
@@ -1672,9 +1699,12 @@ class GatewayHandler(BaseHTTPRequestHandler):
             _sanitize_profile = payload.get("_profile", "unknown")
             data = sanitize_completion_response(data, route_family=_sanitize_route, model=_sanitize_model, profile=_sanitize_profile)
 
-            # FASE 30G: sanitize report output for forbidden tool recommendations
-            # FASE 30H: evidence guard for epistemological discipline
-            if _sanitize_route in ("report", "minimal"):
+            # FASE 30H.1: Universal Evidence Guard — applies to ALL routes
+            # when should_apply_evidence_guard detects runtime-state intent
+            _guard_scope = should_apply_evidence_guard(
+                payload, _sanitize_route, payload.get("_user_text", ""),
+            )
+            if _guard_scope:
                 for _choice in data.get("choices", []):
                     _msg = _choice.get("message", {}) if isinstance(_choice, dict) else {}
                     _content = _msg.get("content", "")
@@ -1691,34 +1721,67 @@ class GatewayHandler(BaseHTTPRequestHandler):
                                     record_report_forbidden_recommendation,
                                 )
                                 for _tool in _found:
-                                    if _tool.startswith("model_not_in_observed:") or _tool.startswith("gpu_not_in_observed:") or _tool.startswith("security_tool_not_in_runtime:") or _tool.startswith("external_platform_not_in_runtime:") or _tool.startswith("unknown_model:") or _tool.startswith("unknown_ip:") or _tool.startswith("unknown_host:"):
+                                    if _tool.startswith("model_not_in_observed:") or _tool.startswith("gpu_not_in_observed:") or _tool.startswith("security_tool_not_in_runtime:") or _tool.startswith("external_platform_not_in_runtime:") or _tool.startswith("orchestration_tool_not_in_runtime:") or _tool.startswith("os_version_not_observed:") or _tool.startswith("unknown_model:") or _tool.startswith("unknown_ip:") or _tool.startswith("unknown_host:"):
                                         continue
                                     record_report_forbidden_recommendation(_tool)
                             except ImportError:
                                 pass
-                        # FASE 30H: record evidence guard metrics
-                        if _report_json:
-                            try:
-                                from runtime.telemetry.prometheus_metrics import (
-                                    record_report_evidence_guard,
-                                    record_report_unverified_claim,
-                                    record_report_evidence_score,
-                                    record_report_hallucination_suppressed,
+                        # FASE 30H.1: record evidence guard metrics (scoped)
+                        try:
+                            from runtime.telemetry.prometheus_metrics import (
+                                record_report_evidence_guard,
+                                record_report_evidence_guard_scoped,
+                                record_report_unverified_claim,
+                                record_report_evidence_score,
+                                record_report_hallucination_suppressed,
+                            )
+                            record_report_evidence_guard()
+                            record_report_evidence_guard_scoped(
+                                action="passed",
+                                model=_sanitize_model,
+                                route_family=_sanitize_route,
+                                guard_scope=_guard_scope,
+                            )
+                            _evidence_claims = [c for c in _found if c.startswith((
+                                "model_not_in_observed:", "gpu_not_in_observed:",
+                                "security_tool_not_in_runtime:", "external_platform_not_in_runtime:",
+                                "orchestration_tool_not_in_runtime:", "os_version_not_observed:",
+                                "unknown_model:", "unknown_ip:", "unknown_host:",
+                            ))]
+                            if _evidence_claims:
+                                record_report_unverified_claim(len(_evidence_claims))
+                                _evidence_score = max(0.0, 1.0 - (0.15 * len(_evidence_claims)))
+                                record_report_evidence_score(_evidence_score)
+                                record_report_evidence_guard_scoped(
+                                    action="sanitized",
+                                    model=_sanitize_model,
+                                    route_family=_sanitize_route,
+                                    guard_scope=_guard_scope,
                                 )
-                                record_report_evidence_guard()
-                                _evidence_claims = [c for c in _found if c.startswith((
-                                    "model_not_in_observed:", "gpu_not_in_observed:",
-                                    "security_tool_not_in_runtime:", "external_platform_not_in_runtime:",
-                                    "unknown_model:", "unknown_ip:", "unknown_host:",
-                                ))]
-                                if _evidence_claims:
-                                    record_report_unverified_claim(len(_evidence_claims))
-                                    _evidence_score = max(0.0, 1.0 - (0.15 * len(_evidence_claims)))
-                                    record_report_evidence_score(_evidence_score)
-                                    if len(_evidence_claims) >= 5:
-                                        record_report_hallucination_suppressed()
-                            except ImportError:
-                                pass
+                                if len(_evidence_claims) >= 5:
+                                    record_report_hallucination_suppressed()
+                                    record_report_evidence_guard_scoped(
+                                        action="blocked",
+                                        model=_sanitize_model,
+                                        route_family=_sanitize_route,
+                                        guard_scope=_guard_scope,
+                                    )
+                        except ImportError:
+                            pass
+            else:
+                # FASE 30H.1: record skipped scoped metric with route family
+                try:
+                    from runtime.telemetry.prometheus_metrics import (
+                        record_report_evidence_guard_scoped,
+                    )
+                    record_report_evidence_guard_scoped(
+                        action="skipped",
+                        model=_sanitize_model,
+                        route_family=_sanitize_route,
+                        guard_scope="fallback_disabled",
+                    )
+                except ImportError:
+                    pass
 
             # FASE 28.2: Agentic Pipeline — READONLY EXECUTION — BEFORE sending response
             _agentic_content = ""

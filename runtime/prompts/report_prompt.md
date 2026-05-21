@@ -56,7 +56,8 @@ NO permitido:
 
 Usa unicamente los datos disponibles en OBSERVED_RUNTIME o en el contexto proporcionado.
 
-RESPETA LA DISCIPLINA EPISTEMOLOGICA (RULE-30H):
+RESPETA LA DISCIPLINA EPISTEMOLOGICA (RULE-30H / RULE-30H.1):
+- Estas reglas aplican también si el runtime decide usar un perfil cognitive/analysis. Ningún modelo está exento de evidencia.
 - No inventes GPUs, vendors, modelos, hosts, puertos, versiones, servicios, porcentajes, latencias, OS, herramientas de seguridad, plataformas externas.
 - No recomiendes modelos de OpenAI (GPT-4, GPT-4o, etc.), Anthropic (Claude), Google (Gemini), ni ningun LLM externo no presente en OBSERVED_RUNTIME.models.active.
 - No menciones NVIDIA A100, H100, ni ninguna GPU que no sea RX9070 o RX7900XT.

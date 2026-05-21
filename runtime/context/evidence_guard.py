@@ -53,6 +53,24 @@ _FORBIDDEN_GPU_MODELS = frozenset({
     "mi250", "mi300", "mi350",
 })
 
+_FORBIDDEN_ORCHESTRATION_TOOLS = frozenset({
+    "kubernetes", "k8s",
+    "spark", "dask", "ray",
+    "docker swarm", "apache spark", "apache dask",
+    "openshift", "rancher", "kubeflow",
+    "terraform", "ansible", "puppet", "chef",
+    "saltstack", "salt",
+})
+
+_FORBIDDEN_OS_VERSIONS = frozenset({
+    "ubuntu 23", "23.04", "23.10", "23.10.1",
+    "ubuntu 24", "24.04", "24.10",
+    "ubuntu 22", "22.04", "22.10",
+    "centos 8", "centos 9", "centos 7",
+    "rhel 8", "rhel 9", "rhel 7",
+    "debian 11", "debian 12",
+})
+
 _FORBIDDEN_GPU_PATTERNS = [
     re.compile(rf"(?i)\bnvidia\s+{re.escape(gpu)}\b")
     for gpu in _FORBIDDEN_GPU_MODELS
@@ -85,6 +103,10 @@ class ReportEvidenceResult:
     warnings: list[str] = field(default_factory=list)
     suppressed_count: int = 0
     strict_mode: bool = True
+    model: str | None = None
+    route_family: str | None = None
+    guard_scope: str = "fallback_disabled"
+    runtime_intent_detected: bool = False
 
 
 # ── Evidence catalog builder ─────────────────────────────────
@@ -207,6 +229,9 @@ def sanitize_unverified_claims(
     runtime_context_json: str | None = None,
     evidence_catalog: dict[str, set[str]] | None = None,
     runtime_context: dict[str, Any] | None = None,
+    model: str | None = None,
+    route_family: str | None = None,
+    guard_scope: str = "fallback_disabled",
 ) -> ReportEvidenceResult:
     if evidence_catalog is None:
         if runtime_context is None and runtime_context_json:
@@ -219,6 +244,9 @@ def sanitize_unverified_claims(
     result = ReportEvidenceResult(
         strict_mode=STRICT_EVIDENCE_MODE,
         sanitized_text=report_text,
+        model=model,
+        route_family=route_family,
+        guard_scope=guard_scope,
     )
 
     if not report_text:
@@ -234,6 +262,8 @@ def sanitize_unverified_claims(
     _check_forbidden_gpus(report_text, unverified)
     _check_forbidden_security_tools(report_text, unverified)
     _check_forbidden_external_platforms(report_text, unverified)
+    _check_forbidden_orchestration_tools(report_text, unverified)
+    _check_forbidden_os_versions(report_text, unverified)
     _check_unknown_models(report_text, unverified, known_models)
     _check_unknown_hosts(report_text, unverified, known_hosts, known_nodes)
 
@@ -292,6 +322,20 @@ def _check_forbidden_external_platforms(text: str, unverified: list[str]) -> Non
     for platform in _FORBIDDEN_EXTERNAL_PLATFORMS:
         if platform in lower:
             unverified.append(f"external_platform_not_in_runtime:{platform}")
+
+
+def _check_forbidden_orchestration_tools(text: str, unverified: list[str]) -> None:
+    lower = text.lower()
+    for tool in _FORBIDDEN_ORCHESTRATION_TOOLS:
+        if tool in lower:
+            unverified.append(f"orchestration_tool_not_in_runtime:{tool}")
+
+
+def _check_forbidden_os_versions(text: str, unverified: list[str]) -> None:
+    lower = text.lower()
+    for ver in _FORBIDDEN_OS_VERSIONS:
+        if ver in lower:
+            unverified.append(f"os_version_not_observed:{ver}")
 
 
 def _check_unknown_models(

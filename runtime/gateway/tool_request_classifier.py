@@ -684,6 +684,86 @@ def _load_report_prompt() -> str:
     return _REPORT_PROMPT_CACHE
 
 
+# ── FASE 30H.1: Universal Evidence Guard Detection ────────
+
+_RUNTIME_INTENT_TRIGGERS = (
+    "ai-lab", "ai lab",
+    "runtime",
+    "estado", "state",
+    "informe", "report",
+    "topology", "topología",
+    "governance", "gobernanza",
+    "modelos", "models",
+    "rutas", "route family",
+    "evidence", "evidencia",
+    "observabilidad", "observability",
+    "prometheus",
+    "grafana",
+    "gpu",
+    "rx9070",
+    "rx7900xt",
+    "multi-gpu", "multigpu",
+    "scheduler",
+    "ailab",
+    "kubernetes", "k8s",
+    "docker", "contenedores",
+    "latencia", "slo",
+    "telemetry", "telemetría",
+    "seguridad", "security",
+    "infraestructura", "infrastructure",
+)
+
+
+def detect_runtime_grounded_intent(
+    user_text: str,
+    system_prompt: str = "",
+) -> bool:
+    """Returns True if the user text indicates runtime-state intent.
+
+    Detects:
+    - runtime-state keywords in user_text
+    - OBSERVED_RUNTIME in system_prompt
+    """
+    if user_text:
+        t = user_text.lower().strip()
+        if any(trigger in t for trigger in _RUNTIME_INTENT_TRIGGERS):
+            return True
+    if "OBSERVED_RUNTIME" in system_prompt:
+        return True
+    return False
+
+
+def should_apply_evidence_guard(
+    payload: dict[str, Any],
+    route_family: str,
+    user_text: str,
+    system_prompt: str = "",
+) -> str | None:
+    """Returns guard_scope if evidence guard should apply, None otherwise.
+
+    Scope values:
+    - report_route: route family is report/minimal with report variant
+    - grounded_runtime: payload has _report_grounded or _report_runtime_context
+    - runtime_intent: user text contains runtime-state triggers
+    - observed_runtime: system_prompt contains OBSERVED_RUNTIME
+    """
+    # Direct flags from inject_agent_context
+    if payload.get("_report_grounded") is True:
+        return "grounded_runtime"
+    if payload.get("_report_runtime_context"):
+        return "grounded_runtime"
+
+    # Route-based
+    if route_family in ("report", "minimal"):
+        return "report_route"
+
+    # Runtime intent detection via standalone function
+    if detect_runtime_grounded_intent(user_text, system_prompt):
+        return "runtime_intent"
+
+    return None
+
+
 # ── FASE 30G: Operational Reporting Discipline ──────────────
 
 FORBIDDEN_TOOL_RECOMMENDATIONS = {

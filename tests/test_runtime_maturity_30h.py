@@ -204,6 +204,56 @@ def test_detects_external_platform_gcp():
     assert any("external_platform_not_in_runtime" in c for c in result.unverified_claims)
 
 
+# ── sanitize_unverified_claims: forbidden orchestration tools ──
+
+def test_detects_kubernetes():
+    result = sanitize_unverified_claims(
+        "Kubernetes coordina los servicios de AI-LAB.",
+        runtime_context=SAMPLE_RUNTIME_CONTEXT,
+    )
+    assert any("orchestration_tool_not_in_runtime" in c for c in result.unverified_claims)
+
+
+def test_detects_spark():
+    result = sanitize_unverified_claims(
+        "Apache Spark procesa datos en AI-LAB.",
+        runtime_context=SAMPLE_RUNTIME_CONTEXT,
+    )
+    assert any("spark" in c.lower() for c in result.unverified_claims)
+
+
+def test_detects_dask():
+    result = sanitize_unverified_claims(
+        "Dask se usa para computacion paralela en AI-LAB.",
+        runtime_context=SAMPLE_RUNTIME_CONTEXT,
+    )
+    assert any("dask" in c.lower() for c in result.unverified_claims)
+
+
+def test_detects_ray():
+    result = sanitize_unverified_claims(
+        "Ray se usa para entrenar modelos en AI-LAB.",
+        runtime_context=SAMPLE_RUNTIME_CONTEXT,
+    )
+    assert any("ray" in c.lower() for c in result.unverified_claims)
+
+
+def test_detects_ubuntu_version():
+    result = sanitize_unverified_claims(
+        "El servidor corre Ubuntu 23.10.1.",
+        runtime_context=SAMPLE_RUNTIME_CONTEXT,
+    )
+    assert any("os_version" in c for c in result.unverified_claims)
+
+
+def test_detects_centos_version():
+    result = sanitize_unverified_claims(
+        "El runtime usa CentOS 9 para produccion.",
+        runtime_context=SAMPLE_RUNTIME_CONTEXT,
+    )
+    assert any("centos" in c.lower() or "os_version" in c for c in result.unverified_claims)
+
+
 # ── sanitize_unverified_claims: clean content ─────────────────
 
 def test_allows_clean_report():
