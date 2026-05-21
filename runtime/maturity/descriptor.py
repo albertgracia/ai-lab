@@ -12,6 +12,7 @@ class RuntimePhase(str, Enum):
     PHASE_29_4 = "29.4"
     PHASE_30A = "30A"
     PHASE_30C = "30C"
+    PHASE_30D = "30D"
 
 
 class RuntimeMaturityLevel(str, Enum):
@@ -35,6 +36,50 @@ class TopologyRole(str, Enum):
     PRIMARY_CONTROL_PLANE = "primary-control-plane"
     INFERENCE_BACKEND = "inference-backend"
     INVENTORY_OFFLINE = "inventory-offline"
+    OBSERVABILITY_NODE = "observability-node"
+    EXTERNAL_GATEWAY = "external-gateway"
+
+
+class FailureDomain(str, Enum):
+    CONTROL_PLANE = "control-plane"
+    INFERENCE_GPU = "inference-gpu"
+    INFERENCE_CPU = "inference-cpu"
+    NETWORK = "network"
+    STORAGE = "storage"
+    OBSERVABILITY = "observability"
+    EXTERNAL = "external"
+
+
+@dataclass
+class NodeTopology:
+    node_id: str
+    host: str
+    port: int | None = None
+    role: TopologyRole = TopologyRole.INVENTORY_OFFLINE
+    failure_domain: FailureDomain = FailureDomain.NETWORK
+    status: str = "unknown"
+    online: bool = False
+    latency_ms: float | None = None
+    last_seen: float = 0.0
+    models: list[str] = field(default_factory=list)
+    capabilities: list[str] = field(default_factory=list)
+    error: str = ""
+
+    def to_dict(self) -> dict:
+        return {
+            "node_id": self.node_id,
+            "host": self.host,
+            "port": self.port,
+            "role": self.role.value,
+            "failure_domain": self.failure_domain.value,
+            "status": self.status,
+            "online": self.online,
+            "latency_ms": self.latency_ms,
+            "last_seen": self.last_seen,
+            "models": self.models,
+            "capabilities": self.capabilities,
+            "error": self.error,
+        }
 
 
 class SchedulerState(str, Enum):
@@ -102,6 +147,7 @@ class RuntimeStateDescriptor:
     governance_level: str
     mode: RuntimeMode
     topology_role: TopologyRole
+    failure_domain: FailureDomain = FailureDomain.CONTROL_PLANE
     temporal: TemporalState = field(default_factory=TemporalState)
     generation_ts: float = field(default_factory=time.time)
     degraded_mode: dict | None = None
@@ -117,6 +163,7 @@ class RuntimeStateDescriptor:
             },
             "mode": self.mode.value if isinstance(self.mode, Enum) else self.mode,
             "topology_role": self.topology_role.value if isinstance(self.topology_role, Enum) else self.topology_role,
+            "failure_domain": self.failure_domain.value if isinstance(self.failure_domain, Enum) else self.failure_domain,
             "temporal": self.temporal.to_dict(),
             "generated_at": self.generation_ts,
         }

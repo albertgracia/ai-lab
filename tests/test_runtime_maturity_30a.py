@@ -7,10 +7,11 @@ from unittest.mock import patch, MagicMock
 
 from runtime.maturity.descriptor import (
     RuntimePhase, RuntimeMaturityLevel, RuntimeMode,
-    TopologyRole, SchedulerState, GovernanceLevel,
+    TopologyRole, FailureDomain, NodeTopology,
+    SchedulerState, GovernanceLevel,
     TemporalState, RuntimeStateDescriptor, ModelStatus,
 )
-from runtime.maturity.builder import build_runtime_descriptor, build_model_status_map
+from runtime.maturity.builder import build_runtime_descriptor, build_model_status_map, build_topology_snapshot
 
 
 # ── RuntimePhase ────────────────────────────────────────────────
@@ -25,7 +26,7 @@ def test_runtime_phase_all_values_are_strings():
 
 
 def test_runtime_phase_includes_previous_phases():
-    expected = {"28.1", "28.2", "28.3", "29.2", "29.3", "29.4", "30A"}
+    expected = {"28.1", "28.2", "28.3", "29.2", "29.3", "29.4", "30A", "30C", "30D"}
     actual = {p.value for p in RuntimePhase}
     assert expected.issubset(actual)
 
@@ -65,6 +66,59 @@ def test_topology_role_values():
     assert TopologyRole.PRIMARY_CONTROL_PLANE.value == "primary-control-plane"
     assert TopologyRole.INFERENCE_BACKEND.value == "inference-backend"
     assert TopologyRole.INVENTORY_OFFLINE.value == "inventory-offline"
+    assert TopologyRole.OBSERVABILITY_NODE.value == "observability-node"
+    assert TopologyRole.EXTERNAL_GATEWAY.value == "external-gateway"
+
+
+# ── FailureDomain ────────────────────────────────────────────────
+
+def test_failure_domain_values():
+    assert FailureDomain.CONTROL_PLANE.value == "control-plane"
+    assert FailureDomain.INFERENCE_GPU.value == "inference-gpu"
+    assert FailureDomain.INFERENCE_CPU.value == "inference-cpu"
+    assert FailureDomain.NETWORK.value == "network"
+    assert FailureDomain.STORAGE.value == "storage"
+    assert FailureDomain.OBSERVABILITY.value == "observability"
+    assert FailureDomain.EXTERNAL.value == "external"
+
+
+def test_failure_domain_has_seven_domains():
+    assert len(FailureDomain) == 7
+
+
+# ── NodeTopology ────────────────────────────────────────────────
+
+def test_node_topology_defaults():
+    nt = NodeTopology(node_id="test", host="192.168.1.50")
+    assert nt.role == TopologyRole.INVENTORY_OFFLINE
+    assert nt.failure_domain == FailureDomain.NETWORK
+    assert nt.online is False
+    assert nt.status == "unknown"
+
+
+def test_node_topology_to_dict():
+    nt = NodeTopology(
+        node_id="rx9070",
+        host="192.168.1.50",
+        port=1234,
+        role=TopologyRole.INFERENCE_BACKEND,
+        failure_domain=FailureDomain.INFERENCE_GPU,
+        status="online",
+        online=True,
+        latency_ms=2.5,
+        models=["qwen2.5-coder-14b"],
+    )
+    d = nt.to_dict()
+    assert d["node_id"] == "rx9070"
+    assert d["role"] == "inference-backend"
+    assert d["failure_domain"] == "inference-gpu"
+    assert d["online"] is True
+    assert d["models"] == ["qwen2.5-coder-14b"]
+
+
+def test_node_topology_to_dict_json_serializable():
+    nt = NodeTopology(node_id="test", host="192.168.1.50")
+    json.dumps(nt.to_dict())
 
 
 # ── SchedulerState ──────────────────────────────────────────────
@@ -210,6 +264,23 @@ def test_descriptor_defaults():
     assert desc.governance_level == "enforced"
     assert desc.mode == RuntimeMode.COGNITIVE
     assert desc.topology_role == TopologyRole.PRIMARY_CONTROL_PLANE
+    assert desc.failure_domain == FailureDomain.CONTROL_PLANE
+
+
+def test_descriptor_with_explicit_failure_domain():
+    desc = RuntimeStateDescriptor(
+        phase="30D",
+        maturity=RuntimeMaturityLevel.OPERATIONAL,
+        topology_mode="single-node",
+        scheduler_mode="static",
+        governance_level="enforced",
+        mode=RuntimeMode.COGNITIVE,
+        topology_role=TopologyRole.INFERENCE_BACKEND,
+        failure_domain=FailureDomain.INFERENCE_GPU,
+    )
+    assert desc.failure_domain == FailureDomain.INFERENCE_GPU
+    d = desc.to_dict()
+    assert d["failure_domain"] == "inference-gpu"
 
 
 def test_descriptor_to_dict_includes_runtime_generation():
@@ -260,6 +331,22 @@ def test_descriptor_to_dict_includes_mode_and_role():
     d = desc.to_dict()
     assert d["mode"] == "cognitive"
     assert d["topology_role"] == "primary-control-plane"
+    assert "failure_domain" in d
+
+
+def test_descriptor_to_dict_includes_failure_domain():
+    desc = RuntimeStateDescriptor(
+        phase="30D",
+        maturity=RuntimeMaturityLevel.OPERATIONAL,
+        topology_mode="single-node",
+        scheduler_mode="static",
+        governance_level="enforced",
+        mode=RuntimeMode.COGNITIVE,
+        topology_role=TopologyRole.INFERENCE_BACKEND,
+        failure_domain=FailureDomain.INFERENCE_GPU,
+    )
+    d = desc.to_dict()
+    assert d["failure_domain"] == "inference-gpu"
 
 
 def test_descriptor_to_dict_includes_generated_at():
@@ -282,22 +369,29 @@ def test_descriptor_to_dict_includes_generated_at():
 def test_build_runtime_descriptor_returns_valid():
     desc = build_runtime_descriptor()
     assert isinstance(desc, RuntimeStateDescriptor)
-    assert desc.phase in ("30A", "30C")
+    assert desc.phase in ("30A", "30C", "30D")
     assert isinstance(desc.maturity, RuntimeMaturityLevel)
     assert isinstance(desc.mode, RuntimeMode)
     assert isinstance(desc.topology_role, TopologyRole)
+    assert isinstance(desc.failure_domain, FailureDomain)
 
 
 def test_build_runtime_descriptor_to_dict_roundtrip():
     desc = build_runtime_descriptor()
     d = desc.to_dict()
-    assert d["runtime_generation"]["phase"] in ("30A", "30C")
+    assert d["runtime_generation"]["phase"] in ("30A", "30C", "30D")
     assert d["runtime_generation"]["maturity"] in (
         "booting", "stabilizing", "operational", "degraded", "emergency", "shutdown"
     )
     assert d["mode"] in ("cognitive", "operational", "tool", "execute", "observe")
     assert d["topology_role"] in (
-        "primary-control-plane", "inference-backend", "inventory-offline"
+        "primary-control-plane", "inference-backend", "inventory-offline",
+        "observability-node", "external-gateway",
+    )
+    assert "failure_domain" in d
+    assert d["failure_domain"] in (
+        "control-plane", "inference-gpu", "inference-cpu",
+        "network", "storage", "observability", "external",
     )
     assert d["temporal"]["last_seen"] > 0
 
@@ -314,7 +408,8 @@ def test_build_runtime_descriptor_json_serializable():
     json_str = json.dumps(d)
     assert json_str
     parsed = json.loads(json_str)
-    assert parsed["runtime_generation"]["phase"] in ("30A", "30C")
+    assert parsed["runtime_generation"]["phase"] in ("30A", "30C", "30D")
+    assert "failure_domain" in parsed
 
 
 def test_build_runtime_descriptor_temporal_touched():
@@ -338,7 +433,8 @@ def test_build_model_status_map_handles_missing_modules():
 
 def test_all_enums_json_serializable():
     for enum_cls in [RuntimePhase, RuntimeMaturityLevel, RuntimeMode,
-                     TopologyRole, SchedulerState, GovernanceLevel, ModelStatus]:
+                     TopologyRole, FailureDomain,
+                     SchedulerState, GovernanceLevel, ModelStatus]:
         for member in enum_cls:
             d = {"value": member.value}
             json.dumps(d)
@@ -358,3 +454,34 @@ def test_runtime_generation_structure():
     )
     gen = desc.to_dict()["runtime_generation"]
     assert set(gen.keys()) == {"phase", "maturity", "topology_mode", "scheduler_mode", "governance_level"}
+
+
+# ── build_topology_snapshot (FASE 30D) ──────────────────────────
+
+def test_build_topology_snapshot_returns_dict():
+    snap = build_topology_snapshot()
+    assert isinstance(snap, dict)
+
+
+def test_build_topology_snapshot_has_required_keys():
+    snap = build_topology_snapshot()
+    assert "role" in snap
+    assert "failure_domain" in snap
+    assert "control_plane" in snap
+    assert "inference_backends" in snap
+    assert "nodes" in snap
+
+
+def test_build_topology_snapshot_inference_count():
+    snap = build_topology_snapshot()
+    ib = snap["inference_backends"]
+    assert isinstance(ib["online"], int)
+    assert isinstance(ib["total"], int)
+    assert ib["total"] >= ib["online"]
+
+
+def test_build_topology_snapshot_nodes_have_failure_domain():
+    snap = build_topology_snapshot()
+    for node in snap["nodes"]:
+        assert "failure_domain" in node
+        assert "role" in node

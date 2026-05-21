@@ -6,6 +6,7 @@ from runtime.maturity.descriptor import (
     RuntimeMaturityLevel,
     RuntimeMode,
     TopologyRole,
+    FailureDomain,
     RuntimeStateDescriptor,
     TemporalState,
     ModelStatus,
@@ -30,6 +31,7 @@ def build_runtime_descriptor() -> RuntimeStateDescriptor:
     maturity = _resolve_maturity_level()
     mode = _resolve_mode()
     role = _resolve_topology_role()
+    failure_domain = _resolve_failure_domain()
     generation_phase = _resolve_generation_phase()
 
     degraded_mode = _resolve_degraded_mode()
@@ -42,6 +44,7 @@ def build_runtime_descriptor() -> RuntimeStateDescriptor:
         governance_level="enforced",
         mode=mode,
         topology_role=role,
+        failure_domain=failure_domain,
         temporal=temporal,
         generation_ts=now,
         degraded_mode=degraded_mode,
@@ -125,6 +128,8 @@ def _resolve_topology_role() -> TopologyRole:
             return TopologyRole.INFERENCE_BACKEND
         if "offline" in role_str or "inventory" in role_str:
             return TopologyRole.INVENTORY_OFFLINE
+        if "observability" in role_str:
+            return TopologyRole.OBSERVABILITY_NODE
         return TopologyRole.PRIMARY_CONTROL_PLANE
     except Exception:
         pass
@@ -135,8 +140,32 @@ def _resolve_topology_role() -> TopologyRole:
     return TopologyRole.INFERENCE_BACKEND
 
 
+def _resolve_failure_domain() -> FailureDomain:
+    role = _resolve_topology_role()
+    mapping = {
+        TopologyRole.PRIMARY_CONTROL_PLANE: FailureDomain.CONTROL_PLANE,
+        TopologyRole.INFERENCE_BACKEND: FailureDomain.INFERENCE_GPU,
+        TopologyRole.INVENTORY_OFFLINE: FailureDomain.INFERENCE_GPU,
+        TopologyRole.OBSERVABILITY_NODE: FailureDomain.OBSERVABILITY,
+        TopologyRole.EXTERNAL_GATEWAY: FailureDomain.EXTERNAL,
+    }
+    return mapping.get(role, FailureDomain.CONTROL_PLANE)
+
+
+def build_topology_snapshot() -> dict:
+    try:
+        from runtime.distributed.runtime_topology import get_topology
+        return get_topology()
+    except Exception:
+        return {
+            "role": "unknown",
+            "failure_domain": "unknown",
+            "nodes": [],
+        }
+
+
 def _resolve_generation_phase() -> str:
-    return "30C"
+    return "30D"
 
 
 def _resolve_degraded_mode() -> dict | None:

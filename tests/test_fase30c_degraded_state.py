@@ -374,11 +374,11 @@ def test_builder_includes_degraded_mode():
     assert dm["is_degraded"] is False
 
 
-def test_builder_phase_30C():
+def test_builder_phase_current():
     from runtime.maturity.builder import build_runtime_descriptor
     descriptor = build_runtime_descriptor()
     d = descriptor.to_dict()
-    assert d["runtime_generation"]["phase"] == "30C"
+    assert d["runtime_generation"]["phase"] in ("30C", "30D")
 
 
 # ── Endpoint integration ────────────────────────────────────────

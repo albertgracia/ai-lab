@@ -279,6 +279,18 @@ Endpoints como /health, /slo/health, /runtime/maturity y futuros /runtime/* debe
 Además de tests/build/tag, cada fase runtime debe incluir al menos una validación real:
 curl endpoint, métrica Prometheus, dashboard, JSONL audit o burn-in corto.
 
+10. Failure domain must be explicit per node
+Cada nodo en la topología debe tener un failure_domain explícito que determine el impacto de su caída.
+- control-plane failure → bloquea todo el routing cognitivo
+- inference-gpu failure → solo bloquea requests que requieren ese GPU
+- observability failure → no afecta al plano cognitivo, solo a métricas
+- network failure → afecta a nodos aguas abajo
+- storage failure → afecta solo a memoria episódica y replay
+
+11. Topology must be observable without inference backend
+El endpoint /runtime/topology debe responder 200 aunque el backend de inferencia esté offline.
+La topología separa rol (qué hace) de failure_domain (qué pasa si falla).
+
 ---
 
 # Runtime Configuration Philosophy
@@ -447,22 +459,24 @@ FASE 29.4.4-D → parallel tool call hardening                ✅ CP-29.4.4-D-PA
 FASE 30A → runtime state foundation & maturity descriptors  ✅ CP-30A-RUNTIME-STATE-FOUNDATION-STABLE
 FASE 30B → model state awareness (active/loaded/discoverable) ✅ CP-30B-MODEL-STATE-AWARE-STABLE
 FASE 30C → single-node explicit degraded mode                ✅ CP-30C-DEGRADED-MODE-EXPLICIT-STABLE
+FASE 30B.1 → completion truncation + multi-gpu triggers       ✅ CP-30B.1-COMPLETION-METADATA-STABLE
+FASE 30D → topology role & failure domain taxonomy            ✅ CP-30D-TOPOLOGY-FAILURE-DOMAIN-STABLE
 ```
 
-Tags git: 30 tags desde `CP-21B-STABLE` hasta `CP-30C-DEGRADED-MODE-EXPLICIT-STABLE`.
+Tags git: 32 tags desde `CP-21B-STABLE` hasta `CP-30D-TOPOLOGY-FAILURE-DOMAIN-STABLE`.
 
 **Deuda saldada:** FASE 29.4.4-C — `/slo/health` ahora responde 200 siempre, con payload disabled cuando enforcement=false.
 
 ## Próximo: Runtime Maturity Before Multi-GPU (Prioridad cambiada 20/05/26)
 
 **Checkpoint actual:** "Runtime Operational Identity"
-**Estado:** 🟢 Runtime estable | 🟢 Governance estable | 🟢 Taxonomy estable | 🟢 Burn-in estable | 🟢 Runtime state foundation (FASE 30A) | 🟢 Model state awareness (FASE 30B) | 🟢 Degraded mode (30C) | 🔵 Multi-GPU postergado
+**Estado:** 🟢 Runtime estable | 🟢 Governance estable | 🟢 Taxonomy estable | 🟢 Burn-in estable | 🟢 Runtime state foundation (FASE 30A) | 🟢 Model state awareness (FASE 30B) | 🟢 Degraded mode (30C) | 🟢 Topology & failure domains (30D) | 🔵 Multi-GPU postergado
 
-**Razón:** FASE 30A + 30B + 30C completadas — runtime tiene identidad operacional, estado de modelos y modo degradado explícito. RULE-30B-1 a 30B-6 establecidas. RULE-30C-1 a 30C-7 establecidas. `DegradedModeState` con metadatos completos. 30 tags git.
+**Razón:** FASE 30A + 30B + 30C + 30B.1 + 30D completadas — runtime tiene identidad operacional, estado de modelos, modo degradado explícito y taxonomía de topología/fallos. RULE-30B-1 a 30B-6 establecidas. RULE-30C-1 a 30C-7 establecidas. RULE-30D-1 a 30D-2 establecidas. `FailureDomain` y `NodeTopology` integrados en descriptor y endpoint. 32 tags git.
 
 ### FASES PRIORITARIAS (próxima sesión)
 
-1. **FASE 30D — Topology role & failure domain taxonomy** — rol del nodo en la topología, clasificación de dominios de fallo
+1. **FASE 30E — Governance visibility refinement** — visibilidad de decisiones governance en el descriptor
 2. **FASE 30E — Governance visibility refinement** — visibilidad de decisiones governance en el descriptor
 3. **FASE 30F — Cognitive route semantics** — semántica operacional por route-family
 4. **FASE 30G — Operational reporting discipline** — reportes NOC con semántica operacional
