@@ -478,7 +478,24 @@ QWEN_ESCALATION_REASONS = {
     "creative_long": "long-form creative writing request",
     "reasoning_deep": "explicit reasoning or analisis profundo request",
     "report_technical": "technical report with structured sections required",
+    "multi_gpu": "multi-gpu, rx7900xt, scheduler, failover, warm pool, queue arbitration, vram-aware routing, inference backend, gpu routing, placement",
+    "architecture_scaling": "repartir cognitive/report/embeddings/minimal, distribuir cargas, escalado cognitivo, cognitive scaling, resource distribution",
 }
+
+
+_MULTI_GPU_TRIGGERS = (
+    "multi-gpu", "rx7900xt", "scheduler", "distribuir cargas",
+    "placement", "inference backend", "gpu routing", "failover",
+    "warm pool", "queue arbitration", "vram-aware routing",
+    "vram aware routing",
+)
+
+_ARCHITECTURE_SCALING_TRIGGERS = (
+    "repartir cognitive/report/embeddings/minimal",
+    "repartir cognitive", "distribuir cognitive",
+    "escalado cognitivo", "cognitive scaling",
+    "resource distribution",
+)
 
 
 def get_qwen_escalation_reason(text: str) -> str | None:
@@ -486,6 +503,12 @@ def get_qwen_escalation_reason(text: str) -> str | None:
     t = text.strip().lower()
     if not t:
         return None
+
+    # FASE 30B.1: multi-GPU / scheduler / architecture scaling triggers
+    if any(term in t for term in _MULTI_GPU_TRIGGERS):
+        return "multi_gpu"
+    if any(term in t for term in _ARCHITECTURE_SCALING_TRIGGERS):
+        return "architecture_scaling"
 
     if "```" in t or "`" in t:
         return "coding_explicit"
@@ -689,6 +712,11 @@ def classify_chat_route(
 ) -> RuntimeRoute:
     """Segment chat requests into explicit runtime families."""
     text = user_text or request_text
+
+    # FASE 30B.1: qwen escalation check — runs BEFORE report/greeting/observe checks
+    qwen_reason = get_qwen_escalation_reason(text)
+    if qwen_reason in ("multi_gpu", "architecture_scaling", "report_technical", "reasoning_deep", "architecture_deep"):
+        return RuntimeRoute(family="report", variant="qwen_escalated", reason=f"qwen_escalation:{qwen_reason}")
 
     if _is_reasoning_request(text):
         return RuntimeRoute(family="cognitive", variant="reasoning", reason="reasoning keywords")

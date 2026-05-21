@@ -42,6 +42,7 @@ SEVERITY_MAP: dict[RuntimeErrorCategory, ErrorSeverity] = {
     RuntimeErrorCategory.GPU_PRESSURE: ErrorSeverity.ERROR,
     RuntimeErrorCategory.VRAM_PRESSURE: ErrorSeverity.ERROR,
     RuntimeErrorCategory.GATEWAY_INTERNAL: ErrorSeverity.CRITICAL,
+    RuntimeErrorCategory.COMPLETION_TRUNCATED: ErrorSeverity.WARNING,
     RuntimeErrorCategory.UNKNOWN: ErrorSeverity.ERROR,
 }
 

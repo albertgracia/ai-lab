@@ -147,11 +147,16 @@ CONFIRMATION_REQUIRED = Counter(
 COMPLETION_TRUNCATED = Counter(
     "ailab_completion_truncated_total",
     "Completions truncadas con contenido valido (finish_reason=length)",
-    ["route_family"],
+    ["model", "route_family", "profile"],
 )
 COMPLETION_EMPTY_AFTER_TRUNCATION = Counter(
     "ailab_completion_empty_after_truncation_total",
     "Completions truncadas y vacias (finish_reason=length, sin contenido)",
+)
+EMPTY_RESPONSE_PREVENTED = Counter(
+    "ailab_empty_response_prevented_total",
+    "Respuestas vacias evitadas con contenido de respaldo",
+    ["reason"],
 )
 
 REPORT_REQUESTS_BY_MODEL = Counter(

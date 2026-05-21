@@ -235,6 +235,52 @@ Esta regla tiene prioridad sobre velocidad de implementación. La trazabilidad G
 
 ---
 
+## Runtime Maturity Rules
+
+1. Loaded ≠ Active ≠ Discoverable ≠ Disabled
+Un modelo listado por LM Studio no se considera activo. ACTIVE solo significa que ha recibido tráfico real reciente dentro de ACTIVE_WINDOW_SECONDS.
+
+2. Disabled wins always
+Si un modelo está desactivado por runtime/config, debe aparecer siempre como DISABLED aunque LM Studio lo liste.
+
+3. Control-plane ≠ inference backend
+192.168.1.30 = primary-control-plane.
+192.168.1.50 = inference backend RX9070.
+192.168.1.60 = inventory/offline RX7900XT hasta que se reactive explícitamente.
+
+4. No Multi-GPU before semantic readiness
+No implementar scheduler Multi-GPU hasta cerrar:
+- 30B model state awareness
+- 30C degraded mode explicit state
+- 30D topology/failure-domain taxonomy
+- 30F route semantics
+
+5. Reports must be operational, not generic
+Los informes deben usar tono NOC/operacional.
+Prohibido recomendar Kubernetes, Docker Swarm, Spark, Dask o herramientas genéricas salvo que el runtime real las use o el usuario las pida.
+
+6. Active route semantics
+Cada route-family debe tener estado explícito:
+active, degraded, throttled, blocked, unused.
+No inferir salud de una ruta solo por existir en código.
+
+7. External AI reports are advisory only
+Informes de Google IA, DeepSeek u otros agentes deben tratarse como señales externas no verificadas. Antes de actuar, validar contra:
+- código
+- métricas
+- endpoints
+- logs
+- runtime_state
+
+8. Health endpoints must be always-on
+Endpoints como /health, /slo/health, /runtime/maturity y futuros /runtime/* deben responder siempre 200 con estado disabled/passive si la feature está apagada.
+
+9. No phase closed without operational proof
+Además de tests/build/tag, cada fase runtime debe incluir al menos una validación real:
+curl endpoint, métrica Prometheus, dashboard, JSONL audit o burn-in corto.
+
+---
+
 # Runtime Configuration Philosophy
 
 ## Principio general
@@ -400,30 +446,27 @@ FASE 29.4.4-C → SLO health endpoint always-on             ✅ CP-29.4.4-C-SLO-
 FASE 29.4.4-D → parallel tool call hardening                ✅ CP-29.4.4-D-PARALLEL-TOOLCALL-HARDENING-STABLE
 FASE 30A → runtime state foundation & maturity descriptors  ✅ CP-30A-RUNTIME-STATE-FOUNDATION-STABLE
 FASE 30B → model state awareness (active/loaded/discoverable) ✅ CP-30B-MODEL-STATE-AWARE-STABLE
+FASE 30C → single-node explicit degraded mode                ✅ CP-30C-DEGRADED-MODE-EXPLICIT-STABLE
 ```
 
-Tags git: 29 tags desde `CP-21B-STABLE` hasta `CP-30B-MODEL-STATE-AWARE-STABLE`.
+Tags git: 30 tags desde `CP-21B-STABLE` hasta `CP-30C-DEGRADED-MODE-EXPLICIT-STABLE`.
 
 **Deuda saldada:** FASE 29.4.4-C — `/slo/health` ahora responde 200 siempre, con payload disabled cuando enforcement=false.
 
 ## Próximo: Runtime Maturity Before Multi-GPU (Prioridad cambiada 20/05/26)
 
 **Checkpoint actual:** "Runtime Operational Identity"
-**Estado:** 🟢 Runtime estable | 🟢 Governance estable | 🟢 Taxonomy estable | 🟢 Burn-in estable | 🟢 Runtime state foundation (FASE 30A) | 🟢 Model state awareness (FASE 30B) | 🟡 Degraded mode (30C) pendiente | 🔵 Multi-GPU postergado
+**Estado:** 🟢 Runtime estable | 🟢 Governance estable | 🟢 Taxonomy estable | 🟢 Burn-in estable | 🟢 Runtime state foundation (FASE 30A) | 🟢 Model state awareness (FASE 30B) | 🟢 Degraded mode (30C) | 🔵 Multi-GPU postergado
 
-**Razón:** FASE 30A + 30B completadas — runtime tiene identidad operacional y estado de modelos. RULE-30B-1 a 30B-6 establecidas. `ModelStatusTracker` con TTL, alias normalization, DISABLED priority. 29 tags git.
+**Razón:** FASE 30A + 30B + 30C completadas — runtime tiene identidad operacional, estado de modelos y modo degradado explícito. RULE-30B-1 a 30B-6 establecidas. RULE-30C-1 a 30C-7 establecidas. `DegradedModeState` con metadatos completos. 30 tags git.
 
 ### FASES PRIORITARIAS (próxima sesión)
 
-1. **Runtime semantic maturity** — descriptors de estado runtime
-2. **Operational reporting discipline** — reportes NOC con semántica operacional
-3. **Runtime topology awareness** — rol del nodo en la topología
-4. **Active vs inventory vs discoverable separation** — qué modelo está cargado, cuál activo, cuál disponible
-5. **Cognitive route semantics** — semántica operacional por route-family
-6. **Runtime-state descriptors** — estado explícito del runtime (fase, modo, degradación)
-7. **Governance visibility refinement** — visibilidad de decisiones governance
-8. **Failure-domain classification** — clasificación de dominios de fallo
-9. **Single-node degraded-mode explicit state** — estado degradado explícito en nodo único
+1. **FASE 30D — Topology role & failure domain taxonomy** — rol del nodo en la topología, clasificación de dominios de fallo
+2. **FASE 30E — Governance visibility refinement** — visibilidad de decisiones governance en el descriptor
+3. **FASE 30F — Cognitive route semantics** — semántica operacional por route-family
+4. **FASE 30G — Operational reporting discipline** — reportes NOC con semántica operacional
+5. **Runtime semantic maturity** — descriptors de estado runtime
 
 ### Multi-GPU pospuesto hasta
 

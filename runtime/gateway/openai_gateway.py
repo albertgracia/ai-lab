@@ -653,7 +653,12 @@ def inject_agent_context(payload):
     return payload
 
 
-def sanitize_completion_response(data):
+def sanitize_completion_response(
+    data: dict,
+    route_family: str = "unknown",
+    model: str = "unknown",
+    profile: str = "unknown",
+) -> dict:
     choices = data.get("choices", [])
 
     for choice in choices:
@@ -694,7 +699,7 @@ def sanitize_completion_response(data):
         if current_mode() == "observe" and isinstance(message.get("content"), str):
             message["content"] = sanitize_observe_output(message.get("content"))
 
-        # FASE 26.1.1: preserve valid content even if finish_reason="length"
+        # FASE 30B.1: preserve valid content even if finish_reason="length"
         finish = choice.get("finish_reason", "stop") if isinstance(choice, dict) else "stop"
         content_len = len(message.get("content") or "")
 
@@ -705,8 +710,9 @@ def sanitize_completion_response(data):
                     "Reintenta con un limite mayor o usa un perfil de informe."
                 )
                 try:
-                    from runtime.telemetry.prometheus_metrics import COMPLETION_EMPTY_AFTER_TRUNCATION
+                    from runtime.telemetry.prometheus_metrics import COMPLETION_EMPTY_AFTER_TRUNCATION, EMPTY_RESPONSE_PREVENTED
                     COMPLETION_EMPTY_AFTER_TRUNCATION.inc()
+                    EMPTY_RESPONSE_PREVENTED.labels(reason="finish_reason_length").inc()
                 except ImportError:
                     pass
             else:
@@ -716,14 +722,21 @@ def sanitize_completion_response(data):
                 )
 
         if finish == "length" and content_len > 0:
+            existing = message.get("content", "") or ""
+            message["content"] = existing + "\n\n[TRUNCATED: max_tokens alcanzado]"
             try:
                 from runtime.telemetry.prometheus_metrics import COMPLETION_TRUNCATED
-                COMPLETION_TRUNCATED.labels(route_family="unknown").inc()
+                COMPLETION_TRUNCATED.labels(
+                    model=model,
+                    route_family=route_family,
+                    profile=profile,
+                ).inc()
             except ImportError:
                 pass
             print(
-                f"FASE26.1.1 completion_truncated_but_valid "
-                f"finish_reason=length chars={content_len}",
+                f"FASE30B.1 completion_truncated "
+                f"finish_reason=length chars={content_len} "
+                f"route={route_family} model={model} profile={profile}",
                 flush=True,
             )
 
@@ -1528,7 +1541,10 @@ class GatewayHandler(BaseHTTPRequestHandler):
 
             data = response.json()
 
-            data = sanitize_completion_response(data)
+            _sanitize_route = route_family if 'route_family' in dir() and route_family else payload.get("_ai_lab_route_family", "unknown")
+            _sanitize_model = selected_model if 'selected_model' in dir() and selected_model else payload.get("model", "unknown")
+            _sanitize_profile = payload.get("_profile", "unknown")
+            data = sanitize_completion_response(data, route_family=_sanitize_route, model=_sanitize_model, profile=_sanitize_profile)
 
             # FASE 28.2: Agentic Pipeline — READONLY EXECUTION — BEFORE sending response
             _agentic_content = ""

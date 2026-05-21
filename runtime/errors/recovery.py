@@ -41,6 +41,7 @@ RECOVERABILITY_MAP: dict[RuntimeErrorCategory, Recoverability] = {
     RuntimeErrorCategory.ROUTING_FAILURE: Recoverability.RETRYABLE,
     RuntimeErrorCategory.GPU_PRESSURE: Recoverability.AUTO_RECOVERABLE,
     RuntimeErrorCategory.VRAM_PRESSURE: Recoverability.AUTO_RECOVERABLE,
+    RuntimeErrorCategory.COMPLETION_TRUNCATED: Recoverability.RETRYABLE,
     RuntimeErrorCategory.UNKNOWN: Recoverability.MANUAL_INTERVENTION,
 }
 
