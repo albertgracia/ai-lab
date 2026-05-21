@@ -543,22 +543,28 @@ def inject_agent_context(payload):
                     record_report_node_classification,
                     record_report_data_quality,
                 )
+                import json as _report_json
+                if _report_runtime:
+                    _rep_ctx = _report_json.loads(_report_runtime)
+                else:
+                    _rep_ctx = {}
                 _report_model = payload.get("model", "unknown")
                 record_report_request(_report_model, route.variant)
-                import json as _report_json
-                _rep_ctx = _report_json.loads(_report_runtime)
-                _models = _rep_ctx.get("models", []) or _rep_ctx.get("inference_nodes", [])
-                if _models:
-                    for _m in _models:
-                        _m_status = _m.get("status", "") if isinstance(_m, dict) else ""
-                        if _m_status:
-                            record_report_model_classification(_m_status)
-                _nodes = _rep_ctx.get("inference_nodes", [])
-                if _nodes:
-                    for _n in _nodes:
-                        _n_status = "active" if _n.get("online") else "inventory"
+                _models_dict = _rep_ctx.get("models", {}) if isinstance(_rep_ctx.get("models"), dict) else {}
+                for _m_status_key, _m_list in _models_dict.items():
+                    if isinstance(_m_list, list):
+                        for _m in _m_list:
+                            _m_status = _m.get("status", "") if isinstance(_m, dict) else ""
+                            if _m_status:
+                                record_report_model_classification(_m_status)
+                _nodes_dict = _rep_ctx.get("inference_nodes", {}) if isinstance(_rep_ctx.get("inference_nodes"), dict) else {}
+                for _n_key, _n_val in _nodes_dict.items():
+                    if isinstance(_n_val, dict):
+                        _n_status = "active" if _n_val.get("online") else "inventory"
                         record_report_node_classification(_n_status)
                 _obs = _rep_ctx.get("observed_fields", 0)
+                if isinstance(_obs, list):
+                    _obs = len(_obs)
                 if _obs > 5:
                     record_report_data_quality("complete")
                 elif _obs > 2:
