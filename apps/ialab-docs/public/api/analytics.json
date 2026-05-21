@@ -1,9 +1,8 @@
 {
   "health": {
-    "score": 0,
+    "score": 10,
     "reasons": [
-      "2 GPU(s) offline",
-      "Prometheus down"
+      "2 GPU(s) offline"
     ],
     "level": "critical"
   },
@@ -46,5 +45,5 @@
       "gpu_overheat": 0
     }
   },
-  "timestamp": 1779350579.3783767
+  "timestamp": 1779350784.2160852
 }
