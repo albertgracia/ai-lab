@@ -7,13 +7,13 @@
     "level": "poor"
   },
   "metrics": {
-    "requests_total": 2149,
+    "requests_total": 2150,
     "streams_total": 749,
-    "errors_total": 206,
-    "routing_decisions_total": 6,
-    "sessions_total": 6,
-    "active_sessions": 6,
-    "last_latency_ms": 356.0,
+    "errors_total": 207,
+    "routing_decisions_total": 7,
+    "sessions_total": 7,
+    "active_sessions": 7,
+    "last_latency_ms": 18198.0,
     "active_streams": 0,
     "online_nodes": 1,
     "total_nodes": 3,
@@ -45,5 +45,5 @@
       "gpu_overheat": 0
     }
   },
-  "timestamp": 1779373370.9424157
+  "timestamp": 1779383340.3125854
 }
