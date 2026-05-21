@@ -165,6 +165,10 @@ REPORT_REQUESTS_BY_MODEL = Counter(
     ["model", "type"],
 )
 
+
+def record_report_request(model: str, report_type: str) -> None:
+    REPORT_REQUESTS_BY_MODEL.labels(model=model or "unknown", type=report_type or "unknown").inc()
+
 CAPABILITY_ANSWERS_TOTAL = Counter(
     "ailab_capability_answers_total",
     "Respuestas de capacidad (que-puedes-hacer) sin pasar por LM Studio",
@@ -653,6 +657,18 @@ REPORT_DATA_QUALITY_TOTAL = Counter(
     ["quality"],
 )
 
+
+def record_report_model_classification(status: str) -> None:
+    REPORT_MODEL_CLASSIFICATION_TOTAL.labels(status=status or "unknown").inc()
+
+
+def record_report_node_classification(status: str) -> None:
+    REPORT_NODE_CLASSIFICATION_TOTAL.labels(status=status or "unknown").inc()
+
+
+def record_report_data_quality(quality: str) -> None:
+    REPORT_DATA_QUALITY_TOTAL.labels(quality=quality or "unknown").inc()
+
 # ── FASE 28.2: Executor Readonly Runtime Metrics ────────────
 EXECUTOR_COMMANDS_TOTAL = Counter(
     "ailab_executor_commands_total",
@@ -845,6 +861,18 @@ def record_stream_chunk_cadence(model: str, cadence_ms: int) -> None:
 
 def record_stream_finalization_mismatch() -> None:
     STREAM_FINALIZATION_MISMATCH.inc()
+
+
+# ── FASE 30G: Operational Reporting Discipline Metrics ──────
+REPORT_FORBIDDEN_RECOMMENDATION_BLOCKED = Counter(
+    "ailab_report_forbidden_recommendation_blocked_total",
+    "Recomendaciones bloqueadas por politica en reportes operacionales",
+    ["tool"],
+)
+
+
+def record_report_forbidden_recommendation(tool: str) -> None:
+    REPORT_FORBIDDEN_RECOMMENDATION_BLOCKED.labels(tool=tool or "unknown").inc()
 
 
 # ── FASE 30A: Runtime State & Maturity Metrics ────────────

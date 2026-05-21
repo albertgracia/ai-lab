@@ -6,7 +6,6 @@
     "minimal": "observe_profile.json",
     "casual": "observe_profile.json",
     "greeting": "observe_profile.json",
-    "report": "observe_profile.json",
     "observe": "observe_profile.json",
     "fast": "chat_profile.json",
     "general": "chat_profile.json",

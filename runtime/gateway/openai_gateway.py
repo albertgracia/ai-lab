@@ -49,7 +49,7 @@ from runtime.distributed.execution_coordinator import (
 
 from runtime.gateway.stream_sanitizer import relay_stream
 from runtime.gateway.tool_call_parser import extract_tool_calls_from_message, filter_dangerous_tool_calls, repair_tool_call_arguments, parse_tool_calls
-from runtime.gateway.tool_request_classifier import build_minimal_report_messages, build_observe_context, build_observe_context_compact, build_capability_answer, classify_chat_route, is_report_request, is_report_request_heavy, sanitize_observe_output, sanitize_payload_messages, sanitize_prompt_text, should_use_greeting_fastpath, should_use_tool_fastpath, strip_question_tool, is_lightweight_prompt, get_qwen_escalation_reason
+from runtime.gateway.tool_request_classifier import build_minimal_report_messages, build_observe_context, build_observe_context_compact, build_capability_answer, classify_chat_route, is_report_request, is_report_request_heavy, sanitize_observe_output, sanitize_payload_messages, sanitize_prompt_text, sanitize_report_output, should_use_greeting_fastpath, should_use_tool_fastpath, strip_question_tool, is_lightweight_prompt, get_qwen_escalation_reason, FORBIDDEN_TOOL_RECOMMENDATIONS
 from runtime.context.report_runtime_context import format_report_runtime_context, extract_target_ip
 from runtime.gateway.gateway_metrics import (
     load_metrics,
@@ -532,6 +532,38 @@ def inject_agent_context(payload):
                     REPORT_MISSING_FIELDS_TOTAL.labels(count=str(len(_miss))).inc()
                 if not _ctx.get("observed_fields"):
                     REPORT_UNGROUNDED_TOTAL.inc()
+            except ImportError:
+                pass
+            # FASE 30G: record report classification metrics
+            try:
+                from runtime.telemetry.prometheus_metrics import (
+                    record_report_request,
+                    record_report_model_classification,
+                    record_report_node_classification,
+                    record_report_data_quality,
+                )
+                _report_model = payload.get("model", "unknown")
+                record_report_request(_report_model, route.variant)
+                import json as _report_json
+                _rep_ctx = _report_json.loads(_report_runtime)
+                _models = _rep_ctx.get("models", []) or _rep_ctx.get("inference_nodes", [])
+                if _models:
+                    for _m in _models:
+                        _m_status = _m.get("status", "") if isinstance(_m, dict) else ""
+                        if _m_status:
+                            record_report_model_classification(_m_status)
+                _nodes = _rep_ctx.get("inference_nodes", [])
+                if _nodes:
+                    for _n in _nodes:
+                        _n_status = "active" if _n.get("online") else "inventory"
+                        record_report_node_classification(_n_status)
+                _obs = _rep_ctx.get("observed_fields", 0)
+                if _obs > 5:
+                    record_report_data_quality("complete")
+                elif _obs > 2:
+                    record_report_data_quality("partial")
+                else:
+                    record_report_data_quality("minimal")
             except ImportError:
                 pass
         except Exception:
@@ -1059,6 +1091,23 @@ class GatewayHandler(BaseHTTPRequestHandler):
             )
             return
 
+        if self.path == "/runtime/reports/discipline":
+            try:
+                from runtime.gateway.tool_request_classifier import FORBIDDEN_TOOL_RECOMMENDATIONS
+                _forbidden_list = sorted(FORBIDDEN_TOOL_RECOMMENDATIONS)
+            except Exception:
+                _forbidden_list = []
+            self._send_json(200, {
+                "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/reports/discipline",
+                "forbidden_tools": _forbidden_list,
+                "section_target": "12. RECOMENDACIONES TECNICAS",
+                "generic_recommendation_guard": True,
+                "status": "operational",
+                "timestamp": int(time.time()),
+            })
+            return
+
         if self.path == "/runtime/status":
 
             self._send_json(
@@ -1576,6 +1625,24 @@ class GatewayHandler(BaseHTTPRequestHandler):
             _sanitize_model = selected_model if 'selected_model' in dir() and selected_model else payload.get("model", "unknown")
             _sanitize_profile = payload.get("_profile", "unknown")
             data = sanitize_completion_response(data, route_family=_sanitize_route, model=_sanitize_model, profile=_sanitize_profile)
+
+            # FASE 30G: sanitize report output for forbidden tool recommendations
+            if _sanitize_route in ("report", "minimal"):
+                for _choice in data.get("choices", []):
+                    _msg = _choice.get("message", {}) if isinstance(_choice, dict) else {}
+                    _content = _msg.get("content", "")
+                    if isinstance(_content, str) and _content:
+                        _cleaned, _found = sanitize_report_output(_content)
+                        if _found:
+                            _msg["content"] = _cleaned
+                            try:
+                                from runtime.telemetry.prometheus_metrics import (
+                                    record_report_forbidden_recommendation,
+                                )
+                                for _tool in _found:
+                                    record_report_forbidden_recommendation(_tool)
+                            except ImportError:
+                                pass
 
             # FASE 28.2: Agentic Pipeline — READONLY EXECUTION — BEFORE sending response
             _agentic_content = ""

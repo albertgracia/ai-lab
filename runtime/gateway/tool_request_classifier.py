@@ -684,6 +684,42 @@ def _load_report_prompt() -> str:
     return _REPORT_PROMPT_CACHE
 
 
+# ── FASE 30G: Operational Reporting Discipline ──────────────
+
+FORBIDDEN_TOOL_RECOMMENDATIONS = {
+    "datadog", "new relic", "sentry", "sumo logic",
+    "splunk", "elastic", "kibana", "logstash",
+    "pagerduty", "opsgenie", "victorops", "nagios",
+    "zabbix", "monit", "uptimerobot", "statuscake",
+    "pingdom", "appdynamics", "dynatrace",
+    "instana", "signalfx", "wavefront",
+}
+
+_FORBIDDEN_PATTERNS: list[tuple[re.Pattern, str]] = [
+    (re.compile(rf"(?i)\b{re.escape(t)}\b"), t) for t in FORBIDDEN_TOOL_RECOMMENDATIONS
+]
+
+
+def sanitize_report_output(content: str) -> tuple[str, list[str]]:
+    if not content:
+        return "", []
+    found_tools: list[str] = []
+    for pattern, tool_name in _FORBIDDEN_PATTERNS:
+        if pattern.search(content):
+            found_tools.append(tool_name)
+    if found_tools:
+        unique_tools = sorted(set(found_tools))
+        note = (
+            "\n\n---\n"
+            "[DISCIPLINA OPERACIONAL] El runtime de AI-LAB "
+            "no incluye las herramientas externas mencionadas en esta sección. "
+            "Las referencias a herramientas no presentes en el stack activo "
+            "no reflejan el entorno real observado."
+        )
+        content = content.rstrip() + note
+    return content, found_tools
+
+
 def build_minimal_report_messages(
     user_text: str,
     observed_runtime: str | None = None,

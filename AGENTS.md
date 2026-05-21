@@ -480,26 +480,26 @@ FASE 30B.1 → completion truncation + multi-gpu triggers       ✅ CP-30B.1-COM
 FASE 30D → topology role & failure domain taxonomy            ✅ CP-30D-TOPOLOGY-FAILURE-DOMAIN-STABLE
 FASE 30E → governance visibility refinement                   ✅ CP-30E-GOVERNANCE-VISIBILITY-STABLE
 FASE 30F → cognitive route semantics                           ✅ CP-30F-ROUTE-SEMANTICS-STABLE
+FASE 30G → operational reporting discipline                     ✅ CP-30G-OPERATIONAL-REPORTING-STABLE
 ```
 
-Tags git: 34 tags desde `CP-21B-STABLE` hasta `CP-30F-ROUTE-SEMANTICS-STABLE`.
+Tags git: 35 tags desde `CP-21B-STABLE` hasta `CP-30G-OPERATIONAL-REPORTING-STABLE`.
 
 **Deuda saldada:** FASE 29.4.4-C — `/slo/health` ahora responde 200 siempre, con payload disabled cuando enforcement=false.
 
 ## Próximo: Runtime Maturity Before Multi-GPU (Prioridad cambiada 20/05/26)
 
 **Checkpoint actual:** "Runtime Operational Identity"
-**Estado:** 🟢 Runtime estable | 🟢 Governance estable | 🟢 Taxonomy estable | 🟢 Burn-in estable | 🟢 Runtime state foundation (FASE 30A) | 🟢 Model state awareness (FASE 30B) | 🟢 Degraded mode (30C) | 🟢 Topology & failure domains (30D) | 🟢 Governance visibility (30E) | 🟢 Route semantics (30F) | 🔵 Multi-GPU postergado
+**Estado:** 🟢 Runtime estable | 🟢 Governance estable | 🟢 Taxonomy estable | 🟢 Burn-in estable | 🟢 Runtime state foundation (FASE 30A) | 🟢 Model state awareness (FASE 30B) | 🟢 Degraded mode (30C) | 🟢 Topology & failure domains (30D) | 🟢 Governance visibility (30E) | 🟢 Route semantics (30F) | 🟢 Operational reporting discipline (30G) | 🔵 Multi-GPU postergado
 
-**Razón:** FASE 30A + 30B + 30C + 30B.1 + 30D + 30E + 30F completadas — runtime tiene identidad operacional, estado de modelos, modo degradado explícito, taxonomía de topología/fallos, visibilidad de governance y semántica de rutas cognitivas. `RouteFamilyStatus` enum (6 estados: ACTIVE, DEGRADED, THROTTLED, BLOCKED, UNUSED, UNKNOWN). `RouteSemantics` dataclass con source, counters, avg latency. Endpoint `/runtime/routes/semantics` always-on 200. RULE-30F-1 establecida. 34 tags git.
+**Razón:** FASE 30A + 30B + 30C + 30B.1 + 30D + 30E + 30F + 30G completadas — runtime tiene identidad operacional, estado de modelos, modo degradado explícito, taxonomía de topología/fallos, visibilidad de governance, semántica de rutas cognitivas y disciplina operacional de reportes. `RouteFamilyStatus` enum (6 estados). `RouteSemantics` dataclass. `sanitize_report_output()` con forbidden tools guard. 4 métricas report reactivadas. Endpoint `/runtime/reports/discipline` always-on 200. RULE-30F-1 y RULE-30G-1 establecidas. 35 tags git.
 
 ### FASES PRIORITARIAS (próxima sesión)
 
-1. **FASE 30G — Operational reporting discipline** — reportes NOC con semántica operacional
-2. **FASE 30E — Governance visibility refinement** — visibilidad de decisiones governance en el descriptor
-3. **FASE 30F — Cognitive route semantics** — semántica operacional por route-family
-4. **FASE 30G — Operational reporting discipline** — reportes NOC con semántica operacional
-5. **Runtime semantic maturity** — descriptors de estado runtime
+1. **Runtime semantic maturity** — descriptors de estado runtime
+2. **Cognitive route semantics refinement** — THROTTLED status conectar con SLO
+3. **Governance visibility refinement** — visibilidad de decisiones governance en el descriptor
+4. **Report consistency stabilization** — consistencia cross-profile de reportes
 
 ### Multi-GPU pospuesto hasta
 
