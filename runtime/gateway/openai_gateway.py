@@ -1128,24 +1128,31 @@ class GatewayHandler(BaseHTTPRequestHandler):
         if self.path == "/runtime/sensors":
             try:
                 from runtime.context.sensor_fusion import SensorFusionEngine
-                from runtime.context.summary_builder import OperationalSummaryBuilder
-                _snap = SensorFusionEngine().collect()
+                _engine = SensorFusionEngine()
+                _snap = _engine.collect()
                 _snap_dict = _snap.to_dict()
-                _gpu_summary = OperationalSummaryBuilder._gpu_summary(_snap)
+                _sensor_contract = _engine.build_sensor_contract(_snap)
                 self._send_json(200, {
                     "status": "ok",
                     "service": "ai-lab-openai-gateway",
                     "endpoint": "runtime/sensors",
                     "timestamp": time.time(),
+                    "sensor_contract_version": _sensor_contract["sensor_contract_version"],
+                    "topology_mode": _sensor_contract["topology_mode"],
                     "topology": _snap.topology.to_dict(),
                     "observed_sources": _snap.observed_sources,
                     "missing_sources": _snap.missing_sources,
-                    "expected_offline": [t.get("name", t.get("job", "?")) for t in _snap.expected_offline_targets],
-                    "unexpected_down": [t.get("name", t.get("job", "?")) for t in _snap.unexpected_down_targets],
-                    "domain_confidence": _snap.domain_confidence,
-                    "gpu_summary": _gpu_summary,
+                    "expected_offline": _sensor_contract["expected_offline_targets"],
+                    "unexpected_down": _sensor_contract["unexpected_down_targets"],
+                    "expected_offline_targets": _sensor_contract["expected_offline_targets"],
+                    "unexpected_down_targets": _sensor_contract["unexpected_down_targets"],
+                    "domain_confidence": _sensor_contract["domain_confidence"],
+                    "gpu_operational_summaries": _sensor_contract["gpu_operational_summaries"],
+                    "gpu_summary": _sensor_contract["gpu_summary"],
+                    "source_quality": _sensor_contract["source_quality"],
                     "derived_state": {k: v for k, v in _snap.derived_state.items() if k in ("gpu_nodes", "gateway", "control_plane")},
-                    "freshness": {k: f"{v:.1f}s ago" for k, v in _snap.last_scrape_seconds_ago.items()},
+                    "freshness": {k: f"{v:.1f}s ago" for k, v in _snap.last_scrape_seconds_ago.items() if v is not None},
+                    "sensor_snapshot": _snap_dict,
                 })
             except Exception as exc:
                 self._send_json(200, {

@@ -153,6 +153,19 @@ def _extract_models(ctx: dict[str, Any], catalog: dict[str, set[str]]) -> None:
 
 
 def _extract_nodes(ctx: dict[str, Any], catalog: dict[str, set[str]]) -> None:
+    gpu_summaries = ctx.get("gpu_operational_summaries", [])
+    if isinstance(gpu_summaries, list):
+        for item in gpu_summaries:
+            if not isinstance(item, dict):
+                continue
+            gpu_id = (item.get("gpu_id") or item.get("name") or "").strip().lower()
+            host = (item.get("host") or "").strip().lower()
+            if gpu_id:
+                catalog["nodes"].add(gpu_id)
+            if host:
+                catalog["hosts"].add(host)
+                catalog["nodes"].add(host)
+
     nodes_dict = ctx.get("inference_nodes", {})
     if not isinstance(nodes_dict, dict):
         return

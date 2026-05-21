@@ -30,6 +30,10 @@ Reglas:
 - qwen3.6-27b es DESACTIVADO. Jamas aparece como activo, recomendado, routeable o disponible para inferencia.
 - RX7900XT es INVENTARIADO. No es fallo critico. No afecta estabilidad del runtime activo.
 - Los datos NO DISPONIBLES van agrupados en la seccion 10, no mezclados en otras secciones.
+- Cuando exista `sensor_contract_version >= 30I-D`, usa `gpu_operational_summaries` como fuente primaria para GPUs.
+- No confundas `inventory_state` con `observed_state`.
+- Si `freshness.status` es `stale` o `expired`, informa que el dato puede no estar actualizado.
+- Prioriza `source_of_truth`, `freshness` y `confidence` de cada summary operacional sobre inventario estático.
 
 Reglas de identidad runtime:
 - Si OBSERVED_RUNTIME.primary_runtime_ip coincide con IP/hostname solicitado en el prompt:

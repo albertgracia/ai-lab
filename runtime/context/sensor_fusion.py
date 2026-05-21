@@ -8,6 +8,7 @@ from typing import Any
 from runtime.context.prometheus_client import PrometheusQueryClient
 
 SENSOR_FUSION_MAX_CHARS = 16_000
+SENSOR_CONTRACT_VERSION = "30I-D"
 
 LMSTUDIO_URL = "http://192.168.1.50:1234/v1"
 
@@ -52,6 +53,76 @@ class RuntimeTopologyState:
 
 
 @dataclass
+class SensorFreshness:
+    status: str = "unavailable"
+    age_seconds: float | None = None
+    last_seen: float | None = None
+    source: str = "unknown"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "status": self.status,
+            "age_seconds": self.age_seconds,
+            "last_seen": self.last_seen,
+            "source": self.source,
+        }
+
+
+@dataclass
+class SensorEvidence:
+    source_of_truth: list[str] = field(default_factory=list)
+    evidence_level: str = "missing"
+    confidence: str = "low"
+    freshness: SensorFreshness = field(default_factory=SensorFreshness)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "source_of_truth": self.source_of_truth,
+            "evidence_level": self.evidence_level,
+            "confidence": self.confidence,
+            "freshness": self.freshness.to_dict(),
+        }
+
+
+@dataclass
+class GPUOperationalSummary:
+    gpu_id: str
+    host: str
+    inventory_state: str
+    observed_state: str
+    operational_state: str
+    topology_role: str
+    observed_metrics: dict[str, Any] = field(default_factory=dict)
+    derived_state: dict[str, Any] = field(default_factory=dict)
+    missing_metrics: list[str] = field(default_factory=list)
+    source_of_truth: list[str] = field(default_factory=list)
+    freshness: SensorFreshness = field(default_factory=SensorFreshness)
+    confidence: str = "low"
+    evidence_level: str = "missing"
+    inventory_expected_offline: bool = False
+    last_seen: float | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "gpu_id": self.gpu_id,
+            "host": self.host,
+            "inventory_state": self.inventory_state,
+            "observed_state": self.observed_state,
+            "operational_state": self.operational_state,
+            "topology_role": self.topology_role,
+            "observed_metrics": self.observed_metrics,
+            "derived_state": self.derived_state,
+            "missing_metrics": self.missing_metrics,
+            "source_of_truth": self.source_of_truth,
+            "freshness": self.freshness.to_dict(),
+            "confidence": self.confidence,
+            "evidence_level": self.evidence_level,
+            "last_seen": self.last_seen,
+            "inventory_expected_offline": self.inventory_expected_offline,
+        }
+
+
+@dataclass
 class RuntimeSensorFusionSnapshot:
     timestamp: float = 0.0
     topology: RuntimeTopologyState = field(default_factory=RuntimeTopologyState)
@@ -65,10 +136,13 @@ class RuntimeSensorFusionSnapshot:
     unexpected_down_targets: list[dict] = field(default_factory=list)
     last_scrape_seconds_ago: dict[str, float] = field(default_factory=dict)
     context_size_bytes: int = 0
+    sensor_contract_version: str = SENSOR_CONTRACT_VERSION
     _gpu_metrics_cache: dict | None = None
     _global_confidence: str = "unknown"
 
     def to_dict(self, max_chars: int = SENSOR_FUSION_MAX_CHARS) -> dict[str, Any]:
+        engine = SensorFusionEngine()
+        contract = engine.build_sensor_contract(self)
         base = {
             "timestamp": self.timestamp,
             "topology": self.topology.to_dict(),
@@ -78,6 +152,11 @@ class RuntimeSensorFusionSnapshot:
             "expected_offline": [t.get("name", t.get("job", "?")) for t in self.expected_offline_targets],
             "unexpected_down": [t.get("name", t.get("job", "?")) for t in self.unexpected_down_targets],
             "freshness": {k: f"{v:.1f}s ago" for k, v in self.last_scrape_seconds_ago.items()},
+            "sensor_contract_version": SENSOR_CONTRACT_VERSION,
+            "gpu_operational_summaries": contract["gpu_operational_summaries"],
+            "source_quality": contract["source_quality"],
+            "gpu_summary": contract["gpu_summary"],
+            "gpu_summary_metadata": {"deprecated_alias": True, "alias_for": "gpu_operational_summaries"},
         }
         derived = {}
         for domain, state in self.derived_state.items():
@@ -136,125 +215,177 @@ class SensorFusionEngine:
         self._compute_domain_confidence(snapshot)
         return snapshot
 
+    def _freshness_for_domain(self, snapshot: RuntimeSensorFusionSnapshot, domain: str, source: str) -> SensorFreshness:
+        age = snapshot.last_scrape_seconds_ago.get(domain)
+        if age is None:
+            return SensorFreshness(status="unavailable", age_seconds=None, last_seen=None, source=source)
+        if age < 10:
+            status = "fresh"
+        elif age < 60:
+            status = "stale"
+        else:
+            status = "expired"
+        last_seen = snapshot.timestamp - age
+        return SensorFreshness(status=status, age_seconds=round(age, 3), last_seen=last_seen, source=source)
+
+    def _compact_gpu_metrics(self, raw_metrics: dict[str, Any] | None) -> tuple[dict[str, Any], list[str]]:
+        raw_metrics = raw_metrics or {}
+        metric_mapping = {
+            "temp_gpu_core_c": "temperature_c",
+            "load_gpu_core": "gpu_load_percent",
+            "power_gpu_package_w": "power_watts",
+            "fan_gpu_fan_rpm": "fan_rpm",
+            "gpu_memory_used": "vram_used_gb",
+            "gpu_memory_total": "vram_total_gb",
+        }
+        observed: dict[str, Any] = {}
+        missing: list[str] = []
+        for raw_name, contract_name in metric_mapping.items():
+            value = raw_metrics.get(raw_name)
+            if value is None:
+                missing.append(contract_name)
+                continue
+            if "memory" in raw_name or "vram" in contract_name:
+                value = round(float(value) / 1024, 2)
+            observed[contract_name] = value
+        if "vram_used_gb" in observed and "vram_total_gb" in observed:
+            observed["vram_free_gb"] = round(observed["vram_total_gb"] - observed["vram_used_gb"], 2)
+            if "vram_free_gb" in missing:
+                missing.remove("vram_free_gb")
+        elif "vram_free_gb" not in missing:
+            missing.append("vram_free_gb")
+        return observed, missing
+
+    def build_gpu_operational_summaries(self, snapshot: RuntimeSensorFusionSnapshot | None = None) -> list[dict[str, Any]]:
+        snapshot = snapshot or self.collect()
+        gpu_nodes_data = snapshot.observed_data.get("gpu_nodes", {})
+        if not isinstance(gpu_nodes_data, dict):
+            return []
+        raw_metrics = gpu_nodes_data.get("gpu_metrics", {}) if isinstance(gpu_nodes_data.get("gpu_metrics"), dict) else {}
+        observed_metrics, missing_metrics = self._compact_gpu_metrics(raw_metrics)
+        source_of_truth = ["prometheus"]
+        if raw_metrics.get("source_of_truth") == "prometheus":
+            source_of_truth.append("gpu_exporter")
+        if "lmstudio_models" in snapshot.observed_sources:
+            source_of_truth.append("lmstudio_api")
+        source_of_truth = sorted(set(source_of_truth))
+
+        summaries: list[GPUOperationalSummary] = []
+
+        rx9070 = GPUOperationalSummary(
+            gpu_id="RX9070",
+            host="192.168.1.50",
+            inventory_state="known",
+            observed_state="online" if gpu_nodes_data.get("rx9070", {}).get("status") == "up" else "unavailable",
+            operational_state="active" if gpu_nodes_data.get("rx9070", {}).get("status") == "up" else "inactive",
+            topology_role="active_inference_backend" if gpu_nodes_data.get("rx9070", {}).get("status") == "up" else "inactive",
+            observed_metrics=observed_metrics,
+            derived_state=dict(snapshot.derived_state.get("gpu_nodes", {})),
+            missing_metrics=missing_metrics,
+            source_of_truth=source_of_truth,
+            freshness=self._freshness_for_domain(snapshot, "gpu_nodes", "prometheus"),
+            confidence=snapshot.domain_confidence.get("gpu_nodes", snapshot._global_confidence),
+            evidence_level="observed" if gpu_nodes_data.get("rx9070", {}).get("status") == "up" else "missing",
+            inventory_expected_offline=False,
+            last_seen=self._freshness_for_domain(snapshot, "gpu_nodes", "prometheus").last_seen,
+        )
+        summaries.append(rx9070)
+
+        rx7900 = GPUOperationalSummary(
+            gpu_id="RX7900XT",
+            host="192.168.1.60",
+            inventory_state="known",
+            observed_state="expected_offline",
+            operational_state="inactive",
+            topology_role="inventory_offline",
+            observed_metrics={},
+            derived_state={"health": "inventory", "expected_offline": True},
+            missing_metrics=list(missing_metrics),
+            source_of_truth=["prometheus", "inventory"],
+            freshness=SensorFreshness(status="unavailable", age_seconds=None, last_seen=None, source="inventory"),
+            confidence="medium",
+            evidence_level="inventory",
+            inventory_expected_offline=True,
+            last_seen=None,
+        )
+        summaries.append(rx7900)
+        return [item.to_dict() for item in summaries]
+
+    def build_source_quality(self, snapshot: RuntimeSensorFusionSnapshot | None = None) -> dict[str, Any]:
+        snapshot = snapshot or self.collect()
+        quality: dict[str, Any] = {}
+        for domain in DOMAIN_PRIORITY:
+            evidence_level = "missing"
+            if domain in snapshot.observed_sources:
+                evidence_level = "observed"
+            elif any(domain in t.get("job", "") for t in snapshot.expected_offline_targets):
+                evidence_level = "inventory"
+            elif domain in snapshot.derived_state:
+                evidence_level = "derived"
+            quality[domain] = SensorEvidence(
+                source_of_truth=[snapshot.observed_data.get(domain, {}).get("source_of_truth", "prometheus")] if isinstance(snapshot.observed_data.get(domain), dict) else ["prometheus"],
+                evidence_level=evidence_level,
+                confidence=snapshot.domain_confidence.get(domain, "low"),
+                freshness=self._freshness_for_domain(snapshot, domain, str(snapshot.observed_data.get(domain, {}).get("source_of_truth", "prometheus")) if isinstance(snapshot.observed_data.get(domain), dict) else "prometheus"),
+            ).to_dict()
+        return quality
+
+    def build_sensor_contract(self, snapshot: RuntimeSensorFusionSnapshot | None = None) -> dict[str, Any]:
+        snapshot = snapshot or self.collect()
+        gpu_operational_summaries = self.build_gpu_operational_summaries(snapshot)
+        return {
+            "sensor_contract_version": SENSOR_CONTRACT_VERSION,
+            "topology_mode": snapshot.topology.mode,
+            "gpu_operational_summaries": gpu_operational_summaries,
+            "gpu_summary": {
+                "deprecated_alias": True,
+                "alias_for": "gpu_operational_summaries",
+                "value": " | ".join(
+                    f"{item['gpu_id']}: {item['inventory_state']}/{item['observed_state']}"
+                    for item in gpu_operational_summaries
+                ) if gpu_operational_summaries else "NO DISPONIBLE",
+            },
+            "domain_confidence": snapshot.domain_confidence,
+            "source_quality": self.build_source_quality(snapshot),
+            "expected_offline_targets": [t.get("name", t.get("job", "?")) for t in snapshot.expected_offline_targets],
+            "unexpected_down_targets": [t.get("name", t.get("job", "?")) for t in snapshot.unexpected_down_targets],
+            "derived_state": snapshot.derived_state,
+        }
+
     def build_gpu_operational_summary(self) -> dict[str, Any]:
         """
         Build compact GPU operational summary for LLM consumption.
         Prioritizes real sensor data over static inventory.
         Returns compact dict with essential GPU information.
         """
-        # Collect fresh snapshot to ensure we have latest data
-        snapshot = self.collect()
-        
-        # Start with base summary
-        summary = {
-            "observed_at": snapshot.timestamp,
-        }
-        
-        # Process GPU nodes data
-        gpu_nodes_data = snapshot.observed_data.get("gpu_nodes", {})
-        if not isinstance(gpu_nodes_data, dict):
-            return {"error": "NO DISPONIBLE", "observed_at": snapshot.timestamp}
-        
-        # Extract RX9070 data if available
-        rx9070_data = gpu_nodes_data.get("rx9070", {})
-        rx7900xt_data = gpu_nodes_data.get("rx7900xt", {})
-        gpu_metrics = gpu_nodes_data.get("gpu_metrics", {})
-        
-        # Determine active GPU status
-        if rx9070_data.get("status") == "up":
-            summary.update({
-                "name": "RX9070",
-                "host": "192.168.1.50",
-                "status": "online",
-                "topology_role": "active_inference_backend",
-                "expected_offline": False,
-            })
-            
-            # Add GPU metrics (even if empty)
-            metrics = {}
-            if isinstance(gpu_metrics, dict) and gpu_metrics:
-                # Map Prometheus metric names to friendly names
-                metric_mapping = {
-                    "temp_gpu_core_c": "temperature_c",
-                    "load_gpu_core": "gpu_load_percent", 
-                    "power_gpu_package_w": "power_watts",
-                    "fan_gpu_fan_rpm": "fan_rpm",
-                    "gpu_memory_used": "vram_used_gb",
-                    "gpu_memory_total": "vram_total_gb"
-                }
-                
-                for prom_name, friendly_name in metric_mapping.items():
-                    if prom_name in gpu_metrics:
-                        value = gpu_metrics[prom_name]
-                        # Convert memory from MB to GB
-                        if "memory" in prom_name or "vram" in friendly_name:
-                            value = round(value / 1024, 2)
-                        metrics[friendly_name] = value
-                
-                # Calculate free VRAM if we have both used and total
-                if "vram_used_gb" in metrics and "vram_total_gb" in metrics:
-                    metrics["vram_free_gb"] = round(
-                        metrics["vram_total_gb"] - metrics["vram_used_gb"], 2
-                    )
-            
-            summary["gpu_metrics"] = metrics
-            
-            # Add source of truth information
-            summary["source_of_truth"] = ["prometheus"]
-            if gpu_metrics.get("source_of_truth") == "prometheus":
-                summary["source_of_truth"].append("gpu_exporter")
-            
-            # Add freshness from last scrape
-            last_scrape = snapshot.last_scrape_seconds_ago.get("ai-lab-gpu-rx9070")
-            if last_scrape is not None:
-                if last_scrape < 10:
-                    summary["freshness"] = "fresh"
-                elif last_scrape < 60:
-                    summary["freshness"] = "stale"
-                else:
-                    summary["freshness"] = "expired"
-            else:
-                summary["freshness"] = "unknown"
-                
-            # Add confidence from domain confidence
-            summary["confidence"] = snapshot.domain_confidence.get("gpu_nodes", "unknown")
-            
-        else:
-            # RX9070 is down or not available
-            summary.update({
-                "name": "RX9070",
-                "host": "192.168.1.50",
-                "status": "offline" if rx9070_data.get("status") == "down" else "unknown",
-                "topology_role": "inactive",
-                "expected_offline": False,
-                "gpu_metrics": {},
-                "source_of_truth": ["prometheus"],
-                "freshness": "unknown",
-                "confidence": "low"
-            })
-        
-        # Add RX7900XT information (always present as inventory)
-        if rx7900xt_data.get("expected_offline", False):
-            summary["inventory_gpu"] = {
-                "name": "RX7900XT",
-                "host": "192.168.1.60",
-                "status": "offline",
-                "topology_role": "inventory_offline",
-                "expected_offline": True,
-                "gpu_metrics": {},  # No active metrics for inventory GPU
-                "source_of_truth": ["prometheus"],
-                "freshness": "unknown",
-                "confidence": "low"
-            }
-        
-        return summary
+        summaries = self.build_gpu_operational_summaries()
+        if not summaries:
+            return {"error": "NO DISPONIBLE", "observed_at": time.time()}
+        primary = dict(summaries[0])
+        primary["name"] = primary.pop("gpu_id", "RX9070")
+        primary["status"] = primary.get("observed_state", "unknown")
+        primary["expected_offline"] = primary.get("inventory_expected_offline", False)
+        primary["gpu_metrics"] = dict(primary.get("observed_metrics", {}))
+        if len(summaries) > 1:
+            inventory = dict(summaries[1])
+            inventory["name"] = inventory.pop("gpu_id", "RX7900XT")
+            inventory["status"] = "offline"
+            inventory["expected_offline"] = inventory.get("inventory_expected_offline", True)
+            inventory["gpu_metrics"] = dict(inventory.get("observed_metrics", {}))
+            primary["inventory_gpu"] = inventory
+        if isinstance(primary.get("freshness"), dict):
+            primary["freshness"] = primary["freshness"].get("status", "unknown")
+        primary["observed_at"] = time.time()
+        return primary
 
     def _store_observed(self, snapshot: RuntimeSensorFusionSnapshot, domain: str, data: dict | None, priority: SensorPriority) -> None:
         if data is not None:
             snapshot.observed_data[domain] = data
             snapshot.observed_sources.append(domain)
+            snapshot.last_scrape_seconds_ago[domain] = 0.0
         else:
             snapshot.missing_sources.append(domain)
+            snapshot.last_scrape_seconds_ago[domain] = None
 
     def _check_up(self, snapshot: RuntimeSensorFusionSnapshot, domain: str, job: str, priority: SensorPriority) -> dict | None:
         result = self.prometheus.get_target_up(job)
@@ -485,6 +616,10 @@ class SensorFusionEngine:
                 domain_confs[domain] = "low"
 
         snapshot.domain_confidence = domain_confs
+        snapshot.stale_sources = [
+            domain for domain in snapshot.last_scrape_seconds_ago
+            if snapshot.last_scrape_seconds_ago.get(domain) is not None and snapshot.last_scrape_seconds_ago[domain] >= 10
+        ]
 
         ratio = observed_weight / total_weight if total_weight > 0 else 0
         critical_missing = any(
