@@ -49,8 +49,9 @@ from runtime.distributed.execution_coordinator import (
 
 from runtime.gateway.stream_sanitizer import relay_stream
 from runtime.gateway.tool_call_parser import extract_tool_calls_from_message, filter_dangerous_tool_calls, repair_tool_call_arguments, parse_tool_calls
-from runtime.gateway.tool_request_classifier import build_minimal_report_messages, build_observe_context, build_observe_context_compact, build_capability_answer, classify_chat_route, is_report_request, is_report_request_heavy, sanitize_observe_output, sanitize_payload_messages, sanitize_prompt_text, sanitize_report_output, should_use_greeting_fastpath, should_use_tool_fastpath, strip_question_tool, is_lightweight_prompt, get_qwen_escalation_reason, should_apply_evidence_guard, detect_runtime_grounded_intent, FORBIDDEN_TOOL_RECOMMENDATIONS
-from runtime.context.report_runtime_context import format_report_runtime_context, extract_target_ip
+from runtime.gateway.tool_request_classifier import build_minimal_report_messages, build_observe_context, build_observe_context_compact, build_capability_answer, classify_chat_route, is_report_request, is_report_request_heavy, sanitize_observe_output, sanitize_payload_messages, sanitize_prompt_text, sanitize_report_output, should_use_greeting_fastpath, should_use_tool_fastpath, strip_question_tool, is_lightweight_prompt, get_qwen_escalation_reason, should_apply_evidence_guard, detect_runtime_grounded_intent, FORBIDDEN_TOOL_RECOMMENDATIONS, select_operational_response_profile
+from runtime.context.report_runtime_context import build_report_runtime_context, format_report_runtime_context, extract_target_ip
+from runtime.formatters.runtime_operational_formatter import compact_runtime_response
 from runtime.gateway.gateway_metrics import (
     load_metrics,
     record_request,
@@ -506,9 +507,13 @@ def inject_agent_context(payload):
             ))
 
     _report_runtime = None
+    _report_runtime_dict = None
+    _operational_response_profile = select_operational_response_profile(user_text)
+    payload["_operational_response_profile"] = _operational_response_profile
     if route.family in ("minimal", "report") and route.variant in ("report", "heavy"):
         try:
             _report_grounded_target = extract_target_ip(user_text)
+            _report_runtime_dict = build_report_runtime_context(target_ip=_report_grounded_target)
             _report_runtime = format_report_runtime_context(target_ip=_report_grounded_target)
             payload["_report_grounded"] = True
             if _report_grounded_target:
@@ -583,6 +588,7 @@ def inject_agent_context(payload):
     # FASE 30H.2: build real runtime context if runtime intent detected
     # replaces FASE 30H.1 synthetic minimal context with format_report_runtime_context()
     if _report_runtime is None and detect_runtime_grounded_intent(user_text):
+        _report_runtime_dict = build_report_runtime_context()
         _report_runtime = format_report_runtime_context()
         payload["_report_runtime_context"] = _report_runtime
         payload["_report_grounded"] = True
@@ -594,10 +600,15 @@ def inject_agent_context(payload):
         except ImportError:
             pass
 
+    if _operational_response_profile == "operational_compact" and _report_runtime_dict and detect_runtime_grounded_intent(user_text):
+        _compact_answer = compact_runtime_response(user_text, _report_runtime_dict, profile=_operational_response_profile)
+        if _compact_answer:
+            payload["_compact_runtime_answer"] = _compact_answer
+
     if route.family == "minimal" and route.variant == "report":
         payload.pop("tools", None)
         payload.pop("tool_choice", None)
-        payload["messages"] = build_minimal_report_messages(user_text, observed_runtime=_report_runtime)
+        payload["messages"] = build_minimal_report_messages(user_text, observed_runtime=_report_runtime, response_profile=_operational_response_profile)
         payload["max_tokens"] = min(int(payload.get("max_tokens", 512) or 512), 512)
         payload["temperature"] = min(float(payload.get("temperature", 0.1) or 0.1), 0.2)
         system_prompt = None
@@ -622,7 +633,7 @@ def inject_agent_context(payload):
         payload.pop("tools", None)
         payload.pop("tool_choice", None)
         payload["model"] = "qwen2.5-coder-14b-instruct"
-        payload["messages"] = build_minimal_report_messages(user_text, observed_runtime=_report_runtime)
+        payload["messages"] = build_minimal_report_messages(user_text, observed_runtime=_report_runtime, response_profile=_operational_response_profile)
         payload["max_tokens"] = min(int(payload.get("max_tokens", 1024) or 1024), 1024)
         payload["temperature"] = min(float(payload.get("temperature", 0.3) or 0.3), 0.3)
         system_prompt = None
@@ -1345,6 +1356,18 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 })
                 return
 
+            compact_runtime_answer = payload.pop("_compact_runtime_answer", None)
+            if compact_runtime_answer:
+                self._send_json(200, {
+                    "id": f"chatcmpl-operational-{_request_id}",
+                    "object": "chat.completion",
+                    "created": int(time.time()),
+                    "model": payload.get("model", "runtime-operational-formatter"),
+                    "choices": [{"index": 0, "message": {"role": "assistant", "content": compact_runtime_answer}, "finish_reason": "stop"}],
+                    "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+                })
+                return
+
             # FASE 22B.4: confirmation gate for write/agentic tools
             if payload.get("_tool_requires_confirmation"):
                 write_names = {"write", "edit", "rm", "mv", "cp", "dd", "tee", "bash"}
@@ -1746,6 +1769,16 @@ class GatewayHandler(BaseHTTPRequestHandler):
             _sanitize_model = selected_model if 'selected_model' in dir() and selected_model else payload.get("model", "unknown")
             _sanitize_profile = payload.get("_profile", "unknown")
             data = sanitize_completion_response(data, route_family=_sanitize_route, model=_sanitize_model, profile=_sanitize_profile)
+
+            _compact_profile = payload.get("_operational_response_profile", "operational_compact") if isinstance(payload, dict) else "operational_compact"
+            _runtime_json = payload.get("_report_runtime_context") if isinstance(payload, dict) else None
+            _user_prompt = payload.get("_user_text", "") if isinstance(payload, dict) else ""
+            _formatted_response = compact_runtime_response(_user_prompt, _runtime_json, profile=_compact_profile)
+            if _formatted_response:
+                for _choice in data.get("choices", []):
+                    _msg = _choice.get("message", {}) if isinstance(_choice, dict) else {}
+                    if isinstance(_msg, dict):
+                        _msg["content"] = _formatted_response
 
             # FASE 30H.1: Universal Evidence Guard — applies to ALL routes
             # when should_apply_evidence_guard detects runtime-state intent

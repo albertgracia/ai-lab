@@ -501,6 +501,19 @@ def detect_gpu_runtime_intent(user_text: str) -> bool:
     return any(pattern in t for pattern in GPU_RUNTIME_INTENT_PATTERNS)
 
 
+def select_operational_response_profile(user_text: str) -> str:
+    t = (user_text or "").lower().strip()
+    if not t:
+        return "operational_compact"
+    if any(term in t for term in ("debug", "raw", "json", "detallado debug")):
+        return "operational_debug"
+    if any(term in t for term in ("detallado", "verbose", "completo", "exhaustivo")):
+        return "operational_verbose"
+    if len(t) <= 120 and (detect_gpu_runtime_intent(t) or detect_runtime_grounded_intent(t)):
+        return "operational_compact"
+    return "operational_verbose"
+
+
 # ── FASE 29.3.1: Qwen escalation reasons ─────────────────────
 
 QWEN_ESCALATION_REASONS = {
@@ -856,8 +869,19 @@ def sanitize_report_output(
 def build_minimal_report_messages(
     user_text: str,
     observed_runtime: str | None = None,
+    response_profile: str = "operational_compact",
 ) -> list[dict[str, str]]:
     system_prompt = _load_report_prompt()
+    if response_profile == "operational_compact":
+        system_prompt += (
+            "\n\nPara prompts operacionales cortos: usa formato compacto tipo NOC. "
+            "Prioriza operational_state, freshness, confidence y source. "
+            "No expliques conceptos basicos y evita parrafos largos."
+        )
+    elif response_profile == "operational_debug":
+        system_prompt += (
+            "\n\nPara prompts debug: muestra formato operacional pero conserva mas detalle diagnostico."
+        )
     if observed_runtime:
         system_prompt += (
             f"\n\nOBSERVED_RUNTIME_BEGIN\n{observed_runtime}\nOBSERVED_RUNTIME_END"

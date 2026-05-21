@@ -34,6 +34,10 @@ Reglas:
 - No confundas `inventory_state` con `observed_state`.
 - Si `freshness.status` es `stale` o `expired`, informa que el dato puede no estar actualizado.
 - Prioriza `source_of_truth`, `freshness` y `confidence` de cada summary operacional sobre inventario estático.
+- Para operational prompts cortos, usa formato compacto tipo NOC.
+- Prioriza `operational_state` y evita lenguaje conversacional innecesario.
+- Muestra `freshness` y `confidence` siempre que existan.
+- No expliques conceptos básicos si el usuario solo pide estado operativo.
 
 Reglas de identidad runtime:
 - Si OBSERVED_RUNTIME.primary_runtime_ip coincide con IP/hostname solicitado en el prompt:
