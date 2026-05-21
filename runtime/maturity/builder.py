@@ -9,6 +9,8 @@ from runtime.maturity.descriptor import (
     FailureDomain,
     GovernanceLevel,
     GovVisibility,
+    RouteFamilyStatus,
+    RouteSemantics,
     RuntimeStateDescriptor,
     TemporalState,
     ModelStatus,
@@ -170,7 +172,7 @@ def build_topology_snapshot() -> dict:
 
 
 def _resolve_generation_phase() -> str:
-    return "30E"
+    return "30F"
 
 
 def _resolve_governance_level() -> GovernanceLevel:
@@ -282,6 +284,76 @@ def build_governance_visibility() -> GovVisibility | None:
         blocks_by_reason={},
         active_policies=[],
     )
+
+
+_KNOWN_ROUTE_FAMILIES = (
+    "minimal", "observe", "tool_fastpath", "cognitive", "learning", "report",
+)
+
+
+def build_route_semantics_snapshot() -> dict:
+    try:
+        from runtime.telemetry.prometheus_metrics import (
+            ROUTE_FAMILY_TOTAL,
+            ROUTE_FAMILY_ERRORS,
+            ROUTE_FAMILY_BLOCKED,
+            ROUTE_FAMILY_LATENCY,
+        )
+    except Exception:
+        return {
+            "source": "fallback",
+            "generated_at": time.time(),
+            "families": {f: RouteSemantics(family=f, status=RouteFamilyStatus.UNKNOWN, status_source="fallback", reason="prometheus_unavailable").to_dict() for f in _KNOWN_ROUTE_FAMILIES},
+        }
+
+    now = time.time()
+    families: dict[str, RouteSemantics] = {}
+
+    for family in _KNOWN_ROUTE_FAMILIES:
+        try:
+            total = int(ROUTE_FAMILY_TOTAL.labels(family=family)._value.get())
+            errors = int(ROUTE_FAMILY_ERRORS.labels(family=family)._value.get())
+            blocked = int(ROUTE_FAMILY_BLOCKED.labels(family=family)._value.get())
+        except Exception:
+            families[family] = RouteSemantics(family=family, status=RouteFamilyStatus.UNKNOWN, reason="metric_read_failed")
+            continue
+
+        if total == 0:
+            status = RouteFamilyStatus.UNUSED
+            reason = "no traffic observed"
+        elif blocked > 0:
+            status = RouteFamilyStatus.BLOCKED
+            reason = f"{blocked} governance block(s)"
+        elif total > 0 and (errors / total) > 0.1:
+            status = RouteFamilyStatus.DEGRADED
+            reason = f"error_rate={errors}/{total}={errors/total:.1%}"
+        else:
+            status = RouteFamilyStatus.ACTIVE
+            reason = f"{total} request(s), no degradation"
+
+        try:
+            latency_samples = list(ROUTE_FAMILY_LATENCY.labels(family=family)._buckets.values())
+            total_weight = sum(v for v in latency_samples if isinstance(v, (int, float)))
+            lat = float(total_weight / total) if total > 0 and total_weight > 0 else 0.0
+        except Exception:
+            lat = 0.0
+
+        families[family] = RouteSemantics(
+            family=family,
+            status=status,
+            status_source="lifetime_metrics",
+            total_requests=total,
+            error_count=errors,
+            blocked_count=blocked,
+            avg_latency_ms=round(lat, 2),
+            reason=reason,
+        )
+
+    return {
+        "source": "gateway_metrics",
+        "generated_at": now,
+        "families": {k: v.to_dict() for k, v in families.items()},
+    }
 
 
 def _resolve_degraded_mode() -> dict | None:

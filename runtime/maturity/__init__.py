@@ -8,6 +8,8 @@ from runtime.maturity.descriptor import (
     SchedulerState,
     GovernanceLevel,
     GovVisibility,
+    RouteFamilyStatus,
+    RouteSemantics,
     TemporalState,
     RuntimeStateDescriptor,
     ModelStatus,
@@ -17,6 +19,7 @@ from runtime.maturity.builder import (
     build_model_status_map,
     build_topology_snapshot,
     build_governance_visibility,
+    build_route_semantics_snapshot,
 )
 
 __all__ = [
@@ -29,6 +32,8 @@ __all__ = [
     "SchedulerState",
     "GovernanceLevel",
     "GovVisibility",
+    "RouteFamilyStatus",
+    "RouteSemantics",
     "TemporalState",
     "RuntimeStateDescriptor",
     "ModelStatus",
@@ -36,4 +41,5 @@ __all__ = [
     "build_model_status_map",
     "build_topology_snapshot",
     "build_governance_visibility",
+    "build_route_semantics_snapshot",
 ]

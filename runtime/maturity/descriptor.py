@@ -102,6 +102,43 @@ class ModelStatus(str, Enum):
     UNAVAILABLE = "unavailable"
 
 
+class RouteFamilyStatus(str, Enum):
+    ACTIVE = "active"
+    DEGRADED = "degraded"
+    THROTTLED = "throttled"
+    BLOCKED = "blocked"
+    UNUSED = "unused"
+    UNKNOWN = "unknown"
+
+
+@dataclass
+class RouteSemantics:
+    family: str = ""
+    status: RouteFamilyStatus = RouteFamilyStatus.UNKNOWN
+    status_source: str = "lifetime_metrics"
+    total_requests: int = 0
+    error_count: int = 0
+    blocked_count: int = 0
+    last_routed_at: float = 0.0
+    last_error_at: float = 0.0
+    avg_latency_ms: float = 0.0
+    reason: str = ""
+
+    def to_dict(self) -> dict:
+        return {
+            "family": self.family,
+            "status": self.status.value,
+            "status_source": self.status_source,
+            "total_requests": self.total_requests,
+            "error_count": self.error_count,
+            "blocked_count": self.blocked_count,
+            "last_routed_at": self.last_routed_at,
+            "last_error_at": self.last_error_at,
+            "avg_latency_ms": self.avg_latency_ms,
+            "reason": self.reason,
+        }
+
+
 @dataclass
 class TemporalState:
     last_seen: float = 0.0

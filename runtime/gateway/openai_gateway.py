@@ -967,6 +967,21 @@ class GatewayHandler(BaseHTTPRequestHandler):
             self.wfile.write(body)
             return
 
+        if self.path == "/runtime/routes/semantics":
+            try:
+                from runtime.maturity.builder import build_route_semantics_snapshot
+                data = build_route_semantics_snapshot()
+            except Exception:
+                data = {"source": "fallback", "generated_at": time.time(), "families": {}, "error": "route_semantics_unavailable"}
+            body = json.dumps(data, ensure_ascii=False).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+
         if self.path == "/api/v1/episodic":
             data = {
                 "total": EPISODIC_TOTAL,

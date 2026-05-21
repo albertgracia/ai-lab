@@ -10,8 +10,9 @@ from runtime.maturity.descriptor import (
     TopologyRole, FailureDomain, NodeTopology,
     SchedulerState, GovernanceLevel,
     TemporalState, RuntimeStateDescriptor, ModelStatus, GovVisibility,
+    RouteFamilyStatus, RouteSemantics,
 )
-from runtime.maturity.builder import build_runtime_descriptor, build_model_status_map, build_topology_snapshot, build_governance_visibility
+from runtime.maturity.builder import build_runtime_descriptor, build_model_status_map, build_topology_snapshot, build_governance_visibility, build_route_semantics_snapshot
 
 
 # ── RuntimePhase ────────────────────────────────────────────────
@@ -369,7 +370,7 @@ def test_descriptor_to_dict_includes_generated_at():
 def test_build_runtime_descriptor_returns_valid():
     desc = build_runtime_descriptor()
     assert isinstance(desc, RuntimeStateDescriptor)
-    assert desc.phase in ("30A", "30C", "30D", "30E")
+    assert desc.phase in ("30A", "30C", "30D", "30E", "30F")
     assert isinstance(desc.maturity, RuntimeMaturityLevel)
     assert isinstance(desc.mode, RuntimeMode)
     assert isinstance(desc.topology_role, TopologyRole)
@@ -379,7 +380,7 @@ def test_build_runtime_descriptor_returns_valid():
 def test_build_runtime_descriptor_to_dict_roundtrip():
     desc = build_runtime_descriptor()
     d = desc.to_dict()
-    assert d["runtime_generation"]["phase"] in ("30A", "30C", "30D", "30E")
+    assert d["runtime_generation"]["phase"] in ("30A", "30C", "30D", "30E", "30F")
     assert d["runtime_generation"]["maturity"] in (
         "booting", "stabilizing", "operational", "degraded", "emergency", "shutdown"
     )
@@ -408,7 +409,7 @@ def test_build_runtime_descriptor_json_serializable():
     json_str = json.dumps(d)
     assert json_str
     parsed = json.loads(json_str)
-    assert parsed["runtime_generation"]["phase"] in ("30A", "30C", "30D", "30E")
+    assert parsed["runtime_generation"]["phase"] in ("30A", "30C", "30D", "30E", "30F")
     assert "failure_domain" in parsed
 
 
@@ -594,3 +595,94 @@ def test_build_runtime_descriptor_includes_gov_visibility():
     d = desc.to_dict()
     assert "gov_visibility" in d
     assert d["gov_visibility"]["source"] in ("control_plane", "fallback")
+
+
+# ── RouteFamilyStatus (FASE 30F) ─────────────────────────────────
+
+def test_route_family_status_values():
+    assert RouteFamilyStatus.ACTIVE.value == "active"
+    assert RouteFamilyStatus.DEGRADED.value == "degraded"
+    assert RouteFamilyStatus.THROTTLED.value == "throttled"
+    assert RouteFamilyStatus.BLOCKED.value == "blocked"
+    assert RouteFamilyStatus.UNUSED.value == "unused"
+    assert RouteFamilyStatus.UNKNOWN.value == "unknown"
+
+
+def test_route_family_status_has_six_values():
+    assert len(RouteFamilyStatus) == 6
+
+
+# ── RouteSemantics (FASE 30F) ────────────────────────────────────
+
+def test_route_semantics_defaults():
+    rs = RouteSemantics(family="test", status=RouteFamilyStatus.ACTIVE)
+    assert rs.family == "test"
+    assert rs.status == RouteFamilyStatus.ACTIVE
+    assert rs.status_source == "lifetime_metrics"
+    assert rs.total_requests == 0
+    assert rs.error_count == 0
+    assert rs.blocked_count == 0
+    assert rs.avg_latency_ms == 0.0
+    assert rs.reason == ""
+
+
+def test_route_semantics_to_dict():
+    rs = RouteSemantics(
+        family="cognitive", status=RouteFamilyStatus.DEGRADED,
+        total_requests=100, error_count=15, reason="error_rate=15%",
+    )
+    d = rs.to_dict()
+    assert d["family"] == "cognitive"
+    assert d["status"] == "degraded"
+    assert d["total_requests"] == 100
+    assert d["error_count"] == 15
+    assert d["reason"] == "error_rate=15%"
+
+
+def test_route_semantics_json_serializable():
+    rs = RouteSemantics(family="minimal", status=RouteFamilyStatus.ACTIVE)
+    import json
+    json.dumps(rs.to_dict())
+
+
+def test_route_semantics_status_active():
+    rs = RouteSemantics(family="cognitive", status=RouteFamilyStatus.ACTIVE, total_requests=42)
+    assert rs.status == RouteFamilyStatus.ACTIVE
+
+
+def test_route_semantics_status_unused():
+    rs = RouteSemantics(family="learning", status=RouteFamilyStatus.UNUSED, total_requests=0)
+    assert rs.status == RouteFamilyStatus.UNUSED
+
+
+def test_route_semantics_status_degraded():
+    rs = RouteSemantics(family="report", status=RouteFamilyStatus.DEGRADED, total_requests=50, error_count=15)
+    assert rs.status == RouteFamilyStatus.DEGRADED
+    assert rs.error_count / rs.total_requests > 0.1
+
+
+# ── build_route_semantics_snapshot (FASE 30F) ────────────────────
+
+def test_build_route_semantics_snapshot_returns_dict():
+    snap = build_route_semantics_snapshot()
+    assert isinstance(snap, dict)
+
+
+def test_build_route_semantics_snapshot_has_source_and_families():
+    snap = build_route_semantics_snapshot()
+    assert "source" in snap
+    assert "generated_at" in snap
+    assert "families" in snap
+
+
+def test_build_route_semantics_snapshot_known_families():
+    snap = build_route_semantics_snapshot()
+    expected = {"minimal", "observe", "tool_fastpath", "cognitive", "learning", "report"}
+    assert expected.issubset(snap["families"].keys())
+
+
+def test_build_route_semantics_snapshot_each_family_has_status():
+    snap = build_route_semantics_snapshot()
+    for family, data in snap["families"].items():
+        assert "status" in data
+        assert data["status"] in ("active", "degraded", "throttled", "blocked", "unused", "unknown")
