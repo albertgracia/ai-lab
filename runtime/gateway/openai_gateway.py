@@ -1330,14 +1330,14 @@ class GatewayHandler(BaseHTTPRequestHandler):
 
         if self.path == "/runtime/observability/targets":
             try:
-                from runtime.observability import build_prometheus_audit_summary
-                _data = build_prometheus_audit_summary()
+                from runtime.observability.prometheus_audit import run_prometheus_authority_audit
+                _data = run_prometheus_authority_audit()
                 self._send_json(200, {
                     "status": "ok",
                     "service": "ai-lab-openai-gateway",
                     "endpoint": "runtime/observability/targets",
                     "timestamp": time.time(),
-                    "contract_version": "OBS-31A",
+                    "contract_version": _data.get("contract_version", "OBS-31A.1"),
                     "prometheus_audit": _data,
                 })
                 try:

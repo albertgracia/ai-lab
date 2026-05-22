@@ -50,11 +50,11 @@ class TestPrometheusTargetsClassified:
             "ai-lab-gpu-metrics": True,
         }
         results = audit_prometheus_targets(up_map=up_map)
-        assert len(results) >= 9  # 10 known - may vary
+        assert len(results) >= 13  # 16 known
         healthy = sum(1 for r in results if r["status"] == "healthy")
         expected_offline = sum(1 for r in results if r["status"] == "expected_offline")
-        assert healthy >= 7
-        assert expected_offline == 2  # RX7900XT + metrics
+        assert healthy >= 7  # gateway, router, live-api, cadvisor, node, gpu-rx9070, gpu-metrics
+        assert expected_offline == 1  # RX7900XT only
 
     def test_classify_scrape_target_healthy(self):
         target = {"job": "test", "endpoint": "host:9100", "expected_offline": False, "critical": True}

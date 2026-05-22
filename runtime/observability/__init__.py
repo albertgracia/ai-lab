@@ -13,9 +13,18 @@ from runtime.observability.contracts import (
 )
 from runtime.observability.prometheus_audit import (
     PrometheusTargetStatus,
+    TargetHealth,
+    FreshnessLevel,
+    _KNOWN_TARGETS,
     audit_prometheus_targets,
     classify_scrape_target,
     build_prometheus_audit_summary,
+    run_prometheus_authority_audit,
+    check_critical_metrics,
+    calculate_freshness,
+    detect_duplicate_jobs,
+    fetch_prometheus_targets,
+    PROMETHEUS_AUDIT_CONTRACT_VERSION,
 )
 from runtime.observability.dashboard_validator import (
     DashboardHealth,
