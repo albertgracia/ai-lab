@@ -1559,6 +1559,72 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 })
             return
 
+        if self.path == "/runtime/observability/cross-validate":
+            try:
+                from runtime.observability.runtime_alignment import (
+                    RuntimeAlignmentValidator,
+                )
+                from runtime.observability.prometheus_audit import (
+                    run_prometheus_authority_audit,
+                )
+                from runtime.observability.dashboard_validator import DashboardValidator
+                from runtime.context.sensor_fusion import build_sensor_fusion_snapshot
+
+                _validator = RuntimeAlignmentValidator()
+                _sensor = build_sensor_fusion_snapshot() or {}
+                _targets = run_prometheus_authority_audit() or {}
+                _dashboards = DashboardValidator().validate_all_known() or []
+
+                _lmstudio = _sensor.get("lmstudio", {}).get("statuses", {})
+                _rt_models = _sensor.get("runtime_models", {})
+
+                _contracts = {
+                    "sensor": _sensor.get("contract_version"),
+                    "cognitive": _sensor.get("cognitive_contract_version"),
+                    "grounding": _sensor.get("grounding_contract_version"),
+                    "observability": _sensor.get("observability_audit", {}).get("contract_version"),
+                    "prometheus_audit": _targets.get("contract_version"),
+                    "drift_detector": None,
+                    "grafana_inventory": None,
+                    "runtime_alignment": "OBS-31A.3",
+                }
+                _result = _validator.validate_all(
+                    sensor_snapshot=_sensor,
+                    runtime_summary=_sensor,
+                    prometheus_targets=_targets,
+                    grafana_dashboards=_dashboards,
+                    lmstudio_state=_lmstudio,
+                    runtime_models=_rt_models,
+                    contracts=_contracts,
+                )
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/cross-validate",
+                    "timestamp": time.time(),
+                    "contract_version": "OBS-31A.3",
+                    "runtime_alignment": _result.to_dict(),
+                })
+                try:
+                    from runtime.telemetry.prometheus_metrics import (
+                        record_observability_alignment_score,
+                        record_observability_audit,
+                    )
+                    record_observability_alignment_score(_result.alignment_score)
+                    record_observability_audit("cross_validate", "ok")
+                except ImportError:
+                    pass
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/cross-validate",
+                    "timestamp": time.time(),
+                    "contract_version": "OBS-31A.3",
+                    "error": str(exc),
+                })
+            return
+
         if self.path == "/runtime/reports/discipline":
             try:
                 from runtime.gateway.tool_request_classifier import FORBIDDEN_TOOL_RECOMMENDATIONS

@@ -48,6 +48,13 @@ from runtime.observability.grafana_inventory import (
     get_dashboards_by_domain,
     get_dashboards_by_owner,
 )
+from runtime.observability.runtime_alignment import (
+    RUNTIME_ALIGNMENT_CONTRACT_VERSION,
+    AlignmentCheck,
+    RuntimeAlignmentValidationResult,
+    RuntimeAlignmentValidator,
+    build_runtime_alignment_result,
+)
 from runtime.observability.loki_audit import (
     LokiStreamStatus,
     audit_loki,
@@ -93,4 +100,9 @@ __all__ = [
     "MetricCriticality",
     "build_metric_inventory",
     "build_observability_health_score",
+    "RUNTIME_ALIGNMENT_CONTRACT_VERSION",
+    "AlignmentCheck",
+    "RuntimeAlignmentValidationResult",
+    "RuntimeAlignmentValidator",
+    "build_runtime_alignment_result",
 ]
