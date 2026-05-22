@@ -6,6 +6,8 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from runtime.context.prometheus_client import PrometheusQueryClient
+from runtime.context.cognitive_compression import COGNITIVE_CONTRACT_VERSION
+from runtime.context.runtime_grounding import GROUNDING_CONTRACT_VERSION
 
 SENSOR_FUSION_MAX_CHARS = 16_000
 SENSOR_CONTRACT_VERSION = "30I-D"
@@ -155,6 +157,8 @@ class RuntimeSensorFusionSnapshot:
             "unexpected_down": [t.get("name", t.get("job", "?")) for t in self.unexpected_down_targets],
             "freshness": {k: f"{v:.1f}s ago" for k, v in self.last_scrape_seconds_ago.items()},
             "sensor_contract_version": SENSOR_CONTRACT_VERSION,
+            "cognitive_contract_version": COGNITIVE_CONTRACT_VERSION,
+            "grounding_contract_version": GROUNDING_CONTRACT_VERSION,
             "gpu_operational_summaries": contract["gpu_operational_summaries"],
             "source_quality": contract["source_quality"],
             "gpu_summary": contract["gpu_summary"],

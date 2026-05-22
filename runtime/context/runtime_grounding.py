@@ -17,6 +17,8 @@ from typing import Any
 from runtime.context.runtime_entity_registry import RuntimeEntityRegistry
 
 
+GROUNDING_CONTRACT_VERSION = "30I-G"
+
 UNKNOWN_STATE_TOKENS = frozenset({
     "NOT_OBSERVED",
     "NO_RUNTIME_EVIDENCE",

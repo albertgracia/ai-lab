@@ -77,6 +77,12 @@ from runtime.observability.remediation_planner import (
     build_remediation_plan,
     classify_remediation_priority,
 )
+from runtime.observability.remediation_executor import (
+    EXECUTOR_CONTRACT_VERSION,
+    ExecutionResult,
+    RemediationExecutor,
+    build_manual_execution_guide,
+)
 from runtime.observability.metric_inventory import (
     MetricEntry,
     MetricCriticality,
@@ -135,4 +141,8 @@ __all__ = [
     "RemediationPlanner",
     "build_remediation_plan",
     "classify_remediation_priority",
+    "EXECUTOR_CONTRACT_VERSION",
+    "ExecutionResult",
+    "RemediationExecutor",
+    "build_manual_execution_guide",
 ]

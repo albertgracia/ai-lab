@@ -4,6 +4,8 @@ Counters, gauges, and histograms for AI-LAB governance and observability.
 Uses the official prometheus_client library (already in venv).
 """
 
+import time
+
 from prometheus_client import Counter, Gauge, Histogram
 
 HARD_FACTS_HITS = Counter(
@@ -1298,3 +1300,45 @@ def record_observability_technical_debt(domain: str) -> None:
 
 def record_observability_remediation_score(score: float) -> None:
     OBSERVABILITY_REMEDIATION_SCORE.set(float(max(0.0, min(100.0, score))))
+
+
+# ── OBS-31A.5 Execution metrics ──
+
+OBSERVABILITY_EXECUTION_TOTAL = Counter(
+    "ailab_observability_execution_total",
+    "Total quick win execution attempts",
+    ["domain", "status"],
+)
+OBSERVABILITY_EXECUTION_AUTO_TOTAL = Counter(
+    "ailab_observability_execution_auto_total",
+    "Auto-fix applied count",
+    ["domain"],
+)
+OBSERVABILITY_EXECUTION_MANUAL_TOTAL = Counter(
+    "ailab_observability_execution_manual_total",
+    "Manual intervention required count",
+    ["domain"],
+)
+OBSERVABILITY_EXECUTION_TIME = Gauge(
+    "ailab_observability_execution_time_seconds",
+    "Time since last execution batch",
+)
+
+
+def record_observability_execution(domain: str, status: str) -> None:
+    OBSERVABILITY_EXECUTION_TOTAL.labels(
+        domain=domain or "unknown",
+        status=status or "unknown",
+    ).inc()
+
+
+def record_observability_execution_auto(domain: str) -> None:
+    OBSERVABILITY_EXECUTION_AUTO_TOTAL.labels(domain=domain or "unknown").inc()
+
+
+def record_observability_execution_manual(domain: str) -> None:
+    OBSERVABILITY_EXECUTION_MANUAL_TOTAL.labels(domain=domain or "unknown").inc()
+
+
+def record_observability_execution_time() -> None:
+    OBSERVABILITY_EXECUTION_TIME.set(time.time())

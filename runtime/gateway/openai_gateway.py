@@ -1568,6 +1568,12 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     run_prometheus_authority_audit,
                 )
                 from runtime.observability.dashboard_validator import DashboardValidator
+                from runtime.observability.drift_detector import (
+                    DRIFT_DETECTOR_CONTRACT_VERSION,
+                )
+                from runtime.observability.grafana_inventory import (
+                    GRAFANA_INVENTORY_CONTRACT_VERSION,
+                )
                 from runtime.context.sensor_fusion import build_sensor_fusion_snapshot
 
                 _validator = RuntimeAlignmentValidator()
@@ -1579,13 +1585,13 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 _rt_models = _sensor.get("runtime_models", {})
 
                 _contracts = {
-                    "sensor": _sensor.get("contract_version"),
-                    "cognitive": _sensor.get("cognitive_contract_version"),
-                    "grounding": _sensor.get("grounding_contract_version"),
-                    "observability": _sensor.get("observability_audit", {}).get("contract_version"),
-                    "prometheus_audit": _targets.get("contract_version"),
-                    "drift_detector": None,
-                    "grafana_inventory": None,
+                    "sensor": _sensor.get("sensor_contract_version", "30I-D"),
+                    "cognitive": _sensor.get("cognitive_contract_version", "30I-F"),
+                    "grounding": _sensor.get("grounding_contract_version", "30I-G"),
+                    "observability": _sensor.get("observability_audit", {}).get("contract_version", "OBS-31A"),
+                    "prometheus_audit": _targets.get("contract_version", "OBS-31A.1"),
+                    "drift_detector": DRIFT_DETECTOR_CONTRACT_VERSION,
+                    "grafana_inventory": GRAFANA_INVENTORY_CONTRACT_VERSION,
                     "runtime_alignment": "OBS-31A.3",
                 }
                 _result = _validator.validate_all(
@@ -1765,6 +1771,100 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     "endpoint": "runtime/observability/technical-debt",
                     "timestamp": time.time(),
                     "contract_version": "OBS-31A.4",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/observability/execute-quick-wins":
+            try:
+                from runtime.observability.remediation_planner import (
+                    build_remediation_plan,
+                )
+                from runtime.observability.remediation_executor import (
+                    RemediationExecutor,
+                    EXECUTOR_CONTRACT_VERSION,
+                )
+                from runtime.observability.dashboard_validator import DashboardValidator
+                from runtime.observability.prometheus_audit import (
+                    run_prometheus_authority_audit,
+                )
+
+                _inventory = DashboardValidator().validate_all_known() or []
+                _audit = DashboardValidator().build_dashboard_audit_summary()
+                _targets = run_prometheus_authority_audit() or {}
+
+                _plan = build_remediation_plan(
+                    dashboard_inventory=_inventory,
+                    dashboard_audit=_audit,
+                    prometheus_targets=_targets,
+                    grafana_dashboards=_inventory,
+                )
+                _items = _plan.get("items", [])
+                _executor = RemediationExecutor()
+                _results = _executor.execute_quick_wins(_items)
+                _summary = _executor.get_execution_summary()
+
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/execute-quick-wins",
+                    "timestamp": time.time(),
+                    "contract_version": EXECUTOR_CONTRACT_VERSION,
+                    "execution_results": _results,
+                    "execution_summary": _summary,
+                    "plan_timestamp": _plan.get("timestamp", 0),
+                })
+                try:
+                    from runtime.telemetry.prometheus_metrics import (
+                        record_observability_execution,
+                        record_observability_execution_auto,
+                        record_observability_execution_manual,
+                        record_observability_execution_time,
+                    )
+                    for _r in _results:
+                        _domain = _r.get("domain", "unknown")
+                        _status = "executed" if _r.get("executed") else "manual"
+                        record_observability_execution(_domain, _status)
+                        if _r.get("auto_fix_applied"):
+                            record_observability_execution_auto(_domain)
+                        else:
+                            record_observability_execution_manual(_domain)
+                    record_observability_execution_time()
+                except ImportError:
+                    pass
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/execute-quick-wins",
+                    "timestamp": time.time(),
+                    "contract_version": "OBS-31A.5",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/observability/execution-status":
+            try:
+                from runtime.observability.remediation_executor import (
+                    RemediationExecutor,
+                    EXECUTOR_CONTRACT_VERSION,
+                )
+                _summary = RemediationExecutor().get_execution_summary()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/execution-status",
+                    "timestamp": time.time(),
+                    "contract_version": EXECUTOR_CONTRACT_VERSION,
+                    "execution_status": _summary,
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/execution-status",
+                    "timestamp": time.time(),
+                    "contract_version": "OBS-31A.5",
                     "error": str(exc),
                 })
             return
