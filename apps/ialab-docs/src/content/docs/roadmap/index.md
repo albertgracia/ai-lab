@@ -1,14 +1,14 @@
 ---
 title: "Roadmap"
-summary: "Roadmap técnico actualizado a FASE 33B — Runtime Pre-Pilot Validation Framework, governance registry, invariants y safety gates."
+summary: "Roadmap técnico actualizado a FASE 28.4 — Tool Contracts & Cross-Plan GC, execution governance y GC dry-run."
 order: 8
 ---
 
 ## Estado actual
 
-**Checkpoint:** CP-33B-RUNTIME-PRE-PILOT-VALIDATION-STABLE
+**Checkpoint:** CP-28.4-TOOL-CONTRACTS-CROSSPLAN-GC-STABLE
 
-### Completado (20 fases desde 30I-D)
+### Completado (21 fases desde 30I-D)
 
 | FASE | Estado |
 |------|--------|
@@ -31,12 +31,12 @@ order: 8
 | 32B — Grafana Semantic Cleanup | ✅ |
 | 33A — Runtime Governance Registry | ✅ |
 | 33B — Runtime Pre-Pilot Validation Framework | ✅ |
+| 28.4 — Tool Contracts & Cross-Plan GC | ✅ |
 
 ### Próxima fase
-**FASE 28.4 — Tool Contracts & Cross-Plan GC**
+**Pilot técnico**
 
 ### Roadmap futuro
-- 28.4 — Tool Contracts & Cross-Plan GC
 - Pilot técnico
 - Pilot operador
 - Multi-GPU (posterior)

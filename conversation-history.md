@@ -237,22 +237,43 @@ Los gaps restantes son de normalización semántica y no bloquean el grounding o
 
 ---
 
+### FASE 28.4: Tool Contracts & Cross-Plan GC — COMPLETED
+- Formalización de tool contracts, plan registry, cross-plan graph y GC dry-run governance
+- Nuevos paquetes:
+  - `runtime/tools/contracts.py`, `runtime/tools/tool_registry.py` — tool registry + contracts + authority map + orphan/invalid detection + tool governance score
+  - `runtime/plans/plan_registry.py` — plan registry + cross-plan references (plan→tool→artifact) + orphan/invalid detection
+  - `runtime/gc/crossplan_gc.py` — inventario /tmp + protección de artefactos de autoridad (governance/validation/observability) + candidatos + safety score + execution_plan dry-run (sin ejecutar)
+- APIs always-on 200:
+  - `/runtime/tools`, `/runtime/tools/contracts`, `/runtime/tools/governance`
+  - `/runtime/plans`, `/runtime/plans/graph`
+  - `/runtime/gc`, `/runtime/gc/candidates`, `/runtime/gc/safety`
+- Métricas Prometheus:
+  - `ailab_tool_governance_score`, `ailab_invalid_tool_contracts_total`, `ailab_orphan_tools_total`, `ailab_orphan_plans_total`
+  - `ailab_gc_candidates_total`, `ailab_gc_protected_artifacts_total`, `ailab_gc_safety_score`, `ailab_crossplan_reference_drift_total`
+- Integración governance (33A): nuevos dominios `tools`, `plans`, `gc` + risks de execution governance
+- Integración validation (33B): invariants añadidos `INVARIANT-TOOL-CONTRACTS`, `INVARIANT-PLAN-REGISTRY`, `INVARIANT-GC-SAFETY` + pilot readiness pondera tool_governance y gc_safety
+- Integración reporting/cognitive: summaries y signals execution governance
+- Tests: `tests/test_tool_contracts_crossplan_gc_284.py` 25/25 PASS
+- Artefactos: `/tmp/28_4-tool-registry.json`, `/tmp/28_4-plan-registry.json`, `/tmp/28_4-crossplan-graph.json`, `/tmp/28_4-gc-inventory.json`, `/tmp/28_4-gc-safety.json`, `/tmp/28_4-summary.md`
+- Tag: `CP-28.4-TOOL-CONTRACTS-CROSSPLAN-GC-STABLE`
+
+---
+
 ## CURRENT STATE
 
-**Checkpoint:** `CP-33B-RUNTIME-PRE-PILOT-VALIDATION-STABLE`
+**Checkpoint:** `CP-28.4-TOOL-CONTRACTS-CROSSPLAN-GC-STABLE`
 **HEAD:** `HEAD`
 
-### Fases completadas (desde 30I-D hasta 33B): 20 fases
-- 30I-D, 30I-E, 30I-F, 30I-F0, 30I-G, OBS-31A, OBS-31A.1, OBS-31A.2, OBS-31A.3, OBS-31A.4, OBS-31A.5, 31B, 31C, 31E, 31D, 32A, 32B, 33A, 33B
+### Fases completadas (desde 30I-D hasta 28.4): 21 fases
+- 30I-D, 30I-E, 30I-F, 30I-F0, 30I-G, OBS-31A, OBS-31A.1, OBS-31A.2, OBS-31A.3, OBS-31A.4, OBS-31A.5, 31B, 31C, 31E, 31D, 32A, 32B, 33A, 33B, 28.4
 - Storage hardening archive policy (CP-STORAGE-HARDENING-ARCHIVE-POLICY-STABLE)
 
-### Tags git: 53 tags (desde CP-21B-STABLE hasta CP-33B-RUNTIME-PRE-PILOT-VALIDATION-STABLE)
+### Tags git: 54 tags (desde CP-21B-STABLE hasta CP-28.4-TOOL-CONTRACTS-CROSSPLAN-GC-STABLE)
 
 ### Próxima fase planificada
-**FASE 28.4 — Tool Contracts & Cross-Plan GC**
+**Pilot técnico**
 
 ### Roadmap
-- 28.4 — Tool Contracts & Cross-Plan GC
 - Pilot técnico
 - Pilot operador
 - Multi-GPU (posterior)

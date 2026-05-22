@@ -2743,6 +2743,182 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 })
             return
 
+        # ── FASE 28.4: Tool Contracts & Cross-Plan GC — always-on 200 ──
+        if self.path == "/runtime/tools":
+            try:
+                from runtime.tools import build_tool_registry
+                data = build_tool_registry()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/tools",
+                    "timestamp": time.time(),
+                    "tools": data,
+                })
+            except Exception as exc:
+                self._send_json(200, {"status": "degraded", "endpoint": "runtime/tools", "error": str(exc), "timestamp": time.time()})
+            return
+
+        if self.path == "/runtime/tools/contracts":
+            try:
+                from runtime.tools import build_tool_contracts, TOOL_CONTRACT_VERSION
+                data = build_tool_contracts()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/tools/contracts",
+                    "timestamp": time.time(),
+                    "contract_version": TOOL_CONTRACT_VERSION,
+                    "tool_contracts": data,
+                    "total": len(data),
+                })
+            except Exception as exc:
+                self._send_json(200, {"status": "degraded", "endpoint": "runtime/tools/contracts", "error": str(exc), "timestamp": time.time(), "contract_version": "28.4"})
+            return
+
+        if self.path == "/runtime/tools/governance":
+            try:
+                from runtime.tools import calculate_tool_governance_score
+                from runtime.plans import build_plan_registry
+                from runtime.gc import build_gc_inventory, detect_gc_candidates, protect_governance_artifacts, protect_active_validation_artifacts, protect_runtime_authority_artifacts, calculate_gc_safety_score
+                tool_gov = calculate_tool_governance_score()
+                plans = build_plan_registry()
+                inv = build_gc_inventory()
+                inv = protect_governance_artifacts(inv)
+                inv = protect_active_validation_artifacts(inv)
+                inv = protect_runtime_authority_artifacts(inv)
+                cand = detect_gc_candidates(inv)
+                safety = calculate_gc_safety_score(inv, cand)
+                try:
+                    from runtime.telemetry.prometheus_metrics import record_tool_gc_metrics
+                    record_tool_gc_metrics(tool_gov, plans, {"inventory": inv, "candidates": cand, "safety": safety})
+                except ImportError:
+                    pass
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/tools/governance",
+                    "timestamp": time.time(),
+                    "tool_governance": tool_gov,
+                    "plan_registry": {"total_plans": plans.get("total_plans", 0)},
+                    "gc": {"candidates_total": len(cand), "gc_safety_score": safety.get("gc_safety_score", 0)},
+                })
+            except Exception as exc:
+                self._send_json(200, {"status": "degraded", "endpoint": "runtime/tools/governance", "error": str(exc), "timestamp": time.time()})
+            return
+
+        if self.path == "/runtime/plans":
+            try:
+                from runtime.plans import build_plan_registry, PLAN_CONTRACT_VERSION
+                data = build_plan_registry()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/plans",
+                    "timestamp": time.time(),
+                    "contract_version": PLAN_CONTRACT_VERSION,
+                    "plan_registry": data,
+                })
+            except Exception as exc:
+                self._send_json(200, {"status": "degraded", "endpoint": "runtime/plans", "error": str(exc), "timestamp": time.time(), "contract_version": "28.4"})
+            return
+
+        if self.path == "/runtime/plans/graph":
+            try:
+                from runtime.plans import build_cross_plan_references, PLAN_CONTRACT_VERSION
+                graph = build_cross_plan_references()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/plans/graph",
+                    "timestamp": time.time(),
+                    "contract_version": PLAN_CONTRACT_VERSION,
+                    "crossplan_graph": graph,
+                })
+            except Exception as exc:
+                self._send_json(200, {"status": "degraded", "endpoint": "runtime/plans/graph", "error": str(exc), "timestamp": time.time(), "contract_version": "28.4"})
+            return
+
+        if self.path == "/runtime/gc":
+            try:
+                from runtime.gc import (
+                    build_gc_inventory, detect_gc_candidates,
+                    protect_governance_artifacts, protect_active_validation_artifacts, protect_runtime_authority_artifacts,
+                    calculate_gc_safety_score, build_gc_execution_plan,
+                    GC_CONTRACT_VERSION,
+                )
+                inv = build_gc_inventory()
+                inv = protect_governance_artifacts(inv)
+                inv = protect_active_validation_artifacts(inv)
+                inv = protect_runtime_authority_artifacts(inv)
+                cand = detect_gc_candidates(inv)
+                safety = calculate_gc_safety_score(inv, cand)
+                plan = build_gc_execution_plan(inv, cand)
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/gc",
+                    "timestamp": time.time(),
+                    "contract_version": GC_CONTRACT_VERSION,
+                    "inventory": inv,
+                    "candidates": cand,
+                    "safety": safety,
+                    "execution_plan": plan,
+                })
+            except Exception as exc:
+                self._send_json(200, {"status": "degraded", "endpoint": "runtime/gc", "error": str(exc), "timestamp": time.time(), "contract_version": "28.4"})
+            return
+
+        if self.path == "/runtime/gc/candidates":
+            try:
+                from runtime.gc import (
+                    build_gc_inventory, detect_gc_candidates,
+                    protect_governance_artifacts, protect_active_validation_artifacts, protect_runtime_authority_artifacts,
+                    GC_CONTRACT_VERSION,
+                )
+                inv = build_gc_inventory()
+                inv = protect_governance_artifacts(inv)
+                inv = protect_active_validation_artifacts(inv)
+                inv = protect_runtime_authority_artifacts(inv)
+                cand = detect_gc_candidates(inv)
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/gc/candidates",
+                    "timestamp": time.time(),
+                    "contract_version": GC_CONTRACT_VERSION,
+                    "candidates": cand,
+                    "total": len(cand),
+                })
+            except Exception as exc:
+                self._send_json(200, {"status": "degraded", "endpoint": "runtime/gc/candidates", "error": str(exc), "timestamp": time.time(), "contract_version": "28.4"})
+            return
+
+        if self.path == "/runtime/gc/safety":
+            try:
+                from runtime.gc import (
+                    build_gc_inventory, detect_gc_candidates,
+                    protect_governance_artifacts, protect_active_validation_artifacts, protect_runtime_authority_artifacts,
+                    calculate_gc_safety_score, GC_CONTRACT_VERSION,
+                )
+                inv = build_gc_inventory()
+                inv = protect_governance_artifacts(inv)
+                inv = protect_active_validation_artifacts(inv)
+                inv = protect_runtime_authority_artifacts(inv)
+                cand = detect_gc_candidates(inv)
+                safety = calculate_gc_safety_score(inv, cand)
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/gc/safety",
+                    "timestamp": time.time(),
+                    "contract_version": GC_CONTRACT_VERSION,
+                    "gc_safety": safety,
+                })
+            except Exception as exc:
+                self._send_json(200, {"status": "degraded", "endpoint": "runtime/gc/safety", "error": str(exc), "timestamp": time.time(), "contract_version": "28.4"})
+            return
+
         self._send_json(
             404,
             {

@@ -721,3 +721,68 @@ def build_validation_summary(
             "failure_surface_total": 0,
             "error": str(exc),
         }
+
+
+# ── FASE 28.4: Tool/Plan/GC governance summaries ───────────────────
+
+def build_tool_governance_summary() -> dict[str, Any]:
+    try:
+        from runtime.tools import calculate_tool_governance_score, detect_invalid_tool_contracts, detect_orphan_tools
+        gov = calculate_tool_governance_score()
+        return {
+            "contract_version": gov.get("contract_version", "28.4"),
+            "tool_governance_score": gov.get("tool_governance_score", 0.0),
+            "invalid_tool_contracts_total": gov.get("invalid_tool_contracts_total", len(detect_invalid_tool_contracts())),
+            "orphan_tools_total": gov.get("orphan_tools_total", len(detect_orphan_tools())),
+            "issues": gov.get("issues", []),
+        }
+    except Exception as exc:
+        return {"contract_version": "28.4", "tool_governance_score": 0.0, "error": str(exc)}
+
+
+def build_plan_lifecycle_summary() -> dict[str, Any]:
+    try:
+        from runtime.plans import build_plan_lifecycle_summary as _pls
+        return _pls()
+    except Exception as exc:
+        return {"contract_version": "28.4", "lifecycle_counts": {}, "error": str(exc)}
+
+
+def build_gc_risk_summary() -> dict[str, Any]:
+    try:
+        from runtime.gc import (
+            build_gc_inventory, detect_gc_candidates,
+            protect_governance_artifacts, protect_active_validation_artifacts, protect_runtime_authority_artifacts,
+            calculate_gc_safety_score,
+        )
+        inv = build_gc_inventory()
+        inv = protect_governance_artifacts(inv)
+        inv = protect_active_validation_artifacts(inv)
+        inv = protect_runtime_authority_artifacts(inv)
+        cand = detect_gc_candidates(inv)
+        safety = calculate_gc_safety_score(inv, cand)
+        protected = sum(1 for it in (inv.get("items", []) or []) if it.get("protected"))
+        return {
+            "contract_version": inv.get("contract_version", "28.4"),
+            "gc_safety_score": safety.get("gc_safety_score", 0.0),
+            "gc_safety_level": safety.get("gc_safety_level", "unknown"),
+            "gc_candidates_total": len(cand),
+            "protected_artifacts_total": protected,
+            "dry_run_only": True,
+        }
+    except Exception as exc:
+        return {"contract_version": "28.4", "gc_safety_score": 0.0, "error": str(exc)}
+
+
+def build_execution_governance_summary() -> dict[str, Any]:
+    """Executive summary for execution governance (tools/plans/gc)."""
+    tool_gov = build_tool_governance_summary()
+    plans = build_plan_lifecycle_summary()
+    gc = build_gc_risk_summary()
+    return {
+        "contract_version": "28.4",
+        "tool_governance": tool_gov,
+        "plan_lifecycle": plans,
+        "gc": gc,
+        "safe_to_execute": bool(tool_gov.get("invalid_tool_contracts_total", 0) == 0) and bool(gc.get("gc_safety_level") in ("high", "medium")),
+    }

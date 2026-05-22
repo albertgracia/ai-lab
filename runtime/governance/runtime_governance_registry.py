@@ -21,6 +21,7 @@ GOVERNANCE_DOMAINS = [
     "grounding", "routing", "gpu", "storage",
     "archive", "governance", "ui_alignment", "grafana",
     "prometheus", "loki", "entities",
+    "tools", "plans", "gc",
 ]
 
 DOMAIN_AUTHORITY = {
@@ -39,6 +40,9 @@ DOMAIN_AUTHORITY = {
     "storage": {"authority_type": "operational", "source_of_truth": "prometheus", "confidence": "medium"},
     "archive": {"authority_type": "storage_policy", "source_of_truth": "archive_policy", "confidence": "medium"},
     "loki": {"authority_type": "logging", "source_of_truth": "loki", "confidence": "low"},
+    "tools": {"authority_type": "execution_surface", "source_of_truth": "tool_registry_28_4", "confidence": "high"},
+    "plans": {"authority_type": "execution_surface", "source_of_truth": "plan_registry_28_4", "confidence": "high"},
+    "gc": {"authority_type": "restricted", "source_of_truth": "crossplan_gc_28_4", "confidence": "high"},
 }
 
 DOMAIN_CONFIDENCE_DEFAULTS = {
@@ -47,6 +51,7 @@ DOMAIN_CONFIDENCE_DEFAULTS = {
     "gpu": "high", "storage": "medium", "archive": "medium",
     "governance": "high", "ui_alignment": "high", "grafana": "high",
     "prometheus": "high", "loki": "medium", "entities": "medium",
+    "tools": "high", "plans": "high", "gc": "high",
 }
 
 DOMAIN_FRESHNESS_DEFAULTS = {
@@ -72,12 +77,14 @@ REGISTERED_PHASES = [
     {"phase": "32A", "label": "Runtime UI Alignment", "domain": "ui_alignment"},
     {"phase": "32B", "label": "Grafana Semantic Cleanup", "domain": "grafana"},
     {"phase": "33A", "label": "Runtime Governance Registry", "domain": "governance"},
+    {"phase": "33B", "label": "Runtime Pre-Pilot Validation Framework", "domain": "governance"},
+    {"phase": "28.4", "label": "Tool Contracts & Cross-Plan GC", "domain": "tools"},
 ]
 
 ACTIVE_CONTRACTS = [
     "30I-D", "30I-E", "30I-F", "30I-G",
     "OBS-31A", "OBS-31A.1", "OBS-31A.5",
-    "31B", "31C", "31D", "31E", "32A", "32B", "33A",
+    "31B", "31C", "31D", "31E", "32A", "32B", "33A", "33B", "28.4",
 ]
 
 DEPRECATED_CONTRACTS = [
@@ -164,6 +171,7 @@ def _try_import_remediation() -> dict[str, Any]:
             result["technical_debt"] = sorted(domains)
     except ImportError:
         pass
+
     return result
 
 

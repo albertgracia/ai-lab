@@ -1706,6 +1706,77 @@ VALIDATION_DEGRADED_DOMAINS_TOTAL = Gauge(
     "Total degraded domains impacting validation",
 )
 
+# ── FASE 28.4: Tool Contracts & Cross-Plan GC Metrics ────────────
+TOOL_GOVERNANCE_SCORE = Gauge(
+    "ailab_tool_governance_score",
+    "Tool governance score 0-100",
+)
+INVALID_TOOL_CONTRACTS_TOTAL = Gauge(
+    "ailab_invalid_tool_contracts_total",
+    "Total invalid tool contracts detected",
+)
+ORPHAN_TOOLS_TOTAL = Gauge(
+    "ailab_orphan_tools_total",
+    "Total orphan tools (unreferenced by plans)",
+)
+ORPHAN_PLANS_TOTAL = Gauge(
+    "ailab_orphan_plans_total",
+    "Total orphan plans (invalid tool references)",
+)
+GC_CANDIDATES_TOTAL = Gauge(
+    "ailab_gc_candidates_total",
+    "Total GC candidates detected",
+)
+GC_PROTECTED_ARTIFACTS_TOTAL = Gauge(
+    "ailab_gc_protected_artifacts_total",
+    "Total protected artifacts (not eligible for GC)",
+)
+GC_SAFETY_SCORE = Gauge(
+    "ailab_gc_safety_score",
+    "GC safety score 0-100",
+)
+CROSSPLAN_REFERENCE_DRIFT_TOTAL = Gauge(
+    "ailab_crossplan_reference_drift_total",
+    "Total cross-plan reference drift instances",
+)
+
+
+def record_tool_gc_metrics(tool_gov: dict[str, Any], plan_reg: dict[str, Any], gc: dict[str, Any]) -> None:
+    try:
+        TOOL_GOVERNANCE_SCORE.set(float(tool_gov.get("tool_governance_score", 0.0) or 0.0))
+        INVALID_TOOL_CONTRACTS_TOTAL.set(float(tool_gov.get("invalid_tool_contracts_total", 0) or 0))
+        ORPHAN_TOOLS_TOTAL.set(float(tool_gov.get("orphan_tools_total", 0) or 0))
+    except Exception:
+        pass
+
+    try:
+        from runtime.plans.plan_registry import detect_orphan_plans
+        ORPHAN_PLANS_TOTAL.set(float(len(detect_orphan_plans())))
+    except Exception:
+        pass
+
+    inv = gc.get("inventory", {}) or {}
+    candidates = gc.get("candidates", []) or []
+    try:
+        GC_CANDIDATES_TOTAL.set(float(len(candidates)))
+        protected = sum(1 for it in (inv.get("items", []) or []) if it.get("protected"))
+        GC_PROTECTED_ARTIFACTS_TOTAL.set(float(protected))
+        GC_SAFETY_SCORE.set(float((gc.get("safety", {}) or {}).get("gc_safety_score", 0.0) or 0.0))
+    except Exception:
+        pass
+
+    try:
+        # Drift is 0 in this phase unless invalid references exist.
+        drift = 0
+        try:
+            from runtime.plans.plan_registry import detect_invalid_plan_references
+            drift += len(detect_invalid_plan_references())
+        except Exception:
+            pass
+        CROSSPLAN_REFERENCE_DRIFT_TOTAL.set(float(drift))
+    except Exception:
+        pass
+
 
 def record_governance_metrics(registry: dict[str, Any]) -> None:
     score_info = registry.get("governance_score_info", {})

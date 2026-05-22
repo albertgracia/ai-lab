@@ -35,6 +35,9 @@ def build_runtime_cognitive_summary(
     validation_signals = compress_validation_signals(sensor_snapshot, extra_ctx)
     all_signals.extend(validation_signals)
 
+    execution_signals = compress_execution_governance_signals(sensor_snapshot, extra_ctx)
+    all_signals.extend(execution_signals)
+
     topology_signals = compress_topology_signals(sensor_snapshot, extra_ctx)
     all_signals.extend(topology_signals)
 
@@ -577,6 +580,97 @@ def compress_validation_signals(
             "evidence": ["validation_framework_33b"],
             "confidence": "low",
             "freshness": "unknown",
+        })
+
+    return signals
+
+
+def compress_execution_governance_signals(
+    sensor_snapshot: dict[str, Any],
+    extra_ctx: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """FASE 28.4: Tool/Plan/GC governance signals."""
+    signals: list[dict[str, Any]] = []
+
+    try:
+        from runtime.tools import calculate_tool_governance_score, detect_invalid_tool_contracts, detect_orphan_tools
+        tool_gov = calculate_tool_governance_score()
+        invalid = detect_invalid_tool_contracts()
+        orphan_tools = detect_orphan_tools()
+        score = tool_gov.get("tool_governance_score", 0.0)
+        severity = "info" if score >= 85 and not invalid else "warning" if invalid else "info"
+        signals.append({
+            "domain": "execution",
+            "severity": severity,
+            "message": f"tool governance: score={score}/100 invalid={len(invalid)} orphan_tools={len(orphan_tools)}",
+            "evidence": ["tool_registry_28_4"],
+            "confidence": "high" if score >= 85 else "medium" if score >= 65 else "low",
+            "freshness": "fresh",
+        })
+        if invalid:
+            signals.append({
+                "domain": "execution",
+                "severity": "warning",
+                "message": f"invalid tool contracts detected: {len(invalid)}",
+                "evidence": ["tool_registry_28_4"],
+                "confidence": "high",
+                "freshness": "fresh",
+            })
+    except Exception:
+        pass
+
+    try:
+        from runtime.plans.plan_registry import detect_orphan_plans
+        orphan_plans = detect_orphan_plans()
+        if orphan_plans:
+            signals.append({
+                "domain": "execution",
+                "severity": "warning",
+                "message": f"orphan plans detected: {len(orphan_plans)}",
+                "evidence": ["plan_registry_28_4"],
+                "confidence": "high",
+                "freshness": "fresh",
+            })
+    except Exception:
+        pass
+
+    try:
+        from runtime.gc.crossplan_gc import (
+            build_gc_inventory,
+            protect_governance_artifacts,
+            protect_active_validation_artifacts,
+            protect_runtime_authority_artifacts,
+            detect_gc_candidates,
+            calculate_gc_safety_score,
+        )
+        inv = build_gc_inventory()
+        inv = protect_governance_artifacts(inv)
+        inv = protect_active_validation_artifacts(inv)
+        inv = protect_runtime_authority_artifacts(inv)
+        cand = detect_gc_candidates(inv)
+        safety = calculate_gc_safety_score(inv, cand)
+        score = safety.get("gc_safety_score", 0.0)
+        level = safety.get("gc_safety_level", "unknown")
+        sev = "info" if level in ("high", "medium") else "warning"
+        signals.append({
+            "domain": "execution",
+            "severity": sev,
+            "message": f"gc: safety={score}/100 ({level}) candidates={len(cand)} dry_run_only",
+            "evidence": ["crossplan_gc_28_4"],
+            "confidence": "high" if score >= 85 else "medium" if score >= 65 else "low",
+            "freshness": "fresh",
+        })
+    except Exception:
+        pass
+
+    if not signals:
+        signals.append({
+            "domain": "execution",
+            "severity": "info",
+            "message": "execution governance signals NO DISPONIBLE",
+            "evidence": ["code"],
+            "confidence": "low",
+            "freshness": "unavailable",
         })
 
     return signals

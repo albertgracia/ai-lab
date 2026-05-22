@@ -75,6 +75,10 @@ runtime/*
 !runtime/control/
 !runtime/health/
 !runtime/tools/tool_metrics.py
+!runtime/tools/
+!runtime/tools/__init__.py
+!runtime/tools/contracts.py
+!runtime/tools/tool_registry.py
 !runtime/telemetry/prometheus_metrics.py
 !runtime/memory/memory_usefulness.py
 !runtime/observability/
@@ -112,6 +116,18 @@ runtime/governance/**/*.pyc
 !runtime/validation/runtime_validation_framework.py
 runtime/validation/__pycache__/
 runtime/validation/**/*.pyc
+
+!runtime/plans/
+!runtime/plans/__init__.py
+!runtime/plans/plan_registry.py
+runtime/plans/__pycache__/
+runtime/plans/**/*.pyc
+
+!runtime/gc/
+!runtime/gc/__init__.py
+!runtime/gc/crossplan_gc.py
+runtime/gc/__pycache__/
+runtime/gc/**/*.pyc
 sessions/
 
 

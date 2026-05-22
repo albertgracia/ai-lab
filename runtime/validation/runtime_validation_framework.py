@@ -18,8 +18,8 @@ from runtime.validation.contracts import (
 )
 
 
-BASELINE_CHECKPOINT = "CP-33A-RUNTIME-GOVERNANCE-REGISTRY-STABLE"
-CURRENT_CHECKPOINT = "CP-33B-RUNTIME-PRE-PILOT-VALIDATION-STABLE"
+BASELINE_CHECKPOINT = "CP-33B-RUNTIME-PRE-PILOT-VALIDATION-STABLE"
+CURRENT_CHECKPOINT = "CP-28.4-TOOL-CONTRACTS-CROSSPLAN-GC-STABLE"
 
 
 INVARIANTS = [
@@ -32,6 +32,9 @@ INVARIANTS = [
     "INVARIANT-OBSERVABILITY-FRESHNESS",
     "INVARIANT-DEGRADED-MODE-CONSISTENCY",
     "INVARIANT-CONTRACT-CONSISTENCY",
+    "INVARIANT-TOOL-CONTRACTS",
+    "INVARIANT-PLAN-REGISTRY",
+    "INVARIANT-GC-SAFETY",
     "INVARIANT-RUNTIME-DETERMINISM",
 ]
 
@@ -339,6 +342,93 @@ def build_runtime_invariants(
         details={"incompatible_contracts": incompatible},
     )
 
+    # INVARIANT-TOOL-CONTRACTS (FASE 28.4)
+    try:
+        from runtime.tools.tool_registry import detect_invalid_tool_contracts, calculate_tool_governance_score
+        invalid_tools = detect_invalid_tool_contracts()
+        tool_score = (calculate_tool_governance_score() or {}).get("tool_governance_score", 0.0)
+        tool_ok = (len(invalid_tools) == 0) and float(tool_score) >= 80.0
+        tool_status = "pass" if tool_ok else "degraded" if float(tool_score) >= 65.0 else "fail"
+        _mk(
+            "INVARIANT-TOOL-CONTRACTS",
+            tool_status,
+            "high" if tool_ok else "medium" if tool_status == "degraded" else "low",
+            "tool_registry_28_4",
+            blocking=(tool_status == "fail"),
+            details={"invalid_tool_contracts": len(invalid_tools), "tool_governance_score": tool_score},
+        )
+    except Exception as exc:
+        _mk(
+            "INVARIANT-TOOL-CONTRACTS",
+            "degraded",
+            "low",
+            "tool_registry_28_4",
+            blocking=False,
+            details={"error": str(exc)},
+        )
+
+    # INVARIANT-PLAN-REGISTRY (FASE 28.4)
+    try:
+        from runtime.plans.plan_registry import detect_orphan_plans, detect_invalid_plan_references
+        orphan_plans = detect_orphan_plans()
+        invalid_refs = detect_invalid_plan_references()
+        plan_ok = (len(orphan_plans) == 0) and (len(invalid_refs) == 0)
+        plan_status = "pass" if plan_ok else "degraded" if len(orphan_plans) == 0 else "fail"
+        _mk(
+            "INVARIANT-PLAN-REGISTRY",
+            plan_status,
+            "high" if plan_ok else "medium" if plan_status == "degraded" else "low",
+            "plan_registry_28_4",
+            blocking=(plan_status == "fail"),
+            details={"orphan_plans": len(orphan_plans), "invalid_plan_references": len(invalid_refs)},
+        )
+    except Exception as exc:
+        _mk(
+            "INVARIANT-PLAN-REGISTRY",
+            "degraded",
+            "low",
+            "plan_registry_28_4",
+            blocking=False,
+            details={"error": str(exc)},
+        )
+
+    # INVARIANT-GC-SAFETY (FASE 28.4)
+    try:
+        from runtime.gc.crossplan_gc import (
+            build_gc_inventory,
+            protect_governance_artifacts,
+            protect_active_validation_artifacts,
+            protect_runtime_authority_artifacts,
+            detect_gc_candidates,
+            calculate_gc_safety_score,
+        )
+        inv = build_gc_inventory()
+        inv = protect_governance_artifacts(inv)
+        inv = protect_active_validation_artifacts(inv)
+        inv = protect_runtime_authority_artifacts(inv)
+        cand = detect_gc_candidates(inv)
+        safety = calculate_gc_safety_score(inv, cand)
+        score_val = float(safety.get("gc_safety_score", 0.0) or 0.0)
+        safe_ok = score_val >= 65.0
+        safe_status = "pass" if score_val >= 85.0 else "degraded" if safe_ok else "fail"
+        _mk(
+            "INVARIANT-GC-SAFETY",
+            safe_status,
+            "high" if safe_status == "pass" else "medium" if safe_status == "degraded" else "low",
+            "crossplan_gc_28_4",
+            blocking=False,
+            details={"gc_safety_score": score_val, "candidates_total": len(cand)},
+        )
+    except Exception as exc:
+        _mk(
+            "INVARIANT-GC-SAFETY",
+            "degraded",
+            "low",
+            "crossplan_gc_28_4",
+            blocking=False,
+            details={"error": str(exc)},
+        )
+
     # INVARIANT-RUNTIME-DETERMINISM
     det_ok = True
     if _strict_mode():
@@ -411,16 +501,21 @@ def build_runtime_safety_gates(
             "INVARIANT-GOVERNANCE-CONSISTENCY",
             "INVARIANT-OBSERVABILITY-FRESHNESS",
             "INVARIANT-TOPOLOGY-ALIGNMENT",
+            "INVARIANT-TOOL-CONTRACTS",
+            "INVARIANT-PLAN-REGISTRY",
+            "INVARIANT-GC-SAFETY",
         ]),
         _gate("SAFE_TO_ROUTE", [
             "INVARIANT-PROMETHEUS-AUTHORITY",
             "INVARIANT-OBSERVABILITY-FRESHNESS",
             "INVARIANT-TOPOLOGY-ALIGNMENT",
+            "INVARIANT-TOOL-CONTRACTS",
         ]),
         _gate("SAFE_TO_REPORT", [
             "INVARIANT-REPORTING-CONSISTENCY",
             "INVARIANT-GOVERNANCE-CONSISTENCY",
             "INVARIANT-OBSERVABILITY-FRESHNESS",
+            "INVARIANT-TOOL-CONTRACTS",
         ]),
         _gate("SAFE_TO_GROUND", [
             "INVARIANT-GROUNDING-VALIDATION",
@@ -433,10 +528,13 @@ def build_runtime_safety_gates(
         _gate("SAFE_TO_GOVERN", [
             "INVARIANT-GOVERNANCE-CONSISTENCY",
             "INVARIANT-CONTRACT-CONSISTENCY",
+            "INVARIANT-TOOL-CONTRACTS",
+            "INVARIANT-PLAN-REGISTRY",
         ]),
         _gate("SAFE_TO_DEGRADE", [
             "INVARIANT-DEGRADED-MODE-CONSISTENCY",
             "INVARIANT-TOPOLOGY-ALIGNMENT",
+            "INVARIANT-GC-SAFETY",
         ]),
     ]
 
@@ -591,16 +689,41 @@ def build_runtime_pilot_readiness(
     except Exception:
         graf_score = 0.0
 
+    tool_score = 0.0
+    try:
+        from runtime.tools import calculate_tool_governance_score
+        tool_score = float((calculate_tool_governance_score() or {}).get("tool_governance_score", 0.0) or 0.0)
+    except Exception:
+        tool_score = 0.0
+
+    gc_safety = 0.0
+    try:
+        from runtime.gc import (
+            build_gc_inventory, protect_governance_artifacts, protect_active_validation_artifacts, protect_runtime_authority_artifacts,
+            detect_gc_candidates, calculate_gc_safety_score,
+        )
+        inv = build_gc_inventory()
+        inv = protect_governance_artifacts(inv)
+        inv = protect_active_validation_artifacts(inv)
+        inv = protect_runtime_authority_artifacts(inv)
+        cand = detect_gc_candidates(inv)
+        safety = calculate_gc_safety_score(inv, cand)
+        gc_safety = float(safety.get("gc_safety_score", 0.0) or 0.0)
+    except Exception:
+        gc_safety = 0.0
+
     inv_blocking = [i.get("name") for i in invariants if i.get("blocking") and i.get("status") == "fail"]
     failed_gates = [g.get("gate") for g in gates if g.get("status") == "fail"]
     degraded_domains = _ensure_list(governance_registry.get("degraded_domains"))
 
     # Weighted readiness score (0-100)
     base = (
-        (gov_score / 100.0) * 0.25
-        + (graf_score / 100.0) * 0.15
-        + (topo_conf / 100.0) * 0.15
-        + (validation_score.get("validation_score", 0.0) / 100.0) * 0.45
+        (gov_score / 100.0) * 0.22
+        + (graf_score / 100.0) * 0.13
+        + (topo_conf / 100.0) * 0.13
+        + (tool_score / 100.0) * 0.12
+        + (gc_safety / 100.0) * 0.10
+        + (validation_score.get("validation_score", 0.0) / 100.0) * 0.30
     )
     penalty = 0.0
     penalty += min(0.4, len(inv_blocking) * 0.15)
@@ -625,6 +748,8 @@ def build_runtime_pilot_readiness(
             "governance_level": gov_level,
             "grafana_alignment_score": graf_score,
             "topology_confidence": topo_conf,
+            "tool_governance_score": tool_score,
+            "gc_safety_score": gc_safety,
             "validation_score": validation_score.get("validation_score", 0.0),
             "penalty": round(penalty, 2),
         },

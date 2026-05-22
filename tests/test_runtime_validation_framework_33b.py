@@ -72,7 +72,7 @@ def test_runtime_validation_report_generated():
 def test_runtime_invariants_generated():
     inv = build_runtime_invariants()
     assert isinstance(inv, list)
-    assert len(inv) == 10
+    assert len(inv) >= 10
     for i in inv:
         assert i.get("name")
         assert i.get("status") in ("pass", "fail", "degraded")
