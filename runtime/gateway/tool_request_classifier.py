@@ -509,6 +509,11 @@ _FASTPATH_INTENTS: dict[str, tuple[str, ...]] = {
         "observability", "observabilidad", "prometheus", "grafana", "loki",
         "exporters", "exporter", "targets", "scrape", "metricas", "métricas",
     ),
+    "authority": (
+        "lista targets", "list targets", "targets prometheus", "prometheus targets",
+        "exporters down", "exporters están down", "exporters estan down", "qué exporters están down", "que exporters estan down",
+        "datasource", "freshness", "authority",
+    ),
     "governance": (
         "governance", "gobernanza", "policy", "riesgos governance", "governance score",
         "dominios degradados", "degraded domains",

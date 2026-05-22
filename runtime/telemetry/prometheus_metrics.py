@@ -1790,6 +1790,42 @@ STERILIZED_OPERATIONAL_NODES_TOTAL = Gauge(
     "Total operational nodes after sterilization",
 )
 
+# ── FASE 35C: Live authority-backed cognition ─────────────────────
+AUTHORITY_FRESHNESS_SCORE = Gauge(
+    "ailab_authority_freshness_score",
+    "Authority freshness score 0-100",
+)
+LIVE_AUTHORITY_QUERIES_TOTAL = Counter(
+    "ailab_live_authority_queries_total",
+    "Live authority queries performed",
+    ["authority"],
+)
+STALE_AUTHORITY_TOTAL = Gauge(
+    "ailab_stale_authority_total",
+    "Total stale/unavailable authorities",
+)
+AUTHORITY_GAPS_TOTAL = Gauge(
+    "ailab_authority_gaps_total",
+    "Total authority gaps detected",
+)
+GROUNDED_COGNITION_SCORE = Gauge(
+    "ailab_grounded_cognition_score",
+    "Grounded cognition score 0-100",
+)
+AUTHORITY_CACHE_HITS_TOTAL = Counter(
+    "ailab_authority_cache_hits_total",
+    "Authority cache hits",
+)
+AUTHORITY_CACHE_MISSES_TOTAL = Counter(
+    "ailab_authority_cache_misses_total",
+    "Authority cache misses",
+)
+SYNTHETIC_STATE_BLOCKED_TOTAL = Counter(
+    "ailab_synthetic_state_blocked_total",
+    "Synthetic operational state blocked (unknown>hallucination)",
+    ["reason"],
+)
+
 # ── FASE 33A: Runtime Governance Registry Metrics ────────────
 GOVERNANCE_SCORE = Gauge(
     "ailab_governance_score",
@@ -2197,6 +2233,40 @@ def record_semantic_metrics(report: dict[str, Any]) -> None:
     """FASE 35B: record semantic integrity counters."""
     try:
         SEMANTIC_INTEGRITY_SCORE.set(float(max(0.0, min(100.0, float(report.get("semantic_integrity_score", 0.0) or 0.0)))))
+    except Exception:
+        pass
+
+
+def record_live_authority_query(authority: str) -> None:
+    try:
+        LIVE_AUTHORITY_QUERIES_TOTAL.labels(authority=authority or "unknown").inc()
+    except Exception:
+        pass
+
+
+def record_authority_cache_event(*, hit: bool) -> None:
+    try:
+        if hit:
+            AUTHORITY_CACHE_HITS_TOTAL.inc()
+        else:
+            AUTHORITY_CACHE_MISSES_TOTAL.inc()
+    except Exception:
+        pass
+
+
+def record_authority_summary(summary: dict[str, Any]) -> None:
+    try:
+        AUTHORITY_FRESHNESS_SCORE.set(float(max(0.0, min(100.0, float(summary.get("authority_freshness_score", 0.0) or 0.0)))))
+        GROUNDED_COGNITION_SCORE.set(float(max(0.0, min(100.0, float(summary.get("grounded_cognition_score", 0.0) or 0.0)))))
+        STALE_AUTHORITY_TOTAL.set(float(summary.get("stale_authority_total", 0) or 0))
+        AUTHORITY_GAPS_TOTAL.set(float(summary.get("authority_gaps_total", 0) or 0))
+    except Exception:
+        pass
+
+
+def record_synthetic_state_blocked(reason: str) -> None:
+    try:
+        SYNTHETIC_STATE_BLOCKED_TOTAL.labels(reason=reason or "unknown").inc()
     except Exception:
         pass
     try:

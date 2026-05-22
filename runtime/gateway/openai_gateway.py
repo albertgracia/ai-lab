@@ -612,7 +612,7 @@ def inject_agent_context(payload):
     # FASE 30H.2: build real runtime context if runtime intent detected
     # replaces FASE 30H.1 synthetic minimal context with format_report_runtime_context()
     # FASE 34C: avoid heavy runtime grounding context for fast-path operational queries.
-    if _report_runtime is None and detect_runtime_grounded_intent(user_text) and _fastpath_intent not in {"governance", "validation", "observability", "watchdogs", "infrastructure"}:
+    if _report_runtime is None and detect_runtime_grounded_intent(user_text) and _fastpath_intent not in {"governance", "validation", "observability", "watchdogs", "infrastructure", "authority", "semantic"}:
         _report_runtime_dict = build_report_runtime_context()
         _report_runtime = format_report_runtime_context()
         payload["_report_runtime_context"] = _report_runtime
@@ -635,7 +635,7 @@ def inject_agent_context(payload):
     if _operational_response_profile == "operational_compact" and not payload.get("_compact_runtime_answer"):
         try:
             _intent = detect_operational_fastpath_intent(user_text)
-            if _intent in {"governance", "validation", "observability", "watchdogs", "infrastructure"}:
+            if _intent in {"governance", "validation", "observability", "watchdogs", "infrastructure", "authority"}:
                 from runtime.performance import build_fast_operational_summary, compress_operational_noise, prime_async_diagnostics
 
                 # Keep background caches warm without blocking the request.
@@ -669,6 +669,25 @@ def inject_agent_context(payload):
                             f"authority_root={bool(rep.get('authority_root'))}",
                             f"expected_offline={bool(rep.get('expected_offline'))}",
                             f"roles={','.join(rep.get('roles', []) or []) or 'unknown'}",
+                        ]
+                        payload["_compact_runtime_answer"] = compress_operational_noise("\n".join(lines), level="operational")
+                        payload["_runtime_only_reasoning"] = True
+                    except Exception:
+                        pass
+                elif _intent == "authority":
+                    try:
+                        from runtime.authority import build_live_authority_snapshot
+                        snap = build_live_authority_snapshot(extra_ctx={})
+                        fresh = snap.get("freshness", {}) or {}
+                        targets = (snap.get("prometheus", {}) or {}).get("targets", {}) or {}
+                        down = targets.get("down_targets", []) or []
+                        lines = [
+                            "AI-LAB Operational Fast-Path",
+                            f"authority_freshness={fresh.get('status', 'unknown')}",
+                            f"targets_total={targets.get('active_total', 0)}",
+                            f"targets_up={targets.get('scrape_up', 0)}",
+                            f"targets_down={targets.get('scrape_down', 0)}",
+                            f"down_examples={','.join([str(d.get('job') or '?') for d in down[:3]]) or 'none'}",
                         ]
                         payload["_compact_runtime_answer"] = compress_operational_noise("\n".join(lines), level="operational")
                         payload["_runtime_only_reasoning"] = True
@@ -2918,6 +2937,151 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     "timestamp": time.time(),
                     "contract_version": "35B",
                     "error": "unknown_semantic_endpoint",
+                })
+                return
+
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": self.path.lstrip("/"),
+                    "timestamp": time.time(),
+                    "contract_version": "35B",
+                    "error": str(exc),
+                })
+                return
+ 
+        # ── FASE 35C: Live authority-backed cognition — always-on 200 ──
+        if self.path == "/runtime/authority" or self.path.startswith("/runtime/authority/"):
+            try:
+                from runtime.authority import (
+                    build_live_authority_snapshot,
+                    build_authority_cognition_summary,
+                    query_prometheus_authority,
+                    get_authority_cache_state,
+                    prime_authority_cache,
+                )
+                from runtime.telemetry.prometheus_metrics import record_authority_summary
+
+                if self.path == "/runtime/authority" or self.path == "/runtime/authority/score":
+                    summ = build_authority_cognition_summary(extra_ctx={})
+                    try:
+                        record_authority_summary(summ)
+                    except Exception:
+                        pass
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": self.path.lstrip("/"),
+                        "timestamp": time.time(),
+                        "contract_version": "35C",
+                        "summary": summ,
+                        "cache": get_authority_cache_state(),
+                    })
+                    return
+
+                if self.path == "/runtime/authority/live":
+                    snap = build_live_authority_snapshot(extra_ctx={})
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/authority/live",
+                        "timestamp": time.time(),
+                        "contract_version": "35C",
+                        "snapshot": snap,
+                    })
+                    return
+
+                if self.path == "/runtime/authority/freshness":
+                    snap = build_live_authority_snapshot(extra_ctx={})
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/authority/freshness",
+                        "timestamp": time.time(),
+                        "contract_version": "35C",
+                        "freshness": snap.get("freshness", {}),
+                    })
+                    return
+
+                if self.path == "/runtime/authority/prometheus":
+                    prom = query_prometheus_authority(extra_ctx={})
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/authority/prometheus",
+                        "timestamp": time.time(),
+                        "contract_version": "35C",
+                        "prometheus": prom,
+                    })
+                    return
+
+                if self.path == "/runtime/authority/operational":
+                    snap = build_live_authority_snapshot(extra_ctx={})
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/authority/operational",
+                        "timestamp": time.time(),
+                        "contract_version": "35C",
+                        "operational_truth": snap.get("operational_truth", {}),
+                    })
+                    return
+
+                if self.path == "/runtime/authority/gaps":
+                    snap = build_live_authority_snapshot(extra_ctx={})
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/authority/gaps",
+                        "timestamp": time.time(),
+                        "contract_version": "35C",
+                        "gaps": snap.get("gaps", []),
+                    })
+                    return
+
+                if self.path == "/runtime/authority/grounded":
+                    snap = build_live_authority_snapshot(extra_ctx={})
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/authority/grounded",
+                        "timestamp": time.time(),
+                        "contract_version": "35C",
+                        "grounded": (snap.get("freshness", {}) or {}).get("status") in ("fresh", "partial"),
+                        "freshness": snap.get("freshness", {}),
+                    })
+                    return
+
+                if self.path == "/runtime/authority/cache":
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/authority/cache",
+                        "timestamp": time.time(),
+                        "contract_version": "35C",
+                        "cache": get_authority_cache_state(),
+                        "primed": prime_authority_cache(extra_ctx={}),
+                    })
+                    return
+
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": self.path.lstrip("/"),
+                    "timestamp": time.time(),
+                    "contract_version": "35C",
+                    "error": "unknown_authority_endpoint",
+                })
+                return
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": self.path.lstrip("/"),
+                    "timestamp": time.time(),
+                    "contract_version": "35C",
+                    "error": str(exc),
                 })
                 return
             except Exception as exc:

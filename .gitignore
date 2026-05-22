@@ -92,6 +92,10 @@ runtime/*
 !runtime/semantic/__init__.py
 !runtime/semantic/contracts.py
 !runtime/semantic/semantic_sterilization.py
+!runtime/authority/
+!runtime/authority/__init__.py
+!runtime/authority/contracts.py
+!runtime/authority/live_authority_cognition.py
 !runtime/memory/memory_usefulness.py
 !runtime/observability/
 !runtime/context/evidence_guard.py

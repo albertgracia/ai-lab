@@ -765,6 +765,20 @@ def build_runtime_governance_registry(
     except Exception:
         pass
 
+    # ── FASE 35C: Live authority-backed cognition integration ───────
+    try:
+        from runtime.authority import build_authority_cognition_summary
+        a = build_authority_cognition_summary(extra_ctx={})
+        result["authority"] = {
+            "contract_version": "35C",
+            "authority_freshness_score": a.get("authority_freshness_score", 0.0),
+            "grounded_cognition_score": a.get("grounded_cognition_score", 0.0),
+            "stale_authority_total": a.get("stale_authority_total", 0),
+            "authority_gap_total": a.get("authority_gaps_total", 0),
+        }
+    except Exception:
+        pass
+
     result["drift"] = drift
 
     try:

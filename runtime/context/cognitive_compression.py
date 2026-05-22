@@ -56,6 +56,9 @@ def build_runtime_cognitive_summary(
     semantic_signals = compress_semantic_signals(sensor_snapshot, extra_ctx)
     all_signals.extend(semantic_signals)
 
+    authority_signals = compress_authority_signals(sensor_snapshot, extra_ctx)
+    all_signals.extend(authority_signals)
+
     if not all_signals:
         unavailable.append("all_domains")
 
@@ -682,6 +685,32 @@ def compress_semantic_signals(
             "message": msg,
             "evidence": ["semantic_sterilization_35b"],
             "confidence": "high",
+            "freshness": "fresh",
+        })
+    except Exception:
+        return signals
+    return signals
+
+
+def compress_authority_signals(
+    sensor_snapshot: dict[str, Any],
+    extra_ctx: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """FASE 35C: authority freshness/gaps signals."""
+    signals: list[dict[str, Any]] = []
+    extra_ctx = extra_ctx or {}
+    try:
+        from runtime.authority import build_authority_cognition_summary
+        summ = build_authority_cognition_summary(extra_ctx=extra_ctx)
+        fresh_score = float(summ.get("authority_freshness_score", 0.0) or 0.0)
+        gaps = int(summ.get("authority_gaps_total", 0) or 0)
+        sev = "info" if fresh_score >= 80 and gaps == 0 else "warning" if fresh_score >= 50 else "critical"
+        signals.append({
+            "domain": "authority",
+            "severity": sev,
+            "message": f"authority: freshness_score={fresh_score} gaps={gaps} stale={summ.get('stale_authority_total', 0)}",
+            "evidence": ["authority_35c"],
+            "confidence": "high" if fresh_score >= 80 else "medium" if fresh_score >= 50 else "low",
             "freshness": "fresh",
         })
     except Exception:

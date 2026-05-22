@@ -271,6 +271,9 @@ def build_domain_health_report(
     if domain == "semantic":
         return {"domain": "semantic", "semantic": build_semantic_integrity_summary(extra_ctx={})}
 
+    if domain == "authority":
+        return {"domain": "authority", "authority": build_authority_freshness_summary(extra_ctx={})}
+
     maturity_data = _extract_maturity(sensor_snapshot, maturity)
     degraded = _ensure_list(maturity_data.get("degraded_domains", []))
     state = "degraded" if domain in degraded else "healthy"
@@ -280,7 +283,7 @@ def build_domain_health_report(
         dc = sensor_snapshot.get("domain_confidence", {}) or {}
         domain_conf = dc.get(domain, "unknown")
 
-    boundaries = ["gpu", "routing", "storage", "grounding", "observability", "governance", "services", "telemetry", "performance", "infrastructure", "semantic"]
+    boundaries = ["gpu", "routing", "storage", "grounding", "observability", "governance", "services", "telemetry", "performance", "infrastructure", "semantic", "authority"]
     if domain not in boundaries:
         domain = "unknown"
 
@@ -855,6 +858,23 @@ def build_semantic_integrity_summary(*, extra_ctx: dict[str, Any] | None = None)
         }
     except Exception as exc:
         return {"contract_version": "35B", "error": str(exc)}
+
+
+def build_authority_freshness_summary(*, extra_ctx: dict[str, Any] | None = None) -> dict[str, Any]:
+    extra_ctx = extra_ctx or {}
+    try:
+        from runtime.authority import build_authority_cognition_summary, build_live_authority_snapshot
+        summ = build_authority_cognition_summary(extra_ctx=extra_ctx)
+        snap = build_live_authority_snapshot(extra_ctx=extra_ctx)
+        return {
+            "contract_version": "35C",
+            "summary": summ,
+            "freshness": snap.get("freshness", {}),
+            "gaps": snap.get("gaps", []),
+            "deterministic_signature": summ.get("deterministic_signature"),
+        }
+    except Exception as exc:
+        return {"contract_version": "35C", "error": str(exc)}
 
 # ── FASE 34A: Hardening summary integration ─────────────────────────
 

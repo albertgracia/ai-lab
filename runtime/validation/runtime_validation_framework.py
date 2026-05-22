@@ -743,6 +743,64 @@ def build_runtime_invariants(
             details={"error": str(exc)},
         )
 
+    # ── FASE 35C: Live authority-backed cognition invariants ────────
+    try:
+        from runtime.authority import build_live_authority_snapshot, build_authority_cognition_summary
+        snap = build_live_authority_snapshot(extra_ctx={"enable_network": False})
+        fresh = snap.get("freshness", {}) or {}
+        ok = fresh.get("status") in ("fresh", "partial")
+        _mk(
+            "INVARIANT-LIVE-AUTHORITY",
+            "pass" if ok else "degraded",
+            "high" if ok else "medium",
+            "authority_35c",
+            blocking=False,
+            details={"freshness": fresh},
+        )
+
+        # Grounded cognition: requires any authority evidence.
+        grounded = ok
+        _mk(
+            "INVARIANT-GROUNDED-COGNITION",
+            "pass" if grounded else "degraded",
+            "high" if grounded else "medium",
+            "authority_35c",
+            blocking=False,
+            details={"grounded": grounded},
+        )
+
+        # No synthetic state: we never claim targets list without fetch or fixture.
+        prom = snap.get("prometheus", {}) or {}
+        fetch = (prom.get("fetch", {}) or {}).get("targets", {}) or {}
+        synth_block = (fetch.get("status") == "skipped")
+        _mk(
+            "INVARIANT-NO-SYNTHETIC-STATE",
+            "pass" if not synth_block else "degraded",
+            "high" if not synth_block else "medium",
+            "authority_35c",
+            blocking=False,
+            details={"targets_fetch": fetch},
+        )
+
+        summ = build_authority_cognition_summary(extra_ctx={"enable_network": False})
+        _mk(
+            "INVARIANT-AUTHORITY-FRESHNESS",
+            "pass" if float(summ.get("authority_freshness_score", 0.0) or 0.0) >= 50 else "degraded",
+            "high",
+            "authority_35c",
+            blocking=False,
+            details={"authority_freshness_score": summ.get("authority_freshness_score")},
+        )
+    except Exception as exc:
+        _mk(
+            "INVARIANT-LIVE-AUTHORITY",
+            "degraded",
+            "low",
+            "authority_35c",
+            blocking=False,
+            details={"error": str(exc)},
+        )
+
     return [i.to_dict() for i in invariants]
 
 
