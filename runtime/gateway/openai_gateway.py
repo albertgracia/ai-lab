@@ -2293,6 +2293,171 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 })
             return
 
+        # ── FASE OBS-34B: Live observability diagnostics — always-on 200 ──
+        if self.path == "/runtime/observability/live":
+            try:
+                from runtime.observability import run_live_observability_diagnostics, OBS_LIVE_DIAGNOSTICS_CONTRACT_VERSION
+                from runtime.telemetry.prometheus_metrics import record_live_observability_diagnostics
+                _diag = run_live_observability_diagnostics(extra_ctx={})
+                record_live_observability_diagnostics(_diag)
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/live",
+                    "timestamp": time.time(),
+                    "contract_version": OBS_LIVE_DIAGNOSTICS_CONTRACT_VERSION,
+                    "live": _diag,
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/live",
+                    "timestamp": time.time(),
+                    "contract_version": "OBS-34B",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/observability/live/prometheus":
+            try:
+                from runtime.observability import diagnose_prometheus_authority, OBS_LIVE_DIAGNOSTICS_CONTRACT_VERSION
+                _p = diagnose_prometheus_authority(extra_ctx={})
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/live/prometheus",
+                    "timestamp": time.time(),
+                    "contract_version": OBS_LIVE_DIAGNOSTICS_CONTRACT_VERSION,
+                    "prometheus": _p,
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/live/prometheus",
+                    "timestamp": time.time(),
+                    "contract_version": "OBS-34B",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/observability/live/grafana":
+            try:
+                from runtime.observability import diagnose_grafana_platform, OBS_LIVE_DIAGNOSTICS_CONTRACT_VERSION
+                _g = diagnose_grafana_platform(extra_ctx={})
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/live/grafana",
+                    "timestamp": time.time(),
+                    "contract_version": OBS_LIVE_DIAGNOSTICS_CONTRACT_VERSION,
+                    "grafana": _g,
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/live/grafana",
+                    "timestamp": time.time(),
+                    "contract_version": "OBS-34B",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/observability/live/loki":
+            try:
+                from runtime.observability import diagnose_loki_platform, OBS_LIVE_DIAGNOSTICS_CONTRACT_VERSION
+                _l = diagnose_loki_platform(extra_ctx={})
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/live/loki",
+                    "timestamp": time.time(),
+                    "contract_version": OBS_LIVE_DIAGNOSTICS_CONTRACT_VERSION,
+                    "loki": _l,
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/live/loki",
+                    "timestamp": time.time(),
+                    "contract_version": "OBS-34B",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/observability/live/exporters":
+            try:
+                from runtime.observability import run_live_observability_diagnostics, OBS_LIVE_DIAGNOSTICS_CONTRACT_VERSION
+                _diag = run_live_observability_diagnostics(extra_ctx={})
+                _e = _diag.get("exporters", {})
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/live/exporters",
+                    "timestamp": time.time(),
+                    "contract_version": OBS_LIVE_DIAGNOSTICS_CONTRACT_VERSION,
+                    "exporters": _e,
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/live/exporters",
+                    "timestamp": time.time(),
+                    "contract_version": "OBS-34B",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/observability/live/incidents":
+            try:
+                from runtime.observability import run_live_observability_diagnostics, OBS_LIVE_DIAGNOSTICS_CONTRACT_VERSION
+                _diag = run_live_observability_diagnostics(extra_ctx={})
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/live/incidents",
+                    "timestamp": time.time(),
+                    "contract_version": OBS_LIVE_DIAGNOSTICS_CONTRACT_VERSION,
+                    "incidents": _diag.get("incidents", {}),
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/live/incidents",
+                    "timestamp": time.time(),
+                    "contract_version": "OBS-34B",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/observability/live/score":
+            try:
+                from runtime.observability import run_live_observability_diagnostics, OBS_LIVE_DIAGNOSTICS_CONTRACT_VERSION
+                _diag = run_live_observability_diagnostics(extra_ctx={})
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/live/score",
+                    "timestamp": time.time(),
+                    "contract_version": OBS_LIVE_DIAGNOSTICS_CONTRACT_VERSION,
+                    "score": _diag.get("score", {}),
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/live/score",
+                    "timestamp": time.time(),
+                    "contract_version": "OBS-34B",
+                    "error": str(exc),
+                })
+            return
+
         if self.path == "/runtime/reports/discipline":
             try:
                 from runtime.gateway.tool_request_classifier import FORBIDDEN_TOOL_RECOMMENDATIONS

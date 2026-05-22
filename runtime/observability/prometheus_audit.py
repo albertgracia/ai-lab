@@ -418,6 +418,29 @@ def _classify_from_live(
     return entry
 
 
+
+
+def classify_last_error_type(last_error: str | None = None) -> str:
+    """Classify common scrape/network error types.
+
+    Used by OBS-34B live diagnostics and incident attribution.
+    """
+    e = (last_error or "").lower()
+    if not e:
+        return ""
+    if "no route to host" in e or "errno 113" in e:
+        return "no_route_to_host"
+    if "connection refused" in e or "errno 111" in e:
+        return "tcp_refused"
+    if "timed out" in e or "timeout" in e:
+        return "timeout"
+    if "name or service not known" in e or "temporary failure in name resolution" in e:
+        return "dns_failure"
+    if "network is unreachable" in e:
+        return "unreachable_network"
+    return "unknown"
+
+
 def _parse_interval(interval_str: str) -> int:
     if not interval_str:
         return 15

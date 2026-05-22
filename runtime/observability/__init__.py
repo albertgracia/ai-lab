@@ -60,6 +60,23 @@ from runtime.observability.loki_audit import (
     audit_loki,
     build_loki_audit_summary,
 )
+
+from runtime.observability.live_diagnostics import (
+    OBS_LIVE_DIAGNOSTICS_CONTRACT_VERSION,
+    run_live_observability_diagnostics,
+    diagnose_prometheus_authority,
+    diagnose_grafana_platform,
+    diagnose_loki_platform,
+    diagnose_exporters,
+    diagnose_scrape_health,
+    diagnose_datasource_health,
+    detect_exporter_flapping,
+    detect_scrape_instability,
+    detect_authority_staleness,
+    detect_observability_incidents,
+    build_observability_incident_summary,
+    calculate_live_observability_score,
+)
 from runtime.observability.remediation_contracts import (
     REMEDIATION_CONTRACT_VERSION,
     RemediationSeverity,
@@ -165,4 +182,18 @@ __all__ = [
     "ExecutionResult",
     "RemediationExecutor",
     "build_manual_execution_guide",
+    "OBS_LIVE_DIAGNOSTICS_CONTRACT_VERSION",
+    "run_live_observability_diagnostics",
+    "diagnose_prometheus_authority",
+    "diagnose_grafana_platform",
+    "diagnose_loki_platform",
+    "diagnose_exporters",
+    "diagnose_scrape_health",
+    "diagnose_datasource_health",
+    "detect_exporter_flapping",
+    "detect_scrape_instability",
+    "detect_authority_staleness",
+    "detect_observability_incidents",
+    "build_observability_incident_summary",
+    "calculate_live_observability_score",
 ]

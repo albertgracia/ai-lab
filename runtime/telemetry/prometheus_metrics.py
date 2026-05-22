@@ -1646,6 +1646,40 @@ GRAFANA_RUNTIME_ALIGNED_DASHBOARDS_TOTAL = Gauge(
     "Total Grafana dashboards marked as runtime-aligned",
 )
 
+# ── OBS-34B: Live Observability Diagnostics Metrics ────────────
+LIVE_OBSERVABILITY_SCORE = Gauge(
+    "ailab_live_observability_score",
+    "Live observability score 0-100 derived from Prometheus authority",
+)
+EXPORTER_FLAPPING_TOTAL = Gauge(
+    "ailab_exporter_flapping_total",
+    "Total exporters detected as flapping",
+)
+SCRAPE_FAILURES_TOTAL = Gauge(
+    "ailab_scrape_failures_total",
+    "Total scrape failures detected in live targets",
+)
+OBSERVABILITY_INCIDENTS_TOTAL = Gauge(
+    "ailab_observability_incidents_total",
+    "Total active observability incidents (excluding NONE)",
+)
+AUTHORITY_STALENESS_TOTAL = Gauge(
+    "ailab_authority_staleness_total",
+    "Total staleness candidates impacting Prometheus authority",
+)
+DATASOURCE_DRIFT_TOTAL = Gauge(
+    "ailab_datasource_drift_total",
+    "Total datasource drift instances (Grafana non-authority diagnostics)",
+)
+LOKI_FAILURES_TOTAL = Gauge(
+    "ailab_loki_failures_total",
+    "Total Loki failures detected in live diagnostics",
+)
+EXPORTER_UNREACHABLE_TOTAL = Gauge(
+    "ailab_exporter_unreachable_total",
+    "Total exporters unreachable (no_route/timeout/refused etc) excluding expected_offline",
+)
+
 # ── FASE 33A: Runtime Governance Registry Metrics ────────────
 GOVERNANCE_SCORE = Gauge(
     "ailab_governance_score",
@@ -1894,5 +1928,57 @@ def record_hardening_metrics(report: dict[str, Any]) -> None:
         # Exclude the synthetic stable marker from the count.
         events = [e for e in instability if e.get("type") != "stable"]
         HARDENING_INSTABILITY_EVENTS_TOTAL.set(float(len(events)))
+    except Exception:
+        pass
+
+
+# ── OBS-34B: Live observability metrics recorder ─────────────────────
+
+
+def record_live_observability_diagnostics(diag: dict[str, Any]) -> None:
+    try:
+        score = float(((diag.get("score", {}) or {}).get("live_observability_score", 0.0)) or 0.0)
+        LIVE_OBSERVABILITY_SCORE.set(float(max(0.0, min(100.0, score))))
+    except Exception:
+        pass
+
+    try:
+        exp = diag.get("exporters", {}) or {}
+        summ = exp.get("summary", {}) or {}
+        flap = summ.get("flapping", {}) or {}
+        EXPORTER_FLAPPING_TOTAL.set(float(flap.get("flapping_total", 0) or 0))
+        EXPORTER_UNREACHABLE_TOTAL.set(float(summ.get("unreachable_total", 0) or 0))
+    except Exception:
+        pass
+
+    try:
+        scrape = diag.get("scrape", {}) or {}
+        SCRAPE_FAILURES_TOTAL.set(float(scrape.get("scrape_failures_total", 0) or 0))
+    except Exception:
+        pass
+
+    try:
+        incidents = (diag.get("incidents", {}) or {}).get("incidents", []) or []
+        active = [i for i in incidents if i.get("incident_id") not in ("OBS-INCIDENT-NONE",)]
+        OBSERVABILITY_INCIDENTS_TOTAL.set(float(len(active)))
+    except Exception:
+        pass
+
+    try:
+        st = diag.get("authority_staleness", {}) or {}
+        AUTHORITY_STALENESS_TOTAL.set(float(st.get("authority_staleness_total", 0) or 0))
+    except Exception:
+        pass
+
+    try:
+        ds = diag.get("datasources", {}) or {}
+        DATASOURCE_DRIFT_TOTAL.set(float(ds.get("datasource_drift_total", 0) or 0))
+    except Exception:
+        pass
+
+    try:
+        loki = diag.get("loki", {}) or {}
+        up = bool((loki.get("platform", {}) or {}).get("up"))
+        LOKI_FAILURES_TOTAL.set(0.0 if up else 1.0)
     except Exception:
         pass

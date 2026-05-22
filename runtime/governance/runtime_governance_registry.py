@@ -371,6 +371,22 @@ def build_governance_risk_summary(
     except ImportError:
         pass
 
+    try:
+        if os.environ.get("AI_LAB_ENABLE_LIVE_OBSERVABILITY_DIAGNOSTICS", "false").lower() in ("true", "1", "yes"):
+            from runtime.observability import run_live_observability_diagnostics
+            _live = run_live_observability_diagnostics(extra_ctx={})
+            _score = float(((_live.get("score", {}) or {}).get("live_observability_score", 0.0)) or 0.0)
+            if _score > 0 and _score < 65:
+                risks.append(GovernanceRiskContract(
+                    risk_type="live_observability_score_low",
+                    severity="medium" if _score >= 40 else "high",
+                    domain="observability",
+                    description=f"live observability score low: {_score}/100",
+                    confidence="medium",
+                ).to_dict())
+    except Exception:
+        pass
+
     if not risks:
         risks.append(GovernanceRiskContract(
             risk_type="no_risks",
@@ -660,6 +676,28 @@ def build_runtime_governance_registry(
         "components": score_info["components"],
         "contract_version": score_info["contract_version"],
     }
+    # ── OBS-34B: Live observability signals (read-only diagnostics) ──
+    try:
+        if os.environ.get("AI_LAB_ENABLE_LIVE_OBSERVABILITY_DIAGNOSTICS", "false").lower() in ("true", "1", "yes"):
+            from runtime.observability import run_live_observability_diagnostics
+            _live = run_live_observability_diagnostics(extra_ctx={})
+            _score = (_live.get("score", {}) or {}).get("live_observability_score")
+            _stale = (_live.get("authority_staleness", {}) or {}).get("authority_staleness_total")
+            _exp = _live.get("exporters", {}) or {}
+            _flap = ((_exp.get("summary", {}) or {}).get("flapping", {}) or {}).get("flapping_total")
+            _unreach = (_exp.get("summary", {}) or {}).get("unreachable_total")
+            result["observability_live"] = {
+                "contract_version": _live.get("contract_version", "OBS-34B"),
+                "live_observability_score": _score,
+                "authority_staleness_total": _stale,
+                "exporter_flapping_total": _flap,
+                "exporter_unreachable_total": _unreach,
+                "highest_incident_severity": (_live.get("incidents", {}) or {}).get("highest_severity"),
+            }
+    except Exception:
+        # Unknown > inventado.
+        pass
+
     result["drift"] = drift
 
     try:
@@ -718,6 +756,22 @@ def build_governance_risk_executive(
     sensor_snapshot: dict[str, Any] | None = None,
 ) -> str:
     risks = build_governance_risk_summary(extra_ctx, sensor_snapshot)
+    try:
+        if os.environ.get("AI_LAB_ENABLE_LIVE_OBSERVABILITY_DIAGNOSTICS", "false").lower() in ("true", "1", "yes"):
+            from runtime.observability import run_live_observability_diagnostics
+            _live = run_live_observability_diagnostics(extra_ctx={})
+            _score = float(((_live.get("score", {}) or {}).get("live_observability_score", 0.0)) or 0.0)
+            if _score > 0 and _score < 65:
+                risks.append(GovernanceRiskContract(
+                    risk_type="live_observability_score_low",
+                    severity="medium" if _score >= 40 else "high",
+                    domain="observability",
+                    description=f"live observability score low: {_score}/100",
+                    confidence="medium",
+                ).to_dict())
+    except Exception:
+        pass
+
     if not risks:
         return "No governance risks detected."
 

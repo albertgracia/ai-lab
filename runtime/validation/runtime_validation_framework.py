@@ -30,6 +30,9 @@ INVARIANTS = [
     "INVARIANT-GROUNDING-VALIDATION",
     "INVARIANT-REPORTING-CONSISTENCY",
     "INVARIANT-OBSERVABILITY-FRESHNESS",
+    "INVARIANT-OBSERVABILITY-SURVIVABILITY",
+    "INVARIANT-SCRAPE-FRESHNESS",
+    "INVARIANT-EXPORTER-STABILITY",
     "INVARIANT-DEGRADED-MODE-CONSISTENCY",
     "INVARIANT-CONTRACT-CONSISTENCY",
     "INVARIANT-TOOL-CONTRACTS",
@@ -180,7 +183,7 @@ def build_runtime_invariants(
         topology_conf = 0
         topo_drift = []
 
-    stale_sources = _ensure_list(sensor_snapshot.get("stale_sources"))
+    stale_sources = sorted(_ensure_list(sensor_snapshot.get("stale_sources")))
     observed_sources = sensor_snapshot.get("observed_sources_count", 0) or 0
     missing_sources = sensor_snapshot.get("missing_sources_count", 0) or 0
 
@@ -197,7 +200,8 @@ def build_runtime_invariants(
         "stale_sources": stale_sources,
         "topology_conf": topology_conf,
         "gov_score": (gov.get("governance_score_info", {}) or {}).get("score"),
-        "contracts": contracts.get("active_contracts", []),
+        # Contract lists can be produced from unordered sources; keep deterministic.
+        "contracts": sorted(_ensure_list(contracts.get("active_contracts", []))),
     })
 
     invariants: list[RuntimeInvariantContract] = []
@@ -228,7 +232,7 @@ def build_runtime_invariants(
     gov_score = (gov.get("governance_score_info", {}) or {}).get("score", 0)
     gov_health = gov.get("health_summary", {}) or {}
     gov_state = gov_health.get("operational_state", "unknown")
-    gov_degraded = _ensure_list(gov.get("degraded_domains"))
+    gov_degraded = sorted(_ensure_list(gov.get("degraded_domains")))
     gov_ok = gov_state in ("healthy", "degraded")
     _mk(
         "INVARIANT-GOVERNANCE-CONSISTENCY",
@@ -312,6 +316,40 @@ def build_runtime_invariants(
         "prometheus",
         blocking=(obs_status == "fail"),
         details={"observed_sources": observed_sources, "missing_sources": missing_sources, "stale_sources": stale_sources},
+    )
+
+    # OBS-34B companion invariants. These are intentionally simple and derived
+    # from the same observed/missing/stale source signals.
+    surv_ok = (observed_sources > 0)
+    _mk(
+        "INVARIANT-OBSERVABILITY-SURVIVABILITY",
+        "pass" if surv_ok else "fail",
+        "high" if surv_ok else "low",
+        "prometheus",
+        blocking=not surv_ok,
+        details={"observed_sources": observed_sources},
+    )
+
+    scrape_ok = (observed_sources > 0) and (not stale_sources)
+    scrape_status = "pass" if scrape_ok else "degraded" if observed_sources > 0 else "fail"
+    _mk(
+        "INVARIANT-SCRAPE-FRESHNESS",
+        scrape_status,
+        "high" if scrape_ok else "medium" if observed_sources > 0 else "low",
+        "prometheus",
+        blocking=(scrape_status == "fail"),
+        details={"stale_sources": stale_sources, "observed_sources": observed_sources},
+    )
+
+    exporter_ok = (observed_sources > 0) and (missing_sources == 0)
+    exporter_status = "pass" if exporter_ok else "degraded" if observed_sources > 0 else "fail"
+    _mk(
+        "INVARIANT-EXPORTER-STABILITY",
+        exporter_status,
+        "high" if exporter_ok else "medium" if observed_sources > 0 else "low",
+        "prometheus",
+        blocking=(exporter_status == "fail"),
+        details={"missing_sources": missing_sources, "observed_sources": observed_sources},
     )
 
     # INVARIANT-DEGRADED-MODE-CONSISTENCY
@@ -542,6 +580,9 @@ def build_runtime_safety_gates(
             "INVARIANT-PROMETHEUS-AUTHORITY",
             "INVARIANT-GOVERNANCE-CONSISTENCY",
             "INVARIANT-OBSERVABILITY-FRESHNESS",
+            "INVARIANT-OBSERVABILITY-SURVIVABILITY",
+            "INVARIANT-SCRAPE-FRESHNESS",
+            "INVARIANT-EXPORTER-STABILITY",
             "INVARIANT-TOPOLOGY-ALIGNMENT",
             "INVARIANT-TOOL-CONTRACTS",
             "INVARIANT-PLAN-REGISTRY",
@@ -551,6 +592,9 @@ def build_runtime_safety_gates(
         _gate("SAFE_TO_ROUTE", [
             "INVARIANT-PROMETHEUS-AUTHORITY",
             "INVARIANT-OBSERVABILITY-FRESHNESS",
+            "INVARIANT-OBSERVABILITY-SURVIVABILITY",
+            "INVARIANT-SCRAPE-FRESHNESS",
+            "INVARIANT-EXPORTER-STABILITY",
             "INVARIANT-TOPOLOGY-ALIGNMENT",
             "INVARIANT-TOOL-CONTRACTS",
         ]),
@@ -558,15 +602,24 @@ def build_runtime_safety_gates(
             "INVARIANT-REPORTING-CONSISTENCY",
             "INVARIANT-GOVERNANCE-CONSISTENCY",
             "INVARIANT-OBSERVABILITY-FRESHNESS",
+            "INVARIANT-OBSERVABILITY-SURVIVABILITY",
+            "INVARIANT-SCRAPE-FRESHNESS",
+            "INVARIANT-EXPORTER-STABILITY",
             "INVARIANT-TOOL-CONTRACTS",
         ]),
         _gate("SAFE_TO_GROUND", [
             "INVARIANT-GROUNDING-VALIDATION",
             "INVARIANT-OBSERVABILITY-FRESHNESS",
+            "INVARIANT-OBSERVABILITY-SURVIVABILITY",
+            "INVARIANT-SCRAPE-FRESHNESS",
+            "INVARIANT-EXPORTER-STABILITY",
         ]),
         _gate("SAFE_TO_OBSERVE", [
             "INVARIANT-PROMETHEUS-AUTHORITY",
             "INVARIANT-OBSERVABILITY-FRESHNESS",
+            "INVARIANT-OBSERVABILITY-SURVIVABILITY",
+            "INVARIANT-SCRAPE-FRESHNESS",
+            "INVARIANT-EXPORTER-STABILITY",
         ]),
         _gate("SAFE_TO_GOVERN", [
             "INVARIANT-GOVERNANCE-CONSISTENCY",
@@ -758,7 +811,7 @@ def build_runtime_pilot_readiness(
 
     inv_blocking = [i.get("name") for i in invariants if i.get("blocking") and i.get("status") == "fail"]
     failed_gates = [g.get("gate") for g in gates if g.get("status") == "fail"]
-    degraded_domains = _ensure_list(governance_registry.get("degraded_domains"))
+    degraded_domains = sorted(_ensure_list(governance_registry.get("degraded_domains")))
 
     # Weighted readiness score (0-100)
     base = (

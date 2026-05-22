@@ -32,6 +32,9 @@ def build_runtime_cognitive_summary(
     observability_signals = compress_observability_signals(sensor_snapshot, extra_ctx)
     all_signals.extend(observability_signals)
 
+    live_obs_signals = compress_live_observability_signals(sensor_snapshot, extra_ctx)
+    all_signals.extend(live_obs_signals)
+
     validation_signals = compress_validation_signals(sensor_snapshot, extra_ctx)
     all_signals.extend(validation_signals)
 
@@ -576,6 +579,69 @@ def compress_topology_signals(
             "evidence": ["code"], "confidence": "low",
             "freshness": "unavailable",
         })
+
+    return signals
+
+
+def compress_live_observability_signals(
+    sensor_snapshot: dict[str, Any],
+    extra_ctx: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """Signals derived from OBS-34B live diagnostics.
+
+    Network calls are disabled by default unless AI_LAB_ENABLE_LIVE_OBSERVABILITY_NETWORK=true.
+    """
+    _ = sensor_snapshot
+    extra_ctx = extra_ctx or {}
+    signals: list[dict[str, Any]] = []
+
+    try:
+        from runtime.observability import run_live_observability_diagnostics
+        rep = run_live_observability_diagnostics(extra_ctx=extra_ctx)
+        score = rep.get("score", {}) or {}
+        incidents = rep.get("incidents", {}) or {}
+        exporters = rep.get("exporters", {}) or {}
+        st = rep.get("authority_staleness", {}) or {}
+
+        lvl = score.get("live_observability_level", "unknown")
+        val = float(score.get("live_observability_score", 0.0) or 0.0)
+        if lvl in ("critical", "low") or val < 65:
+            signals.append({
+                "domain": "observability",
+                "severity": "critical" if val < 40 else "warning",
+                "message": f"live observability score {val}/100 ({lvl})",
+                "evidence": ["prometheus_authority", "obs-34b"],
+            })
+
+        if st.get("authority_freshness") in ("stale", "degraded"):
+            signals.append({
+                "domain": "observability",
+                "severity": "warning",
+                "message": f"authority freshness={st.get('authority_freshness')} stale={st.get('authority_staleness_total', 0)} down={st.get('scrape_down_total', 0)}",
+                "evidence": ["prometheus_authority"],
+            })
+
+        summ = exporters.get("summary", {}) or {}
+        flap = (summ.get("flapping", {}) or {}).get("flapping_total", 0) or 0
+        if int(flap) > 0:
+            signals.append({
+                "domain": "observability",
+                "severity": "warning",
+                "message": f"exporter flapping detected: {flap}",
+                "evidence": ["obs-34b"],
+            })
+
+        highest = incidents.get("highest_severity", "info")
+        if highest in ("critical", "high"):
+            signals.append({
+                "domain": "observability",
+                "severity": "critical" if highest == "critical" else "warning",
+                "message": f"observability incidents active (highest={highest})",
+                "evidence": ["obs-34b"],
+            })
+
+    except Exception:
+        return signals
 
     return signals
 
