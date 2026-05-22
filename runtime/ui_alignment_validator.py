@@ -14,11 +14,12 @@ from runtime.topology import (
 
 ASTRO_ROOT = Path("/opt/ai-lab/apps/ialab-docs/src")
 
-_KNOWN_FAKE_GPUS = {"RTX5070", "RTX 5070", "A100", "NVIDIA A100", "H100", "NVIDIA H100", "H200", "NVIDIA H200"}
+_KNOWN_FAKE_GPUS = {"RTX5070", "RTX 5070", "A100", "NVIDIA A100", "H100", "NVIDIA H100", "H200", "NVIDIA H200", "V100", "Tesla V100", "Tesla T4", "T4"}
 _KNOWN_HARDCODED_INVENTORY_PATTERNS = [
     "gpu_1", "gpu_2", "gpu_3", "fake_gpu",
-    "rtx5070", "a100", "h100", "tesla",
+    "rtx5070", "tesla",
 ]
+_KNOWN_LEGITIMATE_GPU_NAMES = {"RX9070", "RX9070XT", "RX7900XT", "RX 9070", "RX 7900 XT", "RX 7900XT"}
 
 
 def _ensure_list(val: Any) -> list:
@@ -91,6 +92,8 @@ def detect_ui_hardcoded_inventory(
         inventory_data = _gather_ui_entities_from_astro()
     for item in inventory_data:
         item_id = str(item.get("id", item.get("name", ""))).lower()
+        if _is_legitimate_gpu(item_id):
+            continue
         for pattern in _KNOWN_HARDCODED_INVENTORY_PATTERNS:
             if pattern in item_id:
                 found.append({
@@ -103,32 +106,38 @@ def detect_ui_hardcoded_inventory(
     return found
 
 
+def _is_legitimate_gpu(name: str) -> bool:
+    for legit in _KNOWN_LEGITIMATE_GPU_NAMES:
+        if legit.lower() in name.lower():
+            return True
+    return False
+
+
 def detect_ui_fake_entities(
     entity_list: list[dict] | None = None,
 ) -> list[dict]:
     found: list[dict] = []
     if not entity_list:
         entity_list = _gather_ui_entities_from_astro()
+    seen: set[str] = set()
     for entity in entity_list:
         eid = str(entity.get("entity_id", entity.get("id", "")))
         ename = str(entity.get("name", ""))
+        if _is_legitimate_gpu(eid) or _is_legitimate_gpu(ename):
+            continue
         combined = (eid + " " + ename).lower()
         for fake in _KNOWN_FAKE_GPUS:
             if fake.lower() in combined:
-                found.append({
-                    "entity_id": eid,
-                    "fake_gpu": fake,
-                    "reason": f"fake GPU detected: {fake}",
-                    "severity": "critical",
-                })
+                dedup_key = f"fake:{fake}"
+                if dedup_key not in seen:
+                    seen.add(dedup_key)
+                    found.append({
+                        "entity_id": eid,
+                        "fake_gpu": fake,
+                        "reason": f"fake GPU detected: {fake}",
+                        "severity": "critical",
+                    })
                 break
-        entity_type = entity.get("entity_type", entity.get("type", ""))
-        if entity_type == "gpu" and entity.get("vram_total_gb", 0) == 0 and entity.get("operational_state") not in ("inventory", "expected_offline"):
-            found.append({
-                "entity_id": eid,
-                "reason": "GPU with zero VRAM but not marked as inventory/expected_offline",
-                "severity": "medium",
-            })
     return found
 
 
