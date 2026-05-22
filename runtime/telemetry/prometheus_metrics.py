@@ -1087,6 +1087,34 @@ CODING_MODEL_SELECTED_TOTAL = Counter(
 )
 
 
+# ── FASE 30I-G: Runtime Grounding Metrics ─────────────
+RUNTIME_GROUNDING_VALIDATION_TOTAL = Counter(
+    "ailab_runtime_grounding_validation_total",
+    "Runtime grounding validation events by model and route",
+    ["model", "route_family", "entity_type"],
+)
+RUNTIME_GROUNDING_PASSED_TOTAL = Counter(
+    "ailab_runtime_grounding_passed_total",
+    "Runtime grounding validation passes",
+    ["model", "route_family"],
+)
+RUNTIME_GROUNDING_REJECTED_TOTAL = Counter(
+    "ailab_runtime_grounding_rejected_total",
+    "Runtime grounding validation rejections",
+    ["model", "route_family", "entity_type"],
+)
+RUNTIME_GROUNDING_REJECTION_REASON = Counter(
+    "ailab_runtime_grounding_rejection_reason",
+    "Runtime grounding rejection by reason",
+    ["reason"],
+)
+RUNTIME_GROUNDING_UNKNOWN_STATE_TOTAL = Counter(
+    "ailab_runtime_grounding_unknown_state_total",
+    "Unknown state responses by state type",
+    ["state"],
+)
+
+
 def record_deprecated_model_routing(action: str) -> None:
     DEPRECATED_MODEL_ROUTING_TOTAL.labels(action=action).inc()
 
@@ -1097,3 +1125,36 @@ def record_operational_model_selected() -> None:
 
 def record_coding_model_selected() -> None:
     CODING_MODEL_SELECTED_TOTAL.inc()
+
+
+# ── FASE 30I-G: Grounding Recorders ─────────────
+
+def record_runtime_grounding_validation(model: str, route_family: str, entity_type: str) -> None:
+    RUNTIME_GROUNDING_VALIDATION_TOTAL.labels(
+        model=model or "unknown",
+        route_family=route_family or "unknown",
+        entity_type=entity_type or "unknown",
+    ).inc()
+
+
+def record_runtime_grounding_passed(model: str, route_family: str) -> None:
+    RUNTIME_GROUNDING_PASSED_TOTAL.labels(
+        model=model or "unknown",
+        route_family=route_family or "unknown",
+    ).inc()
+
+
+def record_runtime_grounding_rejected(model: str, route_family: str, entity_type: str) -> None:
+    RUNTIME_GROUNDING_REJECTED_TOTAL.labels(
+        model=model or "unknown",
+        route_family=route_family or "unknown",
+        entity_type=entity_type or "unknown",
+    ).inc()
+
+
+def record_runtime_grounding_rejection_reason(reason: str) -> None:
+    RUNTIME_GROUNDING_REJECTION_REASON.labels(reason=reason or "unknown").inc()
+
+
+def record_runtime_grounding_unknown_state(state: str) -> None:
+    RUNTIME_GROUNDING_UNKNOWN_STATE_TOTAL.labels(state=state or "unknown").inc()

@@ -76,3 +76,17 @@ RESPETA LA DISCIPLINA EPISTEMOLOGICA (RULE-30H / RULE-30H.1):
 - No inventes plataformas cloud (AWS, GCP, Azure) si no estan observadas.
 - Si el dato no aparece en OBSERVED_RUNTIME, escribe NO DISPONIBLE.
 - Esta prohibido inventar metricas de rendimiento (CPU %, RAM %, latencia, tokens/segundo) si no estan en OBSERVED_RUNTIME.
+
+Reglas de grounding (FASE 30I-G):
+- Si no hay evidencia runtime para una entidad (GPU, modelo, host, servicio), responde:
+  * "NO OBSERVADO" si la entidad no aparece en OBSERVED_RUNTIME.entity_registry.observed_entities
+  * "SIN EVIDENCIA RUNTIME" si el dato no tiene source_of_truth
+  * "FUENTE NO DISPONIBLE" si el sensor esta caido
+  * "EVIDENCIA DESACTUALIZADA" si freshness.status es stale o expired
+  * "CONFIANZA BAJA" si confidence es low
+- entity_registry.observed_entities es la unica fuente de verdad positiva para entidades observadas.
+- Si entity_registry no contiene una entidad, esa entidad NO EXISTE para el runtime.
+- forbidden_patterns lista entidades que jamas deben mencionarse (GPUs A100/H100, clouds AWS/GCP, etc.).
+- No confundas "no observado" con "no existe". Usa "NO OBSERVADO EN RUNTIME ACTIVO".
+- El grounding envelope (grounding_envelope.grounded=True) confirma que las entidades referenciadas estan verificadas.
+- Toda afirmacion operacional debe tener source_of_truth, freshness y confidence. Si falta alguno, marcalo.

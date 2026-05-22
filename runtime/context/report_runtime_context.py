@@ -386,8 +386,33 @@ def build_report_runtime_context(target_ip: str | None = None) -> dict[str, Any]
         "gpu_operational_summaries": ctx.get("gpu_operational_summaries", []),
     }
 
+    # FASE 30I-G: Runtime Entity Registry + Grounding Envelope
+    try:
+        from runtime.context.runtime_entity_registry import RuntimeEntityRegistry
+        from runtime.context.runtime_grounding import build_grounding_envelope
+        _registry = RuntimeEntityRegistry(ctx)
+        ctx["entity_registry"] = {
+            "observed_entities": _registry.get_observed_entities(),
+            "forbidden_patterns": _registry.get_forbidden_patterns(),
+            "known_gpus": _registry.get_known_gpus(),
+            "known_models": _registry.get_known_models(),
+            "known_hosts": _registry.get_known_hosts(),
+            "known_services": _registry.get_known_services(),
+        }
+        try:
+            _user_text = ctx.get("_user_text", "")
+        except Exception:
+            _user_text = ""
+        ctx["grounding_envelope"] = build_grounding_envelope(
+            _user_text, runtime_context=ctx, entity_registry=_registry,
+        )
+        observed.append("entity_registry")
+        observed.append("grounding_envelope")
+    except Exception:
+        missing.append("entity_registry")
+
     ctx["_report_type"] = "runtime_operational_report"
-    ctx["_runtime_generation"] = "30I-D"
+    ctx["_runtime_generation"] = "30I-G"
     ctx["_grounded_runtime"] = True
     ctx["_grounding_confidence"] = "high"
 

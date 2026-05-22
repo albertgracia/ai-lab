@@ -61,6 +61,11 @@ from runtime.gateway.tool_call_parser import extract_tool_calls_from_message, fi
 from runtime.gateway.tool_request_classifier import build_minimal_report_messages, build_observe_context, build_observe_context_compact, build_capability_answer, classify_chat_route, is_report_request, is_report_request_heavy, sanitize_observe_output, sanitize_payload_messages, sanitize_prompt_text, sanitize_report_output, should_use_greeting_fastpath, should_use_tool_fastpath, strip_question_tool, is_lightweight_prompt, get_qwen_escalation_reason, should_apply_evidence_guard, detect_runtime_grounded_intent, FORBIDDEN_TOOL_RECOMMENDATIONS, select_operational_response_profile
 from runtime.context.report_runtime_context import build_report_runtime_context, format_report_runtime_context, extract_target_ip
 from runtime.formatters.runtime_operational_formatter import compact_runtime_response
+from runtime.context.runtime_grounding import (
+    is_runtime_grounded_prompt,
+    validate_response_against_observed_runtime,
+    build_grounding_envelope,
+)
 from runtime.gateway.gateway_metrics import (
     load_metrics,
     record_request,
@@ -613,6 +618,7 @@ def inject_agent_context(payload):
         _compact_answer = compact_runtime_response(user_text, _report_runtime_dict, profile=_operational_response_profile)
         if _compact_answer:
             payload["_compact_runtime_answer"] = _compact_answer
+            payload["_runtime_only_reasoning"] = True
 
     if route.family == "minimal" and route.variant == "report":
         payload.pop("tools", None)
@@ -1225,6 +1231,42 @@ class GatewayHandler(BaseHTTPRequestHandler):
                         "freshness": "unavailable",
                     },
                     "confidence": "low",
+                    "error": str(exc),
+                })
+            return
+
+        # FASE 30I-G: Runtime Grounding — always-on 200
+        if self.path == "/runtime/grounding":
+            try:
+                from runtime.context.runtime_entity_registry import (
+                    RuntimeEntityRegistry,
+                    OBSERVED_ENTITY_TYPES,
+                )
+                from runtime.context.runtime_grounding import (
+                    build_grounding_envelope,
+                )
+                _reg = RuntimeEntityRegistry()
+                _envelope = build_grounding_envelope("", entity_registry=_reg)
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/grounding",
+                    "timestamp": time.time(),
+                    "contract_version": "30I-G",
+                    "observed_entity_types": sorted(OBSERVED_ENTITY_TYPES),
+                    "grounding_enabled": True,
+                    "grounding_envelope": _envelope,
+                    "denylist_active": True,
+                    "entity_registry_active": True,
+                    "unknown_state_semantics": sorted(UNKNOWN_STATE_TOKENS),
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/grounding",
+                    "timestamp": time.time(),
+                    "contract_version": "30I-G",
                     "error": str(exc),
                 })
             return
@@ -2096,6 +2138,71 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     model=selected_model if 'selected_model' in dir() else None,
                     route_type=route_family, slo_impact=False,
                 ))
+
+            # FASE 30I-G: Post-response grounding validation
+            _grounding_prompt = payload.get("_user_text", "")
+            if _grounding_prompt and is_runtime_grounded_prompt(_grounding_prompt):
+                _response_content = ""
+                for _choice in data.get("choices", []):
+                    _msg = _choice.get("message", {}) if isinstance(_choice, dict) else {}
+                    _response_content = _msg.get("content", "") if isinstance(_msg.get("content"), str) else ""
+                    break
+                if _response_content:
+                    _runtime_json = payload.get("_report_runtime_context") if isinstance(payload, dict) else None
+                    _gr_ctx = None
+                    if _runtime_json:
+                        try:
+                            _gr_ctx = json.loads(_runtime_json) if isinstance(_runtime_json, str) else _runtime_json
+                        except (json.JSONDecodeError, TypeError):
+                            pass
+                    _grounding_result = validate_response_against_observed_runtime(
+                        _response_content, runtime_context=_gr_ctx,
+                    )
+                    if not _grounding_result.get("valid", True):
+                        try:
+                            from runtime.telemetry.prometheus_metrics import (
+                                record_runtime_grounding_rejected,
+                                record_runtime_grounding_rejection_reason,
+                                record_runtime_grounding_unknown_state,
+                            )
+                            _inv_entities = _grounding_result.get("invented_entities", [])
+                            for _inv in _inv_entities:
+                                _etype = "gpu" if "gpu" in _inv.lower() else "model" if any(
+                                    m in _inv.lower() for m in ("llama", "qwen", "gpt", "claude")
+                                ) else "host"
+                                record_runtime_grounding_rejected(
+                                    model=selected_model, route_family=route_family,
+                                    entity_type=_etype,
+                                )
+                                record_runtime_grounding_rejection_reason(
+                                    f"entity_not_observed:{_etype}:{_inv}"
+                                )
+                            for _uclaim in _grounding_result.get("unverified_claims", []):
+                                record_runtime_grounding_rejection_reason(_uclaim)
+                            _ustate = _grounding_result.get("unknown_state")
+                            if _ustate:
+                                record_runtime_grounding_unknown_state(_ustate)
+                            else:
+                                record_runtime_grounding_unknown_state("NOT_OBSERVED")
+                        except ImportError:
+                            pass
+                        # Replace content with sanitized version if violations detected
+                        _sanitized = _grounding_result.get("sanitized_text", _response_content)
+                        if _sanitized != _response_content:
+                            for _choice in data.get("choices", []):
+                                _msg = _choice.get("message", {}) if isinstance(_choice, dict) else {}
+                                if isinstance(_msg, dict):
+                                    _msg["content"] = _sanitized
+                    else:
+                        try:
+                            from runtime.telemetry.prometheus_metrics import (
+                                record_runtime_grounding_passed,
+                            )
+                            record_runtime_grounding_passed(
+                                model=selected_model, route_family=route_family,
+                            )
+                        except ImportError:
+                            pass
 
             self._send_json(
                 response.status_code,
