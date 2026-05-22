@@ -24,6 +24,21 @@ def _resolve_hostname(host: str) -> str | None:
 
 def classify_target_role(ip_or_host: str) -> str:
     clean = ip_or_host.strip().lower()
+    # FASE 35A: infrastructure identity registry is authority for roles.
+    try:
+        from runtime.infrastructure import classify_infrastructure_role
+        roles = classify_infrastructure_role(clean)
+        if roles:
+            if "ROLE-PROMETHEUS-AUTHORITY" in roles:
+                return "prometheus-authority"
+            if "ROLE-RUNTIME-CONTROL-PLANE" in roles:
+                return "primary-control-plane"
+            if "ROLE-INVENTORY-OFFLINE" in roles:
+                return "inventory-offline"
+            if "ROLE-INFERENCE-BACKEND" in roles:
+                return "inference-backend-gpu"
+    except Exception:
+        pass
     if clean == _RUNTIME_HOSTNAME or clean == _PRIMARY_RUNTIME_IP:
         return "primary-control-plane"
     resolved = _resolve_hostname(clean) if not clean.replace(".", "").isdigit() else clean
@@ -153,9 +168,17 @@ def _get_support_services() -> list[str]:
 
 
 def _get_observability_services() -> list[dict[str, Any]]:
+    base = "192.168.1.40"
+    try:
+        from runtime.infrastructure import build_infrastructure_semantic_summary
+        s = build_infrastructure_semantic_summary(base)
+        if not s.get("authority_root"):
+            base = "192.168.1.40"
+    except Exception:
+        base = "192.168.1.40"
     return [
-        {"name": "prometheus", "url": "http://192.168.1.40:9090", "role": "metrics TSDB + alerting"},
-        {"name": "grafana", "url": "http://192.168.1.40:3000", "role": "dashboards + provisioning"},
+        {"name": "prometheus", "url": f"http://{base}:9090", "role": "metrics TSDB + alerting"},
+        {"name": "grafana", "url": f"http://{base}:3000", "role": "dashboards + provisioning"},
     ]
 
 

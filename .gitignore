@@ -84,6 +84,10 @@ runtime/*
 !runtime/performance/__init__.py
 !runtime/performance/contracts.py
 !runtime/performance/runtime_latency_calibration.py
+!runtime/infrastructure/
+!runtime/infrastructure/__init__.py
+!runtime/infrastructure/contracts.py
+!runtime/infrastructure/infrastructure_identity_registry.py
 !runtime/memory/memory_usefulness.py
 !runtime/observability/
 !runtime/context/evidence_guard.py

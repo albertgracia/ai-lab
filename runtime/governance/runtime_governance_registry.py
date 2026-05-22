@@ -21,6 +21,7 @@ GOVERNANCE_DOMAINS = [
     "grounding", "routing", "gpu", "storage",
     "archive", "governance", "ui_alignment", "grafana",
     "prometheus", "loki", "entities",
+    "infrastructure",
     "tools", "plans", "gc", "hardening",
 ]
 
@@ -44,6 +45,7 @@ DOMAIN_AUTHORITY = {
     "plans": {"authority_type": "execution_surface", "source_of_truth": "plan_registry_28_4", "confidence": "high"},
     "gc": {"authority_type": "restricted", "source_of_truth": "crossplan_gc_28_4", "confidence": "high"},
     "hardening": {"authority_type": "operational_safety", "source_of_truth": "runtime_hardening_34a", "confidence": "medium"},
+    "infrastructure": {"authority_type": "operational_identity", "source_of_truth": "infrastructure_registry_35a", "confidence": "high"},
 }
 
 DOMAIN_CONFIDENCE_DEFAULTS = {
@@ -52,7 +54,7 @@ DOMAIN_CONFIDENCE_DEFAULTS = {
     "gpu": "high", "storage": "medium", "archive": "medium",
     "governance": "high", "ui_alignment": "high", "grafana": "high",
     "prometheus": "high", "loki": "medium", "entities": "medium",
-    "tools": "high", "plans": "high", "gc": "high", "hardening": "medium",
+    "tools": "high", "plans": "high", "gc": "high", "hardening": "medium", "infrastructure": "high",
 }
 
 DOMAIN_FRESHNESS_DEFAULTS = {
@@ -726,6 +728,24 @@ def build_runtime_governance_registry(
             "authority_cache_health": _cache,
         }
     except Exception:
+        pass
+
+    # ── FASE 35A: Infrastructure identity registry integration ───────
+    try:
+        from runtime.infrastructure import build_infrastructure_identity_registry
+        infra = build_infrastructure_identity_registry(extra_ctx={})
+        inv = infra.get("inventory", {}) or {}
+        result["infrastructure"] = {
+            "contract_version": "35A",
+            "infrastructure_identity_score": infra.get("score", 0.0),
+            "authority_roots": infra.get("authority_roots", []),
+            "control_plane": infra.get("control_plane", []),
+            "unknown_infrastructure_entities": inv.get("unknown_nodes", []),
+            "orphan_infrastructure_entities": inv.get("discoverable_nodes", []),
+            "semantic_integrity": "ok" if float(infra.get("score", 0.0) or 0.0) >= 85.0 else "degraded",
+        }
+    except Exception:
+        # Unknown > inventado.
         pass
 
     result["drift"] = drift

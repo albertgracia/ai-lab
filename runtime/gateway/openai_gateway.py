@@ -201,6 +201,9 @@ _rate_limit_lock = threading.Lock()
 
 
 def check_rate_limit(client_ip: str) -> bool:
+    # Local tests/health checks should not trip rate limiting.
+    if client_ip in {"127.0.0.1", "::1"}:
+        return True
     now = time.time()
     with _rate_limit_lock:
         timestamps = _rate_limit_data[client_ip]
@@ -609,7 +612,7 @@ def inject_agent_context(payload):
     # FASE 30H.2: build real runtime context if runtime intent detected
     # replaces FASE 30H.1 synthetic minimal context with format_report_runtime_context()
     # FASE 34C: avoid heavy runtime grounding context for fast-path operational queries.
-    if _report_runtime is None and detect_runtime_grounded_intent(user_text) and _fastpath_intent not in {"governance", "validation", "observability", "watchdogs"}:
+    if _report_runtime is None and detect_runtime_grounded_intent(user_text) and _fastpath_intent not in {"governance", "validation", "observability", "watchdogs", "infrastructure"}:
         _report_runtime_dict = build_report_runtime_context()
         _report_runtime = format_report_runtime_context()
         payload["_report_runtime_context"] = _report_runtime
@@ -632,7 +635,7 @@ def inject_agent_context(payload):
     if _operational_response_profile == "operational_compact" and not payload.get("_compact_runtime_answer"):
         try:
             _intent = detect_operational_fastpath_intent(user_text)
-            if _intent in {"governance", "validation", "observability", "watchdogs"}:
+            if _intent in {"governance", "validation", "observability", "watchdogs", "infrastructure"}:
                 from runtime.performance import build_fast_operational_summary, compress_operational_noise, prime_async_diagnostics
 
                 # Keep background caches warm without blocking the request.
@@ -655,6 +658,22 @@ def inject_agent_context(payload):
                         f"containment_mode={bool(_hs.get('containment_mode'))}",
                     ]
                     payload["_compact_runtime_answer"] = compress_operational_noise("\n".join(lines), level="operational")
+                elif _intent == "infrastructure":
+                    try:
+                        from runtime.infrastructure import identify_infrastructure
+                        rep = identify_infrastructure(user_text)
+                        lines = [
+                            "AI-LAB Operational Fast-Path",
+                            f"identity={rep.get('identity') or 'NO DISPONIBLE'}",
+                            f"operational_state={rep.get('operational_state', 'unknown')}",
+                            f"authority_root={bool(rep.get('authority_root'))}",
+                            f"expected_offline={bool(rep.get('expected_offline'))}",
+                            f"roles={','.join(rep.get('roles', []) or []) or 'unknown'}",
+                        ]
+                        payload["_compact_runtime_answer"] = compress_operational_noise("\n".join(lines), level="operational")
+                        payload["_runtime_only_reasoning"] = True
+                    except Exception:
+                        pass
                 else:
                     _fp = build_fast_operational_summary(_intent, extra_ctx={}, sensor_snapshot=_report_runtime_dict or {})
                     if _intent == "governance":
@@ -2641,6 +2660,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     "error": "unknown_performance_endpoint",
                 })
                 return
+
             except Exception as exc:
                 self._send_json(200, {
                     "status": "degraded",
@@ -2648,6 +2668,146 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     "endpoint": self.path.lstrip("/"),
                     "timestamp": time.time(),
                     "contract_version": "34C",
+                    "error": str(exc),
+                })
+                return
+
+        # ── FASE 35A: Infrastructure Identity Registry — always-on 200 ──
+        if self.path == "/runtime/infrastructure" or self.path.startswith("/runtime/infrastructure/"):
+            try:
+                from runtime.infrastructure import (
+                    build_infrastructure_identity_registry,
+                    build_authority_root_map,
+                    build_operational_node_map,
+                    build_infrastructure_semantic_summary,
+                    calculate_infrastructure_identity_score,
+                )
+                from runtime.telemetry.prometheus_metrics import record_infrastructure_metrics
+
+                reg = build_infrastructure_identity_registry(extra_ctx={})
+                try:
+                    record_infrastructure_metrics(reg)
+                except Exception:
+                    pass
+
+                if self.path == "/runtime/infrastructure" or self.path == "/runtime/infrastructure/score":
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": self.path.lstrip("/"),
+                        "timestamp": time.time(),
+                        "contract_version": "35A",
+                        "infrastructure": reg,
+                        "score": calculate_infrastructure_identity_score(reg),
+                    })
+                    return
+
+                if self.path == "/runtime/infrastructure/authority":
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/infrastructure/authority",
+                        "timestamp": time.time(),
+                        "contract_version": "35A",
+                        "authority": build_authority_root_map(),
+                    })
+                    return
+
+                if self.path == "/runtime/infrastructure/nodes":
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/infrastructure/nodes",
+                        "timestamp": time.time(),
+                        "contract_version": "35A",
+                        "nodes": build_operational_node_map(),
+                    })
+                    return
+
+                if self.path == "/runtime/infrastructure/control-plane":
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/infrastructure/control-plane",
+                        "timestamp": time.time(),
+                        "contract_version": "35A",
+                        "control_plane": reg.get("control_plane", []),
+                    })
+                    return
+
+                if self.path == "/runtime/infrastructure/operational":
+                    inv = reg.get("inventory", {}) or {}
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/infrastructure/operational",
+                        "timestamp": time.time(),
+                        "contract_version": "35A",
+                        "operational_nodes": inv.get("operational_nodes", []),
+                    })
+                    return
+
+                if self.path == "/runtime/infrastructure/inventory":
+                    inv = reg.get("inventory", {}) or {}
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/infrastructure/inventory",
+                        "timestamp": time.time(),
+                        "contract_version": "35A",
+                        "inventory_only_nodes": inv.get("inventory_only_nodes", []),
+                    })
+                    return
+
+                if self.path == "/runtime/infrastructure/discoverable":
+                    inv = reg.get("inventory", {}) or {}
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/infrastructure/discoverable",
+                        "timestamp": time.time(),
+                        "contract_version": "35A",
+                        "discoverable_nodes": inv.get("discoverable_nodes", []),
+                    })
+                    return
+
+                if self.path.startswith("/runtime/infrastructure/semantic-summary"):
+                    # Optional query: ?id=192.168.1.40
+                    target = None
+                    try:
+                        from urllib.parse import urlparse, parse_qs
+                        q = parse_qs(urlparse(self.path).query)
+                        target = (q.get("id") or [None])[0]
+                    except Exception:
+                        target = None
+                    if not target:
+                        target = "192.168.1.40"
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/infrastructure/semantic-summary",
+                        "timestamp": time.time(),
+                        "contract_version": "35A",
+                        "summary": build_infrastructure_semantic_summary(str(target)),
+                    })
+                    return
+
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": self.path.lstrip("/"),
+                    "timestamp": time.time(),
+                    "contract_version": "35A",
+                    "error": "unknown_infrastructure_endpoint",
+                })
+                return
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": self.path.lstrip("/"),
+                    "timestamp": time.time(),
+                    "contract_version": "35A",
                     "error": str(exc),
                 })
                 return

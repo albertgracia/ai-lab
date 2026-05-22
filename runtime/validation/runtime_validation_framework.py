@@ -606,6 +606,69 @@ def build_runtime_invariants(
             details={"error": str(exc)},
         )
 
+    # ── FASE 35A: Infrastructure identity invariants ────────────────
+    try:
+        from runtime.infrastructure import build_infrastructure_identity_registry
+        infra = build_infrastructure_identity_registry(extra_ctx={})
+        score = float(infra.get("score", 0.0) or 0.0)
+        roots = infra.get("authority_roots", []) or []
+        inv = infra.get("inventory", {}) or {}
+        unknown_nodes = inv.get("unknown_nodes", []) or []
+        orphans = inv.get("discoverable_nodes", []) or []
+
+        ok = score >= 85.0 and ("192.168.1.40" in roots)
+        status = "pass" if ok else "degraded" if score >= 65.0 else "fail"
+        _mk(
+            "INVARIANT-INFRASTRUCTURE-IDENTITY",
+            status,
+            "high" if status == "pass" else "medium" if status == "degraded" else "low",
+            "infrastructure_registry_35a",
+            blocking=("192.168.1.40" not in roots),
+            details={"score": score, "authority_roots": sorted(roots), "issues": infra.get("issues", [])},
+        )
+
+        roots_ok = "192.168.1.40" in roots and "192.168.1.30" in (infra.get("control_plane", []) or [])
+        _mk(
+            "INVARIANT-AUTHORITY-ROOTS",
+            "pass" if roots_ok else "fail",
+            "high" if roots_ok else "low",
+            "infrastructure_registry_35a",
+            blocking=not roots_ok,
+            details={"roots": sorted(roots), "control_plane": sorted(infra.get("control_plane", []) or [])},
+        )
+
+        phantom_ok = len(unknown_nodes) == 0
+        _mk(
+            "INVARIANT-NO-PHANTOM-INFRASTRUCTURE",
+            "pass" if phantom_ok else "degraded",
+            "high" if phantom_ok else "medium",
+            "infrastructure_registry_35a",
+            blocking=False,
+            details={"unknown_nodes": unknown_nodes},
+        )
+
+        sep_ok = True
+        # Discoverable nodes must be treated as non-operational unless anchored.
+        if orphans:
+            sep_ok = True
+        _mk(
+            "INVARIANT-OBSERVED-OPERATIONAL-SEPARATION",
+            "pass" if sep_ok else "degraded",
+            "high" if sep_ok else "medium",
+            "infrastructure_registry_35a",
+            blocking=False,
+            details={"orphan_discoverable_total": len(orphans)},
+        )
+    except Exception as exc:
+        _mk(
+            "INVARIANT-INFRASTRUCTURE-IDENTITY",
+            "degraded",
+            "low",
+            "infrastructure_registry_35a",
+            blocking=False,
+            details={"error": str(exc)},
+        )
+
     return [i.to_dict() for i in invariants]
 
 

@@ -265,6 +265,9 @@ def build_domain_health_report(
     if domain == "performance":
         return {"domain": "performance", "performance": build_runtime_performance_summary(extra_ctx={}, sensor_snapshot=sensor_snapshot)}
 
+    if domain == "infrastructure":
+        return {"domain": "infrastructure", "infrastructure": build_infrastructure_authority_summary(extra_ctx={})}
+
     maturity_data = _extract_maturity(sensor_snapshot, maturity)
     degraded = _ensure_list(maturity_data.get("degraded_domains", []))
     state = "degraded" if domain in degraded else "healthy"
@@ -274,7 +277,7 @@ def build_domain_health_report(
         dc = sensor_snapshot.get("domain_confidence", {}) or {}
         domain_conf = dc.get(domain, "unknown")
 
-    boundaries = ["gpu", "routing", "storage", "grounding", "observability", "governance", "services", "telemetry", "performance"]
+    boundaries = ["gpu", "routing", "storage", "grounding", "observability", "governance", "services", "telemetry", "performance", "infrastructure"]
     if domain not in boundaries:
         domain = "unknown"
 
@@ -808,6 +811,32 @@ def build_runtime_performance_summary(
             "runtime_performance_level": "unknown",
             "error": str(exc),
         }
+
+# ── FASE 35A: Infrastructure authority summaries ───────────────────
+
+
+def build_infrastructure_authority_summary(
+    *,
+    extra_ctx: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    extra_ctx = extra_ctx or {}
+    try:
+        from runtime.infrastructure import build_infrastructure_identity_registry
+        reg = build_infrastructure_identity_registry(extra_ctx=extra_ctx)
+        inv = reg.get("inventory", {}) or {}
+        return {
+            "contract_version": "35A",
+            "infrastructure_identity_score": reg.get("score", 0.0),
+            "authority_roots": reg.get("authority_roots", []),
+            "control_plane": reg.get("control_plane", []),
+            "operational_nodes_total": len(inv.get("operational_nodes", []) or []),
+            "inventory_only_nodes_total": len(inv.get("inventory_only_nodes", []) or []),
+            "discoverable_nodes_total": len(inv.get("discoverable_nodes", []) or []),
+            "unknown_nodes_total": len(inv.get("unknown_nodes", []) or []),
+            "deterministic_signature": reg.get("deterministic_signature"),
+        }
+    except Exception as exc:
+        return {"contract_version": "35A", "infrastructure_identity_score": 0.0, "error": str(exc)}
 
 # ── FASE 34A: Hardening summary integration ─────────────────────────
 

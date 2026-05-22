@@ -1726,6 +1726,40 @@ ASYNC_DIAGNOSTICS_TOTAL = Counter(
     ["task"],
 )
 
+# ── FASE 35A: Infrastructure Identity Registry Metrics ─────────────
+INFRASTRUCTURE_IDENTITY_SCORE = Gauge(
+    "ailab_infrastructure_identity_score",
+    "Infrastructure identity score 0-100",
+)
+AUTHORITY_ROOT_HEALTH = Gauge(
+    "ailab_authority_root_health",
+    "Authority root health 0.0-1.0 (anchored roots present)",
+)
+UNKNOWN_INFRASTRUCTURE_ENTITIES_TOTAL = Gauge(
+    "ailab_unknown_infrastructure_entities_total",
+    "Total unknown infrastructure entities",
+)
+ORPHAN_INFRASTRUCTURE_ENTITIES_TOTAL = Gauge(
+    "ailab_orphan_infrastructure_entities_total",
+    "Total orphan infrastructure entities (discoverable but unanchored)",
+)
+INFRASTRUCTURE_SEMANTIC_DRIFT_TOTAL = Gauge(
+    "ailab_infrastructure_semantic_drift_total",
+    "Total infrastructure semantic drift markers",
+)
+OPERATIONAL_INFRASTRUCTURE_NODES_TOTAL = Gauge(
+    "ailab_operational_infrastructure_nodes_total",
+    "Total operational infrastructure nodes",
+)
+DISCOVERABLE_ENTITIES_TOTAL = Gauge(
+    "ailab_discoverable_entities_total",
+    "Total discoverable entities",
+)
+INVENTORY_ENTITIES_TOTAL = Gauge(
+    "ailab_inventory_entities_total",
+    "Total inventory-only entities",
+)
+
 # ── FASE 33A: Runtime Governance Registry Metrics ────────────
 GOVERNANCE_SCORE = Gauge(
     "ailab_governance_score",
@@ -2088,5 +2122,42 @@ def record_fallback_leakage_blocked(reason: str) -> None:
 def record_async_diagnostics(task: str) -> None:
     try:
         ASYNC_DIAGNOSTICS_TOTAL.labels(task=task or "unknown").inc()
+    except Exception:
+        pass
+
+
+def record_infrastructure_metrics(registry: dict[str, Any]) -> None:
+    """FASE 35A: record infrastructure identity/authority metrics."""
+    try:
+        score = float(registry.get("score", 0.0) or 0.0)
+        INFRASTRUCTURE_IDENTITY_SCORE.set(float(max(0.0, min(100.0, score))))
+    except Exception:
+        pass
+
+    try:
+        roots = registry.get("authority_roots", []) or []
+        # Health: core authority root anchored.
+        ok = "192.168.1.40" in roots
+        AUTHORITY_ROOT_HEALTH.set(1.0 if ok else 0.0)
+    except Exception:
+        pass
+
+    inv = registry.get("inventory", {}) or {}
+    try:
+        unknown = inv.get("unknown_nodes", []) or []
+        UNKNOWN_INFRASTRUCTURE_ENTITIES_TOTAL.set(float(len(unknown)))
+    except Exception:
+        pass
+
+    try:
+        orphans = inv.get("discoverable_nodes", []) or []
+        ORPHAN_INFRASTRUCTURE_ENTITIES_TOTAL.set(float(len(orphans)))
+    except Exception:
+        pass
+
+    try:
+        OPERATIONAL_INFRASTRUCTURE_NODES_TOTAL.set(float(len(inv.get("operational_nodes", []) or [])))
+        INVENTORY_ENTITIES_TOTAL.set(float(len(inv.get("inventory_only_nodes", []) or [])))
+        DISCOVERABLE_ENTITIES_TOTAL.set(float(len(inv.get("discoverable_nodes", []) or [])))
     except Exception:
         pass

@@ -50,6 +50,9 @@ def build_runtime_cognitive_summary(
     performance_signals = compress_performance_signals(sensor_snapshot, extra_ctx)
     all_signals.extend(performance_signals)
 
+    infrastructure_signals = compress_infrastructure_signals(sensor_snapshot, extra_ctx)
+    all_signals.extend(infrastructure_signals)
+
     if not all_signals:
         unavailable.append("all_domains")
 
@@ -616,6 +619,40 @@ def compress_performance_signals(
         })
     except Exception:
         # Unknown > inventado.
+        return signals
+    return signals
+
+
+def compress_infrastructure_signals(
+    sensor_snapshot: dict[str, Any],
+    extra_ctx: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """FASE 35A: surface infrastructure identity/authority-root state."""
+    signals: list[dict[str, Any]] = []
+    extra_ctx = extra_ctx or {}
+    try:
+        from runtime.infrastructure import build_infrastructure_identity_registry
+        reg = build_infrastructure_identity_registry(extra_ctx=extra_ctx)
+        score = float(reg.get("score", 0.0) or 0.0)
+        roots = reg.get("authority_roots", []) or []
+        inv = reg.get("inventory", {}) or {}
+        unknown = inv.get("unknown_nodes", []) or []
+        orphans = inv.get("discoverable_nodes", []) or []
+
+        sev = "info"
+        if "192.168.1.40" not in roots or score < 65:
+            sev = "warning"
+
+        msg = f"infra: score={score} prometheus_root={'yes' if '192.168.1.40' in roots else 'no'} unknown={len(unknown)} orphans={len(orphans)}"
+        signals.append({
+            "domain": "infrastructure",
+            "severity": sev,
+            "message": msg,
+            "evidence": ["infrastructure_registry_35a"],
+            "confidence": "high" if score >= 85 else "medium" if score >= 65 else "low",
+            "freshness": "fresh",
+        })
+    except Exception:
         return signals
     return signals
 

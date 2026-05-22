@@ -520,6 +520,11 @@ _FASTPATH_INTENTS: dict[str, tuple[str, ...]] = {
     "watchdogs": (
         "watchdog", "watchdogs", "timeouts", "hardening", "escalation", "containment",
     ),
+    "infrastructure": (
+        "que es", "qué es", "who is", "what is",
+        "infra", "infrastructure", "nodo", "node",
+        "prometheus authority", "grafana", "control plane", "control-plane",
+    ),
 }
 
 
@@ -527,6 +532,9 @@ def detect_operational_fastpath_intent(user_text: str) -> str | None:
     t = (user_text or "").lower().strip()
     if not t:
         return None
+    # FASE 35A: direct IP identity queries.
+    if re.search(r"\b(?:\d{1,3}\.){3}\d{1,3}\b", t) and any(k in t for k in ("que es", "qué es", "who is", "what is")):
+        return "infrastructure"
     for intent, patterns in _FASTPATH_INTENTS.items():
         if any(p in t for p in patterns):
             return intent
@@ -553,7 +561,7 @@ def select_operational_response_profile(user_text: str) -> str:
         return "operational_verbose"
     # FASE 34C: operational fast-path defaults to compact unless explicitly verbose.
     fp_intent = detect_operational_fastpath_intent(t)
-    if len(t) <= 160 and fp_intent in {"governance", "validation", "observability", "watchdogs", "runtime", "gpu"}:
+    if len(t) <= 160 and fp_intent in {"governance", "validation", "observability", "watchdogs", "runtime", "gpu", "infrastructure"}:
         return "operational_compact"
     if len(t) <= 120 and (detect_gpu_runtime_intent(t) or detect_runtime_grounded_intent(t)):
         return "operational_compact"
