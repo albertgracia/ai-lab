@@ -1124,12 +1124,45 @@ class GatewayHandler(BaseHTTPRequestHandler):
 
         if self.path == "/runtime/maturity":
             try:
-                from runtime.maturity import build_runtime_descriptor
-                descriptor = build_runtime_descriptor()
-                self._send_json(200, descriptor.to_dict())
+                from runtime.context.sensor_fusion import SensorFusionEngine
+                from runtime.semantics.runtime_maturity import (
+                    RuntimeMaturityEngine,
+                    RUNTIME_MATURITY_CONTRACT_VERSION,
+                )
+
+                _engine = SensorFusionEngine()
+                _snap = _engine.collect()
+                _snap_dict = _snap.to_dict()
+
+                _mat_engine = RuntimeMaturityEngine()
+                _maturity = _mat_engine.evaluate(_snap_dict)
+
+                try:
+                    from runtime.telemetry.prometheus_metrics import (
+                        record_runtime_maturity,
+                    )
+                    record_runtime_maturity(_maturity)
+                except ImportError:
+                    pass
+
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/maturity",
+                    "timestamp": time.time(),
+                    "contract_version": RUNTIME_MATURITY_CONTRACT_VERSION,
+                    "runtime_maturity": _maturity,
+                    "needs_attention": _mat_engine.needs_attention(),
+                })
             except Exception as exc:
-                record_error_legacy(self.path, exc)
-                self._send_json(500, {"error": "maturity_unavailable", "detail": str(exc)})
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/maturity",
+                    "timestamp": time.time(),
+                    "contract_version": "31B",
+                    "error": str(exc),
+                })
             return
 
         if self.path == "/runtime/models/state":

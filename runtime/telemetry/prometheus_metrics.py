@@ -1342,3 +1342,65 @@ def record_observability_execution_manual(domain: str) -> None:
 
 def record_observability_execution_time() -> None:
     OBSERVABILITY_EXECUTION_TIME.set(time.time())
+
+
+# ── FASE 31B: Runtime Semantic Maturity metrics ──
+
+RUNTIME_MATURITY_SCORE = Gauge(
+    "ailab_runtime_maturity_score",
+    "Runtime maturity score 0-100",
+)
+RUNTIME_CONFIDENCE = Gauge(
+    "ailab_runtime_confidence_score",
+    "Runtime confidence score 0.0-1.0",
+    ["confidence_level"],
+)
+RUNTIME_DEGRADED_DOMAINS = Gauge(
+    "ailab_runtime_degraded_domains_total",
+    "Number of degraded domains",
+)
+RUNTIME_UNKNOWN_DOMAINS = Gauge(
+    "ailab_runtime_unknown_domains_total",
+    "Number of unknown domains",
+)
+RUNTIME_UNCERTAINTY = Counter(
+    "ailab_runtime_uncertainty_total",
+    "Uncertainty events by type",
+    ["uncertainty_type"],
+)
+RUNTIME_OPERATIONAL_IMPACT = Gauge(
+    "ailab_runtime_operational_impact",
+    "Operational impact level (0=none, 1=low, 2=medium, 3=high, 4=critical)",
+)
+RUNTIME_SEMANTIC_STATE = Counter(
+    "ailab_runtime_semantic_state_total",
+    "Runtime semantic state distribution",
+    ["runtime_state"],
+)
+
+
+_IMPACT_VALUES = {"none": 0, "low": 1, "medium": 2, "high": 3, "critical": 4}
+
+
+def record_runtime_maturity(maturity: dict[str, Any]) -> None:
+    score = maturity.get("maturity_score", 0)
+    RUNTIME_MATURITY_SCORE.set(float(max(0.0, min(100.0, score))))
+
+    conf = maturity.get("confidence", "unknown")
+    conf_val = {"high": 1.0, "medium": 0.6, "low": 0.2, "unknown": 0.0}.get(conf, 0.0)
+    RUNTIME_CONFIDENCE.labels(confidence_level=conf).set(conf_val)
+
+    degraded = maturity.get("degraded_domains", [])
+    RUNTIME_DEGRADED_DOMAINS.set(float(len(degraded)))
+
+    unknown = maturity.get("unknown_domains", [])
+    RUNTIME_UNKNOWN_DOMAINS.set(float(len(unknown)))
+
+    uncert = maturity.get("uncertainty_level", "unknown")
+    RUNTIME_UNCERTAINTY.labels(uncertainty_type=uncert).inc()
+
+    impact = maturity.get("operational_impact", "none")
+    RUNTIME_OPERATIONAL_IMPACT.set(float(_IMPACT_VALUES.get(impact, 0)))
+
+    state = maturity.get("runtime_state", "unknown")
+    RUNTIME_SEMANTIC_STATE.labels(runtime_state=state).inc()

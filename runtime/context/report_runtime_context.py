@@ -320,6 +320,16 @@ def build_report_runtime_context(target_ip: str | None = None) -> dict[str, Any]
     except Exception:
         missing.append("sensor_fusion")
 
+    # FASE 31B: Runtime Semantic Maturity
+    try:
+        from runtime.semantics.runtime_maturity import calculate_runtime_maturity
+        mat = calculate_runtime_maturity(ctx.get("sensor_snapshot", {}), ctx)
+        if mat:
+            ctx["runtime_maturity"] = mat
+            observed.append("runtime_maturity")
+    except Exception:
+        missing.append("runtime_maturity")
+
     ctx["inference_nodes"] = {
         "active": _get_active_nodes(),
         "inventory": _get_inventory_nodes(),

@@ -417,6 +417,14 @@ def build_actionable_summary(
     expected_offline = sensor_snapshot.get("expected_offline", [])
     unexpected_down = sensor_snapshot.get("unexpected_down", [])
 
+    # FASE 31B: Runtime maturity context
+    runtime_maturity = None
+    try:
+        from runtime.semantics.runtime_maturity import calculate_runtime_maturity
+        runtime_maturity = calculate_runtime_maturity(sensor_snapshot, extra_ctx)
+    except ImportError:
+        pass
+
     summary_parts = []
     if overall_state == "critical":
         summary_parts.append("Runtime en estado CRITICO")
@@ -443,12 +451,26 @@ def build_actionable_summary(
     if expected_offline:
         summary_parts.append("RX7900XT expected_offline no afecta runtime activo")
 
+    # FASE 31B: Add degradation context
+    if runtime_maturity:
+        degraded = runtime_maturity.get("degraded_domains", [])
+        unknown = runtime_maturity.get("unknown_domains", [])
+        if degraded:
+            summary_parts.append(f"degradado: {', '.join(degraded[:3])}")
+        if unknown:
+            summary_parts.append(f"desconocido: {', '.join(unknown[:2])}")
+
     summary_text = ", ".join(set(summary_parts))
 
     risks: list[str] = []
     for s in important_signals:
         if s.get("severity") in ("critical", "warning"):
             risks.append(s.get("message", ""))
+    # FASE 31B: Add maturity degradation reasons to risks
+    if runtime_maturity:
+        for r in runtime_maturity.get("degradation_reason", []):
+            if r not in risks:
+                risks.append(f"[maturity] {r}")
     if not risks:
         risks.append("ningún riesgo activo detectado")
 
@@ -498,6 +520,22 @@ def build_actionable_summary(
     if rx7900xt_expected and not has_gpu_warning and "critical" not in severities:
         recommendations.append("continuar validación de sensor fusion antes de Multi-GPU")
 
+    # FASE 31B: Confidence-aware recommendations
+    if runtime_maturity:
+        mat_conf = runtime_maturity.get("confidence", "unknown")
+        mat_state = runtime_maturity.get("runtime_state", "unknown")
+        if mat_conf == "low" and mat_state in ("degraded", "critical", "stale"):
+            if "verificar conectividad Prometheus" not in recommendations:
+                recommendations.append("confianza baja - verificar fuentes de datos antes de operaciones")
+        if runtime_maturity.get("operational_impact") in ("high", "critical"):
+            if "intervención inmediata" not in str(recommendations):
+                recommendations.append("impacto operacional alto - revisar dominios degradados")
+        if mat_state == "partially_observed":
+            recommendations.append("observabilidad parcial - algunas fuentes no accesibles")
+        if runtime_maturity.get("uncertainty_level") == "stale_evidence":
+            if "datos stale - considerar refresh de sensores" not in recommendations:
+                recommendations.append("datos stale - considerar refresh de sensores")
+
     if not recommendations:
         recommendations.append("ninguna acción necesaria — runtime estable")
 
@@ -521,7 +559,7 @@ def build_actionable_summary(
     else:
         overall_freshness = "mixed"
 
-    return {
+    result = {
         "overall_state": overall_state,
         "topology_mode": topology_mode,
         "summary": summary_text,
@@ -531,6 +569,19 @@ def build_actionable_summary(
         "confidence": overall_confidence,
         "freshness": overall_freshness,
     }
+
+    # FASE 31B: Inject runtime maturity context
+    if runtime_maturity:
+        result["runtime_maturity"] = {
+            "runtime_state": runtime_maturity.get("runtime_state"),
+            "maturity_score": runtime_maturity.get("maturity_score"),
+            "confidence": runtime_maturity.get("confidence"),
+            "uncertainty_level": runtime_maturity.get("uncertainty_level"),
+            "operational_impact": runtime_maturity.get("operational_impact"),
+            "degraded_domains": runtime_maturity.get("degraded_domains", []),
+        }
+
+    return result
 
 
 def _fallback_summary(reason: str) -> dict[str, Any]:

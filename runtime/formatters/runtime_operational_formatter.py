@@ -70,13 +70,35 @@ def format_runtime_domain_confidence(runtime_context: dict[str, Any], domain: st
 def format_runtime_cluster_state(runtime_context: dict[str, Any]) -> str:
     domain_confidence = runtime_context.get("domain_confidence", {}) if isinstance(runtime_context.get("domain_confidence"), dict) else {}
     source_quality = runtime_context.get("source_quality", {}) if isinstance(runtime_context.get("source_quality"), dict) else {}
+
+    # FASE 31B: Runtime maturity context
+    try:
+        from runtime.semantics.runtime_maturity import calculate_runtime_maturity
+        maturity = calculate_runtime_maturity(runtime_context)
+        mat_state = maturity.get("runtime_state", "unknown")
+        mat_conf = maturity.get("confidence", "unknown")
+        degraded = maturity.get("degraded_domains", [])
+        impact = maturity.get("operational_impact", "none")
+        uncertainty = maturity.get("uncertainty_level", "none")
+    except ImportError:
+        mat_state = format_runtime_health(runtime_context).split("=")[-1] if "=" in format_runtime_health(runtime_context) else "unknown"
+        mat_conf = "unknown"
+        degraded = []
+        impact = "none"
+        uncertainty = "none"
+
     lines = [
         "AI-LAB Runtime",
         format_runtime_topology(runtime_context),
-        format_runtime_health(runtime_context),
+        f"runtime_state={mat_state}",
+        f"confidence={mat_conf}",
         f"sensor_confidence={_confidence_score(domain_confidence)}",
         f"observability_freshness={_aggregate_freshness(source_quality)}",
+        f"operational_impact={impact}",
+        f"uncertainty={uncertainty}",
     ]
+    if degraded:
+        lines.append(f"degraded_domains={','.join(degraded)}")
     return "\n".join(lines)
 
 
