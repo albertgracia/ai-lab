@@ -38,6 +38,9 @@ def build_runtime_cognitive_summary(
     execution_signals = compress_execution_governance_signals(sensor_snapshot, extra_ctx)
     all_signals.extend(execution_signals)
 
+    hardening_signals = compress_hardening_signals(sensor_snapshot, extra_ctx)
+    all_signals.extend(hardening_signals)
+
     topology_signals = compress_topology_signals(sensor_snapshot, extra_ctx)
     all_signals.extend(topology_signals)
 
@@ -430,6 +433,71 @@ def compress_observability_signals(
             "confidence": audit_confidence,
             "freshness": "fresh",
         })
+
+    return signals
+
+
+def compress_hardening_signals(
+    sensor_snapshot: dict[str, Any],
+    extra_ctx: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    signals: list[dict[str, Any]] = []
+    extra_ctx = extra_ctx or {}
+
+    try:
+        from runtime.hardening import build_runtime_hardening_report
+        rep = build_runtime_hardening_report(sensor_snapshot=sensor_snapshot, extra_ctx=extra_ctx)
+        score = float(rep.get("hardening_score", 0.0) or 0.0)
+        level = rep.get("hardening_level", "unknown")
+        esc = rep.get("escalation", {}) or {}
+        esc_state = esc.get("escalation_state", "unknown")
+        cont = rep.get("containment", {}) or {}
+        containment = bool(cont.get("containment_mode"))
+        watchdogs = rep.get("watchdogs", []) or []
+        critical = [w.get("watchdog") for w in watchdogs if w.get("state") == "critical"]
+        degraded = [w.get("watchdog") for w in watchdogs if w.get("state") == "degraded"]
+
+        if containment:
+            signals.append({
+                "domain": "hardening",
+                "severity": "critical",
+                "message": "containment_mode active (operational containment)",
+                "evidence": ["runtime_hardening_34a"],
+            })
+        elif esc_state in ("critical", "degraded"):
+            signals.append({
+                "domain": "hardening",
+                "severity": "warning" if esc_state == "degraded" else "critical",
+                "message": f"hardening escalation_state={esc_state}",
+                "evidence": ["runtime_hardening_34a"],
+            })
+
+        if critical:
+            signals.append({
+                "domain": "hardening",
+                "severity": "critical",
+                "message": f"critical watchdogs: {', '.join(sorted([c for c in critical if c])[:3])}",
+                "evidence": ["runtime_hardening_34a"],
+            })
+        elif degraded and score < 85:
+            signals.append({
+                "domain": "hardening",
+                "severity": "warning",
+                "message": f"degraded watchdogs: {', '.join(sorted([d for d in degraded if d])[:3])}",
+                "evidence": ["runtime_hardening_34a"],
+            })
+
+        if score < 65:
+            signals.append({
+                "domain": "hardening",
+                "severity": "warning" if score >= 40 else "critical",
+                "message": f"hardening score {score}/100 ({level})",
+                "evidence": ["runtime_hardening_34a"],
+            })
+
+    except Exception:
+        # Unknown > inventado.
+        return signals
 
     return signals
 

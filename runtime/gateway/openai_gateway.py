@@ -2743,6 +2743,194 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 })
             return
 
+        # ── FASE 34A: Runtime Operational Hardening — always-on 200 ──
+        if self.path == "/runtime/hardening":
+            try:
+                from runtime.hardening import build_runtime_hardening_report, HARDENING_CONTRACT_VERSION
+                _report = build_runtime_hardening_report()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/hardening",
+                    "timestamp": time.time(),
+                    "contract_version": HARDENING_CONTRACT_VERSION,
+                    "hardening": _report,
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/hardening",
+                    "timestamp": time.time(),
+                    "contract_version": "34A",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/hardening/watchdogs":
+            try:
+                from runtime.hardening import build_runtime_watchdogs, HARDENING_CONTRACT_VERSION
+                _watchdogs = build_runtime_watchdogs()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/hardening/watchdogs",
+                    "timestamp": time.time(),
+                    "contract_version": HARDENING_CONTRACT_VERSION,
+                    "watchdogs": _watchdogs,
+                    "total_watchdogs": len(_watchdogs),
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/hardening/watchdogs",
+                    "timestamp": time.time(),
+                    "contract_version": "34A",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/hardening/timeouts":
+            try:
+                from runtime.hardening import build_timeout_governance, HARDENING_CONTRACT_VERSION
+                _timeouts = build_timeout_governance()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/hardening/timeouts",
+                    "timestamp": time.time(),
+                    "contract_version": HARDENING_CONTRACT_VERSION,
+                    "timeouts": _timeouts,
+                    "total_timeouts": len(_timeouts),
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/hardening/timeouts",
+                    "timestamp": time.time(),
+                    "contract_version": "34A",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/hardening/escalation":
+            try:
+                from runtime.hardening import build_degraded_escalation, HARDENING_CONTRACT_VERSION
+                _esc = build_degraded_escalation()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/hardening/escalation",
+                    "timestamp": time.time(),
+                    "contract_version": HARDENING_CONTRACT_VERSION,
+                    "escalation": _esc,
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/hardening/escalation",
+                    "timestamp": time.time(),
+                    "contract_version": "34A",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/hardening/containment":
+            try:
+                from runtime.hardening import build_failure_containment_summary, HARDENING_CONTRACT_VERSION
+                _cont = build_failure_containment_summary()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/hardening/containment",
+                    "timestamp": time.time(),
+                    "contract_version": HARDENING_CONTRACT_VERSION,
+                    "containment": _cont,
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/hardening/containment",
+                    "timestamp": time.time(),
+                    "contract_version": "34A",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/hardening/safeguards":
+            try:
+                from runtime.hardening import build_operational_safeguards, HARDENING_CONTRACT_VERSION
+                _sg = build_operational_safeguards()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/hardening/safeguards",
+                    "timestamp": time.time(),
+                    "contract_version": HARDENING_CONTRACT_VERSION,
+                    "safeguards": _sg,
+                    "total_safeguards": len(_sg),
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/hardening/safeguards",
+                    "timestamp": time.time(),
+                    "contract_version": "34A",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/hardening/survivability":
+            try:
+                from runtime.hardening import build_runtime_survivability, HARDENING_CONTRACT_VERSION
+                _sv = build_runtime_survivability()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/hardening/survivability",
+                    "timestamp": time.time(),
+                    "contract_version": HARDENING_CONTRACT_VERSION,
+                    "survivability": _sv,
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/hardening/survivability",
+                    "timestamp": time.time(),
+                    "contract_version": "34A",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/hardening/score":
+            try:
+                from runtime.hardening import calculate_hardening_score, HARDENING_CONTRACT_VERSION
+                _score = calculate_hardening_score()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/hardening/score",
+                    "timestamp": time.time(),
+                    "contract_version": HARDENING_CONTRACT_VERSION,
+                    "hardening_score": _score,
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/hardening/score",
+                    "timestamp": time.time(),
+                    "contract_version": "34A",
+                    "error": str(exc),
+                })
+            return
+
         # ── FASE 28.4: Tool Contracts & Cross-Plan GC — always-on 200 ──
         if self.path == "/runtime/tools":
             try:

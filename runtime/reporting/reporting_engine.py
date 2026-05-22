@@ -256,6 +256,9 @@ def build_domain_health_report(
     if domain == "gpu":
         return _build_gpu_domain_report(sensor_snapshot, maturity)
 
+    if domain == "hardening":
+        return {"domain": "hardening", "hardening": build_hardening_summary(sensor_snapshot, {})}
+
     maturity_data = _extract_maturity(sensor_snapshot, maturity)
     degraded = _ensure_list(maturity_data.get("degraded_domains", []))
     state = "degraded" if domain in degraded else "healthy"
@@ -722,6 +725,49 @@ def build_validation_summary(
             "error": str(exc),
         }
 
+
+
+
+# ── FASE 34A: Hardening summary integration ─────────────────────────
+
+def build_hardening_summary(
+    sensor_snapshot: dict[str, Any] | None = None,
+    extra_ctx: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Expose operational hardening state for reports (always JSON-safe)."""
+    try:
+        from runtime.hardening import build_runtime_hardening_report
+        rep = build_runtime_hardening_report(sensor_snapshot=sensor_snapshot, extra_ctx=extra_ctx)
+        watchdogs = rep.get("watchdogs", []) or []
+        timeouts = rep.get("timeouts", []) or []
+        containment = rep.get("containment", {}) or {}
+        escalation = rep.get("escalation", {}) or {}
+
+        return {
+            "contract_version": rep.get("contract_version", "34A"),
+            "hardening_score": rep.get("hardening_score", 0.0),
+            "hardening_level": rep.get("hardening_level", "unknown"),
+            "escalation_state": escalation.get("escalation_state", "unknown"),
+            "containment_mode": bool(containment.get("containment_mode")),
+            "critical_watchdogs": [w.get("watchdog") for w in watchdogs if w.get("state") == "critical"],
+            "degraded_watchdogs": [w.get("watchdog") for w in watchdogs if w.get("state") == "degraded"],
+            "timeout_governance_degraded": [t.get("component") for t in timeouts if t.get("authority_degraded")],
+            "instability": rep.get("instability", []),
+            "deterministic_signature": rep.get("deterministic_signature"),
+        }
+    except Exception as exc:
+        return {
+            "contract_version": "34A",
+            "hardening_score": 0.0,
+            "hardening_level": "unknown",
+            "escalation_state": "unknown",
+            "containment_mode": False,
+            "critical_watchdogs": [],
+            "degraded_watchdogs": [],
+            "timeout_governance_degraded": [],
+            "instability": [],
+            "error": str(exc),
+        }
 
 # ── FASE 28.4: Tool/Plan/GC governance summaries ───────────────────
 

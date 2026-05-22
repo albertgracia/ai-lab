@@ -1706,6 +1706,36 @@ VALIDATION_DEGRADED_DOMAINS_TOTAL = Gauge(
     "Total degraded domains impacting validation",
 )
 
+# ── FASE 34A: Runtime Operational Hardening Metrics ────────────
+HARDENING_SCORE = Gauge(
+    "ailab_hardening_score",
+    "Runtime operational hardening score 0-100",
+)
+HARDENING_WATCHDOGS_TOTAL = Gauge(
+    "ailab_hardening_watchdogs_total",
+    "Total watchdogs evaluated in hardening layer",
+)
+HARDENING_WATCHDOGS_CRITICAL_TOTAL = Gauge(
+    "ailab_hardening_watchdogs_critical_total",
+    "Total critical watchdogs",
+)
+HARDENING_WATCHDOGS_DEGRADED_TOTAL = Gauge(
+    "ailab_hardening_watchdogs_degraded_total",
+    "Total degraded watchdogs",
+)
+HARDENING_TIMEOUT_GOVERNANCE_DEGRADED_TOTAL = Gauge(
+    "ailab_hardening_timeout_governance_degraded_total",
+    "Total timeout governance entries with degraded authority",
+)
+HARDENING_CONTAINMENT_MODE_ACTIVE = Gauge(
+    "ailab_hardening_containment_mode_active",
+    "1 if containment mode active, else 0",
+)
+HARDENING_INSTABILITY_EVENTS_TOTAL = Gauge(
+    "ailab_hardening_instability_events_total",
+    "Total operational instability events detected",
+)
+
 # ── FASE 28.4: Tool Contracts & Cross-Plan GC Metrics ────────────
 TOOL_GOVERNANCE_SCORE = Gauge(
     "ailab_tool_governance_score",
@@ -1827,3 +1857,42 @@ def record_validation_metrics(report: dict[str, Any]) -> None:
 
     degraded = report.get("degraded_domains", []) or []
     VALIDATION_DEGRADED_DOMAINS_TOTAL.set(float(len(degraded)))
+
+
+# ── FASE 34A: Runtime Operational Hardening metrics recorder ─────────
+
+
+def record_hardening_metrics(report: dict[str, Any]) -> None:
+    try:
+        score = float(report.get("hardening_score", 0.0) or 0.0)
+        HARDENING_SCORE.set(float(max(0.0, min(100.0, score))))
+    except Exception:
+        pass
+
+    watchdogs = report.get("watchdogs", []) or []
+    try:
+        HARDENING_WATCHDOGS_TOTAL.set(float(len(watchdogs)))
+        HARDENING_WATCHDOGS_CRITICAL_TOTAL.set(float(sum(1 for w in watchdogs if w.get("state") == "critical")))
+        HARDENING_WATCHDOGS_DEGRADED_TOTAL.set(float(sum(1 for w in watchdogs if w.get("state") == "degraded")))
+    except Exception:
+        pass
+
+    timeouts = report.get("timeouts", []) or []
+    try:
+        HARDENING_TIMEOUT_GOVERNANCE_DEGRADED_TOTAL.set(float(sum(1 for t in timeouts if t.get("authority_degraded"))))
+    except Exception:
+        pass
+
+    containment = report.get("containment", {}) or {}
+    try:
+        HARDENING_CONTAINMENT_MODE_ACTIVE.set(1.0 if containment.get("containment_mode") else 0.0)
+    except Exception:
+        pass
+
+    instability = report.get("instability", []) or []
+    try:
+        # Exclude the synthetic stable marker from the count.
+        events = [e for e in instability if e.get("type") != "stable"]
+        HARDENING_INSTABILITY_EVENTS_TOTAL.set(float(len(events)))
+    except Exception:
+        pass

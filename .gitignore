@@ -128,6 +128,13 @@ runtime/plans/**/*.pyc
 !runtime/gc/crossplan_gc.py
 runtime/gc/__pycache__/
 runtime/gc/**/*.pyc
+
+!runtime/hardening/
+!runtime/hardening/__init__.py
+!runtime/hardening/contracts.py
+!runtime/hardening/runtime_operational_hardening.py
+runtime/hardening/__pycache__/
+runtime/hardening/**/*.pyc
 sessions/
 
 

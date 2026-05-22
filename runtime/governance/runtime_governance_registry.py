@@ -21,7 +21,7 @@ GOVERNANCE_DOMAINS = [
     "grounding", "routing", "gpu", "storage",
     "archive", "governance", "ui_alignment", "grafana",
     "prometheus", "loki", "entities",
-    "tools", "plans", "gc",
+    "tools", "plans", "gc", "hardening",
 ]
 
 DOMAIN_AUTHORITY = {
@@ -43,6 +43,7 @@ DOMAIN_AUTHORITY = {
     "tools": {"authority_type": "execution_surface", "source_of_truth": "tool_registry_28_4", "confidence": "high"},
     "plans": {"authority_type": "execution_surface", "source_of_truth": "plan_registry_28_4", "confidence": "high"},
     "gc": {"authority_type": "restricted", "source_of_truth": "crossplan_gc_28_4", "confidence": "high"},
+    "hardening": {"authority_type": "operational_safety", "source_of_truth": "runtime_hardening_34a", "confidence": "medium"},
 }
 
 DOMAIN_CONFIDENCE_DEFAULTS = {
@@ -51,7 +52,7 @@ DOMAIN_CONFIDENCE_DEFAULTS = {
     "gpu": "high", "storage": "medium", "archive": "medium",
     "governance": "high", "ui_alignment": "high", "grafana": "high",
     "prometheus": "high", "loki": "medium", "entities": "medium",
-    "tools": "high", "plans": "high", "gc": "high",
+    "tools": "high", "plans": "high", "gc": "high", "hardening": "medium",
 }
 
 DOMAIN_FRESHNESS_DEFAULTS = {
@@ -79,6 +80,7 @@ REGISTERED_PHASES = [
     {"phase": "33A", "label": "Runtime Governance Registry", "domain": "governance"},
     {"phase": "33B", "label": "Runtime Pre-Pilot Validation Framework", "domain": "governance"},
     {"phase": "28.4", "label": "Tool Contracts & Cross-Plan GC", "domain": "tools"},
+    {"phase": "34A", "label": "Runtime Operational Hardening", "domain": "hardening"},
 ]
 
 ACTIVE_CONTRACTS = [

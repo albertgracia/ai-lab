@@ -35,6 +35,7 @@ INVARIANTS = [
     "INVARIANT-TOOL-CONTRACTS",
     "INVARIANT-PLAN-REGISTRY",
     "INVARIANT-GC-SAFETY",
+    "INVARIANT-OPERATIONAL-HARDENING",
     "INVARIANT-RUNTIME-DETERMINISM",
 ]
 
@@ -429,6 +430,47 @@ def build_runtime_invariants(
             details={"error": str(exc)},
         )
 
+    # INVARIANT-OPERATIONAL-HARDENING (FASE 34A)
+    try:
+        from runtime.hardening import build_runtime_hardening_report
+        h = build_runtime_hardening_report(sensor_snapshot=sensor_snapshot, extra_ctx=extra_ctx)
+        score_val = float(h.get("hardening_score", 0.0) or 0.0)
+        containment = bool((h.get("containment", {}) or {}).get("containment_mode"))
+        watchdogs = h.get("watchdogs", []) or []
+        critical_wd = sum(1 for w in watchdogs if w.get("state") == "critical")
+
+        hard_ok = (score_val >= 65.0) and (critical_wd == 0) and (not containment)
+        if containment or score_val < 40.0:
+            status = "fail"
+        elif hard_ok:
+            status = "pass"
+        else:
+            status = "degraded"
+
+        _mk(
+            "INVARIANT-OPERATIONAL-HARDENING",
+            status,
+            "high" if status == "pass" else "medium" if status == "degraded" else "low",
+            "runtime_hardening_34a",
+            blocking=bool(containment),
+            details={
+                "hardening_score": score_val,
+                "hardening_level": h.get("hardening_level", "unknown"),
+                "critical_watchdogs": critical_wd,
+                "containment_mode": containment,
+                "deterministic_signature": h.get("deterministic_signature"),
+            },
+        )
+    except Exception as exc:
+        _mk(
+            "INVARIANT-OPERATIONAL-HARDENING",
+            "degraded",
+            "low",
+            "runtime_hardening_34a",
+            blocking=False,
+            details={"error": str(exc)},
+        )
+
     # INVARIANT-RUNTIME-DETERMINISM
     det_ok = True
     if _strict_mode():
@@ -504,6 +546,7 @@ def build_runtime_safety_gates(
             "INVARIANT-TOOL-CONTRACTS",
             "INVARIANT-PLAN-REGISTRY",
             "INVARIANT-GC-SAFETY",
+            "INVARIANT-OPERATIONAL-HARDENING",
         ]),
         _gate("SAFE_TO_ROUTE", [
             "INVARIANT-PROMETHEUS-AUTHORITY",
@@ -535,6 +578,7 @@ def build_runtime_safety_gates(
             "INVARIANT-DEGRADED-MODE-CONSISTENCY",
             "INVARIANT-TOPOLOGY-ALIGNMENT",
             "INVARIANT-GC-SAFETY",
+            "INVARIANT-OPERATIONAL-HARDENING",
         ]),
     ]
 
