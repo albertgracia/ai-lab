@@ -262,6 +262,9 @@ def build_domain_health_report(
     if domain == "observability_live":
         return {"domain": "observability_live", "live_observability": build_live_observability_summary({})}
 
+    if domain == "performance":
+        return {"domain": "performance", "performance": build_runtime_performance_summary(extra_ctx={}, sensor_snapshot=sensor_snapshot)}
+
     maturity_data = _extract_maturity(sensor_snapshot, maturity)
     degraded = _ensure_list(maturity_data.get("degraded_domains", []))
     state = "degraded" if domain in degraded else "healthy"
@@ -271,7 +274,7 @@ def build_domain_health_report(
         dc = sensor_snapshot.get("domain_confidence", {}) or {}
         domain_conf = dc.get(domain, "unknown")
 
-    boundaries = ["gpu", "routing", "storage", "grounding", "observability", "governance", "services", "telemetry"]
+    boundaries = ["gpu", "routing", "storage", "grounding", "observability", "governance", "services", "telemetry", "performance"]
     if domain not in boundaries:
         domain = "unknown"
 
@@ -772,6 +775,37 @@ def build_live_observability_summary(
             "live_observability_level": "unknown",
             "incidents_total": 0,
             "authority_freshness": "unknown",
+            "error": str(exc),
+        }
+
+# ── FASE 34C: Runtime performance summary integration ───────────────
+
+
+def build_runtime_performance_summary(
+    *,
+    extra_ctx: dict[str, Any] | None = None,
+    sensor_snapshot: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Expose runtime performance (latency/friction/cache) for operational reporting."""
+    extra_ctx = extra_ctx or {}
+    sensor_snapshot = sensor_snapshot or {}
+    try:
+        from runtime.performance import profile_runtime_latency, get_performance_cache_state
+        rep = profile_runtime_latency(extra_ctx=extra_ctx, sensor_snapshot=sensor_snapshot)
+        perf = rep.get("performance", {}) or {}
+        return {
+            "contract_version": "34C",
+            "runtime_performance_score": perf.get("runtime_performance_score", 0.0),
+            "runtime_performance_level": perf.get("runtime_performance_level", "unknown"),
+            "total_ms": perf.get("total_ms", rep.get("breakdown", {}).get("total_ms", 0.0)),
+            "cache": get_performance_cache_state(),
+            "deterministic_signature": perf.get("deterministic_signature") or (rep.get("breakdown", {}) or {}).get("deterministic_signature"),
+        }
+    except Exception as exc:
+        return {
+            "contract_version": "34C",
+            "runtime_performance_score": 0.0,
+            "runtime_performance_level": "unknown",
             "error": str(exc),
         }
 

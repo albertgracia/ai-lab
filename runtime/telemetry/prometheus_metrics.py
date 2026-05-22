@@ -1680,6 +1680,52 @@ EXPORTER_UNREACHABLE_TOTAL = Gauge(
     "Total exporters unreachable (no_route/timeout/refused etc) excluding expected_offline",
 )
 
+# ── FASE 34C: Runtime Performance & Governance Latency Calibration ───
+RUNTIME_PERFORMANCE_SCORE = Gauge(
+    "ailab_runtime_performance_score",
+    "Runtime performance score 0-100 (latency/friction calibrated)",
+)
+GOVERNANCE_LATENCY_SECONDS = Histogram(
+    "ailab_governance_latency_seconds",
+    "Latency to build governance registry (seconds)",
+    buckets=(0.001, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1.0),
+)
+VALIDATION_LATENCY_SECONDS = Histogram(
+    "ailab_validation_latency_seconds",
+    "Latency to build validation report (seconds)",
+    buckets=(0.001, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1.0),
+)
+FASTPATH_REQUESTS_TOTAL = Counter(
+    "ailab_fastpath_requests_total",
+    "Operational fast-path requests served without LM Studio",
+    ["intent"],
+)
+CACHE_HITS_TOTAL = Counter(
+    "ailab_cache_hits_total",
+    "Cache hits (performance/authority cache)",
+    ["cache"],
+)
+CACHE_MISSES_TOTAL = Counter(
+    "ailab_cache_misses_total",
+    "Cache misses (performance/authority cache)",
+    ["cache"],
+)
+SEMANTIC_NOISE_EVENTS_TOTAL = Counter(
+    "ailab_semantic_noise_events_total",
+    "Semantic noise reduction events (dedup/truncate applied)",
+    ["kind"],
+)
+FALLBACK_LEAKAGE_BLOCKED_TOTAL = Counter(
+    "ailab_fallback_leakage_blocked_total",
+    "Fallback leakage prevented (unknown>invented enforcement)",
+    ["reason"],
+)
+ASYNC_DIAGNOSTICS_TOTAL = Counter(
+    "ailab_async_diagnostics_total",
+    "Async diagnostics tasks scheduled",
+    ["task"],
+)
+
 # ── FASE 33A: Runtime Governance Registry Metrics ────────────
 GOVERNANCE_SCORE = Gauge(
     "ailab_governance_score",
@@ -1980,5 +2026,67 @@ def record_live_observability_diagnostics(diag: dict[str, Any]) -> None:
         loki = diag.get("loki", {}) or {}
         up = bool((loki.get("platform", {}) or {}).get("up"))
         LOKI_FAILURES_TOTAL.set(0.0 if up else 1.0)
+    except Exception:
+        pass
+
+
+# ── FASE 34C: Performance metrics helpers ───────────────────────────
+
+
+def record_runtime_performance_score(score: float) -> None:
+    try:
+        RUNTIME_PERFORMANCE_SCORE.set(float(max(0.0, min(100.0, float(score)))))
+    except Exception:
+        pass
+
+
+def record_governance_latency_ms(ms: float) -> None:
+    try:
+        GOVERNANCE_LATENCY_SECONDS.observe(max(0.0, float(ms) / 1000.0))
+    except Exception:
+        pass
+
+
+def record_validation_latency_ms(ms: float) -> None:
+    try:
+        VALIDATION_LATENCY_SECONDS.observe(max(0.0, float(ms) / 1000.0))
+    except Exception:
+        pass
+
+
+def record_fastpath_request(intent: str) -> None:
+    try:
+        FASTPATH_REQUESTS_TOTAL.labels(intent=intent or "unknown").inc()
+    except Exception:
+        pass
+
+
+def record_cache_event(cache: str, *, hit: bool) -> None:
+    try:
+        if hit:
+            CACHE_HITS_TOTAL.labels(cache=cache or "default").inc()
+        else:
+            CACHE_MISSES_TOTAL.labels(cache=cache or "default").inc()
+    except Exception:
+        pass
+
+
+def record_semantic_noise_event(kind: str) -> None:
+    try:
+        SEMANTIC_NOISE_EVENTS_TOTAL.labels(kind=kind or "unknown").inc()
+    except Exception:
+        pass
+
+
+def record_fallback_leakage_blocked(reason: str) -> None:
+    try:
+        FALLBACK_LEAKAGE_BLOCKED_TOTAL.labels(reason=reason or "unknown").inc()
+    except Exception:
+        pass
+
+
+def record_async_diagnostics(task: str) -> None:
+    try:
+        ASYNC_DIAGNOSTICS_TOTAL.labels(task=task or "unknown").inc()
     except Exception:
         pass

@@ -47,6 +47,9 @@ def build_runtime_cognitive_summary(
     topology_signals = compress_topology_signals(sensor_snapshot, extra_ctx)
     all_signals.extend(topology_signals)
 
+    performance_signals = compress_performance_signals(sensor_snapshot, extra_ctx)
+    all_signals.extend(performance_signals)
+
     if not all_signals:
         unavailable.append("all_domains")
 
@@ -580,6 +583,40 @@ def compress_topology_signals(
             "freshness": "unavailable",
         })
 
+    return signals
+
+
+def compress_performance_signals(
+    sensor_snapshot: dict[str, Any],
+    extra_ctx: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """FASE 34C: surface runtime friction/latency signals (non-invasive)."""
+    signals: list[dict[str, Any]] = []
+    extra_ctx = extra_ctx or {}
+    try:
+        from runtime.performance import profile_governance_latency, profile_validation_latency, get_performance_cache_state
+        g = profile_governance_latency(extra_ctx=extra_ctx, sensor_snapshot=sensor_snapshot)
+        v = profile_validation_latency(extra_ctx=extra_ctx, sensor_snapshot=sensor_snapshot)
+        cache = get_performance_cache_state()
+
+        gov_ms = float(g.get("governance_ms", 0.0) or 0.0)
+        val_ms = float(v.get("validation_ms", 0.0) or 0.0)
+
+        sev = "info"
+        if bool(g.get("friction_detected")) or bool(v.get("overhead_detected")):
+            sev = "warning"
+
+        signals.append({
+            "domain": "performance",
+            "severity": sev,
+            "message": f"perf: governance_ms={gov_ms} validation_ms={val_ms} cache_hits={cache.get('cache_hits', 0)} cache_misses={cache.get('cache_misses', 0)}",
+            "evidence": ["runtime_performance_34c"],
+            "confidence": "high",
+            "freshness": "fresh",
+        })
+    except Exception:
+        # Unknown > inventado.
+        return signals
     return signals
 
 

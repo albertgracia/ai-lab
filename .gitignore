@@ -80,6 +80,10 @@ runtime/*
 !runtime/tools/contracts.py
 !runtime/tools/tool_registry.py
 !runtime/telemetry/prometheus_metrics.py
+!runtime/performance/
+!runtime/performance/__init__.py
+!runtime/performance/contracts.py
+!runtime/performance/runtime_latency_calibration.py
 !runtime/memory/memory_usefulness.py
 !runtime/observability/
 !runtime/context/evidence_guard.py

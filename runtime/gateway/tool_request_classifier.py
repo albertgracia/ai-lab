@@ -338,6 +338,12 @@ def is_report_request(text_or_payload: Any) -> bool:
     if not t:
         return False
 
+    # FASE 34C: operational fast-path queries are NOT treated as report requests.
+    # This prevents expensive grounding/report context construction for short NOC-like prompts.
+    fp_intent = detect_operational_fastpath_intent(t)
+    if fp_intent in {"governance", "validation", "observability", "watchdogs"} and len(t) <= 220:
+        return False
+
     markers = (
         "informe",
         "resumen",
@@ -490,6 +496,42 @@ GPU_RUNTIME_INTENT_PATTERNS = (
     "estado de gpu",
 )
 
+
+# ── FASE 34C: operational fast-path intent detection ───────────────
+
+_FASTPATH_INTENTS: dict[str, tuple[str, ...]] = {
+    "runtime": (
+        "runtime status", "estado runtime", "estado del runtime", "cluster status", "estado cluster",
+        "topology", "topologia", "topología",
+    ),
+    "gpu": GPU_RUNTIME_INTENT_PATTERNS,
+    "observability": (
+        "observability", "observabilidad", "prometheus", "grafana", "loki",
+        "exporters", "exporter", "targets", "scrape", "metricas", "métricas",
+    ),
+    "governance": (
+        "governance", "gobernanza", "policy", "riesgos governance", "governance score",
+        "dominios degradados", "degraded domains",
+    ),
+    "validation": (
+        "validation", "validacion", "validación", "invariants", "safety gates",
+        "pilot readiness",
+    ),
+    "watchdogs": (
+        "watchdog", "watchdogs", "timeouts", "hardening", "escalation", "containment",
+    ),
+}
+
+
+def detect_operational_fastpath_intent(user_text: str) -> str | None:
+    t = (user_text or "").lower().strip()
+    if not t:
+        return None
+    for intent, patterns in _FASTPATH_INTENTS.items():
+        if any(p in t for p in patterns):
+            return intent
+    return None
+
 def detect_gpu_runtime_intent(user_text: str) -> bool:
     """
     Detect if user is asking about GPU runtime status.
@@ -509,6 +551,10 @@ def select_operational_response_profile(user_text: str) -> str:
         return "operational_debug"
     if any(term in t for term in ("detallado", "verbose", "completo", "exhaustivo")):
         return "operational_verbose"
+    # FASE 34C: operational fast-path defaults to compact unless explicitly verbose.
+    fp_intent = detect_operational_fastpath_intent(t)
+    if len(t) <= 160 and fp_intent in {"governance", "validation", "observability", "watchdogs", "runtime", "gpu"}:
+        return "operational_compact"
     if len(t) <= 120 and (detect_gpu_runtime_intent(t) or detect_runtime_grounded_intent(t)):
         return "operational_compact"
     return "operational_verbose"

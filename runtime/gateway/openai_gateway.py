@@ -58,7 +58,7 @@ from runtime.distributed.execution_coordinator import (
 
 from runtime.gateway.stream_sanitizer import relay_stream
 from runtime.gateway.tool_call_parser import extract_tool_calls_from_message, filter_dangerous_tool_calls, repair_tool_call_arguments, parse_tool_calls
-from runtime.gateway.tool_request_classifier import build_minimal_report_messages, build_observe_context, build_observe_context_compact, build_capability_answer, classify_chat_route, is_report_request, is_report_request_heavy, sanitize_observe_output, sanitize_payload_messages, sanitize_prompt_text, sanitize_report_output, should_use_greeting_fastpath, should_use_tool_fastpath, strip_question_tool, is_lightweight_prompt, get_qwen_escalation_reason, should_apply_evidence_guard, detect_runtime_grounded_intent, FORBIDDEN_TOOL_RECOMMENDATIONS, select_operational_response_profile
+from runtime.gateway.tool_request_classifier import build_minimal_report_messages, build_observe_context, build_observe_context_compact, build_capability_answer, classify_chat_route, is_report_request, is_report_request_heavy, sanitize_observe_output, sanitize_payload_messages, sanitize_prompt_text, sanitize_report_output, should_use_greeting_fastpath, should_use_tool_fastpath, strip_question_tool, is_lightweight_prompt, get_qwen_escalation_reason, should_apply_evidence_guard, detect_runtime_grounded_intent, FORBIDDEN_TOOL_RECOMMENDATIONS, select_operational_response_profile, detect_operational_fastpath_intent
 from runtime.context.report_runtime_context import build_report_runtime_context, format_report_runtime_context, extract_target_ip
 from runtime.formatters.runtime_operational_formatter import compact_runtime_response
 from runtime.context.runtime_grounding import (
@@ -524,6 +524,13 @@ def inject_agent_context(payload):
     _report_runtime_dict = None
     _operational_response_profile = select_operational_response_profile(user_text)
     payload["_operational_response_profile"] = _operational_response_profile
+    _fastpath_intent = None
+    try:
+        _fastpath_intent = detect_operational_fastpath_intent(user_text)
+        if _fastpath_intent:
+            payload["_fastpath_intent"] = _fastpath_intent
+    except Exception:
+        _fastpath_intent = None
     if route.family in ("minimal", "report") and route.variant in ("report", "heavy"):
         try:
             _report_grounded_target = extract_target_ip(user_text)
@@ -601,7 +608,8 @@ def inject_agent_context(payload):
 
     # FASE 30H.2: build real runtime context if runtime intent detected
     # replaces FASE 30H.1 synthetic minimal context with format_report_runtime_context()
-    if _report_runtime is None and detect_runtime_grounded_intent(user_text):
+    # FASE 34C: avoid heavy runtime grounding context for fast-path operational queries.
+    if _report_runtime is None and detect_runtime_grounded_intent(user_text) and _fastpath_intent not in {"governance", "validation", "observability", "watchdogs"}:
         _report_runtime_dict = build_report_runtime_context()
         _report_runtime = format_report_runtime_context()
         payload["_report_runtime_context"] = _report_runtime
@@ -619,6 +627,67 @@ def inject_agent_context(payload):
         if _compact_answer:
             payload["_compact_runtime_answer"] = _compact_answer
             payload["_runtime_only_reasoning"] = True
+
+    # ── FASE 34C: Operational fast-path (authority-first, non-LLM) ──
+    if _operational_response_profile == "operational_compact" and not payload.get("_compact_runtime_answer"):
+        try:
+            _intent = detect_operational_fastpath_intent(user_text)
+            if _intent in {"governance", "validation", "observability", "watchdogs"}:
+                from runtime.performance import build_fast_operational_summary, compress_operational_noise, prime_async_diagnostics
+
+                # Keep background caches warm without blocking the request.
+                try:
+                    prime_async_diagnostics(extra_ctx={})
+                except Exception:
+                    pass
+
+                if _intent == "watchdogs":
+                    try:
+                        from runtime.reporting.reporting_engine import build_hardening_summary
+                        _hs = build_hardening_summary(sensor_snapshot=_report_runtime_dict or {}, extra_ctx={})
+                    except Exception as _exc:
+                        _hs = {"contract_version": "34A", "error": str(_exc)}
+                    lines = [
+                        "AI-LAB Operational Fast-Path",
+                        f"hardening_score={_hs.get('hardening_score', 0.0)}",
+                        f"hardening_level={_hs.get('hardening_level', 'unknown')}",
+                        f"escalation_state={_hs.get('escalation_state', 'unknown')}",
+                        f"containment_mode={bool(_hs.get('containment_mode'))}",
+                    ]
+                    payload["_compact_runtime_answer"] = compress_operational_noise("\n".join(lines), level="operational")
+                else:
+                    _fp = build_fast_operational_summary(_intent, extra_ctx={}, sensor_snapshot=_report_runtime_dict or {})
+                    if _intent == "governance":
+                        g = _fp.get("governance", {}) or {}
+                        lines = [
+                            "AI-LAB Operational Fast-Path",
+                            f"governance_score={g.get('score', 'unknown')}",
+                            f"governance_level={g.get('level', 'unknown')}",
+                            f"degraded_domains={','.join(g.get('degraded_domains', []) or []) or 'none'}",
+                        ]
+                    elif _intent == "validation":
+                        v = _fp.get("validation", {}) or {}
+                        lines = [
+                            "AI-LAB Operational Fast-Path",
+                            f"validation_score={v.get('validation_score', 'unknown')}",
+                            f"validation_level={v.get('validation_level', 'unknown')}",
+                            f"failed_invariants={v.get('failed_invariants', 'unknown')}",
+                            f"failed_gates={v.get('failed_gates', 'unknown')}",
+                        ]
+                    else:
+                        o = _fp.get("observability_live", {}) or {}
+                        lines = [
+                            "AI-LAB Operational Fast-Path",
+                            f"live_observability_score={o.get('live_observability_score', 0.0)}",
+                            f"live_observability_level={o.get('live_observability_level', 'unknown')}",
+                            f"highest_incident_severity={o.get('highest_incident_severity', 'info')}",
+                            f"authority_freshness={o.get('authority_freshness', 'unknown')}",
+                        ]
+
+                    payload["_compact_runtime_answer"] = compress_operational_noise("\n".join(lines), level="operational")
+                    payload["_runtime_only_reasoning"] = True
+        except Exception:
+            pass
 
     if route.family == "minimal" and route.variant == "report":
         payload.pop("tools", None)
@@ -2457,6 +2526,131 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     "error": str(exc),
                 })
             return
+
+        # ── FASE 34C: Runtime performance & governance latency calibration ──
+        if self.path == "/runtime/performance" or self.path.startswith("/runtime/performance/"):
+            try:
+                from runtime.performance import (
+                    profile_runtime_latency,
+                    profile_governance_latency,
+                    profile_validation_latency,
+                    get_performance_cache_state,
+                    calculate_runtime_performance_score,
+                    build_latency_breakdown,
+                    prime_async_diagnostics,
+                )
+                prime_async_diagnostics(extra_ctx={})
+
+                if self.path == "/runtime/performance" or self.path == "/runtime/performance/score":
+                    rep = profile_runtime_latency(extra_ctx={}, sensor_snapshot={})
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": self.path.lstrip("/"),
+                        "timestamp": time.time(),
+                        "contract_version": "34C",
+                        "performance": rep.get("performance", {}),
+                        "latency": rep.get("latency", {}),
+                        "cache": get_performance_cache_state(),
+                    })
+                    return
+
+                if self.path == "/runtime/performance/latency":
+                    rep = profile_runtime_latency(extra_ctx={}, sensor_snapshot={})
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/performance/latency",
+                        "timestamp": time.time(),
+                        "contract_version": "34C",
+                        "latency": rep,
+                    })
+                    return
+
+                if self.path == "/runtime/performance/governance":
+                    g = profile_governance_latency(extra_ctx={}, sensor_snapshot={})
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/performance/governance",
+                        "timestamp": time.time(),
+                        "contract_version": "34C",
+                        "governance": g,
+                    })
+                    return
+
+                if self.path == "/runtime/performance/validation":
+                    v = profile_validation_latency(extra_ctx={}, sensor_snapshot={})
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/performance/validation",
+                        "timestamp": time.time(),
+                        "contract_version": "34C",
+                        "validation": v,
+                    })
+                    return
+
+                if self.path == "/runtime/performance/cache":
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/performance/cache",
+                        "timestamp": time.time(),
+                        "contract_version": "34C",
+                        "cache": get_performance_cache_state(),
+                    })
+                    return
+
+                if self.path == "/runtime/performance/noise":
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/performance/noise",
+                        "timestamp": time.time(),
+                        "contract_version": "34C",
+                        "verbosity_levels": ["minimal", "operational", "technical", "deep"],
+                        "default_level": "operational",
+                    })
+                    return
+
+                if self.path == "/runtime/performance/fastpath":
+                    # This endpoint is informational; fast-path execution happens in /v1/chat/completions.
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/performance/fastpath",
+                        "timestamp": time.time(),
+                        "contract_version": "34C",
+                        "fastpath": {
+                            "enabled": True,
+                            "authority_first": True,
+                            "intents": ["runtime", "gpu", "observability", "governance", "validation", "watchdogs"],
+                            "model": "llama-3.1-8b-instruct",
+                        },
+                    })
+                    return
+
+                # Unknown /runtime/performance/* -> always-on 200.
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": self.path.lstrip("/"),
+                    "timestamp": time.time(),
+                    "contract_version": "34C",
+                    "error": "unknown_performance_endpoint",
+                })
+                return
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": self.path.lstrip("/"),
+                    "timestamp": time.time(),
+                    "contract_version": "34C",
+                    "error": str(exc),
+                })
+                return
 
         if self.path == "/runtime/reports/discipline":
             try:

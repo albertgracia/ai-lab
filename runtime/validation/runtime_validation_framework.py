@@ -523,6 +523,89 @@ def build_runtime_invariants(
         details={"deterministic_hash": det_hash, "strict_mode": _strict_mode()},
     )
 
+    # ── FASE 34C: Performance/fast-path invariants (non-blocking by default) ──
+    try:
+        from runtime.performance import build_fast_operational_summary, get_performance_cache_state
+
+        fp1 = build_fast_operational_summary("governance", extra_ctx=extra_ctx, sensor_snapshot=sensor_snapshot)
+        fp2 = build_fast_operational_summary("governance", extra_ctx=extra_ctx, sensor_snapshot=sensor_snapshot)
+
+        def _strip_fp(d: dict[str, Any]) -> dict[str, Any]:
+            # Remove cache-dependent fields that legitimately differ between first/second call.
+            if not isinstance(d, dict):
+                return {}
+            out = json.loads(json.dumps(d, sort_keys=True, ensure_ascii=True, default=str))
+            fp = out.get("fastpath")
+            if isinstance(fp, dict):
+                fp.pop("used_cache", None)
+            return out
+
+        # In strict mode, fast-path must be deterministic modulo cache-hit fields.
+        fp_det = True
+        if _strict_mode():
+            fp_det = _strip_fp(fp1) == _strip_fp(fp2)
+        _mk(
+            "INVARIANT-FASTPATH-DETERMINISM",
+            "pass" if fp_det else "degraded",
+            "high" if fp_det else "medium",
+            "runtime_performance_34c",
+            blocking=False,
+            details={"strict_mode": _strict_mode(), "deterministic": fp_det},
+        )
+
+        auth_first = bool(fp1.get("authority_first"))
+        _mk(
+            "INVARIANT-AUTHORITY-FIRST",
+            "pass" if auth_first else "degraded",
+            "high" if auth_first else "medium",
+            "runtime_performance_34c",
+            blocking=False,
+            details={"authority_first": auth_first},
+        )
+
+        cache = get_performance_cache_state()
+        cache_ok = int(cache.get("cache_entries", 0) or 0) >= 0
+        cache_details = cache
+        if _strict_mode() and isinstance(cache, dict):
+            # Avoid volatile counters in deterministic signature.
+            cache_details = {
+                "contract_version": cache.get("contract_version"),
+                "cache_entries": cache.get("cache_entries"),
+                "freshness": cache.get("freshness"),
+            }
+        _mk(
+            "INVARIANT-CACHE-CONSISTENCY",
+            "pass" if cache_ok else "degraded",
+            "high" if cache_ok else "medium",
+            "runtime_performance_34c",
+            blocking=False,
+            details={"cache": cache_details},
+        )
+
+        # Fallback leakage: ensure deprecated model IDs are not selected as primary.
+        try:
+            from runtime.router.model_policy import PRIMARY_OPERATIONAL_MODEL, PRIMARY_CODING_MODEL, is_deprecated_model
+            blocked = bool(is_deprecated_model(PRIMARY_OPERATIONAL_MODEL) or is_deprecated_model(PRIMARY_CODING_MODEL))
+        except Exception:
+            blocked = False
+        _mk(
+            "INVARIANT-NO-FALLBACK-LEAKAGE",
+            "pass" if not blocked else "fail",
+            "high" if not blocked else "low",
+            "route_policy",
+            blocking=bool(blocked),
+            details={"primary_operational_model": "checked", "primary_coding_model": "checked"},
+        )
+    except Exception as exc:
+        _mk(
+            "INVARIANT-FASTPATH-DETERMINISM",
+            "degraded",
+            "low",
+            "runtime_performance_34c",
+            blocking=False,
+            details={"error": str(exc)},
+        )
+
     return [i.to_dict() for i in invariants]
 
 

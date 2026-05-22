@@ -309,6 +309,7 @@ def build_governance_risk_summary(
     sensor_snapshot: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     risks: list[dict[str, Any]] = []
+    extra_ctx = extra_ctx or {}
     sensor_snapshot = sensor_snapshot or {}
 
     stale_sources = sensor_snapshot.get("stale_sources", [])
@@ -346,30 +347,32 @@ def build_governance_risk_summary(
     except ImportError:
         pass
 
-    try:
-        from runtime.observability import build_observability_audit
-        audit = build_observability_audit()
-        if isinstance(audit, dict):
-            broken = audit.get("broken_panels", 0) or 0
-            stale_metrics = audit.get("stale_metrics", 0) or 0
-            if broken > 0:
-                risks.append(GovernanceRiskContract(
-                    risk_type="broken_observability",
-                    severity="high" if broken > 3 else "medium",
-                    domain="observability",
-                    description=f"{broken} broken panels en Grafana",
-                    confidence="high",
-                ).to_dict())
-            if stale_metrics > 0:
-                risks.append(GovernanceRiskContract(
-                    risk_type="stale_observability",
-                    severity="low",
-                    domain="observability",
-                    description=f"{stale_metrics} metricas stale en inventario",
-                    confidence="medium",
-                ).to_dict())
-    except ImportError:
-        pass
+    # FASE 34C: In operational fast-path mode, skip heavy Grafana audit scans.
+    if not extra_ctx.get("fastpath"):
+        try:
+            from runtime.observability import build_observability_audit
+            audit = build_observability_audit()
+            if isinstance(audit, dict):
+                broken = audit.get("broken_panels", 0) or 0
+                stale_metrics = audit.get("stale_metrics", 0) or 0
+                if broken > 0:
+                    risks.append(GovernanceRiskContract(
+                        risk_type="broken_observability",
+                        severity="high" if broken > 3 else "medium",
+                        domain="observability",
+                        description=f"{broken} broken panels en Grafana",
+                        confidence="high",
+                    ).to_dict())
+                if stale_metrics > 0:
+                    risks.append(GovernanceRiskContract(
+                        risk_type="stale_observability",
+                        severity="low",
+                        domain="observability",
+                        description=f"{stale_metrics} metricas stale en inventario",
+                        confidence="medium",
+                    ).to_dict())
+        except ImportError:
+            pass
 
     try:
         if os.environ.get("AI_LAB_ENABLE_LIVE_OBSERVABILITY_DIAGNOSTICS", "false").lower() in ("true", "1", "yes"):
@@ -402,6 +405,18 @@ def build_governance_risk_summary(
 def build_governance_remediation_summary(
     extra_ctx: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    extra_ctx = extra_ctx or {}
+    # FASE 34C: fast-path skips remediation inventory scans.
+    if extra_ctx.get("fastpath"):
+        return {
+            "total": 0,
+            "critical": 0,
+            "quick_wins": 0,
+            "high_risk": 0,
+            "technical_debt": [],
+            "fastpath": True,
+        }
+
     remediation_data = _try_import_remediation()
 
     items = []
@@ -651,7 +666,7 @@ def build_runtime_governance_registry(
     contract_registry = build_governance_contract_registry(extra_ctx)
     health_summary = build_governance_health_summary(extra_ctx, sensor_snapshot, domains, risks, remediation)
     score_info = calculate_governance_score(extra_ctx, sensor_snapshot, domains, risks, health_summary)
-    drift = detect_governance_drift(extra_ctx, sensor_snapshot)
+    drift = [] if extra_ctx.get("fastpath") else detect_governance_drift(extra_ctx, sensor_snapshot)
 
     contract = GovernanceRegistryContract(
         governance_score=score_info["governance_score"],
@@ -696,6 +711,21 @@ def build_runtime_governance_registry(
             }
     except Exception:
         # Unknown > inventado.
+        pass
+
+    # ── FASE 34C: Performance/governance friction signals (cache-aware) ──
+    try:
+        from runtime.performance.runtime_latency_calibration import get_performance_cache_state
+        _cache = get_performance_cache_state()
+        result["performance"] = {
+            "contract_version": "34C",
+            "governance_latency_score": "unknown",
+            "validation_pressure": "unknown",
+            "runtime_friction_score": "unknown",
+            "verbosity_pressure": "reduced" if os.environ.get("AI_LAB_REPORTING_MODE", "legacy").lower() in ("canonical", "31c") else "unknown",
+            "authority_cache_health": _cache,
+        }
+    except Exception:
         pass
 
     result["drift"] = drift
