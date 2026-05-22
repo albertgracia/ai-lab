@@ -16,10 +16,10 @@
           "os": "linux"
         },
         "Ports": "0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp",
-        "RunningFor": "26 seconds ago",
+        "RunningFor": "2 hours ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 25 seconds"
+        "Status": "Up 2 hours"
       },
       {
         "Command": "\"bash start.sh\"",
@@ -39,7 +39,7 @@
         "RunningFor": "4 days ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 28 seconds (health: starting)"
+        "Status": "Up 2 hours (healthy)"
       },
       {
         "Command": "\"/usr/bin/promtail -config.file=/etc/promtail/promtail.yml\"",
@@ -59,7 +59,7 @@
         "RunningFor": "5 days ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 28 seconds"
+        "Status": "Up 2 hours"
       },
       {
         "Command": "\"/docker-entrypoint.sh nginx -g 'daemon off;'\"",
@@ -79,7 +79,7 @@
         "RunningFor": "8 days ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 28 seconds"
+        "Status": "Up 2 hours"
       },
       {
         "Command": "\"docker-entrypoint.sh node server.js\"",
@@ -99,7 +99,7 @@
         "RunningFor": "8 days ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 28 seconds"
+        "Status": "Up 2 hours"
       },
       {
         "Command": "\"/docker-entrypoint.sh nginx -g 'daemon off;'\"",
@@ -119,7 +119,7 @@
         "RunningFor": "8 days ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 28 seconds"
+        "Status": "Up 2 hours"
       },
       {
         "Command": "\"/docker-entrypoint.sh nginx -g 'daemon off;'\"",
@@ -139,7 +139,7 @@
         "RunningFor": "8 days ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 28 seconds"
+        "Status": "Up 2 hours"
       },
       {
         "Command": "\"/docker-entrypoint.sh nginx -g 'daemon off;'\"",
@@ -159,7 +159,7 @@
         "RunningFor": "8 days ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 28 seconds"
+        "Status": "Up 2 hours"
       },
       {
         "Command": "\"/docker-entrypoint.sh nginx -g 'daemon off;'\"",
@@ -179,7 +179,7 @@
         "RunningFor": "8 days ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 28 seconds"
+        "Status": "Up 2 hours"
       },
       {
         "Command": "\"docker-entrypoint.sh node server.js\"",
@@ -199,7 +199,7 @@
         "RunningFor": "8 days ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 28 seconds"
+        "Status": "Up 2 hours"
       },
       {
         "Command": "\"docker-entrypoint.sh postgres\"",
@@ -219,7 +219,7 @@
         "RunningFor": "8 days ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 28 seconds (healthy)"
+        "Status": "Up 2 hours (healthy)"
       },
       {
         "Command": "\"/bin/ollama serve\"",
@@ -239,7 +239,7 @@
         "RunningFor": "8 days ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 28 seconds"
+        "Status": "Up 2 hours"
       },
       {
         "Command": "\"/usr/bin/cadvisor -logtostderr --docker_only=true --housekeeping_interval=30s\"",
@@ -259,7 +259,7 @@
         "RunningFor": "8 days ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 28 seconds (health: starting)"
+        "Status": "Up 2 hours (healthy)"
       },
       {
         "Command": "\"/bin/node_exporter --path.procfs=/host/proc --path.sysfs=/host/sys --path.rootfs=/rootfs --collector.systemd --collector.processes --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($|/)\"",
@@ -279,7 +279,7 @@
         "RunningFor": "8 days ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 28 seconds"
+        "Status": "Up 2 hours"
       },
       {
         "Command": "\"./entrypoint.sh\"",
@@ -299,7 +299,7 @@
         "RunningFor": "12 days ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 28 seconds"
+        "Status": "Up 2 hours"
       },
       {
         "Command": "\"/portainer\"",
@@ -316,10 +316,10 @@
           "os": "linux"
         },
         "Ports": "8000/tcp, 9443/tcp, 0.0.0.0:9000->9000/tcp, [::]:9000->9000/tcp",
-        "RunningFor": "12 days ago",
+        "RunningFor": "13 days ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 28 seconds"
+        "Status": "Up 2 hours"
       }
     ]
   },
@@ -327,8 +327,8 @@
     {
       "node": "RX9070",
       "host": "192.168.1.50",
-      "vram_used_gib": 0,
-      "vram_total_gib": 0
+      "vram_used_gib": 14.77,
+      "vram_total_gib": 15.82
     },
     {
       "node": "RX7900XT",
