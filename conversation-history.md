@@ -122,27 +122,52 @@ Los gaps restantes son de normalización semántica y no bloquean el grounding o
 - Nuevo: `runtime/observability/` con auditoría Prometheus, Grafana, Loki, drift detection, remediation planner/executor
 - Tag: `CP-31B-RUNTIME-SEMANTIC-MATURITY-STABLE`
 
+### FASE 31C: Operational Reporting Discipline — COMPLETED
+- Disciplina de reportes operacionales con contratos, rutas prohibidas
+- Tag: `CP-31C-OPERATIONAL-REPORTING-DISCIPLINE-STABLE`
+
+### FASE 31E: Active vs Inventory vs Discoverable Separation — COMPLETED
+- Separación de estado de entidades: activas, inventario, discoverable, deprecated
+- Nuevo: `runtime/entities/` con dataclasses, clasificadores, registry
+- 8 métricas Prometheus, 46 tests
+- Tag: `CP-31E-ACTIVE-INVENTORY-DISCOVERABLE-SEPARATION-STABLE`
+
+### FASE 31D: Runtime Topology Awareness — COMPLETED
+- Grafo de dependencias, cadenas de autoridad, blast radius, drift detection, confidence scoring
+- Nuevo: `runtime/topology/` con 7 dataclasses, 14 nodos, 15 aristas
+- 5 endpoints: dependencies, authority, blast-radius, confidence, drift
+- 7 métricas, 27/27 tests, confianza 98.9%
+- Tag: `CP-31D-RUNTIME-TOPOLOGY-AWARENESS-STABLE`
+
+### FASE 32A: Runtime UI Alignment — COMPLETED
+- UI alignment validator con 5 funciones core: validate, detect_hardcoded, detect_fake, detect_drift, calculate_score
+- 3 endpoints always-on 200: `/runtime/ui-alignment`, `/ui-alignment/drift`, `/ui-alignment/score`
+- 5 métricas Prometheus: `UI_ALIGNMENT_SCORE`, `UI_HARDCODED_ENTITIES_TOTAL`, `UI_TOPOLOGY_DRIFT_TOTAL`, `UI_RUNTIME_MISMATCH_TOTAL`, `UI_FAKE_INVENTORY_TOTAL`
+- TypeScript contracts: `runtimeContracts.ts`
+- Corrección de RX9070XT → RX9070 en index.astro y 5 docs españoles (8 referencias)
+- Eliminación de roadmap.md legacy (reemplazado por roadmap/index.md)
+- Alignment score final: 85.0 (medium) — 3 fake entities (A100/H100/H200) solo en blog/docs históricos
+- Hardcoded: 0, Topology drift: 0, Runtime mismatch: 0
+- Astro build: PASS (197 páginas)
+- Tags: `CP-32A-RUNTIME-UI-ALIGNMENT-STABLE`, `CP-32A-VALIDATOR-REFINEMENT-STABLE`
+
 ---
 
 ## CURRENT STATE
 
-**Checkpoint:** `CP-31B-RUNTIME-SEMANTIC-MATURITY-STABLE`
-**HEAD:** `cb9b604d2c0b07a3bb3ae3ff5d42fde410890564`
+**Checkpoint:** `CP-32A-RUNTIME-UI-ALIGNMENT-STABLE`
+**HEAD:** `bfb0be4a`
 
-### Fases completadas (desde 30I-D hasta 31B): 13 fases
-- 30I-D, 30I-E, 30I-F, 30I-F0, 30I-G, OBS-31A, OBS-31A.1, OBS-31A.2, OBS-31A.3, OBS-31A.4, OBS-31A.5, 31B
+### Fases completadas (desde 30I-D hasta 32A): 17 fases
+- 30I-D, 30I-E, 30I-F, 30I-F0, 30I-G, OBS-31A, OBS-31A.1, OBS-31A.2, OBS-31A.3, OBS-31A.4, OBS-31A.5, 31B, 31C, 31E, 31D, 32A
 - Storage hardening archive policy (CP-STORAGE-HARDENING-ARCHIVE-POLICY-STABLE)
 
-### Tags git: 48 tags (desde CP-21B-STABLE hasta CP-31B-RUNTIME-SEMANTIC-MATURITY-STABLE)
+### Tags git: 50 tags (desde CP-21B-STABLE hasta CP-32A-VALIDATOR-REFINEMENT-STABLE)
 
 ### Próxima fase planificada
-**FASE 31C — Operational Reporting Discipline**
+**FASE 32B — Grafana Semantic Cleanup**
 
 ### Roadmap
-- 31C — Operational Reporting Discipline
-- 31E — Active vs Inventory vs Discoverable Separation
-- 31D — Runtime Topology Awareness
-- 32A — Runtime UI Alignment
 - 32B — Grafana Semantic Cleanup
 - 33A — Runtime Governance Registry
 - 28.4 — Tool Contracts & Cross-Plan GC
