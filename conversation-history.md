@@ -67,3 +67,88 @@ Los gaps restantes son de normalización semántica y no bloquean el grounding o
 - RX7900XT queda como `inventory/offline`.
 - `source_of_truth`, `freshness` y `confidence` incorporados en el diseño, con exposición parcial conocida en runtime vivo.
 - Checkpoint histórico preservado: `CP-30I-C-SENSOR-SUMMARY-EXPOSURE-STABLE`.
+
+---
+
+## FASES POSTERIORES (resumen ejecutivo)
+
+### FASE 30I-D: Sensor Semantics Normalization — COMPLETED
+- Normalización semántica de sensores GPU
+- Tag: `CP-30I-D-SENSOR-SEMANTICS-NORMALIZED-STABLE`
+
+### FASE 30I-E: Operational Response Formatting — COMPLETED
+- Formateo de respuestas operacionales con semántica NOC
+- Tag: `CP-30I-E-OPERATIONAL-RESPONSE-FORMATTING-STABLE`
+
+### FASE 30I-F: Runtime Cognitive Compression — COMPLETED
+- Compresión cognitiva del runtime para reducir token overhead
+- Tag: `CP-30I-F-RUNTIME-COGNITIVE-COMPRESSION-STABLE`
+
+### FASE 30I-F0: Runtime Model Routing Cleanup — COMPLETED
+- Limpieza de routing legacy, eliminación de modelos deprecated
+- Tag: `CP-30I-F0-RUNTIME-MODEL-ROUTING-CLEANUP-STABLE`
+
+### FASE 30I-G: Deterministic Runtime Grounding — COMPLETED
+- Grounding determinista del runtime para respuestas operacionales
+- Tag: `CP-30I-G-RUNTIME-GROUNDING-STABLE`
+
+### FASE OBS-31A: Observability Source-of-Truth Audit — COMPLETED
+- Auditoría completa de la cadena de observabilidad
+- Tag: `CP-OBS-31A-OBSERVABILITY-SOURCE-OF-TRUTH-STABLE`
+
+### FASE OBS-31A.1: Prometheus Authority Audit — COMPLETED
+- Prometheus establecido como fuente de verdad de métricas
+- Tag: `CP-OBS-31A.1-PROMETHEUS-AUTHORITY-AUDIT-STABLE`
+
+### FASE OBS-31A.2: Grafana Drift Audit — COMPLETED
+- Auditoría de drift entre dashboards Grafana y runtime real
+- Tag: `CP-OBS-31A.2-GRAFANA-DRIFT-AUDIT-STABLE`
+
+### FASE OBS-31A.3: Runtime-Observability Alignment — COMPLETED
+- Alineamiento entre runtime state y observabilidad externa
+- Tag: `CP-OBS-31A.3-RUNTIME-OBSERVABILITY-ALIGNMENT-STABLE`
+
+### FASE OBS-31A.4: Observability Remediation Plan — COMPLETED
+- Plan de remediación para gaps de observabilidad
+- Tag: `CP-OBS-31A.4-OBSERVABILITY-REMEDIATION-PLAN-STABLE`
+
+### FASE OBS-31A.5: Safe Quick Wins Execution — COMPLETED
+- Ejecución de quick wins de observabilidad
+- Tag: `CP-OBS-31A.5-EXECUTOR-STABLE`
+
+### FASE 31B: Runtime Semantic Maturity & Degraded Mode Governance — COMPLETED
+- Madurez semántica del runtime con governance de modo degradado
+- Nuevo: `runtime/maturity/` con `build_runtime_descriptor()`, `RuntimeStateDescriptor`, `RuntimePhase`, `RuntimeMaturityLevel`, `RuntimeMode`, `FailureDomain`, `GovernanceLevel`, `RouteSemantics`
+- Nuevo: `runtime/observability/` con auditoría Prometheus, Grafana, Loki, drift detection, remediation planner/executor
+- Tag: `CP-31B-RUNTIME-SEMANTIC-MATURITY-STABLE`
+
+---
+
+## CURRENT STATE
+
+**Checkpoint:** `CP-31B-RUNTIME-SEMANTIC-MATURITY-STABLE`
+**HEAD:** `cb9b604d2c0b07a3bb3ae3ff5d42fde410890564`
+
+### Fases completadas (desde 30I-D hasta 31B): 13 fases
+- 30I-D, 30I-E, 30I-F, 30I-F0, 30I-G, OBS-31A, OBS-31A.1, OBS-31A.2, OBS-31A.3, OBS-31A.4, OBS-31A.5, 31B
+- Storage hardening archive policy (CP-STORAGE-HARDENING-ARCHIVE-POLICY-STABLE)
+
+### Tags git: 48 tags (desde CP-21B-STABLE hasta CP-31B-RUNTIME-SEMANTIC-MATURITY-STABLE)
+
+### Próxima fase planificada
+**FASE 31C — Operational Reporting Discipline**
+
+### Roadmap
+- 31C — Operational Reporting Discipline
+- 31E — Active vs Inventory vs Discoverable Separation
+- 31D — Runtime Topology Awareness
+- 32A — Runtime UI Alignment
+- 32B — Grafana Semantic Cleanup
+- 33A — Runtime Governance Registry
+- 28.4 — Tool Contracts & Cross-Plan GC
+- Pilot técnico
+- Pilot operador
+- Multi-GPU (posterior)
+
+### Nota
+Este archivo se actualiza con resumen ejecutivo. Para detalle completo de cada fase, consultar commits y tags git.

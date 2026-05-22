@@ -258,12 +258,14 @@ Si un modelo está desactivado por runtime/config, debe aparecer siempre como DI
 192.168.1.50 = inference backend RX9070.
 192.168.1.60 = inventory/offline RX7900XT hasta que se reactive explícitamente.
 
-4. No Multi-GPU before semantic readiness
+4. No Multi-GPU before semantic readiness (todas las dependencias cerradas en FASE 30A-31B)
 No implementar scheduler Multi-GPU hasta cerrar:
-- 30B model state awareness
-- 30C degraded mode explicit state
-- 30D topology/failure-domain taxonomy
-- 30F route semantics
+- 30H evidence enforcement
+- 30I sensor fusion
+- 30I-G deterministic runtime grounding
+- OBS-31A observability alignment
+- 31B runtime semantic maturity & degraded mode governance
+Todas las anteriores están ✅ cerradas desde CP-31B.
 
 5. Reports must be operational, not generic
 Los informes deben usar tono NOC/operacional.
@@ -485,56 +487,86 @@ FASE 29.4.4-C → SLO health endpoint always-on             ✅ CP-29.4.4-C-SLO-
 FASE 29.4.4-D → parallel tool call hardening                ✅ CP-29.4.4-D-PARALLEL-TOOLCALL-HARDENING-STABLE
 FASE 30A → runtime state foundation & maturity descriptors  ✅ CP-30A-RUNTIME-STATE-FOUNDATION-STABLE
 FASE 30B → model state awareness (active/loaded/discoverable) ✅ CP-30B-MODEL-STATE-AWARE-STABLE
-FASE 30C → single-node explicit degraded mode                ✅ CP-30C-DEGRADED-MODE-EXPLICIT-STABLE
 FASE 30B.1 → completion truncation + multi-gpu triggers       ✅ CP-30B.1-COMPLETION-METADATA-STABLE
+FASE 30C → single-node explicit degraded mode                ✅ CP-30C-DEGRADED-MODE-EXPLICIT-STABLE
 FASE 30D → topology role & failure domain taxonomy            ✅ CP-30D-TOPOLOGY-FAILURE-DOMAIN-STABLE
 FASE 30E → governance visibility refinement                   ✅ CP-30E-GOVERNANCE-VISIBILITY-STABLE
 FASE 30F → cognitive route semantics                           ✅ CP-30F-ROUTE-SEMANTICS-STABLE
 FASE 30G → operational reporting discipline                     ✅ CP-30G-OPERATIONAL-REPORTING-STABLE
 FASE 30Z → runtime maturity consolidation snapshot               ✅ CP-30Z-RUNTIME-MATURITY-CONSOLIDATED
+FASE 30H → runtime evidence enforcement                         ✅ CP-30H-RUNTIME-EVIDENCE-ENFORCEMENT-STABLE
+FASE 30H.1 → universal evidence guard                            ✅ CP-30H.1-UNIVERSAL-EVIDENCE-GUARD-STABLE
+FASE 30H.2 → runtime context injection                           ✅ CP-30H.2-RUNTIME-CONTEXT-INJECTION-STABLE
+FASE 30I → runtime sensor fusion                                 ✅ CP-30I-RUNTIME-SENSOR-FUSION-STABLE
+FASE 30I-B → sensor fusion hardening                             ✅ CP-30I-B-SENSOR-FUSION-HARDENED-STABLE
+FASE 30I-C → sensor summary exposure                              ✅ CP-30I-C-SENSOR-SUMMARY-EXPOSURE-STABLE
+FASE 30I-D → sensor semantics normalization                       ✅ CP-30I-D-SENSOR-SEMANTICS-NORMALIZED-STABLE
+FASE 30I-E → operational response formatting                      ✅ CP-30I-E-OPERATIONAL-RESPONSE-FORMATTING-STABLE
+FASE 30I-F → runtime cognitive compression                        ✅ CP-30I-F-RUNTIME-COGNITIVE-COMPRESSION-STABLE
+FASE 30I-F0 → runtime model routing cleanup                       ✅ CP-30I-F0-RUNTIME-MODEL-ROUTING-CLEANUP-STABLE
+FASE 30I-G → deterministic runtime grounding                      ✅ CP-30I-G-RUNTIME-GROUNDING-STABLE
+FASE OBS-31A → observability source-of-truth audit               ✅ CP-OBS-31A-OBSERVABILITY-SOURCE-OF-TRUTH-STABLE
+FASE OBS-31A.1 → Prometheus authority audit                       ✅ CP-OBS-31A.1-PROMETHEUS-AUTHORITY-AUDIT-STABLE
+FASE OBS-31A.2 → Grafana drift audit                              ✅ CP-OBS-31A.2-GRAFANA-DRIFT-AUDIT-STABLE
+FASE OBS-31A.3 → runtime-observability alignment                  ✅ CP-OBS-31A.3-RUNTIME-OBSERVABILITY-ALIGNMENT-STABLE
+FASE OBS-31A.4 → observability remediation plan                   ✅ CP-OBS-31A.4-OBSERVABILITY-REMEDIATION-PLAN-STABLE
+FASE OBS-31A.5 → safe quick wins execution                        ✅ CP-OBS-31A.5-EXECUTOR-STABLE
+FASE 31B → runtime semantic maturity & degraded mode governance    ✅ CP-31B-RUNTIME-SEMANTIC-MATURITY-STABLE
+FASE 31B-HF1 → OpenCode runtime context alignment                   ✅ CP-31B-HF1-OPENCODE-CONTEXT-ALIGNMENT-STABLE
 ```
 
-Tags git: 36 tags desde `CP-21B-STABLE` hasta `CP-30Z-RUNTIME-MATURITY-CONSOLIDATED`.
+Tags git: 49 tags desde `CP-21B-STABLE` hasta `CP-31B-HF1-OPENCODE-CONTEXT-ALIGNMENT-STABLE`.
 
 **Deuda saldada:** FASE 29.4.4-C — `/slo/health` ahora responde 200 siempre, con payload disabled cuando enforcement=false.
 
-## Próximo: Runtime Maturity Before Multi-GPU (Prioridad cambiada 20/05/26)
+## Current Runtime Truth
 
-**Checkpoint actual:** "Runtime Maturity Consolidated" — Listo para Multi-GPU
-**Estado:** 🟢 Runtime estable | 🟢 Governance estable | 🟢 Taxonomy estable | 🟢 Burn-in estable | 🟢 FASE 30A-30Z completadas (10 fases) | 🟢 6 endpoints /runtime/* always-on 200 | 🟢 36 tags git | 🟢 NOC report real generado + métricas verificadas | 🔵 Multi-GPU next
+**Checkpoint actual:** `CP-31B-RUNTIME-SEMANTIC-MATURITY-STABLE`
 
-**Razón:** FASE 30A + 30B + 30B.1 + 30C + 30D + 30E + 30F + 30G + 30Z completadas. Consolidación verificada:
-- 6/6 endpoints /runtime/* responden 200: health, slo, maturity, topology, governance, routes/semantics, reports/discipline
-- Reporte NOC real generado con grounding + disciplina operacional
-- 11 métricas report activas (6 pre-30G + 5 nuevas 30G)
-- bugfixes: `_report_runtime` UnboundLocalError, `stream_enabled` UnboundLocalError, report metrics JSON structure
-- 1029 tests: 126 maturity + 903 existing = all PASS
-- 36 tags git estables
+**Runtime state source of truth:** `/runtime/maturity` (build_runtime_descriptor)
 
-### PRÓXIMA FASE
+**Operational model routing policy:**
+- `llama-3.1-8b-instruct` = PRIMARY_OPERATIONAL_MODEL (minimal, greetings, observe, light prompts)
+- `qwen/qwen2.5-coder-14b-instruct` = PRIMARY_CODING_MODEL (coding, report, architecture, reasoning, creative)
+- `nomic-embed-text-v1.5` = embedding model (semantic recall)
+- `lmstudio-community/qwen2.5-coder-14b-instruct` = DEPRECATED / NON_ROUTABLE
+- `qwen3.6-27b` = DESACTIVADO (disponible para tests manuales)
+- `qwen2.5-coder-32b` = DOWN (nodo RX7900XT apagado)
 
-1. **FASE 31A — RX7900XT Node Bring-up** — reactivar nodo GPU secundario
+**Active GPU:**
+- RX9070 / 192.168.1.50 / active_inference_backend
 
-### Multi-GPU pospuesto hasta
+**Inventory offline:**
+- RX7900XT / 192.168.1.60 / expected_offline (nodo apagado)
 
-- Runtime maturity estable
-- Report consistency estable
-- Cognitive topology awareness estable
-- Governance semantics cerradas
-- Scheduler contracts definidos
+**Observability authority:**
+- Prometheus = source of truth → 192.168.1.40:9090
+- Grafana = visualization layer only → 192.168.1.40:3000
+- Loki = log layer
+- Grafana is NOT source of truth
 
-### Multi-GPU futuro (cuando se reactive)
+**Storage:**
+- runtime: `/opt/ai-lab`
+- runtime data: `/opt/ai-lab-data`
+- models: `/mnt/ai-models`
+- archives: `/mnt/opencode/ai-lab-archives`
 
-- RX7900XT recovery
-- qwen32b activation
-- cognitive route placement
-- scheduler v1
-- warm pool
-- queue arbitration
-- failover chains
-- VRAM-aware routing
+**Próxima fase:** FASE 31C — Operational Reporting Discipline
 
----
+### Roadmap actual
+
+```
+31C — Operational Reporting Discipline
+31E — Active vs Inventory vs Discoverable Separation
+31D — Runtime Topology Awareness
+32A — Runtime UI Alignment
+32B — Grafana Semantic Cleanup
+33A — Runtime Governance Registry
+28.4 — Tool Contracts & Cross-Plan GC
+Pilot técnico
+Pilot operador
+Multi-GPU (posterior)
+```
 
 
 
