@@ -174,22 +174,50 @@ Los gaps restantes son de normalización semántica y no bloquean el grounding o
 
 ---
 
+### FASE 33A: Runtime Governance Registry — COMPLETED
+- Construcción del registro central de gobierno operacional de AI-LAB
+- Nuevo: `runtime/governance/` con 3 archivos:
+  - `runtime/governance/contracts.py` — 8 dataclasses de contrato (GovernanceRegistryContract, GovernanceDomainContract, GovernanceAuthorityContract, GovernanceConfidenceContract, GovernanceRiskContract, GovernanceRemediationContract, GovernanceHealthContract, GovernanceContractRegistry)
+  - `runtime/governance/runtime_governance_registry.py` (400+ líneas) — 14 funciones core:
+    - `build_runtime_governance_registry()` — orquestador completo
+    - `build_governance_domains()` — 15 dominios formalizados (runtime, topology, observability, prometheus, grafana, reporting, grounding, routing, gpu, storage, archive, governance, ui_alignment, loki, entities)
+    - `build_governance_authority_map()` — authority registry (Prometheus=operational, Grafana=visualization, topology=dependency, grounding=validation, inventory=fallback)
+    - `build_governance_confidence_map()` — confidence propagation (Prometheus stale → observability degraded → governance confidence degraded)
+    - `build_governance_contract_registry()` — 18 fases registradas, 14 activas, 4 deprecated, 1 incompatible
+    - `build_governance_risk_summary()` — detección de stale authority, orphan domains, degraded contracts, low confidence
+    - `build_governance_remediation_summary()` — integración OBS-31A remediation plans
+    - `build_governance_health_summary()` — health contract con operational_state, stale_authority, remediation_pending
+    - `calculate_governance_score()` — scoring con topology_confidence, domain_confidence_avg, freshness_score, explainability_ratio, penalty por degraded/risks
+    - `detect_governance_drift()` — stale observability, topology drift, domain confidence drift
+    - `build_governance_executive_summary()` — texto NOC
+    - `build_governance_degradation_summary()` — degradación detallada
+    - `build_governance_risk_executive()` — risk report textual
+  - `runtime/governance/__init__.py` — exports + GOVERNANCE_CONTRACT_VERSION
+- 7 endpoints always-on 200: `/runtime/governance`, `/runtime/governance/domains`, `/runtime/governance/contracts`, `/runtime/governance/risks`, `/runtime/governance/confidence`, `/runtime/governance/remediation`, `/runtime/governance/score`
+- 7 métricas Prometheus: `GOVERNANCE_SCORE`, `GOVERNANCE_DEGRADED_DOMAINS_TOTAL`, `GOVERNANCE_RISKS_TOTAL`, `GOVERNANCE_CONTRACT_DRIFT_TOTAL`, `GOVERNANCE_STALE_AUTHORITY_TOTAL`, `GOVERNANCE_REMEDIATION_PENDING_TOTAL`, `GOVERNANCE_CONFIDENCE_SCORE`
+- Governance score: 95.8/100 (high) — 0 degraded domains, 1 risk (no_risks), 0 drift, 0 stale authority
+- Integración reporting: `build_governance_summary()` en reporting_engine ahora incluye governance registry, score, degraded domains
+- Integración cognitive: `compress_governance_signals()` en cognitive_compression ahora incluye governance score, risks, drift events
+- Tests: 20 tests, 70+ assertions, 0 failures
+- Tag: `CP-33A-RUNTIME-GOVERNANCE-REGISTRY-STABLE`
+
+---
+
 ## CURRENT STATE
 
-**Checkpoint:** `CP-32B-GRAFANA-SEMANTIC-CLEANUP-STABLE`
-**HEAD:** `8d43e587`
+**Checkpoint:** `CP-33A-RUNTIME-GOVERNANCE-REGISTRY-STABLE`
+**HEAD:** `HEAD`
 
-### Fases completadas (desde 30I-D hasta 32B): 18 fases
-- 30I-D, 30I-E, 30I-F, 30I-F0, 30I-G, OBS-31A, OBS-31A.1, OBS-31A.2, OBS-31A.3, OBS-31A.4, OBS-31A.5, 31B, 31C, 31E, 31D, 32A, 32B
+### Fases completadas (desde 30I-D hasta 33A): 19 fases
+- 30I-D, 30I-E, 30I-F, 30I-F0, 30I-G, OBS-31A, OBS-31A.1, OBS-31A.2, OBS-31A.3, OBS-31A.4, OBS-31A.5, 31B, 31C, 31E, 31D, 32A, 32B, 33A
 - Storage hardening archive policy (CP-STORAGE-HARDENING-ARCHIVE-POLICY-STABLE)
 
-### Tags git: 51 tags (desde CP-21B-STABLE hasta CP-32B-GRAFANA-SEMANTIC-CLEANUP-STABLE)
+### Tags git: 52 tags (desde CP-21B-STABLE hasta CP-33A-RUNTIME-GOVERNANCE-REGISTRY-STABLE)
 
 ### Próxima fase planificada
-**FASE 33A — Runtime Governance Registry**
+**FASE 28.4 — Tool Contracts & Cross-Plan GC**
 
 ### Roadmap
-- 33A — Runtime Governance Registry
 - 28.4 — Tool Contracts & Cross-Plan GC
 - Pilot técnico
 - Pilot operador

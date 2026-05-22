@@ -5,6 +5,7 @@ Uses the official prometheus_client library (already in venv).
 """
 
 import time
+from typing import Any
 
 from prometheus_client import Counter, Gauge, Histogram
 
@@ -1644,3 +1645,59 @@ GRAFANA_RUNTIME_ALIGNED_DASHBOARDS_TOTAL = Gauge(
     "ailab_grafana_runtime_aligned_dashboards_total",
     "Total Grafana dashboards marked as runtime-aligned",
 )
+
+# ── FASE 33A: Runtime Governance Registry Metrics ────────────
+GOVERNANCE_SCORE = Gauge(
+    "ailab_governance_score",
+    "Runtime governance score 0-100",
+)
+GOVERNANCE_DEGRADED_DOMAINS_TOTAL = Gauge(
+    "ailab_governance_degraded_domains_total",
+    "Total degraded governance domains",
+)
+GOVERNANCE_RISKS_TOTAL = Gauge(
+    "ailab_governance_risks_total",
+    "Total active governance risks",
+)
+GOVERNANCE_CONTRACT_DRIFT_TOTAL = Gauge(
+    "ailab_governance_contract_drift_total",
+    "Total contract drift instances detected",
+)
+GOVERNANCE_STALE_AUTHORITY_TOTAL = Gauge(
+    "ailab_governance_stale_authority_total",
+    "Total stale authority entries",
+)
+GOVERNANCE_REMEDIATION_PENDING_TOTAL = Gauge(
+    "ailab_governance_remediation_pending_total",
+    "Total pending remediation items",
+)
+GOVERNANCE_CONFIDENCE_SCORE = Gauge(
+    "ailab_governance_confidence_score",
+    "Governance confidence score 0.0-1.0",
+)
+
+
+def record_governance_metrics(registry: dict[str, Any]) -> None:
+    score_info = registry.get("governance_score_info", {})
+    score = score_info.get("score", 0)
+    GOVERNANCE_SCORE.set(float(max(0.0, min(100.0, score))))
+
+    degraded = registry.get("degraded_domains", [])
+    GOVERNANCE_DEGRADED_DOMAINS_TOTAL.set(float(len(degraded)))
+
+    risks = registry.get("risks", [])
+    active_risks = [r for r in risks if r.get("severity") in ("high", "medium", "critical")]
+    GOVERNANCE_RISKS_TOTAL.set(float(len(active_risks)))
+
+    drift = registry.get("drift", [])
+    active_drift = [d for d in drift if d.get("drift_type") != "no_drift"]
+    GOVERNANCE_CONTRACT_DRIFT_TOTAL.set(float(len(active_drift)))
+
+    health = registry.get("health_summary", {})
+    stale_authority = health.get("stale_authority", [])
+    GOVERNANCE_STALE_AUTHORITY_TOTAL.set(float(len(stale_authority)))
+    GOVERNANCE_REMEDIATION_PENDING_TOTAL.set(float(health.get("remediation_pending", 0)))
+
+    confidence = health.get("confidence", "unknown")
+    conf_val = {"high": 1.0, "medium": 0.6, "low": 0.2, "unknown": 0.0}.get(confidence, 0.0)
+    GOVERNANCE_CONFIDENCE_SCORE.set(conf_val)

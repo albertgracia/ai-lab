@@ -6,9 +6,9 @@ order: 8
 
 ## Estado actual
 
-**Checkpoint:** CP-32B-GRAFANA-SEMANTIC-CLEANUP-STABLE
+**Checkpoint:** CP-33A-RUNTIME-GOVERNANCE-REGISTRY-STABLE
 
-### Completado (18 fases desde 30I-D)
+### Completado (19 fases desde 30I-D)
 
 | FASE | Estado |
 |------|--------|
@@ -29,12 +29,12 @@ order: 8
 | 31D — Runtime Topology Awareness | ✅ |
 | 32A — Runtime UI Alignment | ✅ |
 | 32B — Grafana Semantic Cleanup | ✅ |
+| 33A — Runtime Governance Registry | ✅ |
 
 ### Próxima fase
-**FASE 33A — Runtime Governance Registry**
+**FASE 28.4 — Tool Contracts & Cross-Plan GC**
 
 ### Roadmap futuro
-- 33A — Runtime Governance Registry
 - 28.4 — Tool Contracts & Cross-Plan GC
 - Pilot técnico
 - Pilot operador

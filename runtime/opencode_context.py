@@ -6,8 +6,8 @@ import sys
 ROOT = Path("/opt/ai-lab")
 
 # Anti-stale guard: minimum expected checkpoint
-MINIMUM_CHECKPOINT = "CP-32A"
-CURRENT_CHECKPOINT_TAG = "CP-32A-RUNTIME-UI-ALIGNMENT-STABLE"
+MINIMUM_CHECKPOINT = "CP-33A"
+CURRENT_CHECKPOINT_TAG = "CP-33A-RUNTIME-GOVERNANCE-REGISTRY-STABLE"
 CURRENT_CHECKPOINT_COMMIT = "HEAD"
 
 CONTEXT_FILES = [
@@ -84,7 +84,7 @@ def build_runtime_truth_block() -> str:
         "- Loki log layer",
         "- Grafana is NOT source of truth",
         "",
-        "Next planned phase: FASE 32B - TBD",
+        "Next planned phase: FASE 28.4 - Tool Contracts & Cross-Plan GC",
         "",
         "Runtime APIs (source_of_truth for UI):",
         "- /runtime/entities      → entity registry with active/inventory/deprecated",
@@ -94,6 +94,7 @@ def build_runtime_truth_block() -> str:
         "- /runtime/grounding     → runtime grounding envelope",
         "- /runtime/reporting/*   → operational reports",
         "- /runtime/observability/* → observability audit",
+        "- /runtime/governance    → governance registry with domains, authority, risks, score, contracts, remediation",
         "",
         "UI is runtime-driven. No hardcoded GPUs (RTX5070, A100). No fake inventory.",
         "",

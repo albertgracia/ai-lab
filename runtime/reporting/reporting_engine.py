@@ -367,8 +367,23 @@ def build_governance_summary(
     conf_set = set(dc.values()) if dc else {"unknown"}
     confidence = _confidence_from_set(conf_set)
 
+    # FASE 33A: integrate governance registry
+    governance_registry = None
+    governance_score = None
+    governance_level = None
+    degraded_governance_domains = []
+    try:
+        from runtime.governance import build_runtime_governance_registry
+        _reg = build_runtime_governance_registry(extra_ctx, sensor_snapshot)
+        governance_registry = _reg
+        governance_score = _reg.get("governance_score_info", {}).get("score")
+        governance_level = _reg.get("governance_score_info", {}).get("level")
+        degraded_governance_domains = _reg.get("degraded_domains", [])
+    except ImportError:
+        pass
+
     report = GovernanceReportContract(
-        governance_level="enforced",
+        governance_level=governance_level or "enforced",
         blocked_actions=blocked,
         blocked_by_reason=blocked_by_reason,
         evidence_guard_active=evidence_active,
@@ -377,6 +392,19 @@ def build_governance_summary(
         freshness="fresh",
     )
     d = report.to_dict()
+    if governance_score is not None:
+        d["governance_score"] = governance_score
+        d["governance_score_level"] = governance_level
+        d["degraded_governance_domains"] = degraded_governance_domains
+    if governance_registry:
+        d["governance_registry"] = {
+            "contract_version": governance_registry.get("governance_score_info", {}).get("contract_version", "33A"),
+            "governance_score": governance_registry.get("governance_score_info", {}).get("score"),
+            "governance_level": governance_registry.get("governance_score_info", {}).get("level"),
+            "degraded_domains": governance_registry.get("degraded_domains", []),
+            "risks_total": len(governance_registry.get("risks", [])),
+            "drift_total": len([d for d in governance_registry.get("drift", []) if d.get("drift_type") != "no_drift"]),
+        }
     _record_governance_metrics(d)
     return d
 

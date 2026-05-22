@@ -231,6 +231,49 @@ def compress_governance_signals(
             "freshness": "fresh",
         })
 
+    # FASE 33A: governance registry signals
+    try:
+        from runtime.governance import build_runtime_governance_registry
+        _reg = build_runtime_governance_registry(extra_ctx, sensor_snapshot)
+        _score = _reg.get("governance_score_info", {})
+        _score_val = _score.get("score", 0)
+        _level = _score.get("level", "unknown")
+        _degraded = _reg.get("degraded_domains", [])
+
+        signals.append({
+            "domain": "governance", "severity": "info",
+            "message": f"governance score: {_score_val}/100 ({_level}), {len(_degraded)} dominios degradados",
+            "evidence": ["runtime_governance_33a"], "confidence": "high",
+            "freshness": "fresh",
+        })
+
+        _risks = _reg.get("risks", [])
+        for r in _risks:
+            if r.get("severity") in ("high", "critical"):
+                signals.append({
+                    "domain": "governance", "severity": "warning",
+                    "message": f"governance risk [{r.get('severity')}]: {r.get('description', '')}",
+                    "evidence": ["runtime_governance_33a"], "confidence": r.get("confidence", "medium"),
+                    "freshness": "fresh",
+                })
+
+        _drift = [d for d in _reg.get("drift", []) if d.get("drift_type") != "no_drift"]
+        if _drift:
+            signals.append({
+                "domain": "governance", "severity": "warning",
+                "message": f"{len(_drift)} governance drift events detectados",
+                "evidence": ["runtime_governance_33a"], "confidence": "high",
+                "freshness": "fresh",
+            })
+
+    except ImportError:
+        signals.append({
+            "domain": "governance", "severity": "info",
+            "message": "governance registry module no disponible — FASE 33A no integrada",
+            "evidence": ["code"], "confidence": "low",
+            "freshness": "unavailable",
+        })
+
     return signals
 
 

@@ -2406,6 +2406,174 @@ class GatewayHandler(BaseHTTPRequestHandler):
 
             return
 
+        # ── FASE 33A: Runtime Governance Registry — always-on 200 ──
+        if self.path == "/runtime/governance":
+            try:
+                from runtime.governance import build_runtime_governance_registry, GOVERNANCE_CONTRACT_VERSION
+                from runtime.telemetry.prometheus_metrics import record_governance_metrics
+                _registry = build_runtime_governance_registry()
+                record_governance_metrics(_registry)
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/governance",
+                    "timestamp": time.time(),
+                    "contract_version": GOVERNANCE_CONTRACT_VERSION,
+                    "governance_registry": _registry,
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/governance",
+                    "timestamp": time.time(),
+                    "contract_version": "33A",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/governance/domains":
+            try:
+                from runtime.governance import build_governance_domains, GOVERNANCE_CONTRACT_VERSION
+                _domains = build_governance_domains()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/governance/domains",
+                    "timestamp": time.time(),
+                    "contract_version": GOVERNANCE_CONTRACT_VERSION,
+                    "domains": _domains,
+                    "total_domains": len(_domains),
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/governance/domains",
+                    "timestamp": time.time(),
+                    "contract_version": "33A",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/governance/contracts":
+            try:
+                from runtime.governance import build_governance_contract_registry, GOVERNANCE_CONTRACT_VERSION
+                _contracts = build_governance_contract_registry()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/governance/contracts",
+                    "timestamp": time.time(),
+                    "contract_version": GOVERNANCE_CONTRACT_VERSION,
+                    "contract_registry": _contracts,
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/governance/contracts",
+                    "timestamp": time.time(),
+                    "contract_version": "33A",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/governance/risks":
+            try:
+                from runtime.governance import build_governance_risk_summary, GOVERNANCE_CONTRACT_VERSION
+                _risks = build_governance_risk_summary()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/governance/risks",
+                    "timestamp": time.time(),
+                    "contract_version": GOVERNANCE_CONTRACT_VERSION,
+                    "risks": _risks,
+                    "total_risks": len(_risks),
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/governance/risks",
+                    "timestamp": time.time(),
+                    "contract_version": "33A",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/governance/confidence":
+            try:
+                from runtime.governance import build_governance_confidence_map, GOVERNANCE_CONTRACT_VERSION
+                _confidence = build_governance_confidence_map()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/governance/confidence",
+                    "timestamp": time.time(),
+                    "contract_version": GOVERNANCE_CONTRACT_VERSION,
+                    "confidence_map": _confidence,
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/governance/confidence",
+                    "timestamp": time.time(),
+                    "contract_version": "33A",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/governance/remediation":
+            try:
+                from runtime.governance import build_governance_remediation_summary, GOVERNANCE_CONTRACT_VERSION
+                _remediation = build_governance_remediation_summary()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/governance/remediation",
+                    "timestamp": time.time(),
+                    "contract_version": GOVERNANCE_CONTRACT_VERSION,
+                    "remediation": _remediation,
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/governance/remediation",
+                    "timestamp": time.time(),
+                    "contract_version": "33A",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/governance/score":
+            try:
+                from runtime.governance import calculate_governance_score, GOVERNANCE_CONTRACT_VERSION
+                from runtime.telemetry.prometheus_metrics import GOVERNANCE_SCORE
+                _score = calculate_governance_score()
+                GOVERNANCE_SCORE.set(float(_score.get("governance_score", 0)))
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/governance/score",
+                    "timestamp": time.time(),
+                    "contract_version": GOVERNANCE_CONTRACT_VERSION,
+                    "governance_score": _score,
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/governance/score",
+                    "timestamp": time.time(),
+                    "contract_version": "33A",
+                    "error": str(exc),
+                })
+            return
+
         self._send_json(
             404,
             {
