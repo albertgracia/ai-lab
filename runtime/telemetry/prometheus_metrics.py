@@ -1244,3 +1244,57 @@ def record_observability_datasource_health(datasource_name: str, health: int) ->
 
 def record_observability_alignment_score(score: float) -> None:
     OBSERVABILITY_ALIGNMENT_SCORE.set(float(max(0.0, min(100.0, score))))
+
+
+# ── OBS-31A.4 Remediation metrics ──
+
+OBSERVABILITY_REMEDIATION_TOTAL = Counter(
+    "ailab_observability_remediation_total",
+    "Total remediation items generated",
+    ["domain", "severity"],
+)
+OBSERVABILITY_REMEDIATION_CRITICAL_TOTAL = Counter(
+    "ailab_observability_remediation_critical_total",
+    "Critical remediation items",
+)
+OBSERVABILITY_QUICK_WIN_TOTAL = Counter(
+    "ailab_observability_quick_win_total",
+    "Safe quick win remediation items",
+)
+OBSERVABILITY_HIGH_RISK_CHANGE_TOTAL = Counter(
+    "ailab_observability_high_risk_change_total",
+    "High-risk change remediation items",
+)
+OBSERVABILITY_TECHNICAL_DEBT_TOTAL = Counter(
+    "ailab_observability_technical_debt_total",
+    "Technical debt items count by domain",
+    ["domain"],
+)
+OBSERVABILITY_REMEDIATION_SCORE = Gauge(
+    "ailab_observability_remediation_score",
+    "Observability remediation score 0-100",
+)
+
+
+def record_observability_remediation(domain: str, severity: str) -> None:
+    OBSERVABILITY_REMEDIATION_TOTAL.labels(domain=domain, severity=severity).inc()
+
+
+def record_observability_remediation_critical() -> None:
+    OBSERVABILITY_REMEDIATION_CRITICAL_TOTAL.inc()
+
+
+def record_observability_quick_win() -> None:
+    OBSERVABILITY_QUICK_WIN_TOTAL.inc()
+
+
+def record_observability_high_risk_change() -> None:
+    OBSERVABILITY_HIGH_RISK_CHANGE_TOTAL.inc()
+
+
+def record_observability_technical_debt(domain: str) -> None:
+    OBSERVABILITY_TECHNICAL_DEBT_TOTAL.labels(domain=domain).inc()
+
+
+def record_observability_remediation_score(score: float) -> None:
+    OBSERVABILITY_REMEDIATION_SCORE.set(float(max(0.0, min(100.0, score))))

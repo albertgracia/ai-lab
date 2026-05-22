@@ -1625,6 +1625,150 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 })
             return
 
+        if self.path == "/runtime/observability/remediation-plan":
+            try:
+                from runtime.observability.remediation_planner import RemediationPlanner
+                from runtime.observability.dashboard_validator import DashboardValidator
+                from runtime.observability.prometheus_audit import run_prometheus_authority_audit
+
+                _drift = None
+                _inventory = DashboardValidator().validate_all_known()
+                _audit = DashboardValidator().build_dashboard_audit_summary()
+                _targets = run_prometheus_authority_audit()
+                _alignment = None
+
+                _plan = RemediationPlanner().build_remediation_plan(
+                    drift_result=_drift,
+                    dashboard_inventory=_inventory,
+                    dashboard_audit=_audit,
+                    prometheus_targets=_targets,
+                    runtime_alignment=_alignment,
+                    grafana_dashboards=_inventory,
+                )
+                _plan_dict = _plan.to_dict()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/remediation-plan",
+                    "timestamp": time.time(),
+                    "contract_version": "OBS-31A.4",
+                    "remediation_plan": _plan_dict,
+                })
+                try:
+                    from runtime.telemetry.prometheus_metrics import (
+                        record_observability_remediation,
+                        record_observability_audit,
+                    )
+                    record_observability_audit("remediation_plan", "ok")
+                    for _item in _plan.items:
+                        record_observability_remediation(_item.domain, _item.severity)
+                except ImportError:
+                    pass
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/remediation-plan",
+                    "timestamp": time.time(),
+                    "contract_version": "OBS-31A.4",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/observability/remediation-summary":
+            try:
+                from runtime.observability.remediation_planner import RemediationPlanner
+                from runtime.observability.dashboard_validator import DashboardValidator
+                from runtime.observability.prometheus_audit import run_prometheus_authority_audit
+
+                _inventory = DashboardValidator().validate_all_known()
+                _audit = DashboardValidator().build_dashboard_audit_summary()
+                _targets = run_prometheus_authority_audit()
+
+                _planner = RemediationPlanner()
+                _plan = _planner.build_remediation_plan(
+                    dashboard_inventory=_inventory,
+                    dashboard_audit=_audit,
+                    prometheus_targets=_targets,
+                    grafana_dashboards=_inventory,
+                )
+                _summary = _planner.generate_remediation_summary(_plan)
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/remediation-summary",
+                    "timestamp": time.time(),
+                    "contract_version": "OBS-31A.4",
+                    "remediation_summary": _summary.to_dict(),
+                })
+                try:
+                    from runtime.telemetry.prometheus_metrics import (
+                        record_observability_remediation_score,
+                        record_observability_audit,
+                    )
+                    record_observability_remediation_score(_summary.remediation_score)
+                    record_observability_audit("remediation_summary", "ok")
+                except ImportError:
+                    pass
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/remediation-summary",
+                    "timestamp": time.time(),
+                    "contract_version": "OBS-31A.4",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/observability/technical-debt":
+            try:
+                from runtime.observability.remediation_planner import RemediationPlanner
+                from runtime.observability.dashboard_validator import DashboardValidator
+                from runtime.observability.prometheus_audit import run_prometheus_authority_audit
+
+                _inventory = DashboardValidator().validate_all_known()
+                _audit = DashboardValidator().build_dashboard_audit_summary()
+                _targets = run_prometheus_authority_audit()
+
+                _planner = RemediationPlanner()
+                _plan = _planner.build_remediation_plan(
+                    dashboard_inventory=_inventory,
+                    dashboard_audit=_audit,
+                    prometheus_targets=_targets,
+                    grafana_dashboards=_inventory,
+                )
+                _debt = _planner.get_technical_debt_report(_plan)
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/technical-debt",
+                    "timestamp": time.time(),
+                    "contract_version": "OBS-31A.4",
+                    "technical_debt": _debt,
+                })
+                try:
+                    from runtime.telemetry.prometheus_metrics import (
+                        record_observability_technical_debt,
+                        record_observability_audit,
+                    )
+                    record_observability_audit("technical_debt", "ok")
+                    for _domain, _count in _debt.get('by_domain', {}).items():
+                        for _ in range(_count):
+                            record_observability_technical_debt(_domain)
+                except ImportError:
+                    pass
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/technical-debt",
+                    "timestamp": time.time(),
+                    "contract_version": "OBS-31A.4",
+                    "error": str(exc),
+                })
+            return
+
         if self.path == "/runtime/reports/discipline":
             try:
                 from runtime.gateway.tool_request_classifier import FORBIDDEN_TOOL_RECOMMENDATIONS

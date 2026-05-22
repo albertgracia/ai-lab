@@ -60,6 +60,23 @@ from runtime.observability.loki_audit import (
     audit_loki,
     build_loki_audit_summary,
 )
+from runtime.observability.remediation_contracts import (
+    REMEDIATION_CONTRACT_VERSION,
+    RemediationSeverity,
+    ProblemClass,
+    RemediationPhase,
+    RemediationRisk,
+    RemediationItem,
+    RemediationPlan,
+    RemediationSummary,
+    build_remediation_item,
+)
+from runtime.observability.remediation_planner import (
+    REMEDIATION_PLANNER_CONTRACT_VERSION,
+    RemediationPlanner,
+    build_remediation_plan,
+    classify_remediation_priority,
+)
 from runtime.observability.metric_inventory import (
     MetricEntry,
     MetricCriticality,
@@ -105,4 +122,17 @@ __all__ = [
     "RuntimeAlignmentValidationResult",
     "RuntimeAlignmentValidator",
     "build_runtime_alignment_result",
+    "REMEDIATION_CONTRACT_VERSION",
+    "RemediationSeverity",
+    "ProblemClass",
+    "RemediationPhase",
+    "RemediationRisk",
+    "RemediationItem",
+    "RemediationPlan",
+    "RemediationSummary",
+    "build_remediation_item",
+    "REMEDIATION_PLANNER_CONTRACT_VERSION",
+    "RemediationPlanner",
+    "build_remediation_plan",
+    "classify_remediation_priority",
 ]
