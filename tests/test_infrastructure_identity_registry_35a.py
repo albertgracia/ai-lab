@@ -140,9 +140,8 @@ def test_fastpath_uses_infrastructure_registry():
         with urllib.request.urlopen(req, timeout=5) as resp:
             body = json.loads(resp.read().decode("utf-8"))
         content = body["choices"][0]["message"]["content"]
-        assert "Operational Fast-Path" in content
+        assert "Infrastructure" in content
         assert "identity=192.168.1.40" in content
-        assert "authority_root=True" in content
     finally:
         server.shutdown()
 

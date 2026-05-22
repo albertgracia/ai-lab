@@ -876,6 +876,42 @@ def build_authority_freshness_summary(*, extra_ctx: dict[str, Any] | None = None
     except Exception as exc:
         return {"contract_version": "35C", "error": str(exc)}
 
+
+def build_fastpath_operational_summary(*, extra_ctx: dict[str, Any] | None = None, sensor_snapshot: dict[str, Any] | None = None) -> dict[str, Any]:
+    """FASE 35D: compact operational summary for NOC."""
+    extra_ctx = extra_ctx or {}
+    sensor_snapshot = sensor_snapshot or {}
+    try:
+        from runtime.fastpath import build_fastpath_response
+        fp = build_fastpath_response("estado runtime", extra_ctx=extra_ctx, sensor_snapshot=sensor_snapshot, verbosity="operational")
+        return {
+            "contract_version": "35D",
+            "fastpath": fp,
+            "deterministic_signature": fp.get("deterministic_signature"),
+        }
+    except Exception as exc:
+        return {"contract_version": "35D", "error": str(exc)}
+
+
+def build_fastpath_compact_domain_summary(domain: str, *, extra_ctx: dict[str, Any] | None = None, sensor_snapshot: dict[str, Any] | None = None) -> dict[str, Any]:
+    """FASE 35D: compact summaries per domain."""
+    extra_ctx = extra_ctx or {}
+    sensor_snapshot = sensor_snapshot or {}
+    q = {
+        "observability": "estado observabilidad",
+        "governance": "estado governance",
+        "validation": "estado validation",
+        "topology": "estado topology",
+        "infrastructure": "estado infrastructure",
+        "gpu": "estado gpu",
+    }.get(domain, "estado runtime")
+    try:
+        from runtime.fastpath import build_fastpath_response
+        fp = build_fastpath_response(q, extra_ctx=extra_ctx, sensor_snapshot=sensor_snapshot, verbosity="operational")
+        return {"contract_version": "35D", "domain": domain, "fastpath": fp}
+    except Exception as exc:
+        return {"contract_version": "35D", "domain": domain, "error": str(exc)}
+
 # ── FASE 34A: Hardening summary integration ─────────────────────────
 
 def build_hardening_summary(

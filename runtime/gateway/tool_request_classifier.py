@@ -503,11 +503,13 @@ _FASTPATH_INTENTS: dict[str, tuple[str, ...]] = {
     "runtime": (
         "runtime status", "estado runtime", "estado del runtime", "cluster status", "estado cluster",
         "topology", "topologia", "topología",
+        "estado topology", "estado topologia", "estado topología",
     ),
     "gpu": GPU_RUNTIME_INTENT_PATTERNS,
     "observability": (
         "observability", "observabilidad", "prometheus", "grafana", "loki",
         "exporters", "exporter", "targets", "scrape", "metricas", "métricas",
+        "estado observabilidad", "estado observability",
     ),
     "authority": (
         "lista targets", "list targets", "targets prometheus", "prometheus targets",
@@ -517,10 +519,12 @@ _FASTPATH_INTENTS: dict[str, tuple[str, ...]] = {
     "governance": (
         "governance", "gobernanza", "policy", "riesgos governance", "governance score",
         "dominios degradados", "degraded domains",
+        "estado governance", "estado gobernanza",
     ),
     "validation": (
         "validation", "validacion", "validación", "invariants", "safety gates",
         "pilot readiness",
+        "estado validation", "estado validacion", "estado validación",
     ),
     "watchdogs": (
         "watchdog", "watchdogs", "timeouts", "hardening", "escalation", "containment",

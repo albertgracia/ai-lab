@@ -1700,6 +1700,40 @@ FASTPATH_REQUESTS_TOTAL = Counter(
     "Operational fast-path requests served without LM Studio",
     ["intent"],
 )
+
+# ── FASE 35D: Operational fast-path UX metrics ───────────────────
+FASTPATH_LATENCY_SECONDS = Histogram(
+    "ailab_fastpath_latency_seconds",
+    "Latency for operational fast-path (seconds)",
+    buckets=(0.001, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1.0, 2.0),
+)
+FASTPATH_CACHE_HITS_TOTAL = Counter(
+    "ailab_fastpath_cache_hits_total",
+    "Fast-path cache hits",
+)
+FASTPATH_CACHE_MISSES_TOTAL = Counter(
+    "ailab_fastpath_cache_misses_total",
+    "Fast-path cache misses",
+)
+OPERATIONAL_COMPACT_RESPONSES_TOTAL = Counter(
+    "ailab_operational_compact_responses_total",
+    "Compact operational fast-path responses generated",
+    ["intent"],
+)
+DEEP_PATH_REQUESTS_TOTAL = Counter(
+    "ailab_deep_path_requests_total",
+    "Requests classified as deep-path (diagnostic/forensic/incident/remediation)",
+    ["classification"],
+)
+VERBOSITY_SUPPRESSION_TOTAL = Counter(
+    "ailab_verbosity_suppression_total",
+    "Verbosity suppression events in fast-path outputs",
+    ["kind"],
+)
+OPERATIONAL_RESPONSE_QUALITY_SCORE = Gauge(
+    "ailab_operational_response_quality_score",
+    "Operational response quality score 0-100 (compactness/usability)",
+)
 CACHE_HITS_TOTAL = Counter(
     "ailab_cache_hits_total",
     "Cache hits (performance/authority cache)",
@@ -2157,6 +2191,51 @@ def record_validation_latency_ms(ms: float) -> None:
 def record_fastpath_request(intent: str) -> None:
     try:
         FASTPATH_REQUESTS_TOTAL.labels(intent=intent or "unknown").inc()
+    except Exception:
+        pass
+
+
+def record_fastpath_latency_seconds(seconds: float) -> None:
+    try:
+        FASTPATH_LATENCY_SECONDS.observe(max(0.0, float(seconds)))
+    except Exception:
+        pass
+
+
+def record_fastpath_cache_event(*, hit: bool) -> None:
+    try:
+        if hit:
+            FASTPATH_CACHE_HITS_TOTAL.inc()
+        else:
+            FASTPATH_CACHE_MISSES_TOTAL.inc()
+    except Exception:
+        pass
+
+
+def record_operational_compact_response(intent: str) -> None:
+    try:
+        OPERATIONAL_COMPACT_RESPONSES_TOTAL.labels(intent=intent or "unknown").inc()
+    except Exception:
+        pass
+
+
+def record_deep_path_request(classification: str) -> None:
+    try:
+        DEEP_PATH_REQUESTS_TOTAL.labels(classification=classification or "unknown").inc()
+    except Exception:
+        pass
+
+
+def record_verbosity_suppression(kind: str) -> None:
+    try:
+        VERBOSITY_SUPPRESSION_TOTAL.labels(kind=kind or "unknown").inc()
+    except Exception:
+        pass
+
+
+def record_operational_response_quality_score(score: float) -> None:
+    try:
+        OPERATIONAL_RESPONSE_QUALITY_SCORE.set(float(max(0.0, min(100.0, float(score)))))
     except Exception:
         pass
 

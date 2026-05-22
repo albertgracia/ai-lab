@@ -779,6 +779,25 @@ def build_runtime_governance_registry(
     except Exception:
         pass
 
+    # ── FASE 35D: Operational fast-path health integration ─────────
+    try:
+        from runtime.fastpath import build_fastpath_response
+        fp = build_fastpath_response("estado runtime", extra_ctx={"enable_network": False}, sensor_snapshot=sensor_snapshot or {}, verbosity="operational")
+        result["fastpath_health"] = {
+            "contract_version": "35D",
+            "response_quality_score": fp.get("response_quality_score", 0.0),
+            "deep_path": bool((fp.get("routing", {}) or {}).get("deep_path")),
+            "deterministic_signature": fp.get("deterministic_signature"),
+        }
+        # Minimal operational pressure signals.
+        q = float(fp.get("response_quality_score", 0.0) or 0.0)
+        result.setdefault("performance", {})
+        if isinstance(result.get("performance"), dict):
+            result["performance"]["operational_response_quality"] = q
+            result["performance"]["deep_path_pressure"] = "low" if not bool((fp.get("routing", {}) or {}).get("deep_path")) else "high"
+    except Exception:
+        pass
+
     result["drift"] = drift
 
     try:

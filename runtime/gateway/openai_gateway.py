@@ -612,7 +612,8 @@ def inject_agent_context(payload):
     # FASE 30H.2: build real runtime context if runtime intent detected
     # replaces FASE 30H.1 synthetic minimal context with format_report_runtime_context()
     # FASE 34C: avoid heavy runtime grounding context for fast-path operational queries.
-    if _report_runtime is None and detect_runtime_grounded_intent(user_text) and _fastpath_intent not in {"governance", "validation", "observability", "watchdogs", "infrastructure", "authority", "semantic"}:
+    # FASE 35D: avoid heavy runtime context injection for operational fast-path.
+    if _report_runtime is None and detect_runtime_grounded_intent(user_text) and _fastpath_intent is None:
         _report_runtime_dict = build_report_runtime_context()
         _report_runtime = format_report_runtime_context()
         payload["_report_runtime_context"] = _report_runtime
@@ -635,94 +636,20 @@ def inject_agent_context(payload):
     if _operational_response_profile == "operational_compact" and not payload.get("_compact_runtime_answer"):
         try:
             _intent = detect_operational_fastpath_intent(user_text)
-            if _intent in {"governance", "validation", "observability", "watchdogs", "infrastructure", "authority"}:
-                from runtime.performance import build_fast_operational_summary, compress_operational_noise, prime_async_diagnostics
+            if _intent:
+                # FASE 35D: unified compact operational fast-path.
+                from runtime.fastpath import build_fastpath_response
 
-                # Keep background caches warm without blocking the request.
-                try:
-                    prime_async_diagnostics(extra_ctx={})
-                except Exception:
-                    pass
-
-                if _intent == "watchdogs":
-                    try:
-                        from runtime.reporting.reporting_engine import build_hardening_summary
-                        _hs = build_hardening_summary(sensor_snapshot=_report_runtime_dict or {}, extra_ctx={})
-                    except Exception as _exc:
-                        _hs = {"contract_version": "34A", "error": str(_exc)}
-                    lines = [
-                        "AI-LAB Operational Fast-Path",
-                        f"hardening_score={_hs.get('hardening_score', 0.0)}",
-                        f"hardening_level={_hs.get('hardening_level', 'unknown')}",
-                        f"escalation_state={_hs.get('escalation_state', 'unknown')}",
-                        f"containment_mode={bool(_hs.get('containment_mode'))}",
-                    ]
-                    payload["_compact_runtime_answer"] = compress_operational_noise("\n".join(lines), level="operational")
-                elif _intent == "infrastructure":
-                    try:
-                        from runtime.infrastructure import identify_infrastructure
-                        rep = identify_infrastructure(user_text)
-                        lines = [
-                            "AI-LAB Operational Fast-Path",
-                            f"identity={rep.get('identity') or 'NO DISPONIBLE'}",
-                            f"operational_state={rep.get('operational_state', 'unknown')}",
-                            f"authority_root={bool(rep.get('authority_root'))}",
-                            f"expected_offline={bool(rep.get('expected_offline'))}",
-                            f"roles={','.join(rep.get('roles', []) or []) or 'unknown'}",
-                        ]
-                        payload["_compact_runtime_answer"] = compress_operational_noise("\n".join(lines), level="operational")
-                        payload["_runtime_only_reasoning"] = True
-                    except Exception:
-                        pass
-                elif _intent == "authority":
-                    try:
-                        from runtime.authority import build_live_authority_snapshot
-                        snap = build_live_authority_snapshot(extra_ctx={})
-                        fresh = snap.get("freshness", {}) or {}
-                        targets = (snap.get("prometheus", {}) or {}).get("targets", {}) or {}
-                        down = targets.get("down_targets", []) or []
-                        lines = [
-                            "AI-LAB Operational Fast-Path",
-                            f"authority_freshness={fresh.get('status', 'unknown')}",
-                            f"targets_total={targets.get('active_total', 0)}",
-                            f"targets_up={targets.get('scrape_up', 0)}",
-                            f"targets_down={targets.get('scrape_down', 0)}",
-                            f"down_examples={','.join([str(d.get('job') or '?') for d in down[:3]]) or 'none'}",
-                        ]
-                        payload["_compact_runtime_answer"] = compress_operational_noise("\n".join(lines), level="operational")
-                        payload["_runtime_only_reasoning"] = True
-                    except Exception:
-                        pass
-                else:
-                    _fp = build_fast_operational_summary(_intent, extra_ctx={}, sensor_snapshot=_report_runtime_dict or {})
-                    if _intent == "governance":
-                        g = _fp.get("governance", {}) or {}
-                        lines = [
-                            "AI-LAB Operational Fast-Path",
-                            f"governance_score={g.get('score', 'unknown')}",
-                            f"governance_level={g.get('level', 'unknown')}",
-                            f"degraded_domains={','.join(g.get('degraded_domains', []) or []) or 'none'}",
-                        ]
-                    elif _intent == "validation":
-                        v = _fp.get("validation", {}) or {}
-                        lines = [
-                            "AI-LAB Operational Fast-Path",
-                            f"validation_score={v.get('validation_score', 'unknown')}",
-                            f"validation_level={v.get('validation_level', 'unknown')}",
-                            f"failed_invariants={v.get('failed_invariants', 'unknown')}",
-                            f"failed_gates={v.get('failed_gates', 'unknown')}",
-                        ]
-                    else:
-                        o = _fp.get("observability_live", {}) or {}
-                        lines = [
-                            "AI-LAB Operational Fast-Path",
-                            f"live_observability_score={o.get('live_observability_score', 0.0)}",
-                            f"live_observability_level={o.get('live_observability_level', 'unknown')}",
-                            f"highest_incident_severity={o.get('highest_incident_severity', 'info')}",
-                            f"authority_freshness={o.get('authority_freshness', 'unknown')}",
-                        ]
-
-                    payload["_compact_runtime_answer"] = compress_operational_noise("\n".join(lines), level="operational")
+                resp = build_fastpath_response(
+                    user_text,
+                    extra_ctx={},
+                    sensor_snapshot=_report_runtime_dict or {},
+                    verbosity="operational",
+                )
+                routing = resp.get("routing", {}) or {}
+                if not bool(routing.get("deep_path")):
+                    lines = ((resp.get("summary", {}) or {}).get("lines", []) or [])
+                    payload["_compact_runtime_answer"] = "\n".join([str(l) for l in lines if str(l).strip()])
                     payload["_runtime_only_reasoning"] = True
         except Exception:
             pass
@@ -3074,6 +3001,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     "error": "unknown_authority_endpoint",
                 })
                 return
+
             except Exception as exc:
                 self._send_json(200, {
                     "status": "degraded",
@@ -3084,14 +3012,145 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     "error": str(exc),
                 })
                 return
-            except Exception as exc:
+
+        # ── FASE 35D: Operational fast-path — always-on 200 ──
+        if self.path == "/runtime/fastpath" or self.path.startswith("/runtime/fastpath/"):
+            try:
+                from runtime.fastpath import (
+                    build_fastpath_response,
+                    build_fast_operational_summary,
+                    build_fast_observability_summary,
+                    build_fast_governance_summary,
+                    build_fast_validation_summary,
+                    build_fast_topology_summary,
+                    build_fast_infrastructure_summary,
+                    build_fast_gpu_summary,
+                    get_fastpath_cache_state,
+                    prime_fastpath_cache,
+                )
+
+                if self.path == "/runtime/fastpath" or self.path == "/runtime/fastpath/score":
+                    resp = build_fastpath_response("estado runtime", extra_ctx={"enable_network": False}, sensor_snapshot={}, verbosity="operational")
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": self.path.lstrip("/"),
+                        "timestamp": time.time(),
+                        "contract_version": "35D",
+                        "fastpath": resp,
+                        "cache": get_fastpath_cache_state(),
+                    })
+                    return
+
+                if self.path == "/runtime/fastpath/cache":
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/fastpath/cache",
+                        "timestamp": time.time(),
+                        "contract_version": "35D",
+                        "cache": get_fastpath_cache_state(),
+                        "primed": prime_fastpath_cache(extra_ctx={"enable_network": False}),
+                    })
+                    return
+
+                if self.path == "/runtime/fastpath/operational":
+                    auth = None
+                    try:
+                        from runtime.fastpath.operational_fastpath import _build_fastpath_authority_snapshot
+                        auth = _build_fastpath_authority_snapshot(extra_ctx={"enable_network": False})
+                    except Exception:
+                        auth = None
+                    summ = build_fast_operational_summary(extra_ctx={"verbosity": "operational"}, authority=auth)
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/fastpath/operational",
+                        "timestamp": time.time(),
+                        "contract_version": "35D",
+                        "summary": summ,
+                    })
+                    return
+
+                if self.path == "/runtime/fastpath/observability":
+                    summ = build_fast_observability_summary(extra_ctx={"verbosity": "operational"})
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/fastpath/observability",
+                        "timestamp": time.time(),
+                        "contract_version": "35D",
+                        "summary": summ,
+                    })
+                    return
+
+                if self.path == "/runtime/fastpath/governance":
+                    summ = build_fast_governance_summary(extra_ctx={"verbosity": "operational"}, sensor_snapshot={})
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/fastpath/governance",
+                        "timestamp": time.time(),
+                        "contract_version": "35D",
+                        "summary": summ,
+                    })
+                    return
+
+                if self.path == "/runtime/fastpath/validation":
+                    summ = build_fast_validation_summary(extra_ctx={"verbosity": "operational"}, sensor_snapshot={})
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/fastpath/validation",
+                        "timestamp": time.time(),
+                        "contract_version": "35D",
+                        "summary": summ,
+                    })
+                    return
+
+                if self.path == "/runtime/fastpath/topology":
+                    summ = build_fast_topology_summary(extra_ctx={"verbosity": "operational"})
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/fastpath/topology",
+                        "timestamp": time.time(),
+                        "contract_version": "35D",
+                        "summary": summ,
+                    })
+                    return
+
+                if self.path == "/runtime/fastpath/infrastructure":
+                    summ = build_fast_infrastructure_summary(extra_ctx={"verbosity": "operational"})
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/fastpath/infrastructure",
+                        "timestamp": time.time(),
+                        "contract_version": "35D",
+                        "summary": summ,
+                    })
+                    return
+
+                if self.path == "/runtime/fastpath/gpu":
+                    summ = build_fast_gpu_summary(extra_ctx={"verbosity": "operational"})
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/fastpath/gpu",
+                        "timestamp": time.time(),
+                        "contract_version": "35D",
+                        "summary": summ,
+                    })
+                    return
+
                 self._send_json(200, {
                     "status": "degraded",
                     "service": "ai-lab-openai-gateway",
                     "endpoint": self.path.lstrip("/"),
                     "timestamp": time.time(),
-                    "contract_version": "35B",
-                    "error": str(exc),
+                    "contract_version": "35D",
+                    "error": "unknown_fastpath_endpoint",
                 })
                 return
             except Exception as exc:
@@ -3100,7 +3159,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     "service": "ai-lab-openai-gateway",
                     "endpoint": self.path.lstrip("/"),
                     "timestamp": time.time(),
-                    "contract_version": "35A",
+                    "contract_version": "35D",
                     "error": str(exc),
                 })
                 return

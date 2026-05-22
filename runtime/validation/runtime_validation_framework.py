@@ -606,6 +606,83 @@ def build_runtime_invariants(
             details={"error": str(exc)},
         )
 
+    # ── FASE 35D: Operational fast-path invariants ───────────────────
+    try:
+        from runtime.fastpath import build_fastpath_response
+
+        fp1 = build_fastpath_response(
+            "estado runtime",
+            extra_ctx={"enable_network": False},
+            sensor_snapshot=sensor_snapshot or {},
+            verbosity="operational",
+        )
+        fp2 = build_fastpath_response(
+            "estado runtime",
+            extra_ctx={"enable_network": False},
+            sensor_snapshot=sensor_snapshot or {},
+            verbosity="operational",
+        )
+
+        lines = (((fp1.get("summary", {}) or {}).get("lines", [])) or [])
+        compact_ok = len(lines) <= 10
+        _mk(
+            "INVARIANT-FASTPATH-COMPACTNESS",
+            "pass" if compact_ok else "degraded",
+            "high" if compact_ok else "medium",
+            "fastpath_35d",
+            blocking=False,
+            details={"lines": len(lines)},
+        )
+
+        det_ok = True
+        if _strict_mode():
+            det_ok = fp1.get("deterministic_signature") == fp2.get("deterministic_signature")
+        _mk(
+            "INVARIANT-FASTPATH-DETERMINISM-35D",
+            "pass" if det_ok else "degraded",
+            "high" if det_ok else "medium",
+            "fastpath_35d",
+            blocking=False,
+            details={"strict_mode": _strict_mode(), "deterministic": det_ok},
+        )
+
+        auth = fp1.get("authority", {}) or {}
+        auth_first = isinstance(auth, dict) and bool(auth)
+        _mk(
+            "INVARIANT-AUTHORITY-FIRST-FASTPATH",
+            "pass" if auth_first else "degraded",
+            "high" if auth_first else "medium",
+            "fastpath_35d",
+            blocking=False,
+            details={"authority_present": auth_first},
+        )
+
+        prom = (auth.get("prometheus_targets", {}) or {}) if isinstance(auth, dict) else {}
+        no_hall = True
+        try:
+            _ = int(prom.get("active_total", 0) or 0)
+            _ = int(prom.get("scrape_up", 0) or 0)
+            _ = int(prom.get("scrape_down", 0) or 0)
+        except Exception:
+            no_hall = False
+        _mk(
+            "INVARIANT-NO-FASTPATH-HALLUCINATION",
+            "pass" if no_hall else "degraded",
+            "high" if no_hall else "medium",
+            "fastpath_35d",
+            blocking=False,
+            details={"prometheus_targets": {"active_total": prom.get("active_total"), "scrape_up": prom.get("scrape_up")}},
+        )
+    except Exception as exc:
+        _mk(
+            "INVARIANT-FASTPATH-COMPACTNESS",
+            "degraded",
+            "low",
+            "fastpath_35d",
+            blocking=False,
+            details={"error": str(exc)},
+        )
+
     # ── FASE 35A: Infrastructure identity invariants ────────────────
     try:
         from runtime.infrastructure import build_infrastructure_identity_registry

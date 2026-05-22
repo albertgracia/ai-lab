@@ -59,12 +59,18 @@ def build_runtime_cognitive_summary(
     authority_signals = compress_authority_signals(sensor_snapshot, extra_ctx)
     all_signals.extend(authority_signals)
 
+    fastpath_signals = compress_fastpath_signals(sensor_snapshot, extra_ctx)
+    all_signals.extend(fastpath_signals)
+
     if not all_signals:
         unavailable.append("all_domains")
 
     important_signals = rank_operational_signals(all_signals)
     summary = build_actionable_summary(important_signals, sensor_snapshot, extra_ctx)
     summary["important_signals"] = important_signals
+
+    # FASE 35D: expose raw signals for operational UX/debug (compact consumers can ignore).
+    summary["signals"] = all_signals[:25]
 
     if unavailable:
         summary["unavailable_data"] = unavailable
@@ -711,6 +717,38 @@ def compress_authority_signals(
             "message": f"authority: freshness_score={fresh_score} gaps={gaps} stale={summ.get('stale_authority_total', 0)}",
             "evidence": ["authority_35c"],
             "confidence": "high" if fresh_score >= 80 else "medium" if fresh_score >= 50 else "low",
+            "freshness": "fresh",
+        })
+    except Exception:
+        return signals
+    return signals
+
+
+def compress_fastpath_signals(
+    sensor_snapshot: dict[str, Any],
+    extra_ctx: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """FASE 35D: operational fast-path UX pressure signals."""
+    signals: list[dict[str, Any]] = []
+    extra_ctx = extra_ctx or {}
+    try:
+        from runtime.fastpath import build_fastpath_response
+        fp = build_fastpath_response("estado runtime", extra_ctx={"enable_network": False}, sensor_snapshot=sensor_snapshot or {}, verbosity="operational")
+        q = float(fp.get("response_quality_score", 0.0) or 0.0)
+        deep = bool((fp.get("routing", {}) or {}).get("deep_path"))
+        auth = fp.get("authority", {}) or {}
+        auth_fresh = (auth.get("freshness", {}) or {}).get("status", "unknown") if isinstance(auth, dict) else "unknown"
+        # If authority is unavailable, surface fast-path as warning (operational impact).
+        if auth_fresh in ("partial", "unavailable"):
+            sev = "warning"
+        else:
+            sev = "info" if q >= 80 and not deep else "warning" if q >= 55 else "critical"
+        signals.append({
+            "domain": "fastpath",
+            "severity": sev,
+            "message": f"fastpath: quality={q} deep_path={deep} authority={auth_fresh}",
+            "evidence": ["fastpath_35d"],
+            "confidence": "high" if q >= 80 else "medium" if q >= 55 else "low",
             "freshness": "fresh",
         })
     except Exception:

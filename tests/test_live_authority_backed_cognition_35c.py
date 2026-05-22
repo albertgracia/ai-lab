@@ -141,7 +141,7 @@ def test_fastpath_uses_authority():
         with urllib.request.urlopen(req, timeout=5) as resp:
             body = json.loads(resp.read().decode("utf-8"))
         content = body["choices"][0]["message"]["content"]
-        assert "authority_freshness=" in content
+        assert "Prometheus authority:" in content
     finally:
         server.shutdown()
 

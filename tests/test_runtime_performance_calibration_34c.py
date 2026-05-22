@@ -144,7 +144,7 @@ def test_operational_responses_compact():
         with urllib.request.urlopen(req, timeout=5) as resp:
             body = json.loads(resp.read().decode("utf-8"))
         content = body["choices"][0]["message"]["content"]
-        assert "Operational Fast-Path" in content
+        assert "Governance" in content
         assert len(content) < 900
     finally:
         server.shutdown()
