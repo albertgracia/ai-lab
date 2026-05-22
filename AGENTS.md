@@ -513,9 +513,10 @@ FASE OBS-31A.4 → observability remediation plan                   ✅ CP-OBS-3
 FASE OBS-31A.5 → safe quick wins execution                        ✅ CP-OBS-31A.5-EXECUTOR-STABLE
 FASE 31B → runtime semantic maturity & degraded mode governance    ✅ CP-31B-RUNTIME-SEMANTIC-MATURITY-STABLE
 FASE 31B-HF1 → OpenCode runtime context alignment                   ✅ CP-31B-HF1-OPENCODE-CONTEXT-ALIGNMENT-STABLE
+FASE 31C → operational reporting discipline                          ✅ CP-31C-OPERATIONAL-REPORTING-DISCIPLINE-STABLE
 ```
 
-Tags git: 49 tags desde `CP-21B-STABLE` hasta `CP-31B-HF1-OPENCODE-CONTEXT-ALIGNMENT-STABLE`.
+Tags git: 50 tags desde `CP-21B-STABLE` hasta `CP-31C-OPERATIONAL-REPORTING-DISCIPLINE-STABLE`.
 
 **Deuda saldada:** FASE 29.4.4-C — `/slo/health` ahora responde 200 siempre, con payload disabled cuando enforcement=false.
 

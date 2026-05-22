@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 import json
+import os
 from typing import Any
 
 from runtime.formatters.gpu_operational_formatter import format_gpu_operational_block
+
+
+_REPORTING_MODE = os.environ.get("AI_LAB_REPORTING_MODE", "legacy").lower()
 
 
 def _confidence_score(domain_confidence: dict[str, str]) -> float:
@@ -67,11 +71,34 @@ def format_runtime_domain_confidence(runtime_context: dict[str, Any], domain: st
     ])
 
 
+def _use_31c() -> bool:
+    return _REPORTING_MODE in ("canonical", "31c")
+
+
 def format_runtime_cluster_state(runtime_context: dict[str, Any]) -> str:
+    if _use_31c():
+        try:
+            from runtime.reporting import build_operational_report
+            report = build_operational_report(
+                sensor_snapshot=runtime_context,
+                mode="compact",
+            )
+            return report.get("text", "")
+        except ImportError:
+            pass
+
+    try:
+        from runtime.reporting import build_operator_summary, build_operational_report
+        report = build_operational_report(sensor_snapshot=runtime_context, mode="compact")
+        txt = report.get("text", "")
+        if txt:
+            return txt
+    except ImportError:
+        pass
+
     domain_confidence = runtime_context.get("domain_confidence", {}) if isinstance(runtime_context.get("domain_confidence"), dict) else {}
     source_quality = runtime_context.get("source_quality", {}) if isinstance(runtime_context.get("source_quality"), dict) else {}
 
-    # FASE 31B: Runtime maturity context
     try:
         from runtime.semantics.runtime_maturity import calculate_runtime_maturity
         maturity = calculate_runtime_maturity(runtime_context)
@@ -136,5 +163,18 @@ def compact_runtime_response(
     if "confianza" in text and "sensor" in text:
         return format_runtime_domain_confidence(runtime_context, domain="gpu_nodes")
     if "runtime" in text or "ai-lab" in text or "cluster" in text:
+        if _use_31c():
+            try:
+                from runtime.reporting import build_operational_report
+                _mode = {"operational_compact": "compact", "operational_verbose": "verbose", "operational_debug": "debug"}.get(profile, "compact")
+                report = build_operational_report(
+                    sensor_snapshot=runtime_context,
+                    mode=_mode,
+                )
+                _compact = report.get("text") or report.get("verbose_text") or ""
+                if _compact:
+                    return _compact
+            except ImportError:
+                pass
         return format_runtime_cluster_state(runtime_context)
     return None

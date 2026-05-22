@@ -872,6 +872,40 @@ REPORT_FORBIDDEN_RECOMMENDATION_BLOCKED = Counter(
     ["tool"],
 )
 
+# ── FASE 31C: Operational Reporting Discipline Metrics ──────
+REPORTING_TOTAL = Counter(
+    "ailab_reporting_total",
+    "Reportes operacionales generados por modo",
+    ["mode"],
+)
+REPORTING_CONFIDENCE = Counter(
+    "ailab_reporting_confidence",
+    "Reportes por nivel de confianza",
+    ["level"],
+)
+REPORTING_DEGRADED_TOTAL = Counter(
+    "ailab_reporting_degraded_total",
+    "Total de dominios degradados reportados",
+)
+REPORTING_UNKNOWN_TOTAL = Counter(
+    "ailab_reporting_unknown_total",
+    "Total de dominios desconocidos reportados",
+)
+REPORTING_EXPLAINABILITY_SCORE = Histogram(
+    "ailab_reporting_explainability_score",
+    "Puntuacion de explainabilidad del reporte",
+    buckets=(0, 25, 50, 75, 100),
+)
+REPORTING_CONSISTENCY_SCORE = Histogram(
+    "ailab_reporting_consistency_score",
+    "Puntuacion de consistencia del reporte",
+    buckets=(0, 25, 50, 75, 100),
+)
+REPORTING_GOVERNANCE_TOTAL = Counter(
+    "ailab_reporting_governance_total",
+    "Governance summaries generados",
+)
+
 
 # ── FASE 30H: Runtime Evidence Enforcement Metrics ──────────
 REPORT_EVIDENCE_GUARD_TOTAL = Counter(

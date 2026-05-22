@@ -202,6 +202,61 @@ def health():
     }
 
 
+# ── FASE 31C: Reporting endpoints (always-on 200) ────────────────
+
+@app.get("/runtime/reporting/status")
+def runtime_reporting_status():
+    return {
+        "status": "ok",
+        "service": "ai-lab-router-api",
+        "endpoint": "reporting-status",
+        "contract_version": "31C",
+        "data": {"message": "Reporting engine active. Use /runtime/reporting/operator-summary for details."},
+    }
+
+
+@app.get("/runtime/reporting/operator-summary")
+def runtime_reporting_operator_summary():
+    try:
+        from runtime.reporting import build_operator_summary
+        sensor = {}
+        try:
+            from runtime.state.system_snapshot import load_snapshot
+            sensor = load_snapshot() or {}
+        except Exception:
+            pass
+        summary = build_operator_summary(sensor_snapshot=sensor)
+        return {"status": "ok", "endpoint": "operator-summary", "contract_version": "31C", "data": summary}
+    except Exception as exc:
+        return {"status": "ok", "endpoint": "operator-summary", "contract_version": "31C", "data": {"error": str(exc)}}
+
+
+@app.get("/runtime/reporting/governance")
+def runtime_reporting_governance():
+    try:
+        from runtime.reporting import build_governance_summary
+        summary = build_governance_summary()
+        return {"status": "ok", "endpoint": "governance", "contract_version": "31C", "data": summary}
+    except Exception as exc:
+        return {"status": "ok", "endpoint": "governance", "contract_version": "31C", "data": {"error": str(exc)}}
+
+
+@app.get("/runtime/reporting/executive-summary")
+def runtime_reporting_executive_summary():
+    try:
+        from runtime.reporting import build_executive_summary
+        sensor = {}
+        try:
+            from runtime.state.system_snapshot import load_snapshot
+            sensor = load_snapshot() or {}
+        except Exception:
+            pass
+        summary = build_executive_summary(sensor_snapshot=sensor)
+        return {"status": "ok", "endpoint": "executive-summary", "contract_version": "31C", "data": summary}
+    except Exception as exc:
+        return {"status": "ok", "endpoint": "executive-summary", "contract_version": "31C", "data": {"error": str(exc)}}
+
+
 @app.get("/metrics")
 def metrics():
     from prometheus_client import generate_latest, REGISTRY

@@ -1,7 +1,7 @@
 import time
 from typing import Any
 
-COGNITIVE_CONTRACT_VERSION = "30I-F"
+COGNITIVE_CONTRACT_VERSION = "31C"
 
 SEVERITY_ORDER = {"critical": 0, "warning": 1, "info": 2}
 MAX_IMPORTANT_SIGNALS = 5

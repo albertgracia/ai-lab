@@ -12,6 +12,7 @@ TEST_CONTEXT_FILE = Path("/mnt/opencode/test/AGENTS.md")
 
 EXPECTED_CHECKPOINT = "CP-31B-RUNTIME-SEMANTIC-MATURITY-STABLE"
 EXPECTED_HF_CHECKPOINT = "CP-31B-HF1-OPENCODE-CONTEXT-ALIGNMENT-STABLE"
+EXPECTED_31C_CHECKPOINT = "CP-31C-OPERATIONAL-REPORTING-DISCIPLINE-STABLE"
 EXPECTED_NEXT_PHASE = "FASE 31C"
 DEPRECATED_MODEL = "lmstudio-community/qwen2.5-coder-14b-instruct"
 PRIMARY_OPERATIONAL = "llama-3.1-8b-instruct"
@@ -98,8 +99,8 @@ class TestOpenCodeContextAlignment31B:
 
     def test_agents_md_tags_count_updated(self):
         content = _read_file(AGENTS_FILE)
-        assert "48 tags" in content or "CP-31B" in content, (
-            "AGENTS.md should reference 48+ tags up to CP-31B"
+        assert "50 tags" in content or "CP-31C" in content, (
+            "AGENTS.md should reference 50+ tags up to CP-31C"
         )
 
     def test_agents_md_checkpoint_is_31b(self):
@@ -146,10 +147,11 @@ class TestOpenCodeContextAlignment31B:
         has_checkpoint = (
             EXPECTED_CHECKPOINT in result.stdout
             or EXPECTED_HF_CHECKPOINT in result.stdout
+            or EXPECTED_31C_CHECKPOINT in result.stdout
         )
         assert has_checkpoint, (
-            f"Generated context should contain a CP-31B checkpoint tag. "
-            f"Expected {EXPECTED_CHECKPOINT} or {EXPECTED_HF_CHECKPOINT}"
+            f"Generated context should contain a CP-31x checkpoint tag. "
+            f"Expected one of: {EXPECTED_CHECKPOINT}, {EXPECTED_HF_CHECKPOINT}, {EXPECTED_31C_CHECKPOINT}"
         )
         assert "CURRENT AI-LAB RUNTIME TRUTH" in result.stdout, (
             "Generated context should contain RUNTIME TRUTH block"
