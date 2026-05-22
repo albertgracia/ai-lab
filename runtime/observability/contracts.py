@@ -1,10 +1,12 @@
-"""FASE OBS-31A: Observability source-of-truth contracts.
+"""FASE OBS-31A.2: Observability source-of-truth contracts.
 
 Defines contracts for observability layers:
 - source contract: Prometheus → runtime
 - dashboard contract: Grafana → runtime alignment
 - metric contract: individual metric specification
 - datasource contract: datasource validity
+- alignment contract: runtime ↔ Grafana alignment
+- inventory contract: dashboard inventory metadata
 """
 
 from __future__ import annotations
@@ -81,6 +83,8 @@ class DashboardContract:
     health: str = "unknown"
     deprecated: bool = False
     experimental: bool = False
+    inventory_aligned: bool = True
+    runtime_aligned: bool = True
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -97,6 +101,8 @@ class DashboardContract:
             "health": self.health,
             "deprecated": self.deprecated,
             "experimental": self.experimental,
+            "inventory_aligned": self.inventory_aligned,
+            "runtime_aligned": self.runtime_aligned,
         }
 
 
@@ -148,6 +154,54 @@ class DatasourceContract:
         }
 
 
+@dataclass
+class GrafanaAlignmentContract:
+    total_dashboards: int = 0
+    healthy_dashboards: int = 0
+    broken_dashboards: int = 0
+    legacy_dashboards: int = 0
+    stale_dashboards: int = 0
+    total_drifts: int = 0
+    gpu_drifts: int = 0
+    topology_drifts: int = 0
+    inventory_drifts: int = 0
+    semantic_drifts: int = 0
+    runtime_mismatches: int = 0
+    broken_panels: int = 0
+    no_data_panels: int = 0
+    datasource_valid: bool = True
+    datasource_prometheus: bool = True
+    datasource_loki: bool = True
+    alignment_score: float = 0.0
+    alignment_level: str = "unknown"
+    contract_version: str = "OBS-31A.2"
+    timestamp: float = field(default_factory=time.time)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "contract_version": self.contract_version,
+            "timestamp": self.timestamp,
+            "total_dashboards": self.total_dashboards,
+            "dashboards_healthy": self.healthy_dashboards,
+            "dashboards_broken": self.broken_dashboards,
+            "dashboards_legacy": self.legacy_dashboards,
+            "dashboards_stale": self.stale_dashboards,
+            "total_drifts": self.total_drifts,
+            "gpu_drifts": self.gpu_drifts,
+            "topology_drifts": self.topology_drifts,
+            "inventory_drifts": self.inventory_drifts,
+            "semantic_drifts": self.semantic_drifts,
+            "runtime_mismatches": self.runtime_mismatches,
+            "broken_panels": self.broken_panels,
+            "no_data_panels": self.no_data_panels,
+            "datasource_valid": self.datasource_valid,
+            "datasource_prometheus": self.datasource_prometheus,
+            "datasource_loki": self.datasource_loki,
+            "alignment_score": round(self.alignment_score, 2),
+            "alignment_level": self.alignment_level,
+        }
+
+
 def build_observability_source_contract(**overrides: Any) -> dict[str, Any]:
     contract = ObservabilitySourceContract(**{
         k: v for k, v in overrides.items()
@@ -176,5 +230,13 @@ def build_datasource_contract(**overrides: Any) -> dict[str, Any]:
     contract = DatasourceContract(**{
         k: v for k, v in overrides.items()
         if hasattr(DatasourceContract, k)
+    })
+    return contract.to_dict()
+
+
+def build_grafana_alignment_contract(**overrides: Any) -> dict[str, Any]:
+    contract = GrafanaAlignmentContract(**{
+        k: v for k, v in overrides.items()
+        if hasattr(GrafanaAlignmentContract, k)
     })
     return contract.to_dict()

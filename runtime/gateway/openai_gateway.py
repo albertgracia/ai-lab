@@ -1459,6 +1459,106 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 })
             return
 
+        if self.path == "/runtime/observability/datasources":
+            try:
+                from runtime.observability.contracts import build_datasource_contract
+                from runtime.observability.grafana_inventory import _KNOWN_DATASOURCES
+                _results = []
+                for ds in _KNOWN_DATASOURCES:
+                    _contract = build_datasource_contract(
+                        name=ds["name"], uid=ds["uid"], type=ds["type"],
+                        url=ds["url"], accessible=ds.get("accessible", True),
+                        default=ds.get("default", False),
+                    )
+                    _results.append(_contract)
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/datasources",
+                    "timestamp": time.time(),
+                    "contract_version": "OBS-31A.2",
+                    "total_datasources": len(_results),
+                    "datasources": _results,
+                })
+                try:
+                    from runtime.telemetry.prometheus_metrics import record_observability_audit
+                    record_observability_audit("datasources", "ok")
+                except ImportError:
+                    pass
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/datasources",
+                    "timestamp": time.time(),
+                    "contract_version": "OBS-31A.2",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/observability/runtime-alignment":
+            try:
+                from runtime.observability.drift_detector import DriftDetector, build_runtime_alignment_summary
+                from runtime.observability.dashboard_validator import DashboardValidator
+                _drift = DriftDetector().detect_all()
+                _dashboards = DashboardValidator().validate_all_known()
+                _alignment = build_runtime_alignment_summary(_drift, _dashboards)
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/runtime-alignment",
+                    "timestamp": time.time(),
+                    "contract_version": _alignment.get("contract_version", "OBS-31A.2"),
+                    "runtime_alignment": _alignment,
+                })
+                try:
+                    from runtime.telemetry.prometheus_metrics import (
+                        record_observability_alignment_score,
+                        record_observability_audit,
+                    )
+                    record_observability_alignment_score(_alignment.get("alignment_score", 0))
+                    record_observability_audit("runtime_alignment", "ok")
+                except ImportError:
+                    pass
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/runtime-alignment",
+                    "timestamp": time.time(),
+                    "contract_version": "OBS-31A.2",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/observability/drift-audit":
+            try:
+                from runtime.observability.dashboard_validator import DashboardValidator
+                _audit = DashboardValidator().run_grafana_drift_audit()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/drift-audit",
+                    "timestamp": time.time(),
+                    "contract_version": _audit.get("contract_version", "OBS-31A.2"),
+                    "drift_audit": _audit,
+                })
+                try:
+                    from runtime.telemetry.prometheus_metrics import record_observability_audit
+                    record_observability_audit("drift_audit", "ok")
+                except ImportError:
+                    pass
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/drift-audit",
+                    "timestamp": time.time(),
+                    "contract_version": "OBS-31A.2",
+                    "error": str(exc),
+                })
+            return
+
         if self.path == "/runtime/reports/discipline":
             try:
                 from runtime.gateway.tool_request_classifier import FORBIDDEN_TOOL_RECOMMENDATIONS

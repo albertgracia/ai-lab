@@ -10,6 +10,8 @@ from runtime.observability.contracts import (
     build_dashboard_contract,
     build_metric_contract,
     build_datasource_contract,
+    build_grafana_alignment_contract,
+    GrafanaAlignmentContract,
 )
 from runtime.observability.prometheus_audit import (
     PrometheusTargetStatus,
@@ -35,6 +37,16 @@ from runtime.observability.drift_detector import (
     DriftDetectionResult,
     DriftDetector,
     build_drift_summary,
+    build_runtime_alignment_summary,
+)
+from runtime.observability.grafana_inventory import (
+    DashboardHealth as InventoryDashboardHealth,
+    build_dashboard_inventory,
+    build_inventory_summary,
+    classify_dashboard_health,
+    get_dashboard_by_uid,
+    get_dashboards_by_domain,
+    get_dashboards_by_owner,
 )
 from runtime.observability.loki_audit import (
     LokiStreamStatus,
@@ -54,6 +66,8 @@ __all__ = [
     "build_dashboard_contract",
     "build_metric_contract",
     "build_datasource_contract",
+    "build_grafana_alignment_contract",
+    "GrafanaAlignmentContract",
     "PrometheusTargetStatus",
     "audit_prometheus_targets",
     "classify_scrape_target",
@@ -64,6 +78,14 @@ __all__ = [
     "DriftDetectionResult",
     "DriftDetector",
     "build_drift_summary",
+    "build_runtime_alignment_summary",
+    "InventoryDashboardHealth",
+    "build_dashboard_inventory",
+    "build_inventory_summary",
+    "classify_dashboard_health",
+    "get_dashboard_by_uid",
+    "get_dashboards_by_domain",
+    "get_dashboards_by_owner",
     "LokiStreamStatus",
     "audit_loki",
     "build_loki_audit_summary",

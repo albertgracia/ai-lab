@@ -201,7 +201,7 @@ class TestRuntimeDriftDetection:
     def test_drift_summary_has_contract(self):
         result = DriftDetector().detect_all()
         summary = result.to_dict()
-        assert summary["contract_version"] == "OBS-31A"
+        assert summary["contract_version"] == "OBS-31A.2"
         assert "total_drifts" in summary
 
 
@@ -335,7 +335,7 @@ class TestRuntimeObservabilityEndpoint:
     def test_dashboard_audit_summary(self):
         validator = DashboardValidator()
         summary = validator.build_dashboard_audit_summary()
-        assert summary["contract_version"] == "OBS-31A"
+        assert summary["contract_version"] == "OBS-31A.2"
         assert "health_classification" in summary
         assert "dashboards" in summary
 
