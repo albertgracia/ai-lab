@@ -1532,3 +1532,66 @@ def record_runtime_maturity(maturity: dict[str, Any]) -> None:
 
     state = maturity.get("runtime_state", "unknown")
     RUNTIME_SEMANTIC_STATE.labels(runtime_state=state).inc()
+
+
+# ── FASE 31D: Runtime Topology Awareness Metrics ────────────
+TOPOLOGY_NODES_TOTAL = Gauge(
+    "ailab_topology_nodes_total",
+    "Total topology nodes by node type",
+    ["node_type"],
+)
+TOPOLOGY_EDGES_TOTAL = Gauge(
+    "ailab_topology_edges_total",
+    "Total topology edges by relationship",
+    ["relationship"],
+)
+TOPOLOGY_DEGRADED_PATHS_TOTAL = Gauge(
+    "ailab_topology_degraded_paths_total",
+    "Total degraded paths in topology",
+)
+TOPOLOGY_AUTHORITY_CHAINS_TOTAL = Gauge(
+    "ailab_topology_authority_chains_total",
+    "Total authority chains",
+)
+TOPOLOGY_BLAST_RADIUS_TOTAL = Gauge(
+    "ailab_topology_blast_radius_total",
+    "Total blast radius affected nodes",
+    ["severity"],
+)
+TOPOLOGY_CONFIDENCE_SCORE = Gauge(
+    "ailab_topology_confidence_score",
+    "Topology confidence score 0-100",
+)
+TOPOLOGY_INVENTORY_NODES_TOTAL = Gauge(
+    "ailab_topology_inventory_nodes_total",
+    "Total inventory-only topology nodes",
+)
+
+
+def record_topology_metrics(topology: dict[str, Any]) -> None:
+    from collections import Counter
+    nodes = topology.get("nodes", [])
+    edges = topology.get("edges", [])
+    degraded = topology.get("degraded_paths", [])
+
+    type_counts = Counter(n.get("node_type", "unknown") for n in nodes)
+    for ntype, count in type_counts.items():
+        TOPOLOGY_NODES_TOTAL.labels(node_type=ntype).set(float(count))
+
+    rel_counts = Counter(e.get("relationship", "unknown") for e in edges)
+    for rel, count in rel_counts.items():
+        TOPOLOGY_EDGES_TOTAL.labels(relationship=rel).set(float(count))
+
+    TOPOLOGY_DEGRADED_PATHS_TOTAL.set(float(len(degraded)))
+    TOPOLOGY_INVENTORY_NODES_TOTAL.set(float(sum(1 for n in nodes if n.get("inventory_only"))))
+
+    try:
+        from runtime.topology import build_authority_graph, calculate_blast_radius, calculate_topology_confidence
+        authority = build_authority_graph()
+        TOPOLOGY_AUTHORITY_CHAINS_TOTAL.set(float(authority.get("total_chains", 0)))
+        blast = calculate_blast_radius()
+        TOPOLOGY_BLAST_RADIUS_TOTAL.labels(severity=blast.get("severity", "low")).set(float(len(blast.get("affected_nodes", []))))
+        conf = calculate_topology_confidence()
+        TOPOLOGY_CONFIDENCE_SCORE.set(float(conf.get("overall_score", 0)))
+    except ImportError:
+        pass

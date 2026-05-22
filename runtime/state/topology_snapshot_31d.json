@@ -1,0 +1,1126 @@
+{
+  "timestamp": 1779458973.037246,
+  "contract_version": "31D",
+  "runtime_topology": {
+    "nodes": [
+      {
+        "node_id": "ailab-gateway",
+        "node_type": "gateway",
+        "operational_state": "active",
+        "active": true,
+        "discoverable": true,
+        "routable": true,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "entrypoint",
+        "inventory_only": false,
+        "entity_ref": "ailab-gateway",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "ailab-router",
+        "node_type": "router",
+        "operational_state": "active",
+        "active": true,
+        "discoverable": true,
+        "routable": true,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "internal_api",
+        "inventory_only": false,
+        "entity_ref": "ailab-router",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "ailab-live-api",
+        "node_type": "service",
+        "operational_state": "active",
+        "active": true,
+        "discoverable": true,
+        "routable": true,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "internal_api",
+        "inventory_only": false,
+        "entity_ref": "ailab-live-api",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "ailab-docs",
+        "node_type": "service",
+        "operational_state": "active",
+        "active": false,
+        "discoverable": true,
+        "routable": false,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "support",
+        "inventory_only": false,
+        "entity_ref": "ailab-docs",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "ailab-metrics",
+        "node_type": "service",
+        "operational_state": "active",
+        "active": false,
+        "discoverable": true,
+        "routable": false,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "support",
+        "inventory_only": false,
+        "entity_ref": "ailab-metrics",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "ailab-heartbeat",
+        "node_type": "service",
+        "operational_state": "active",
+        "active": false,
+        "discoverable": true,
+        "routable": false,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "support",
+        "inventory_only": false,
+        "entity_ref": "ailab-heartbeat",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "ailab-runner",
+        "node_type": "service",
+        "operational_state": "active",
+        "active": false,
+        "discoverable": true,
+        "routable": false,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "support",
+        "inventory_only": false,
+        "entity_ref": "ailab-runner",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "prometheus",
+        "node_type": "datasource",
+        "operational_state": "active",
+        "active": true,
+        "discoverable": true,
+        "routable": false,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "source_of_truth",
+        "inventory_only": false,
+        "entity_ref": "prometheus",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "grafana",
+        "node_type": "datasource",
+        "operational_state": "active",
+        "active": true,
+        "discoverable": true,
+        "routable": false,
+        "confidence": "medium",
+        "freshness": "fresh",
+        "authority": "visualization",
+        "inventory_only": false,
+        "entity_ref": "grafana",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "192.168.1.30",
+        "node_type": "runtime",
+        "operational_state": "active",
+        "active": true,
+        "discoverable": true,
+        "routable": true,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "primary_control_plane",
+        "inventory_only": false,
+        "entity_ref": "192.168.1.30",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "192.168.1.50",
+        "node_type": "exporter",
+        "operational_state": "active",
+        "active": true,
+        "discoverable": true,
+        "routable": true,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "inference_gpu",
+        "inventory_only": false,
+        "entity_ref": "192.168.1.50",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "192.168.1.60",
+        "node_type": "exporter",
+        "operational_state": "inactive",
+        "active": false,
+        "discoverable": true,
+        "routable": false,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "inventory",
+        "inventory_only": true,
+        "entity_ref": "192.168.1.60",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "192.168.1.40",
+        "node_type": "exporter",
+        "operational_state": "active",
+        "active": true,
+        "discoverable": true,
+        "routable": true,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "observability",
+        "inventory_only": false,
+        "entity_ref": "192.168.1.40",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "192.168.1.200",
+        "node_type": "storage",
+        "operational_state": "active",
+        "active": true,
+        "discoverable": true,
+        "routable": true,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "storage",
+        "inventory_only": false,
+        "entity_ref": "192.168.1.200",
+        "contract_version": "31D"
+      }
+    ],
+    "edges": [
+      {
+        "source_id": "ailab-gateway",
+        "target_id": "ailab-router",
+        "relationship": "routes_to",
+        "direction": "forward",
+        "observed": true,
+        "confidence": "high",
+        "weight": 1.0,
+        "metadata": {},
+        "contract_version": "31D"
+      },
+      {
+        "source_id": "ailab-gateway",
+        "target_id": "prometheus",
+        "relationship": "emits_metrics_to",
+        "direction": "forward",
+        "observed": true,
+        "confidence": "high",
+        "weight": 0.8,
+        "metadata": {},
+        "contract_version": "31D"
+      },
+      {
+        "source_id": "ailab-router",
+        "target_id": "prometheus",
+        "relationship": "emits_metrics_to",
+        "direction": "forward",
+        "observed": true,
+        "confidence": "high",
+        "weight": 0.8,
+        "metadata": {},
+        "contract_version": "31D"
+      },
+      {
+        "source_id": "ailab-live-api",
+        "target_id": "prometheus",
+        "relationship": "emits_metrics_to",
+        "direction": "forward",
+        "observed": true,
+        "confidence": "high",
+        "weight": 0.8,
+        "metadata": {},
+        "contract_version": "31D"
+      },
+      {
+        "source_id": "prometheus",
+        "target_id": "grafana",
+        "relationship": "feeds_visualization",
+        "direction": "forward",
+        "observed": true,
+        "confidence": "high",
+        "weight": 1.0,
+        "metadata": {},
+        "contract_version": "31D"
+      },
+      {
+        "source_id": "ailab-gateway",
+        "target_id": "192.168.1.30",
+        "relationship": "runs_on",
+        "direction": "forward",
+        "observed": true,
+        "confidence": "high",
+        "weight": 1.0,
+        "metadata": {},
+        "contract_version": "31D"
+      },
+      {
+        "source_id": "ailab-router",
+        "target_id": "192.168.1.30",
+        "relationship": "runs_on",
+        "direction": "forward",
+        "observed": true,
+        "confidence": "high",
+        "weight": 1.0,
+        "metadata": {},
+        "contract_version": "31D"
+      },
+      {
+        "source_id": "192.168.1.30",
+        "target_id": "192.168.1.50",
+        "relationship": "forwards_inference_to",
+        "direction": "forward",
+        "observed": true,
+        "confidence": "high",
+        "weight": 1.0,
+        "metadata": {},
+        "contract_version": "31D"
+      },
+      {
+        "source_id": "192.168.1.30",
+        "target_id": "192.168.1.40",
+        "relationship": "sends_metrics_to",
+        "direction": "forward",
+        "observed": true,
+        "confidence": "high",
+        "weight": 1.0,
+        "metadata": {},
+        "contract_version": "31D"
+      },
+      {
+        "source_id": "prometheus",
+        "target_id": "192.168.1.40",
+        "relationship": "runs_on",
+        "direction": "forward",
+        "observed": true,
+        "confidence": "high",
+        "weight": 1.0,
+        "metadata": {},
+        "contract_version": "31D"
+      },
+      {
+        "source_id": "grafana",
+        "target_id": "192.168.1.40",
+        "relationship": "runs_on",
+        "direction": "forward",
+        "observed": true,
+        "confidence": "high",
+        "weight": 1.0,
+        "metadata": {},
+        "contract_version": "31D"
+      },
+      {
+        "source_id": "prometheus",
+        "target_id": "ailab-gateway",
+        "relationship": "source_of_truth_for_metrics",
+        "direction": "reverse",
+        "observed": true,
+        "confidence": "high",
+        "weight": 1.0,
+        "metadata": {},
+        "contract_version": "31D"
+      },
+      {
+        "source_id": "prometheus",
+        "target_id": "ailab-router",
+        "relationship": "source_of_truth_for_metrics",
+        "direction": "reverse",
+        "observed": true,
+        "confidence": "high",
+        "weight": 1.0,
+        "metadata": {},
+        "contract_version": "31D"
+      },
+      {
+        "source_id": "prometheus",
+        "target_id": "ailab-live-api",
+        "relationship": "source_of_truth_for_metrics",
+        "direction": "reverse",
+        "observed": true,
+        "confidence": "high",
+        "weight": 1.0,
+        "metadata": {},
+        "contract_version": "31D"
+      },
+      {
+        "source_id": "grafana",
+        "target_id": "prometheus",
+        "relationship": "visualizes_from",
+        "direction": "reverse",
+        "observed": true,
+        "confidence": "high",
+        "weight": 1.0,
+        "metadata": {},
+        "contract_version": "31D"
+      }
+    ],
+    "degraded_paths": [],
+    "total_nodes": 14,
+    "total_edges": 15,
+    "contract_version": "31D"
+  },
+  "dependency_graph": {
+    "total_dependencies": 6,
+    "dependencies": [
+      {
+        "dependency_id": "ailab-gateway->ailab-router",
+        "dependent": "ailab-gateway",
+        "dependency": "ailab-router",
+        "relationship_type": "routes_to",
+        "critical": true,
+        "observed": true,
+        "confidence": "high",
+        "metadata": {},
+        "contract_version": "31D"
+      },
+      {
+        "dependency_id": "ailab-gateway->prometheus",
+        "dependent": "ailab-gateway",
+        "dependency": "prometheus",
+        "relationship_type": "emits_metrics_to",
+        "critical": false,
+        "observed": true,
+        "confidence": "high",
+        "metadata": {},
+        "contract_version": "31D"
+      },
+      {
+        "dependency_id": "ailab-router->prometheus",
+        "dependent": "ailab-router",
+        "dependency": "prometheus",
+        "relationship_type": "emits_metrics_to",
+        "critical": false,
+        "observed": true,
+        "confidence": "high",
+        "metadata": {},
+        "contract_version": "31D"
+      },
+      {
+        "dependency_id": "ailab-live-api->prometheus",
+        "dependent": "ailab-live-api",
+        "dependency": "prometheus",
+        "relationship_type": "emits_metrics_to",
+        "critical": false,
+        "observed": true,
+        "confidence": "high",
+        "metadata": {},
+        "contract_version": "31D"
+      },
+      {
+        "dependency_id": "prometheus->grafana",
+        "dependent": "prometheus",
+        "dependency": "grafana",
+        "relationship_type": "feeds_visualization",
+        "critical": false,
+        "observed": true,
+        "confidence": "high",
+        "metadata": {},
+        "contract_version": "31D"
+      },
+      {
+        "dependency_id": "192.168.1.30->192.168.1.50",
+        "dependent": "192.168.1.30",
+        "dependency": "192.168.1.50",
+        "relationship_type": "forwards_inference_to",
+        "critical": true,
+        "observed": true,
+        "confidence": "high",
+        "metadata": {},
+        "contract_version": "31D"
+      }
+    ],
+    "contract_version": "31D"
+  },
+  "authority_graph": {
+    "total_chains": 4,
+    "authority_chains": [
+      {
+        "chain_id": "authority_ailab-gateway",
+        "source": "ailab-gateway",
+        "target": "runtime",
+        "authority_type": "entrypoint",
+        "observed": true,
+        "confidence": "high",
+        "hops": [
+          {
+            "node": "ailab-gateway",
+            "type": "gateway",
+            "authority": "entrypoint"
+          }
+        ],
+        "metadata": {},
+        "contract_version": "31D"
+      },
+      {
+        "chain_id": "authority_ailab-router",
+        "source": "ailab-router",
+        "target": "runtime",
+        "authority_type": "internal_api",
+        "observed": true,
+        "confidence": "high",
+        "hops": [
+          {
+            "node": "ailab-router",
+            "type": "router",
+            "authority": "internal_api"
+          }
+        ],
+        "metadata": {},
+        "contract_version": "31D"
+      },
+      {
+        "chain_id": "authority_ailab-live-api",
+        "source": "ailab-live-api",
+        "target": "runtime",
+        "authority_type": "internal_api",
+        "observed": true,
+        "confidence": "high",
+        "hops": [
+          {
+            "node": "ailab-live-api",
+            "type": "service",
+            "authority": "internal_api"
+          }
+        ],
+        "metadata": {},
+        "contract_version": "31D"
+      },
+      {
+        "chain_id": "authority_prometheus",
+        "source": "prometheus",
+        "target": "runtime",
+        "authority_type": "source_of_truth",
+        "observed": true,
+        "confidence": "high",
+        "hops": [
+          {
+            "node": "prometheus",
+            "type": "datasource",
+            "authority": "source_of_truth"
+          }
+        ],
+        "metadata": {},
+        "contract_version": "31D"
+      }
+    ],
+    "contract_version": "31D"
+  },
+  "observability_graph": {
+    "total_observability_nodes": 12,
+    "total_observability_edges": 5,
+    "nodes": [
+      {
+        "node_id": "ailab-gateway",
+        "node_type": "gateway",
+        "operational_state": "active",
+        "active": true,
+        "discoverable": true,
+        "routable": true,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "entrypoint",
+        "inventory_only": false,
+        "entity_ref": "ailab-gateway",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "ailab-router",
+        "node_type": "router",
+        "operational_state": "active",
+        "active": true,
+        "discoverable": true,
+        "routable": true,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "internal_api",
+        "inventory_only": false,
+        "entity_ref": "ailab-router",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "ailab-live-api",
+        "node_type": "service",
+        "operational_state": "active",
+        "active": true,
+        "discoverable": true,
+        "routable": true,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "internal_api",
+        "inventory_only": false,
+        "entity_ref": "ailab-live-api",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "ailab-docs",
+        "node_type": "service",
+        "operational_state": "active",
+        "active": false,
+        "discoverable": true,
+        "routable": false,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "support",
+        "inventory_only": false,
+        "entity_ref": "ailab-docs",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "ailab-metrics",
+        "node_type": "service",
+        "operational_state": "active",
+        "active": false,
+        "discoverable": true,
+        "routable": false,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "support",
+        "inventory_only": false,
+        "entity_ref": "ailab-metrics",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "ailab-heartbeat",
+        "node_type": "service",
+        "operational_state": "active",
+        "active": false,
+        "discoverable": true,
+        "routable": false,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "support",
+        "inventory_only": false,
+        "entity_ref": "ailab-heartbeat",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "ailab-runner",
+        "node_type": "service",
+        "operational_state": "active",
+        "active": false,
+        "discoverable": true,
+        "routable": false,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "support",
+        "inventory_only": false,
+        "entity_ref": "ailab-runner",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "prometheus",
+        "node_type": "datasource",
+        "operational_state": "active",
+        "active": true,
+        "discoverable": true,
+        "routable": false,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "source_of_truth",
+        "inventory_only": false,
+        "entity_ref": "prometheus",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "grafana",
+        "node_type": "datasource",
+        "operational_state": "active",
+        "active": true,
+        "discoverable": true,
+        "routable": false,
+        "confidence": "medium",
+        "freshness": "fresh",
+        "authority": "visualization",
+        "inventory_only": false,
+        "entity_ref": "grafana",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "192.168.1.50",
+        "node_type": "exporter",
+        "operational_state": "active",
+        "active": true,
+        "discoverable": true,
+        "routable": true,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "inference_gpu",
+        "inventory_only": false,
+        "entity_ref": "192.168.1.50",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "192.168.1.60",
+        "node_type": "exporter",
+        "operational_state": "inactive",
+        "active": false,
+        "discoverable": true,
+        "routable": false,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "inventory",
+        "inventory_only": true,
+        "entity_ref": "192.168.1.60",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "192.168.1.40",
+        "node_type": "exporter",
+        "operational_state": "active",
+        "active": true,
+        "discoverable": true,
+        "routable": true,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "observability",
+        "inventory_only": false,
+        "entity_ref": "192.168.1.40",
+        "contract_version": "31D"
+      }
+    ],
+    "edges": [
+      {
+        "source_id": "ailab-gateway",
+        "target_id": "prometheus",
+        "relationship": "emits_metrics_to",
+        "direction": "forward",
+        "observed": true,
+        "confidence": "high",
+        "weight": 0.8,
+        "metadata": {},
+        "contract_version": "31D"
+      },
+      {
+        "source_id": "ailab-router",
+        "target_id": "prometheus",
+        "relationship": "emits_metrics_to",
+        "direction": "forward",
+        "observed": true,
+        "confidence": "high",
+        "weight": 0.8,
+        "metadata": {},
+        "contract_version": "31D"
+      },
+      {
+        "source_id": "ailab-live-api",
+        "target_id": "prometheus",
+        "relationship": "emits_metrics_to",
+        "direction": "forward",
+        "observed": true,
+        "confidence": "high",
+        "weight": 0.8,
+        "metadata": {},
+        "contract_version": "31D"
+      },
+      {
+        "source_id": "prometheus",
+        "target_id": "grafana",
+        "relationship": "feeds_visualization",
+        "direction": "forward",
+        "observed": true,
+        "confidence": "high",
+        "weight": 1.0,
+        "metadata": {},
+        "contract_version": "31D"
+      },
+      {
+        "source_id": "192.168.1.30",
+        "target_id": "192.168.1.40",
+        "relationship": "sends_metrics_to",
+        "direction": "forward",
+        "observed": true,
+        "confidence": "high",
+        "weight": 1.0,
+        "metadata": {},
+        "contract_version": "31D"
+      }
+    ],
+    "contract_version": "31D"
+  },
+  "routing_graph": {
+    "total_routing_nodes": 7,
+    "total_routing_edges": 2,
+    "nodes": [
+      {
+        "node_id": "ailab-gateway",
+        "node_type": "gateway",
+        "operational_state": "active",
+        "active": true,
+        "discoverable": true,
+        "routable": true,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "entrypoint",
+        "inventory_only": false,
+        "entity_ref": "ailab-gateway",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "ailab-router",
+        "node_type": "router",
+        "operational_state": "active",
+        "active": true,
+        "discoverable": true,
+        "routable": true,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "internal_api",
+        "inventory_only": false,
+        "entity_ref": "ailab-router",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "ailab-live-api",
+        "node_type": "service",
+        "operational_state": "active",
+        "active": true,
+        "discoverable": true,
+        "routable": true,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "internal_api",
+        "inventory_only": false,
+        "entity_ref": "ailab-live-api",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "192.168.1.30",
+        "node_type": "runtime",
+        "operational_state": "active",
+        "active": true,
+        "discoverable": true,
+        "routable": true,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "primary_control_plane",
+        "inventory_only": false,
+        "entity_ref": "192.168.1.30",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "192.168.1.50",
+        "node_type": "exporter",
+        "operational_state": "active",
+        "active": true,
+        "discoverable": true,
+        "routable": true,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "inference_gpu",
+        "inventory_only": false,
+        "entity_ref": "192.168.1.50",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "192.168.1.40",
+        "node_type": "exporter",
+        "operational_state": "active",
+        "active": true,
+        "discoverable": true,
+        "routable": true,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "observability",
+        "inventory_only": false,
+        "entity_ref": "192.168.1.40",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "192.168.1.200",
+        "node_type": "storage",
+        "operational_state": "active",
+        "active": true,
+        "discoverable": true,
+        "routable": true,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "storage",
+        "inventory_only": false,
+        "entity_ref": "192.168.1.200",
+        "contract_version": "31D"
+      }
+    ],
+    "edges": [
+      {
+        "source_id": "ailab-gateway",
+        "target_id": "ailab-router",
+        "relationship": "routes_to",
+        "direction": "forward",
+        "observed": true,
+        "confidence": "high",
+        "weight": 1.0,
+        "metadata": {},
+        "contract_version": "31D"
+      },
+      {
+        "source_id": "192.168.1.30",
+        "target_id": "192.168.1.50",
+        "relationship": "forwards_inference_to",
+        "direction": "forward",
+        "observed": true,
+        "confidence": "high",
+        "weight": 1.0,
+        "metadata": {},
+        "contract_version": "31D"
+      }
+    ],
+    "contract_version": "31D"
+  },
+  "operational_graph": {
+    "total_active_nodes": 9,
+    "total_operational_edges": 6,
+    "active_nodes": [
+      {
+        "node_id": "ailab-gateway",
+        "node_type": "gateway",
+        "operational_state": "active",
+        "active": true,
+        "discoverable": true,
+        "routable": true,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "entrypoint",
+        "inventory_only": false,
+        "entity_ref": "ailab-gateway",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "ailab-router",
+        "node_type": "router",
+        "operational_state": "active",
+        "active": true,
+        "discoverable": true,
+        "routable": true,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "internal_api",
+        "inventory_only": false,
+        "entity_ref": "ailab-router",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "ailab-live-api",
+        "node_type": "service",
+        "operational_state": "active",
+        "active": true,
+        "discoverable": true,
+        "routable": true,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "internal_api",
+        "inventory_only": false,
+        "entity_ref": "ailab-live-api",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "prometheus",
+        "node_type": "datasource",
+        "operational_state": "active",
+        "active": true,
+        "discoverable": true,
+        "routable": false,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "source_of_truth",
+        "inventory_only": false,
+        "entity_ref": "prometheus",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "grafana",
+        "node_type": "datasource",
+        "operational_state": "active",
+        "active": true,
+        "discoverable": true,
+        "routable": false,
+        "confidence": "medium",
+        "freshness": "fresh",
+        "authority": "visualization",
+        "inventory_only": false,
+        "entity_ref": "grafana",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "192.168.1.30",
+        "node_type": "runtime",
+        "operational_state": "active",
+        "active": true,
+        "discoverable": true,
+        "routable": true,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "primary_control_plane",
+        "inventory_only": false,
+        "entity_ref": "192.168.1.30",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "192.168.1.50",
+        "node_type": "exporter",
+        "operational_state": "active",
+        "active": true,
+        "discoverable": true,
+        "routable": true,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "inference_gpu",
+        "inventory_only": false,
+        "entity_ref": "192.168.1.50",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "192.168.1.40",
+        "node_type": "exporter",
+        "operational_state": "active",
+        "active": true,
+        "discoverable": true,
+        "routable": true,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "observability",
+        "inventory_only": false,
+        "entity_ref": "192.168.1.40",
+        "contract_version": "31D"
+      },
+      {
+        "node_id": "192.168.1.200",
+        "node_type": "storage",
+        "operational_state": "active",
+        "active": true,
+        "discoverable": true,
+        "routable": true,
+        "confidence": "high",
+        "freshness": "fresh",
+        "authority": "storage",
+        "inventory_only": false,
+        "entity_ref": "192.168.1.200",
+        "contract_version": "31D"
+      }
+    ],
+    "operational_edges": [
+      {
+        "source_id": "ailab-gateway",
+        "target_id": "ailab-router",
+        "relationship": "routes_to",
+        "direction": "forward",
+        "observed": true,
+        "confidence": "high",
+        "weight": 1.0,
+        "metadata": {},
+        "contract_version": "31D"
+      },
+      {
+        "source_id": "ailab-gateway",
+        "target_id": "192.168.1.30",
+        "relationship": "runs_on",
+        "direction": "forward",
+        "observed": true,
+        "confidence": "high",
+        "weight": 1.0,
+        "metadata": {},
+        "contract_version": "31D"
+      },
+      {
+        "source_id": "ailab-router",
+        "target_id": "192.168.1.30",
+        "relationship": "runs_on",
+        "direction": "forward",
+        "observed": true,
+        "confidence": "high",
+        "weight": 1.0,
+        "metadata": {},
+        "contract_version": "31D"
+      },
+      {
+        "source_id": "192.168.1.30",
+        "target_id": "192.168.1.50",
+        "relationship": "forwards_inference_to",
+        "direction": "forward",
+        "observed": true,
+        "confidence": "high",
+        "weight": 1.0,
+        "metadata": {},
+        "contract_version": "31D"
+      },
+      {
+        "source_id": "prometheus",
+        "target_id": "192.168.1.40",
+        "relationship": "runs_on",
+        "direction": "forward",
+        "observed": true,
+        "confidence": "high",
+        "weight": 1.0,
+        "metadata": {},
+        "contract_version": "31D"
+      },
+      {
+        "source_id": "grafana",
+        "target_id": "192.168.1.40",
+        "relationship": "runs_on",
+        "direction": "forward",
+        "observed": true,
+        "confidence": "high",
+        "weight": 1.0,
+        "metadata": {},
+        "contract_version": "31D"
+      }
+    ],
+    "contract_version": "31D"
+  },
+  "blast_radius": {
+    "event_id": "blast_prometheus_stale_1779458973",
+    "event_type": "prometheus_stale",
+    "source_node": "prometheus",
+    "source_type": "datasource",
+    "severity": "medium",
+    "affected_nodes": [
+      "grafana"
+    ],
+    "affected_domains": [
+      "datasource"
+    ],
+    "impact_score": 0.07142857142857142,
+    "confidence": "high",
+    "propagation_path": [
+      {
+        "from": "prometheus",
+        "to": "grafana",
+        "relationship": "feeds_visualization",
+        "depth": 1
+      }
+    ],
+    "contract_version": "31D"
+  },
+  "topology_drift": [],
+  "topology_confidence": {
+    "overall_score": 98.9,
+    "observed_edges": 15,
+    "total_edges": 15,
+    "stale_entities": 0,
+    "total_entities": 14,
+    "inventory_only": 1,
+    "degraded_observability": 0,
+    "authority_valid": true,
+    "factors": {
+      "observed_edge_ratio": 1.0,
+      "stale_penalty": 1.0,
+      "inventory_penalty": 0.93,
+      "degraded_penalty": 1.0,
+      "authority_bonus": 1.0
+    },
+    "contract_version": "31D"
+  }
+}

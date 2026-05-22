@@ -446,6 +446,35 @@ def build_operator_summary(
         expected_offline = [g.get("gpu_id", "?") for g in offline_gpus]
         unexpected_down = [g.get("gpu_id", "?") for g in unknown_gpus]
 
+    # FASE 31D: topology reasoning for operator summary
+    _topology_summary = {}
+    try:
+        from runtime.topology import (
+            build_runtime_topology,
+            build_dependency_graph,
+            build_authority_graph,
+            calculate_topology_confidence,
+        )
+        _topo = build_runtime_topology(sensor_snapshot, {})
+        _dep = build_dependency_graph(sensor_snapshot, {})
+        _auth = build_authority_graph(sensor_snapshot, {})
+        _conf = calculate_topology_confidence(sensor_snapshot, {})
+        _topology_summary = {
+            "total_nodes": len(_topo.get("nodes", [])),
+            "total_edges": len(_topo.get("edges", [])),
+            "degraded_paths": len(_topo.get("degraded_paths", [])),
+            "total_dependencies": _dep.get("total_dependencies", 0),
+            "total_authority_chains": _auth.get("total_chains", 0),
+            "confidence_score": _conf.get("overall_score", 0),
+            "confidence_level": "high" if _conf.get("overall_score", 0) >= 80 else "medium" if _conf.get("overall_score", 0) >= 50 else "low",
+        }
+    except ImportError:
+        _topology_summary = {
+            "total_nodes": 0, "total_edges": 0, "degraded_paths": 0,
+            "total_dependencies": 0, "total_authority_chains": 0,
+            "confidence_score": 0, "confidence_level": "unavailable",
+        }
+
     report = OperationalSummaryContract(
         overall_state=maturity_data.get("runtime_state", "unknown"),
         active_gpus=len(active_gpus),
@@ -458,6 +487,8 @@ def build_operator_summary(
         recommendations=maturity_data.get("recommended_actions", []),
         confidence=maturity_data.get("confidence", "unknown"),
         freshness=maturity_data.get("freshness", "unknown"),
+        # FASE 31D: topology annex
+        topology=_topology_summary,
     )
     return report.to_dict()
 

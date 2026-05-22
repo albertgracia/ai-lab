@@ -32,6 +32,9 @@ def build_runtime_cognitive_summary(
     observability_signals = compress_observability_signals(sensor_snapshot, extra_ctx)
     all_signals.extend(observability_signals)
 
+    topology_signals = compress_topology_signals(sensor_snapshot, extra_ctx)
+    all_signals.extend(topology_signals)
+
     if not all_signals:
         unavailable.append("all_domains")
 
@@ -382,6 +385,84 @@ def compress_observability_signals(
     return signals
 
 
+def compress_topology_signals(
+    sensor_snapshot: dict[str, Any],
+    extra_ctx: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    signals: list[dict[str, Any]] = []
+    try:
+        from runtime.topology import (
+            build_runtime_topology,
+            build_dependency_graph,
+            build_authority_graph,
+            detect_topology_drift,
+            calculate_topology_confidence,
+        )
+        _topo = build_runtime_topology(sensor_snapshot, extra_ctx)
+        _dep = build_dependency_graph(sensor_snapshot, extra_ctx)
+        _auth = build_authority_graph(sensor_snapshot, extra_ctx)
+        _drift = detect_topology_drift(sensor_snapshot, extra_ctx)
+        _conf = calculate_topology_confidence(sensor_snapshot, extra_ctx)
+
+        nodes = _topo.get("nodes", [])
+        edges = _topo.get("edges", [])
+        degraded_paths = _topo.get("degraded_paths", [])
+        active_nodes = sum(1 for n in nodes if n.get("active"))
+        inventory_nodes = sum(1 for n in nodes if n.get("inventory_only"))
+        total_deps = _dep.get("total_dependencies", 0)
+        total_chains = _auth.get("total_chains", 0)
+        conf_score = _conf.get("overall_score", 0)
+
+        parts = [
+            f"topology: {len(nodes)} nodos, {len(edges)} aristas, {active_nodes} activos",
+            f"{inventory_nodes} inventario, {total_deps} dependencias, {total_chains} cadenas autoridad",
+            f"confianza topologica: {conf_score}%",
+        ]
+        signals.append({
+            "domain": "topology", "severity": "info",
+            "message": ", ".join(parts),
+            "evidence": ["runtime_topology_31d"], "confidence": "high" if conf_score >= 80 else "medium",
+            "freshness": "fresh",
+        })
+
+        if degraded_paths:
+            signals.append({
+                "domain": "topology", "severity": "warning",
+                "message": f"{len(degraded_paths)} rutas degradadas en topologia",
+                "evidence": ["runtime_topology_31d"], "confidence": "high",
+                "freshness": "fresh",
+            })
+
+        if _drift:
+            _drift_severity = "warning"
+            if any(d.get("severity") == "medium" for d in _drift):
+                _drift_severity = "warning"
+            signals.append({
+                "domain": "topology", "severity": _drift_severity,
+                "message": f"{len(_drift)} desviaciones topologicas detectadas",
+                "evidence": ["runtime_topology_31d"], "confidence": "high",
+                "freshness": "fresh",
+            })
+
+        if conf_score < 50:
+            signals.append({
+                "domain": "topology", "severity": "warning",
+                "message": f"confianza topologica baja ({conf_score}%) — verificar consistencia de relaciones observadas",
+                "evidence": ["runtime_topology_31d"], "confidence": "low",
+                "freshness": "fresh",
+            })
+
+    except ImportError:
+        signals.append({
+            "domain": "topology", "severity": "info",
+            "message": "topology module no disponible — FASE 31D no integrada",
+            "evidence": ["code"], "confidence": "low",
+            "freshness": "unavailable",
+        })
+
+    return signals
+
+
 def rank_operational_signals(signals: list[dict[str, Any]]) -> list[dict[str, Any]]:
     if not signals:
         return []
@@ -535,6 +616,14 @@ def build_actionable_summary(
         if runtime_maturity.get("uncertainty_level") == "stale_evidence":
             if "datos stale - considerar refresh de sensores" not in recommendations:
                 recommendations.append("datos stale - considerar refresh de sensores")
+
+    # FASE 31D: topology-aware recommendations
+    _has_topology_warning = any(
+        s.get("domain") == "topology" and s.get("severity") == "warning"
+        for s in important_signals
+    )
+    if _has_topology_warning:
+        recommendations.append("revisar topologia — rutas degradadas o desviaciones detectadas")
 
     if not recommendations:
         recommendations.append("ninguna acción necesaria — runtime estable")

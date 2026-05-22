@@ -59,6 +59,8 @@ class OperationalSummaryContract:
     recommendations: list[str] = field(default_factory=list)
     confidence: str = "unknown"
     freshness: str = "unknown"
+    # FASE 31D: topology annex
+    topology: dict[str, Any] = field(default_factory=dict)
     timestamp: float = field(default_factory=time.time)
     contract_version: str = REPORTING_CONTRACT_VERSION
 
@@ -77,6 +79,7 @@ class OperationalSummaryContract:
             "recommendations": list(self.recommendations),
             "confidence": self.confidence,
             "freshness": self.freshness,
+            "topology": dict(self.topology),
         }
 
 

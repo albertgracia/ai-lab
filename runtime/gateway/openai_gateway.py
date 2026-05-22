@@ -1183,6 +1183,123 @@ class GatewayHandler(BaseHTTPRequestHandler):
             )
             return
 
+        # FASE 31D: Runtime Topology Awareness — always-on 200
+        if self.path == "/runtime/topology/dependencies":
+            try:
+                from runtime.topology import build_dependency_graph
+                _dep = build_dependency_graph()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/topology/dependencies",
+                    "timestamp": time.time(),
+                    "contract_version": "31D",
+                    "dependencies": _dep,
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/topology/dependencies",
+                    "timestamp": time.time(),
+                    "contract_version": "31D",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/topology/authority":
+            try:
+                from runtime.topology import build_authority_graph
+                _auth = build_authority_graph()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/topology/authority",
+                    "timestamp": time.time(),
+                    "contract_version": "31D",
+                    "authority_graph": _auth,
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/topology/authority",
+                    "timestamp": time.time(),
+                    "contract_version": "31D",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/topology/blast-radius":
+            try:
+                from runtime.topology import calculate_blast_radius
+                _blast = calculate_blast_radius()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/topology/blast-radius",
+                    "timestamp": time.time(),
+                    "contract_version": "31D",
+                    "blast_radius": _blast,
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/topology/blast-radius",
+                    "timestamp": time.time(),
+                    "contract_version": "31D",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/topology/confidence":
+            try:
+                from runtime.topology import calculate_topology_confidence
+                _conf = calculate_topology_confidence()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/topology/confidence",
+                    "timestamp": time.time(),
+                    "contract_version": "31D",
+                    "topology_confidence": _conf,
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/topology/confidence",
+                    "timestamp": time.time(),
+                    "contract_version": "31D",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/topology/drift":
+            try:
+                from runtime.topology import detect_topology_drift
+                _drift = detect_topology_drift()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/topology/drift",
+                    "timestamp": time.time(),
+                    "contract_version": "31D",
+                    "topology_drift": _drift,
+                    "total_drifts": len(_drift),
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/topology/drift",
+                    "timestamp": time.time(),
+                    "contract_version": "31D",
+                    "error": str(exc),
+                })
+            return
+
         # FASE 30I: Runtime Sensor Fusion — always-on 200
         if self.path == "/runtime/sensors":
             try:

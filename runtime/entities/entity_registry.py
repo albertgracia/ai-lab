@@ -348,3 +348,43 @@ def build_topology_preparation(
             and e["operational_state"] != "active"
         ],
     }
+
+
+# FASE 31D: topology graph integration — delegates to runtime/topology
+def build_topology_graph(
+    sensor_snapshot: dict[str, Any] | None = None,
+    extra_ctx: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    try:
+        from runtime.topology import build_runtime_topology
+        return build_runtime_topology(sensor_snapshot, extra_ctx)
+    except ImportError:
+        return {
+            "nodes": [],
+            "edges": [],
+            "degraded_paths": [],
+            "contract_version": "31D",
+            "source": "fallback",
+        }
+
+
+def build_topology_summary(
+    sensor_snapshot: dict[str, Any] | None = None,
+    extra_ctx: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    topo = build_topology_graph(sensor_snapshot, extra_ctx)
+    nodes = topo.get("nodes", [])
+    edges = topo.get("edges", [])
+    degraded = topo.get("degraded_paths", [])
+    return {
+        "total_nodes": len(nodes),
+        "total_edges": len(edges),
+        "active_nodes": sum(1 for n in nodes if n.get("active")),
+        "inventory_nodes": sum(1 for n in nodes if n.get("inventory_only")),
+        "degraded_paths": len(degraded),
+        "node_types": list({n.get("node_type", "unknown") for n in nodes}),
+        "relationship_types": list({e.get("relationship", "unknown") for e in edges}),
+        "authorities": list({n.get("authority", "unknown") for n in nodes if n.get("authority")}),
+        "contract_version": "31D",
+        "source": "entity_registry_31e",
+    }
