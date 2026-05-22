@@ -215,6 +215,166 @@ def runtime_reporting_status():
     }
 
 
+# ── FASE 31E: Entity State Taxonomy Endpoints ─────────────────────
+
+@app.get("/runtime/entities")
+def runtime_entities():
+    try:
+        from runtime.entities import build_entity_registry
+        sensor = {}
+        try:
+            from runtime.state.system_snapshot import load_snapshot
+            sensor = load_snapshot() or {}
+        except Exception:
+            pass
+        registry = build_entity_registry(sensor_snapshot=sensor)
+        try:
+            from runtime.telemetry.prometheus_metrics import record_entity_registry_metrics
+            record_entity_registry_metrics(registry)
+        except ImportError:
+            pass
+        return {
+            "status": "ok",
+            "endpoint": "entities",
+            "contract_version": "31E",
+            "total_entities": len(registry),
+            "entities": registry,
+        }
+    except Exception as exc:
+        return {"status": "ok", "endpoint": "entities", "contract_version": "31E", "error": str(exc), "entities": []}
+
+
+@app.get("/runtime/entities/active")
+def runtime_entities_active():
+    try:
+        from runtime.entities import build_active_entities
+        sensor = {}
+        try:
+            from runtime.state.system_snapshot import load_snapshot
+            sensor = load_snapshot() or {}
+        except Exception:
+            pass
+        entities = build_active_entities(sensor_snapshot=sensor)
+        return {
+            "status": "ok",
+            "endpoint": "entities/active",
+            "contract_version": "31E",
+            "total_active": len(entities),
+            "entities": entities,
+        }
+    except Exception as exc:
+        return {"status": "ok", "endpoint": "entities/active", "contract_version": "31E", "error": str(exc), "entities": []}
+
+
+@app.get("/runtime/entities/inventory")
+def runtime_entities_inventory():
+    try:
+        from runtime.entities import build_inventory_entities
+        sensor = {}
+        try:
+            from runtime.state.system_snapshot import load_snapshot
+            sensor = load_snapshot() or {}
+        except Exception:
+            pass
+        entities = build_inventory_entities(sensor_snapshot=sensor)
+        return {
+            "status": "ok",
+            "endpoint": "entities/inventory",
+            "contract_version": "31E",
+            "total_inventory": len(entities),
+            "entities": entities,
+        }
+    except Exception as exc:
+        return {"status": "ok", "endpoint": "entities/inventory", "contract_version": "31E", "error": str(exc), "entities": []}
+
+
+@app.get("/runtime/entities/discoverable")
+def runtime_entities_discoverable():
+    try:
+        from runtime.entities import build_discoverable_entities
+        sensor = {}
+        try:
+            from runtime.state.system_snapshot import load_snapshot
+            sensor = load_snapshot() or {}
+        except Exception:
+            pass
+        entities = build_discoverable_entities(sensor_snapshot=sensor)
+        return {
+            "status": "ok",
+            "endpoint": "entities/discoverable",
+            "contract_version": "31E",
+            "total_discoverable": len(entities),
+            "entities": entities,
+        }
+    except Exception as exc:
+        return {"status": "ok", "endpoint": "entities/discoverable", "contract_version": "31E", "error": str(exc), "entities": []}
+
+
+@app.get("/runtime/entities/deprecated")
+def runtime_entities_deprecated():
+    try:
+        from runtime.entities import build_deprecated_entities
+        sensor = {}
+        try:
+            from runtime.state.system_snapshot import load_snapshot
+            sensor = load_snapshot() or {}
+        except Exception:
+            pass
+        entities = build_deprecated_entities(sensor_snapshot=sensor)
+        return {
+            "status": "ok",
+            "endpoint": "entities/deprecated",
+            "contract_version": "31E",
+            "total_deprecated": len(entities),
+            "entities": entities,
+        }
+    except Exception as exc:
+        return {"status": "ok", "endpoint": "entities/deprecated", "contract_version": "31E", "error": str(exc), "entities": []}
+
+
+@app.get("/runtime/entities/routability")
+def runtime_entities_routability():
+    try:
+        from runtime.entities import build_routability_summary
+        sensor = {}
+        try:
+            from runtime.state.system_snapshot import load_snapshot
+            sensor = load_snapshot() or {}
+        except Exception:
+            pass
+        summary = build_routability_summary(sensor_snapshot=sensor)
+        return {
+            "status": "ok",
+            "endpoint": "entities/routability",
+            "contract_version": "31E",
+            "total_routable": sum(1 for s in summary if s.get("routable")),
+            "routability_summary": summary,
+        }
+    except Exception as exc:
+        return {"status": "ok", "endpoint": "entities/routability", "contract_version": "31E", "error": str(exc), "routability_summary": []}
+
+
+@app.get("/runtime/entities/topology")
+def runtime_entities_topology():
+    try:
+        from runtime.entities import build_topology_preparation
+        sensor = {}
+        try:
+            from runtime.state.system_snapshot import load_snapshot
+            sensor = load_snapshot() or {}
+        except Exception:
+            pass
+        topology = build_topology_preparation(sensor_snapshot=sensor)
+        return {
+            "status": "ok",
+            "endpoint": "entities/topology",
+            "contract_version": "31E",
+            "topology": topology,
+        }
+    except Exception as exc:
+        return {"status": "ok", "endpoint": "entities/topology", "contract_version": "31E", "error": str(exc), "topology": {}}
+
+
 @app.get("/runtime/reporting/operator-summary")
 def runtime_reporting_operator_summary():
     try:

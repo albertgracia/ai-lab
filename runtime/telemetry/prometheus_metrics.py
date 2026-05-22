@@ -1163,6 +1163,100 @@ def record_coding_model_selected() -> None:
     CODING_MODEL_SELECTED_TOTAL.inc()
 
 
+# ── FASE 31E: Entity State Taxonomy Metrics ─────────────
+ENTITY_REGISTRY_TOTAL = Gauge(
+    "ailab_entity_registry_total",
+    "Entity registry count by entity type and entity state",
+    ["entity_type", "entity_state"],
+)
+ENTITY_ACTIVE_TOTAL = Gauge(
+    "ailab_entity_active_total",
+    "Active entities by entity type",
+    ["entity_type"],
+)
+ENTITY_INVENTORY_TOTAL = Gauge(
+    "ailab_entity_inventory_total",
+    "Inventory-only entities by entity type",
+    ["entity_type"],
+)
+ENTITY_DISCOVERABLE_TOTAL = Gauge(
+    "ailab_entity_discoverable_total",
+    "Discoverable entities by entity type",
+    ["entity_type"],
+)
+ENTITY_DEPRECATED_TOTAL = Gauge(
+    "ailab_entity_deprecated_total",
+    "Deprecated entities by entity type",
+    ["entity_type"],
+)
+ENTITY_STALE_TOTAL = Gauge(
+    "ailab_entity_stale_total",
+    "Stale entities by entity type",
+    ["entity_type"],
+)
+ENTITY_CONFIDENCE = Gauge(
+    "ailab_entity_confidence",
+    "Entity registry confidence score 0.0-1.0",
+)
+ENTITY_ROUTABLE_TOTAL = Gauge(
+    "ailab_entity_routable_total",
+    "Routable entities by entity type",
+    ["entity_type"],
+)
+
+
+_CONFIDENCE_VALUE = {"high": 1.0, "medium": 0.6, "low": 0.2, "unknown": 0.0}
+
+
+def record_entity_registry_metrics(registry: list[dict]) -> None:
+    from collections import Counter
+    type_state = Counter()
+    type_active = Counter()
+    type_inventory = Counter()
+    type_discoverable = Counter()
+    type_deprecated = Counter()
+    type_stale = Counter()
+    type_routable = Counter()
+    confidences = set()
+
+    for e in registry:
+        etype = e.get("entity_type", "unknown")
+        estate = e.get("operational_state", "unknown")
+        type_state[(etype, estate)] += 1
+        if estate == "active":
+            type_active[etype] += 1
+        if e.get("inventory_state") in ("inventory", "expected_offline") and not e.get("routable"):
+            type_inventory[etype] += 1
+        if e.get("discoverability") == "discoverable":
+            type_discoverable[etype] += 1
+        if e.get("deprecated"):
+            type_deprecated[etype] += 1
+        if e.get("freshness") in ("stale", "expired", "unavailable"):
+            type_stale[etype] += 1
+        if e.get("routable"):
+            type_routable[etype] += 1
+        confidences.add(e.get("confidence", "unknown"))
+
+    for (etype, estate), count in type_state.items():
+        ENTITY_REGISTRY_TOTAL.labels(entity_type=etype, entity_state=estate).set(float(count))
+    for etype, count in type_active.items():
+        ENTITY_ACTIVE_TOTAL.labels(entity_type=etype).set(float(count))
+    for etype, count in type_inventory.items():
+        ENTITY_INVENTORY_TOTAL.labels(entity_type=etype).set(float(count))
+    for etype, count in type_discoverable.items():
+        ENTITY_DISCOVERABLE_TOTAL.labels(entity_type=etype).set(float(count))
+    for etype, count in type_deprecated.items():
+        ENTITY_DEPRECATED_TOTAL.labels(entity_type=etype).set(float(count))
+    for etype, count in type_stale.items():
+        ENTITY_STALE_TOTAL.labels(entity_type=etype).set(float(count))
+    for etype, count in type_routable.items():
+        ENTITY_ROUTABLE_TOTAL.labels(entity_type=etype).set(float(count))
+
+    conf_values = [_CONFIDENCE_VALUE.get(c, 0.0) for c in confidences]
+    avg_conf = sum(conf_values) / max(len(conf_values), 1)
+    ENTITY_CONFIDENCE.set(avg_conf)
+
+
 # ── FASE 30I-G: Grounding Recorders ─────────────
 
 def record_runtime_grounding_validation(model: str, route_family: str, entity_type: str) -> None:

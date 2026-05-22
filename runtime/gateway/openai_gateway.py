@@ -1268,7 +1268,61 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 })
             return
 
-        # FASE 30I-G: Runtime Grounding — always-on 200
+        # FASE 31E: Entity State Taxonomy — always-on 200
+        if self.path == "/runtime/entities":
+            try:
+                from runtime.entities import (
+                    build_entity_registry as _31e_build,
+                    build_active_entities,
+                    build_inventory_entities,
+                    build_discoverable_entities,
+                    build_deprecated_entities,
+                    build_routability_summary,
+                    build_topology_preparation,
+                )
+                _31e_entities = _31e_build()
+                _active = build_active_entities()
+                _inventory = build_inventory_entities()
+                _discoverable = build_discoverable_entities()
+                _deprecated = build_deprecated_entities()
+                _routability = build_routability_summary()
+                _topology = build_topology_preparation()
+                try:
+                    from runtime.telemetry.prometheus_metrics import record_entity_registry_metrics
+                    record_entity_registry_metrics(_31e_entities)
+                except ImportError:
+                    pass
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/entities",
+                    "timestamp": time.time(),
+                    "contract_version": "31E",
+                    "total_entities": len(_31e_entities),
+                    "total_active": len(_active),
+                    "total_inventory": len(_inventory),
+                    "total_discoverable": len(_discoverable),
+                    "total_deprecated": len(_deprecated),
+                    "active": _active,
+                    "inventory": _inventory,
+                    "discoverable": _discoverable,
+                    "deprecated": _deprecated,
+                    "routability": _routability,
+                    "topology": _topology,
+                    "entities": _31e_entities,
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/entities",
+                    "timestamp": time.time(),
+                    "contract_version": "31E",
+                    "error": str(exc),
+                })
+            return
+
+        # FASE 30I-G + 31E: Runtime Grounding — always-on 200
         if self.path == "/runtime/grounding":
             try:
                 from runtime.context.runtime_entity_registry import (
@@ -1280,17 +1334,39 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 )
                 _reg = RuntimeEntityRegistry()
                 _envelope = build_grounding_envelope("", entity_registry=_reg)
+
+                # FASE 31E: enrich with entity state taxonomy counts
+                try:
+                    from runtime.entities import build_entity_registry as _31e_build
+                    _31e_entities = _31e_build()
+                    _31e_active = sum(1 for e in _31e_entities if e.get("operational_state") == "active")
+                    _31e_inventory = sum(1 for e in _31e_entities if e.get("inventory_state") in ("inventory", "expected_offline") and e.get("operational_state") != "active")
+                    _31e_deprecated = sum(1 for e in _31e_entities if e.get("deprecated"))
+                    _31e_discoverable = sum(1 for e in _31e_entities if e.get("discoverability") == "discoverable" and e.get("operational_state") != "active")
+                    _31e_routable = sum(1 for e in _31e_entities if e.get("routable"))
+                    _31e_summary = {
+                        "total_entities": len(_31e_entities),
+                        "active": _31e_active,
+                        "inventory": _31e_inventory,
+                        "deprecated": _31e_deprecated,
+                        "discoverable": _31e_discoverable,
+                        "routable": _31e_routable,
+                    }
+                except Exception:
+                    _31e_summary = {}
+
                 self._send_json(200, {
                     "status": "ok",
                     "service": "ai-lab-openai-gateway",
                     "endpoint": "runtime/grounding",
                     "timestamp": time.time(),
-                    "contract_version": "30I-G",
+                    "contract_version": "31E",
                     "observed_entity_types": sorted(OBSERVED_ENTITY_TYPES),
                     "grounding_enabled": True,
                     "grounding_envelope": _envelope,
                     "denylist_active": True,
                     "entity_registry_active": True,
+                    "entity_taxonomy_31e": _31e_summary,
                     "unknown_state_semantics": sorted(UNKNOWN_STATE_TOKENS),
                 })
             except Exception as exc:

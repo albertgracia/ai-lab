@@ -204,18 +204,32 @@ def _extract_topology(
 
 # ── Runtime health report ──────────────────────────────────────────
 
+def _entity_aware_gpu_counts(sensor_snapshot):
+    """Use 31E entity registry if available, fall back to raw summaries."""
+    try:
+        from runtime.entities import build_entity_registry
+        registry = build_entity_registry(sensor_snapshot=sensor_snapshot)
+        active = sum(1 for e in registry if e.get("entity_type") == "gpu" and e.get("operational_state") == "active")
+        offline = sum(1 for e in registry if e.get("entity_type") == "gpu" and e.get("inventory_state") in ("expected_offline", "inventory") and e.get("operational_state") != "active")
+        return active, offline
+    except ImportError:
+        pass
+    gpu_summaries = []
+    if sensor_snapshot:
+        gpu_summaries = sensor_snapshot.get("gpu_operational_summaries", []) or []
+    active = sum(1 for g in gpu_summaries if isinstance(g, dict) and g.get("operational_state") == "active")
+    offline = sum(1 for g in gpu_summaries if isinstance(g, dict) and g.get("observed_state") in ("expected_offline", "unavailable", "down"))
+    return active, offline
+
+
 def build_runtime_health_report(
     sensor_snapshot: dict[str, Any] | None = None,
     maturity: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     maturity_data = _extract_maturity(sensor_snapshot, maturity)
     topology_mode = _extract_topology(sensor_snapshot, maturity_data)
-    gpu_summaries = []
-    if sensor_snapshot:
-        gpu_summaries = sensor_snapshot.get("gpu_operational_summaries", []) or []
 
-    active = sum(1 for g in gpu_summaries if isinstance(g, dict) and g.get("operational_state") == "active")
-    offline = sum(1 for g in gpu_summaries if isinstance(g, dict) and g.get("observed_state") in ("expected_offline", "unavailable", "down"))
+    active, offline = _entity_aware_gpu_counts(sensor_snapshot)
 
     report = RuntimeHealthContract(
         runtime_state=maturity_data.get("runtime_state", "unknown"),
@@ -274,9 +288,33 @@ def _build_gpu_domain_report(
     if not sensor_snapshot:
         return DomainHealthContract(domain="gpu", state="unknown", confidence="low").to_dict()
 
-    gpu_summaries = sensor_snapshot.get("gpu_operational_summaries", []) or []
-    active = any(g.get("operational_state") == "active" for g in gpu_summaries if isinstance(g, dict))
-    offline = any(g.get("observed_state") == "expected_offline" for g in gpu_summaries if isinstance(g, dict))
+    try:
+        from runtime.entities import build_entity_registry
+        registry = build_entity_registry(sensor_snapshot=sensor_snapshot)
+        gpu_entities = [e for e in registry if e.get("entity_type") == "gpu"]
+        active = any(e.get("operational_state") == "active" for e in gpu_entities)
+        offline = any(e.get("inventory_state") == "expected_offline" for e in gpu_entities)
+        issues = []
+        confidence_set = set()
+        for e in gpu_entities:
+            issues.extend(e.get("_issues", []))
+            confidence_set.add(e.get("confidence", "low"))
+    except ImportError:
+        gpu_summaries = sensor_snapshot.get("gpu_operational_summaries", []) or []
+        active = any(g.get("operational_state") == "active" for g in gpu_summaries if isinstance(g, dict))
+        offline = any(g.get("observed_state") == "expected_offline" for g in gpu_summaries if isinstance(g, dict))
+        issues = []
+        for g in gpu_summaries:
+            if isinstance(g, dict):
+                m = g.get("observed_metrics", {}) or {}
+                temp = m.get("temperature_c")
+                if temp is not None and float(temp) > 80:
+                    issues.append(f"GPU {g.get('gpu_id', '?')} high temperature: {temp}C")
+                vram_free = m.get("vram_free_gb")
+                if vram_free is not None and float(vram_free) < 1:
+                    vram_used = m.get("vram_used_gb", "?")
+                    issues.append(f"GPU {g.get('gpu_id', '?')} VRAM pressure: {vram_used}GB used")
+        confidence_set = {g.get("confidence", "low") for g in gpu_summaries if isinstance(g, dict)}
 
     if active:
         state = "healthy"
@@ -285,19 +323,6 @@ def _build_gpu_domain_report(
     else:
         state = "unavailable"
 
-    issues = []
-    for g in gpu_summaries:
-        if isinstance(g, dict):
-            m = g.get("observed_metrics", {}) or {}
-            temp = m.get("temperature_c")
-            if temp is not None and float(temp) > 80:
-                issues.append(f"GPU {g.get('gpu_id', '?')} high temperature: {temp}C")
-            vram_free = m.get("vram_free_gb")
-            if vram_free is not None and float(vram_free) < 1:
-                vram_used = m.get("vram_used_gb", "?")
-                issues.append(f"GPU {g.get('gpu_id', '?')} VRAM pressure: {vram_used}GB used")
-
-    confidence_set = {g.get("confidence", "low") for g in gpu_summaries if isinstance(g, dict)}
     confidence = _confidence_from_set(confidence_set)
 
     report = DomainHealthContract(
@@ -305,7 +330,7 @@ def _build_gpu_domain_report(
         state=state,
         confidence=confidence,
         freshness=maturity.get("freshness", "unknown") if maturity else "unknown",
-        sources=["lmstudio", "prometheus", "sensor_fusion"],
+        sources=["lmstudio", "prometheus", "sensor_fusion", "entity_registry_31e"],
         operational_impact="none" if active else "low",
         issues=issues,
     )
@@ -367,10 +392,7 @@ def build_executive_summary(
     reasons = _ensure_list(maturity_data.get("degradation_reason"))
     impact = maturity_data.get("operational_impact", "none")
 
-    gpu_summaries = []
-    if sensor_snapshot:
-        gpu_summaries = sensor_snapshot.get("gpu_operational_summaries", []) or []
-    active = sum(1 for g in gpu_summaries if isinstance(g, dict) and g.get("operational_state") == "active")
+    active, _ = _entity_aware_gpu_counts(sensor_snapshot)
 
     critical = []
     if impact in ("high", "critical"):
@@ -406,16 +428,23 @@ def build_operator_summary(
     maturity: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     maturity_data = _extract_maturity(sensor_snapshot, maturity)
-    gpu_summaries = []
-    if sensor_snapshot:
-        gpu_summaries = sensor_snapshot.get("gpu_operational_summaries", []) or []
 
-    active_gpus = [g for g in gpu_summaries if isinstance(g, dict) and g.get("operational_state") == "active"]
-    offline_gpus = [g for g in gpu_summaries if isinstance(g, dict) and g.get("observed_state") == "expected_offline"]
-    unknown_gpus = [g for g in gpu_summaries if isinstance(g, dict) and g.get("observed_state") in ("unavailable", "down") and not g.get("inventory_expected_offline")]
-
-    expected_offline = [g.get("gpu_id", "?") for g in offline_gpus]
-    unexpected_down = [g.get("gpu_id", "?") for g in unknown_gpus]
+    try:
+        from runtime.entities import build_entity_registry
+        registry = build_entity_registry(sensor_snapshot=sensor_snapshot)
+        gpu_entities = [e for e in registry if e.get("entity_type") == "gpu"]
+        active_gpus = [e for e in gpu_entities if e.get("operational_state") == "active"]
+        expected_offline = [e.get("entity_id", "?") for e in gpu_entities if e.get("inventory_state") == "expected_offline"]
+        unexpected_down = [e.get("entity_id", "?") for e in gpu_entities if e.get("inventory_state") not in ("expected_offline",) and e.get("operational_state") in ("down", "inactive") and e.get("observed_state") in ("unavailable", "down")]
+    except ImportError:
+        gpu_summaries = []
+        if sensor_snapshot:
+            gpu_summaries = sensor_snapshot.get("gpu_operational_summaries", []) or []
+        active_gpus = [g for g in gpu_summaries if isinstance(g, dict) and g.get("operational_state") == "active"]
+        offline_gpus = [g for g in gpu_summaries if isinstance(g, dict) and g.get("observed_state") == "expected_offline"]
+        unknown_gpus = [g for g in gpu_summaries if isinstance(g, dict) and g.get("observed_state") in ("unavailable", "down") and not g.get("inventory_expected_offline")]
+        expected_offline = [g.get("gpu_id", "?") for g in offline_gpus]
+        unexpected_down = [g.get("gpu_id", "?") for g in unknown_gpus]
 
     report = OperationalSummaryContract(
         overall_state=maturity_data.get("runtime_state", "unknown"),

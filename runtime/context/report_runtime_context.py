@@ -421,8 +421,38 @@ def build_report_runtime_context(target_ip: str | None = None) -> dict[str, Any]
     except Exception:
         missing.append("entity_registry")
 
+    # FASE 31E: Entity State Taxonomy — active/inventory/discoverable/deprecated separation
+    try:
+        from runtime.entities import (
+            build_entity_registry as _31e_registry,
+            build_active_entities,
+            build_inventory_entities,
+            build_discoverable_entities,
+            build_deprecated_entities,
+            build_routability_summary,
+        )
+        _sensor_data = ctx.get("sensor_snapshot", {})
+        _31e_entities = _31e_registry(sensor_snapshot=_sensor_data if isinstance(_sensor_data, dict) else None)
+        ctx["entity_registry_31e"] = {
+            "contract_version": "31E",
+            "total": len(_31e_entities),
+            "active": build_active_entities(sensor_snapshot=_sensor_data if isinstance(_sensor_data, dict) else None),
+            "inventory": build_inventory_entities(sensor_snapshot=_sensor_data if isinstance(_sensor_data, dict) else None),
+            "discoverable": build_discoverable_entities(sensor_snapshot=_sensor_data if isinstance(_sensor_data, dict) else None),
+            "deprecated": build_deprecated_entities(sensor_snapshot=_sensor_data if isinstance(_sensor_data, dict) else None),
+            "routability": build_routability_summary(sensor_snapshot=_sensor_data if isinstance(_sensor_data, dict) else None),
+        }
+        try:
+            from runtime.telemetry.prometheus_metrics import record_entity_registry_metrics
+            record_entity_registry_metrics(_31e_entities)
+        except ImportError:
+            pass
+        observed.append("entity_registry_31e")
+    except Exception:
+        missing.append("entity_registry_31e")
+
     ctx["_report_type"] = "runtime_operational_report"
-    ctx["_runtime_generation"] = "30I-G"
+    ctx["_runtime_generation"] = "31E"
     ctx["_grounded_runtime"] = True
     ctx["_grounding_confidence"] = "high"
 

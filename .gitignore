@@ -79,6 +79,11 @@ runtime/
 !runtime/context/evidence_guard.py
 !runtime/context/report_runtime_context.py
 !runtime/context/__init__.py
+!runtime/context/runtime_entity_registry.py
+!runtime/entities/
+!runtime/entities/__init__.py
+!runtime/entities/contracts.py
+!runtime/entities/entity_registry.py
 !runtime/context/prometheus_client.py
 !runtime/context/sensor_fusion.py
 !runtime/context/summary_builder.py

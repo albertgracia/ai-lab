@@ -191,13 +191,14 @@ def build_grounding_envelope(
         entity_registry = RuntimeEntityRegistry(runtime_context)
 
     envelope: dict[str, Any] = {
-        "contract_version": "30I-G",
+        "contract_version": "31E",
         "grounded": False,
         "intent_detected": False,
         "observed_entities": {},
         "forbidden_patterns": {},
         "unknown_state": None,
         "confidence": "low",
+        "entity_taxonomy_31e": {},
     }
 
     if not user_text:
@@ -210,6 +211,37 @@ def build_grounding_envelope(
         envelope["forbidden_patterns"] = entity_registry.get_forbidden_patterns()
         envelope["grounded"] = True
         envelope["confidence"] = "high"
+
+    # FASE 31E: Enrich with entity state taxonomy
+    try:
+        from runtime.entities import (
+            build_entity_registry as _31e_build_registry,
+            classify_entity_state,
+            classify_routability,
+        )
+        _sensor_data = None
+        if runtime_context:
+            _sensor_data = runtime_context.get("sensor_snapshot", None)
+        _31e_registry = _31e_build_registry(sensor_snapshot=_sensor_data)
+        if _31e_registry:
+            envelope["entity_taxonomy_31e"] = {
+                "total": len(_31e_registry),
+                "entities": [
+                    {
+                        "entity_id": e["entity_id"],
+                        "entity_type": e["entity_type"],
+                        "operational_state": e["operational_state"],
+                        "inventory_state": e["inventory_state"],
+                        "discoverability": e["discoverability"],
+                        "routable": e["routable"],
+                        "deprecated": e["deprecated"],
+                        "confidence": e.get("confidence", "unknown"),
+                    }
+                    for e in _31e_registry
+                ],
+            }
+    except ImportError:
+        pass
 
     return envelope
 
