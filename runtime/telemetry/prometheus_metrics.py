@@ -1030,3 +1030,42 @@ def record_sensor_fusion_missing(source: str) -> None:
 
 def record_observed_runtime_size(size_bytes: int) -> None:
     OBSERVED_RUNTIME_CONTEXT_SIZE.set(float(size_bytes))
+
+
+# ── FASE 30I-F: Cognitive Compression Metrics ─────────────
+COGNITIVE_SUMMARY_TOTAL = Counter(
+    "ailab_cognitive_summary_total",
+    "Cognitive summary generation events by status",
+    ["status"],
+)
+COGNITIVE_SUMMARY_SIGNAL_COUNT = Counter(
+    "ailab_cognitive_summary_signal_count",
+    "Compressed signal count by severity",
+    ["severity"],
+)
+COGNITIVE_SUMMARY_CONFIDENCE = Counter(
+    "ailab_cognitive_summary_confidence",
+    "Cognitive summary generations by confidence level",
+    ["level"],
+)
+COGNITIVE_SUMMARY_DURATION_MS = Histogram(
+    "ailab_cognitive_summary_generation_duration_ms",
+    "Duration of cognitive summary generation in ms",
+    buckets=(5, 10, 25, 50, 100, 250, 500, 1000),
+)
+
+
+def record_cognitive_summary(status: str) -> None:
+    COGNITIVE_SUMMARY_TOTAL.labels(status=status).inc()
+
+
+def record_cognitive_summary_signal(severity: str) -> None:
+    COGNITIVE_SUMMARY_SIGNAL_COUNT.labels(severity=severity).inc()
+
+
+def record_cognitive_summary_confidence(level: str) -> None:
+    COGNITIVE_SUMMARY_CONFIDENCE.labels(level=level).inc()
+
+
+def record_cognitive_summary_duration(duration_ms: float) -> None:
+    COGNITIVE_SUMMARY_DURATION_MS.observe(float(duration_ms))

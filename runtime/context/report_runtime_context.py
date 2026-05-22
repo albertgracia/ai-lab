@@ -264,6 +264,33 @@ def build_report_runtime_context(target_ip: str | None = None) -> dict[str, Any]
         }
         ctx["evidence_catalog"]["gpu_operational_summaries"] = _sensor_contract["gpu_operational_summaries"]
 
+        # FASE 30I-F: Runtime Cognitive Compression
+        try:
+            from runtime.context.cognitive_compression import (
+                build_runtime_cognitive_summary,
+                COGNITIVE_CONTRACT_VERSION,
+            )
+            _cognitive = build_runtime_cognitive_summary(_snap_dict, ctx)
+            if _cognitive:
+                ctx["cognitive_summary"] = _cognitive
+                observed.append("cognitive_summary")
+                try:
+                    from runtime.telemetry.prometheus_metrics import (
+                        record_cognitive_summary,
+                        record_cognitive_summary_signal,
+                        record_cognitive_summary_confidence,
+                        record_cognitive_summary_duration,
+                    )
+                    _cs_status = "degraded" if _cognitive.get("overall_state") in ("critical", "unknown") else "ok"
+                    record_cognitive_summary(_cs_status)
+                    for _sig in _cognitive.get("important_signals", []):
+                        record_cognitive_summary_signal(_sig.get("severity", "info"))
+                    record_cognitive_summary_confidence(_cognitive.get("confidence", "low"))
+                except ImportError:
+                    pass
+        except Exception:
+            missing.append("cognitive_summary")
+
         try:
             from runtime.context.summary_builder import OperationalSummaryBuilder
             _route_family = "report"

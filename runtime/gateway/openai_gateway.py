@@ -1175,6 +1175,51 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 })
             return
 
+        # FASE 30I-F: Runtime Cognitive Summary — always-on 200
+        if self.path == "/runtime/cognitive-summary":
+            try:
+                from runtime.context.sensor_fusion import SensorFusionEngine
+                from runtime.context.cognitive_compression import (
+                    build_runtime_cognitive_summary,
+                    COGNITIVE_CONTRACT_VERSION,
+                )
+                _engine = SensorFusionEngine()
+                _snap = _engine.collect()
+                _snap_dict = _snap.to_dict()
+                _cognitive = build_runtime_cognitive_summary(_snap_dict)
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/cognitive-summary",
+                    "timestamp": time.time(),
+                    "cognitive_summary": _cognitive,
+                    "source_snapshot_time": _snap.timestamp,
+                    "confidence": _cognitive.get("confidence", "low"),
+                    "unavailable_data": _cognitive.get("unavailable_data", []),
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/cognitive-summary",
+                    "timestamp": time.time(),
+                    "cognitive_summary": {
+                        "contract_version": "30I-F",
+                        "overall_state": "unknown",
+                        "topology_mode": "unknown",
+                        "summary": "NO DISPONIBLE",
+                        "important_signals": [],
+                        "risks": ["cognitive compression unavailable"],
+                        "recommended_actions": ["verificar sensor fusion"],
+                        "unavailable_data": ["cognitive_summary"],
+                        "confidence": "low",
+                        "freshness": "unavailable",
+                    },
+                    "confidence": "low",
+                    "error": str(exc),
+                })
+            return
+
         if self.path == "/runtime/reports/discipline":
             try:
                 from runtime.gateway.tool_request_classifier import FORBIDDEN_TOOL_RECOMMENDATIONS

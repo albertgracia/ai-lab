@@ -26,6 +26,8 @@ Clasificacion de datos en cada seccion:
 - NO DISPONIBLE: campo no accesible en este momento
 
 Reglas:
+- cognitive_summary es la primera lectura operacional. Usalo para contexto general antes de entrar en detalle.
+- Si el usuario pide profundidad, usa los bloques detallados (gpu_operational_summaries, source_quality, etc.).
 - Ausencia no es error. Inventory no es runtime activo. Discovered no es active.
 - qwen3.6-27b es DESACTIVADO. Jamas aparece como activo, recomendado, routeable o disponible para inferencia.
 - RX7900XT es INVENTARIADO. No es fallo critico. No afecta estabilidad del runtime activo.
