@@ -159,6 +159,7 @@ model_registry = MODEL_REGISTRY
 MODEL_ALIASES = {
     "Qwen2.5-Coder-32B-Instruct-GGUF-Q4_K_M": "qwen2.5-coder-32b-instruct",
     # lmstudio-community publisher → canon interno
+    # FASE 30I-F0: deprecated for operational runtime, hidden from operational inventory
     "lmstudio-community/qwen2.5-coder-14b-instruct": "qwen2.5-coder-14b-instruct",
     "lmstudio-community/qwen2.5-coder-32b-instruct": "qwen2.5-coder-32b-instruct",
     "lmstudio-community/qwen3.6-27b": "qwen3.6-27b",

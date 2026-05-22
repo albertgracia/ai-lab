@@ -14,6 +14,15 @@ import requests
 import time
 
 from runtime.router.capability_router import choose_model
+from runtime.router.model_policy import (
+    is_operational_prompt,
+    is_coding_prompt,
+    is_deprecated_model,
+    validate_model_selection,
+    PRIMARY_OPERATIONAL_MODEL,
+    PRIMARY_CODING_MODEL,
+    DEPRECATED_MODEL_IDS,
+)
 from runtime.llm.model_router import infer_task
 from runtime.agent.intent_router import detect_intent
 from runtime.modes.mode_manager import current_mode
@@ -1504,6 +1513,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     selected_model = "llama-3.1-8b-instruct"
 
             # FASE 29.3: Hard guard — qwen3.6-27b disabled, redirect to qwen2.5-14b
+            # FASE 30I-F0: Also block deprecated lmstudio-community/qwen2.5-coder-14b-instruct
             DISABLED_MODELS = {"qwen3.6-27b", "qwen/qwen3.6-27b", "lmstudio-community/qwen3.6-27b"}
             if selected_model in DISABLED_MODELS or "qwen3.6" in (selected_model or "").lower():
                 original = selected_model
@@ -1521,6 +1531,18 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     model=selected_model, route_type=route_family,
                     slo_impact=False,
                 ))
+            elif is_deprecated_model(selected_model):
+                original = selected_model
+                selected_model = "qwen2.5-coder-14b-instruct"
+                try:
+                    from runtime.telemetry.prometheus_metrics import (
+                        record_deprecated_model_routing,
+                        record_disabled_model_selection,
+                    )
+                    record_deprecated_model_routing("blocked_to_qwen_fallback")
+                    record_disabled_model_selection(original, "deprecated_model_redirect")
+                except ImportError:
+                    pass
 
             # FASE 29.4: Degradation-based model override
             if _HAVE_SLO:
@@ -1537,7 +1559,44 @@ class GatewayHandler(BaseHTTPRequestHandler):
                         selected_model = "llama-3.1-8b-instruct"
                         _degradation.record_qwen_protection("degradation_block_escalation", is_slo_dry_run())
 
-            # FASE 30H.1: respect explicit model request from payload (AFTER degradation)
+            # FASE 30I-F0: Model routing policy — validate operational/coding/deprecated
+            _validated = validate_model_selection(
+                task_type=task_type,
+                model_id=selected_model,
+                route_family=route_family,
+                user_text=observe_user_text,
+            )
+            if _validated != selected_model:
+                try:
+                    from runtime.telemetry.prometheus_metrics import (
+                        record_deprecated_model_routing,
+                        record_operational_model_selected,
+                        record_coding_model_selected,
+                    )
+                    if is_deprecated_model(selected_model):
+                        record_deprecated_model_routing("blocked_to_operational")
+                    if _validated == PRIMARY_OPERATIONAL_MODEL:
+                        record_operational_model_selected()
+                    elif _validated == PRIMARY_CODING_MODEL:
+                        record_coding_model_selected()
+                except ImportError:
+                    pass
+                selected_model = _validated
+            else:
+                if selected_model == PRIMARY_OPERATIONAL_MODEL:
+                    try:
+                        from runtime.telemetry.prometheus_metrics import record_operational_model_selected
+                        record_operational_model_selected()
+                    except ImportError:
+                        pass
+                elif selected_model == PRIMARY_CODING_MODEL:
+                    try:
+                        from runtime.telemetry.prometheus_metrics import record_coding_model_selected
+                        record_coding_model_selected()
+                    except ImportError:
+                        pass
+
+            # FASE 30H.1: respect explicit model request from payload (AFTER routing policy)
             # so burn-in / testing with specific models can override routing + degradation
             _rm_lower = requested_model.lower() if isinstance(requested_model, str) else ""
             _sm_lower = selected_model.lower() if isinstance(selected_model, str) else ""

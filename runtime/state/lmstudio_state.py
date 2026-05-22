@@ -31,6 +31,11 @@ _ALIAS_MAP: dict[str, str] = {
     "hugging-quants/": "",
 }
 
+# FASE 30I-F0: deprecated model prefixes — hidden from operational inventory
+_DEPRECATED_PREFIXES: tuple[str, ...] = (
+    "lmstudio-community/qwen2.5-coder-14b-instruct",
+)
+
 
 def normalize_model_id(model_id: str) -> str:
     normalized = model_id.strip()
@@ -141,6 +146,9 @@ class ModelStatusTracker:
                 continue
 
             for raw_id in result.get("models", []):
+                # FASE 30I-F0: skip deprecated model prefixes in operational inventory
+                if any(raw_id.startswith(prefix) for prefix in _DEPRECATED_PREFIXES):
+                    continue
                 normalized = normalize_model_id(raw_id)
                 self.set_model_node(normalized, node_name)
                 seen_normalized.add(normalized)
@@ -171,6 +179,10 @@ class ModelStatusTracker:
                 "loaded": status in (ModelStatus.LOADED, ModelStatus.ACTIVE),
                 "routable": status == ModelStatus.ACTIVE,
                 "disabled": normalized in self._disabled_ids,
+                "deprecated": any(
+                    normalized == normalize_model_id(prefix)
+                    for prefix in _DEPRECATED_PREFIXES
+                ),
                 "node": self._node_map.get(normalized, ""),
                 "transition_count": ts.transition_count if ts else 0,
                 "last_routed": ts.last_routed if ts else 0.0,

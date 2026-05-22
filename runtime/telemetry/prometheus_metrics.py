@@ -1069,3 +1069,31 @@ def record_cognitive_summary_confidence(level: str) -> None:
 
 def record_cognitive_summary_duration(duration_ms: float) -> None:
     COGNITIVE_SUMMARY_DURATION_MS.observe(float(duration_ms))
+
+
+# ── FASE 30I-F0: Model Routing Cleanup Metrics ─────────────
+DEPRECATED_MODEL_ROUTING_TOTAL = Counter(
+    "ailab_deprecated_model_routing_total",
+    "Deprecated model routing attempts by action",
+    ["action"],
+)
+OPERATIONAL_MODEL_SELECTED_TOTAL = Counter(
+    "ailab_operational_model_selected_total",
+    "Operational model selections (llama-3.1-8b)",
+)
+CODING_MODEL_SELECTED_TOTAL = Counter(
+    "ailab_coding_model_selected_total",
+    "Coding model selections (qwen2.5-coder-14b)",
+)
+
+
+def record_deprecated_model_routing(action: str) -> None:
+    DEPRECATED_MODEL_ROUTING_TOTAL.labels(action=action).inc()
+
+
+def record_operational_model_selected() -> None:
+    OPERATIONAL_MODEL_SELECTED_TOTAL.inc()
+
+
+def record_coding_model_selected() -> None:
+    CODING_MODEL_SELECTED_TOTAL.inc()
