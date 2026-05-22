@@ -1618,3 +1618,29 @@ UI_FAKE_INVENTORY_TOTAL = Gauge(
     "ailab_ui_fake_inventory_total",
     "Total fake inventory entries detected in UI (RTX5070, A100, etc)",
 )
+
+# ── FASE 32B: Grafana Semantic Cleanup Metrics ────────────
+GRAFANA_ALIGNMENT_SCORE = Gauge(
+    "ailab_grafana_alignment_score",
+    "Grafana semantic alignment score 0-100 against runtime truth",
+)
+GRAFANA_FAKE_PANELS_TOTAL = Gauge(
+    "ailab_grafana_fake_panels_total",
+    "Total Grafana panels with fake GPU references (A100, H100, etc)",
+)
+GRAFANA_STALE_PANELS_TOTAL = Gauge(
+    "ailab_grafana_stale_panels_total",
+    "Total stale Grafana panels using deprecated metrics",
+)
+GRAFANA_ORPHAN_DATASOURCES_TOTAL = Gauge(
+    "ailab_grafana_orphan_datasources_total",
+    "Total orphan datasources referenced by Grafana dashboards",
+)
+GRAFANA_METRIC_DRIFT_TOTAL = Gauge(
+    "ailab_grafana_metric_drift_total",
+    "Total metric drift instances detected in Grafana dashboards",
+)
+GRAFANA_RUNTIME_ALIGNED_DASHBOARDS_TOTAL = Gauge(
+    "ailab_grafana_runtime_aligned_dashboards_total",
+    "Total Grafana dashboards marked as runtime-aligned",
+)

@@ -2189,6 +2189,110 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 })
             return
 
+        # FASE 32B: Grafana Semantic Cleanup — always-on 200
+        if self.path == "/runtime/observability/grafana/semantic-audit":
+            try:
+                from runtime.observability.grafana_semantic_validator import build_grafana_semantic_summary
+                _result = build_grafana_semantic_summary()
+                try:
+                    from runtime.telemetry.prometheus_metrics import (
+                        GRAFANA_ALIGNMENT_SCORE,
+                        GRAFANA_FAKE_PANELS_TOTAL,
+                        GRAFANA_STALE_PANELS_TOTAL,
+                        GRAFANA_ORPHAN_DATASOURCES_TOTAL,
+                        GRAFANA_METRIC_DRIFT_TOTAL,
+                        GRAFANA_RUNTIME_ALIGNED_DASHBOARDS_TOTAL,
+                    )
+                    _score = _result.get("grafana_alignment_score", {}).get("overall_score", 0)
+                    GRAFANA_ALIGNMENT_SCORE.set(float(_score))
+                    _issues = _result.get("issues", {})
+                    GRAFANA_FAKE_PANELS_TOTAL.set(float(len(_issues.get("fake_gpu_panels", []))))
+                    GRAFANA_STALE_PANELS_TOTAL.set(float(len(_issues.get("stale_panels", []))))
+                    GRAFANA_ORPHAN_DATASOURCES_TOTAL.set(float(len(_issues.get("orphan_datasources", []))))
+                    GRAFANA_METRIC_DRIFT_TOTAL.set(float(len(_issues.get("metric_drift", []))))
+                    GRAFANA_RUNTIME_ALIGNED_DASHBOARDS_TOTAL.set(float(_result.get("inventory", {}).get("runtime_aligned", 0)))
+                except ImportError:
+                    pass
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/grafana/semantic-audit",
+                    "timestamp": time.time(),
+                    "contract_version": "32B",
+                    "grafana_semantic": _result,
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/grafana/semantic-audit",
+                    "timestamp": time.time(),
+                    "contract_version": "32B",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/observability/grafana/alignment-score":
+            try:
+                from runtime.observability.grafana_semantic_validator import build_grafana_semantic_summary, calculate_grafana_alignment_score
+                _result = build_grafana_semantic_summary()
+                _score = calculate_grafana_alignment_score(
+                    total_dashboards=_result.get("inventory", {}).get("total_inventory", 1),
+                    fake_panels=_result.get("summary", {}).get("total_fake_gpu_panels", 0),
+                    stale_panels=_result.get("summary", {}).get("total_stale_panels", 0),
+                    orphan_datasources=_result.get("summary", {}).get("total_orphan_datasources", 0),
+                    metric_drifts=_result.get("summary", {}).get("total_metric_drifts", 0),
+                    topology_issues=_result.get("summary", {}).get("total_topology_issues", 0),
+                    runtime_aligned_count=_result.get("inventory", {}).get("runtime_aligned", 0),
+                )
+                try:
+                    from runtime.telemetry.prometheus_metrics import GRAFANA_ALIGNMENT_SCORE
+                    GRAFANA_ALIGNMENT_SCORE.set(float(_score.get("overall_score", 0)))
+                except ImportError:
+                    pass
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/grafana/alignment-score",
+                    "timestamp": time.time(),
+                    "contract_version": "32B",
+                    "grafana_alignment_score": _score,
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/grafana/alignment-score",
+                    "timestamp": time.time(),
+                    "contract_version": "32B",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/observability/grafana/dashboard-inventory":
+            try:
+                from runtime.observability.grafana_semantic_validator import build_dashboard_inventory_32b
+                _inventory = build_dashboard_inventory_32b()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/grafana/dashboard-inventory",
+                    "timestamp": time.time(),
+                    "contract_version": "32B",
+                    "total_dashboards": len(_inventory),
+                    "dashboards": _inventory,
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/grafana/dashboard-inventory",
+                    "timestamp": time.time(),
+                    "contract_version": "32B",
+                    "error": str(exc),
+                })
+            return
+
         if self.path == "/runtime/reports/discipline":
             try:
                 from runtime.gateway.tool_request_classifier import FORBIDDEN_TOOL_RECOMMENDATIONS

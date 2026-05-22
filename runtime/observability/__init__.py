@@ -89,6 +89,17 @@ from runtime.observability.metric_inventory import (
     build_metric_inventory,
     build_observability_health_score,
 )
+from runtime.observability.grafana_semantic_validator import (
+    GRAFANA_SEMANTIC_CONTRACT_VERSION,
+    build_dashboard_inventory_32b,
+    build_grafana_semantic_summary,
+    calculate_grafana_alignment_score,
+    detect_fake_gpu_panels,
+    detect_stale_panels,
+    detect_orphan_datasources,
+    detect_metric_drift,
+    detect_topology_dashboard_alignment,
+)
 
 __all__ = [
     "OBSERVABILITY_CONTRACT_VERSION",
@@ -116,6 +127,15 @@ __all__ = [
     "get_dashboard_by_uid",
     "get_dashboards_by_domain",
     "get_dashboards_by_owner",
+    "GRAFANA_SEMANTIC_CONTRACT_VERSION",
+    "build_dashboard_inventory_32b",
+    "build_grafana_semantic_summary",
+    "calculate_grafana_alignment_score",
+    "detect_fake_gpu_panels",
+    "detect_stale_panels",
+    "detect_orphan_datasources",
+    "detect_metric_drift",
+    "detect_topology_dashboard_alignment",
     "LokiStreamStatus",
     "audit_loki",
     "build_loki_audit_summary",
