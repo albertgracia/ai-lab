@@ -1595,3 +1595,26 @@ def record_topology_metrics(topology: dict[str, Any]) -> None:
         TOPOLOGY_CONFIDENCE_SCORE.set(float(conf.get("overall_score", 0)))
     except ImportError:
         pass
+
+
+# ── FASE 32A: Runtime UI Alignment Metrics ────────────
+UI_ALIGNMENT_SCORE = Gauge(
+    "ailab_ui_alignment_score",
+    "UI alignment score 0-100 indicating how well UI matches runtime reality",
+)
+UI_HARDCODED_ENTITIES_TOTAL = Gauge(
+    "ailab_ui_hardcoded_entities_total",
+    "Total hardcoded inventory entities detected in UI",
+)
+UI_TOPOLOGY_DRIFT_TOTAL = Gauge(
+    "ailab_ui_topology_drift_total",
+    "Total topology drifts between UI and runtime",
+)
+UI_RUNTIME_MISMATCH_TOTAL = Gauge(
+    "ailab_ui_runtime_mismatch_total",
+    "Total runtime mismatches between UI entities and runtime entity registry",
+)
+UI_FAKE_INVENTORY_TOTAL = Gauge(
+    "ailab_ui_fake_inventory_total",
+    "Total fake inventory entries detected in UI (RTX5070, A100, etc)",
+)

@@ -1300,6 +1300,100 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 })
             return
 
+        # FASE 32A: Runtime UI Alignment — always-on 200
+        if self.path == "/runtime/ui-alignment":
+            try:
+                from runtime.ui_alignment_validator import validate_ui_runtime_alignment
+                _result = validate_ui_runtime_alignment()
+                try:
+                    from runtime.telemetry.prometheus_metrics import (
+                        UI_ALIGNMENT_SCORE,
+                        UI_HARDCODED_ENTITIES_TOTAL,
+                        UI_TOPOLOGY_DRIFT_TOTAL,
+                        UI_RUNTIME_MISMATCH_TOTAL,
+                        UI_FAKE_INVENTORY_TOTAL,
+                    )
+                    _score = _result.get("alignment_score", {}).get("overall_score", 0)
+                    UI_ALIGNMENT_SCORE.set(float(_score))
+                    _summary = _result.get("summary", {})
+                    _issues = _result.get("issues", {})
+                    UI_HARDCODED_ENTITIES_TOTAL.set(float(_summary.get("total_hardcoded", 0)))
+                    UI_TOPOLOGY_DRIFT_TOTAL.set(float(_summary.get("total_drift", 0)))
+                    UI_RUNTIME_MISMATCH_TOTAL.set(float(_summary.get("total_mismatch", 0)))
+                    UI_FAKE_INVENTORY_TOTAL.set(float(_summary.get("total_fake", 0)))
+                except ImportError:
+                    pass
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/ui-alignment",
+                    "timestamp": time.time(),
+                    "contract_version": "32A",
+                    "ui_alignment": _result,
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/ui-alignment",
+                    "timestamp": time.time(),
+                    "contract_version": "32A",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/ui-alignment/drift":
+            try:
+                from runtime.ui_alignment_validator import detect_ui_topology_drift
+                _drift = detect_ui_topology_drift()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/ui-alignment/drift",
+                    "timestamp": time.time(),
+                    "contract_version": "32A",
+                    "topology_drift": _drift,
+                    "total_drifts": len(_drift),
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/ui-alignment/drift",
+                    "timestamp": time.time(),
+                    "contract_version": "32A",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/ui-alignment/score":
+            try:
+                from runtime.ui_alignment_validator import calculate_ui_alignment_score
+                _score = calculate_ui_alignment_score()
+                try:
+                    from runtime.telemetry.prometheus_metrics import UI_ALIGNMENT_SCORE
+                    UI_ALIGNMENT_SCORE.set(float(_score.get("overall_score", 0)))
+                except ImportError:
+                    pass
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/ui-alignment/score",
+                    "timestamp": time.time(),
+                    "contract_version": "32A",
+                    "alignment_score": _score,
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/ui-alignment/score",
+                    "timestamp": time.time(),
+                    "contract_version": "32A",
+                    "error": str(exc),
+                })
+            return
+
         # FASE 30I: Runtime Sensor Fusion — always-on 200
         if self.path == "/runtime/sensors":
             try:

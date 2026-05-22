@@ -8,7 +8,7 @@ order: 2
 flowchart LR
     User[Usuario / OpenCode] --> Router[AI-LAB Router API]
 
-    Router --> RX9070[Gaming PC RX9070XT]
+    Router --> RX9070[Gaming PC RX9070]
     Router --> RX7900[Gaming PC RX7900XT]
 
     RX9070 --> LM1[LM Studio]

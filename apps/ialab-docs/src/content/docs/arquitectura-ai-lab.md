@@ -10,7 +10,7 @@ AI-LAB es una infraestructura local de inferencia IA distribuida.
 
 - Nodo principal Linux: `ubuntu-ialab`
 - IP principal: `192.168.1.30`
-- Nodo GPU RX9070XT: `192.168.1.50`
+- Nodo GPU RX9070: `192.168.1.50`
 - Nodo GPU RX7900XT: `192.168.1.60`
 
 ## Servicios

@@ -14,7 +14,7 @@ order: 27
 |---|---|---|---|
 | AI-LAB Main Node | 192.168.1.30 | - | ONLINE |
 | Main LM Studio | 192.168.1.200 | 1234 | ONLINE |
-| GPU Node RX9070XT | 192.168.1.50 | 1234 | ONLINE |
+| GPU Node RX9070 | 192.168.1.50 | 1234 | ONLINE |
 | GPU Node RX7900XT | 192.168.1.60 | 1234 | OFFLINE |
 | Router API | 192.168.1.30 | 8008 | ONLINE |
 | OpenCode | 192.168.1.30 | 4096 | ONLINE |
@@ -280,7 +280,7 @@ Traefik --> OpenWebUI
 Traefik --> RouterAPI
 
 RouterAPI --> LMStudioLocal
-RouterAPI --> RX9070XT
+RouterAPI --> RX9070
 RouterAPI --> RX7900XT
 
 RouterAPI --> Qdrant
@@ -299,7 +299,7 @@ OpenWebUI --> RouterAPI
 - Traefik + Cloudflare activos
 - Observabilidad viva
 - Arquitectura distribuida parcial
-- RX9070XT pendiente de estabilización
+- RX9070 pendiente de estabilización
 - RX7900XT apagado
 
 ---

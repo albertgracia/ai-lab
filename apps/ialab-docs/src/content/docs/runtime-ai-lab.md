@@ -39,7 +39,7 @@ A[Usuario] --> B[Router API]
 
 B --> C[Routing Cognitivo]
 
-C --> D[GPU RX9070XT]
+C --> D[GPU RX9070]
 C --> E[GPU RX7900XT]
 
 D --> F[Inferencia]

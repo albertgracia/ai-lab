@@ -6,9 +6,9 @@ import sys
 ROOT = Path("/opt/ai-lab")
 
 # Anti-stale guard: minimum expected checkpoint
-MINIMUM_CHECKPOINT = "CP-31B"
-CURRENT_CHECKPOINT_TAG = "CP-31B-RUNTIME-SEMANTIC-MATURITY-STABLE"
-CURRENT_CHECKPOINT_COMMIT = "cb9b604d2c0b07a3bb3ae3ff5d42fde410890564"
+MINIMUM_CHECKPOINT = "CP-32A"
+CURRENT_CHECKPOINT_TAG = "CP-32A-RUNTIME-UI-ALIGNMENT-STABLE"
+CURRENT_CHECKPOINT_COMMIT = "HEAD"
 
 CONTEXT_FILES = [
     ROOT / "config/opencode/AI_LAB_CONTEXT.md",
@@ -84,7 +84,18 @@ def build_runtime_truth_block() -> str:
         "- Loki log layer",
         "- Grafana is NOT source of truth",
         "",
-        "Next planned phase: FASE 31C - Operational Reporting Discipline",
+        "Next planned phase: FASE 32B - TBD",
+        "",
+        "Runtime APIs (source_of_truth for UI):",
+        "- /runtime/entities      → entity registry with active/inventory/deprecated",
+        "- /runtime/topology      → topology graph with nodes, edges, degraded paths",
+        "- /runtime/maturity      → runtime maturity score and state",
+        "- /runtime/ui-alignment  → UI alignment validator score and drift detection",
+        "- /runtime/grounding     → runtime grounding envelope",
+        "- /runtime/reporting/*   → operational reports",
+        "- /runtime/observability/* → observability audit",
+        "",
+        "UI is runtime-driven. No hardcoded GPUs (RTX5070, A100). No fake inventory.",
         "",
         "Do not suggest old phases unless explicitly requested.",
         "Do not reference CP-30Z or earlier as current state.",

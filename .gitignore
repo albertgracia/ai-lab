@@ -96,6 +96,7 @@ runtime/
 !runtime/observability/drift_detector.py
 !runtime/observability/loki_audit.py
 !runtime/observability/metric_inventory.py
+!runtime/ui_alignment_validator.py
 sessions/
 
 
@@ -107,3 +108,6 @@ docs/system_snapshot.json
 actions-runner/
 actions-runner/
 apps/metrics-dashboard/node_modules
+
+# Infrastructure / external stacks (not part of AI-LAB runtime)
+stacks/
