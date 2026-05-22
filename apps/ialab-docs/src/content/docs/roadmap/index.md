@@ -1,14 +1,14 @@
 ---
 title: "Roadmap"
-summary: "Roadmap técnico actualizado a FASE 32B — Grafana Semantic Cleanup, runtime UI alignment, observability semantic maturity."
+summary: "Roadmap técnico actualizado a FASE 33B — Runtime Pre-Pilot Validation Framework, governance registry, invariants y safety gates."
 order: 8
 ---
 
 ## Estado actual
 
-**Checkpoint:** CP-33A-RUNTIME-GOVERNANCE-REGISTRY-STABLE
+**Checkpoint:** CP-33B-RUNTIME-PRE-PILOT-VALIDATION-STABLE
 
-### Completado (19 fases desde 30I-D)
+### Completado (20 fases desde 30I-D)
 
 | FASE | Estado |
 |------|--------|
@@ -30,6 +30,7 @@ order: 8
 | 32A — Runtime UI Alignment | ✅ |
 | 32B — Grafana Semantic Cleanup | ✅ |
 | 33A — Runtime Governance Registry | ✅ |
+| 33B — Runtime Pre-Pilot Validation Framework | ✅ |
 
 ### Próxima fase
 **FASE 28.4 — Tool Contracts & Cross-Plan GC**

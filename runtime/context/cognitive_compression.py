@@ -32,6 +32,9 @@ def build_runtime_cognitive_summary(
     observability_signals = compress_observability_signals(sensor_snapshot, extra_ctx)
     all_signals.extend(observability_signals)
 
+    validation_signals = compress_validation_signals(sensor_snapshot, extra_ctx)
+    all_signals.extend(validation_signals)
+
     topology_signals = compress_topology_signals(sensor_snapshot, extra_ctx)
     all_signals.extend(topology_signals)
 
@@ -501,6 +504,79 @@ def compress_topology_signals(
             "message": "topology module no disponible — FASE 31D no integrada",
             "evidence": ["code"], "confidence": "low",
             "freshness": "unavailable",
+        })
+
+    return signals
+
+
+def compress_validation_signals(
+    sensor_snapshot: dict[str, Any],
+    extra_ctx: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """FASE 33B: Surface pre-pilot validation state in cognitive summary."""
+    signals: list[dict[str, Any]] = []
+    try:
+        from runtime.validation import build_runtime_validation_report
+        report = build_runtime_validation_report(sensor_snapshot=sensor_snapshot, extra_ctx=extra_ctx)
+        score = report.get("validation_score", 0.0)
+        level = report.get("validation_level", "unknown")
+        failures = report.get("failures", []) or []
+        pilot = report.get("pilot_readiness", {}) or {}
+        readiness = pilot.get("pilot_readiness_score", 0.0)
+        readiness_level = pilot.get("readiness_level", "unknown")
+
+        severity = "info"
+        if readiness_level == "not_ready" or any(f.get("blocking") for f in failures):
+            severity = "warning"
+
+        signals.append({
+            "domain": "validation",
+            "severity": severity,
+            "message": f"pre-pilot validation: score={score}/100 ({level}), readiness={readiness}/100 ({readiness_level}), failures={len(failures)}",
+            "evidence": ["validation_framework_33b"],
+            "confidence": "high" if score >= 85 else "medium" if score >= 65 else "low",
+            "freshness": "fresh",
+        })
+
+        blocking_inv = pilot.get("blocking_invariants", []) or []
+        if blocking_inv:
+            signals.append({
+                "domain": "validation",
+                "severity": "warning",
+                "message": f"blocking invariants: {', '.join(blocking_inv[:3])}",
+                "evidence": ["validation_framework_33b"],
+                "confidence": "high",
+                "freshness": "fresh",
+            })
+
+        failed_gates = pilot.get("failed_gates", []) or []
+        if failed_gates:
+            signals.append({
+                "domain": "validation",
+                "severity": "warning",
+                "message": f"failed gates: {', '.join(failed_gates[:3])}",
+                "evidence": ["validation_framework_33b"],
+                "confidence": "high",
+                "freshness": "fresh",
+            })
+
+    except ImportError:
+        signals.append({
+            "domain": "validation",
+            "severity": "info",
+            "message": "validation framework no disponible — FASE 33B no integrada",
+            "evidence": ["code"],
+            "confidence": "low",
+            "freshness": "unavailable",
+        })
+    except Exception as exc:
+        signals.append({
+            "domain": "validation",
+            "severity": "warning",
+            "message": f"validation framework error: {exc}",
+            "evidence": ["validation_framework_33b"],
+            "confidence": "low",
+            "freshness": "unknown",
         })
 
     return signals

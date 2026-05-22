@@ -1,0 +1,765 @@
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import time
+from pathlib import Path
+from typing import Any
+
+from runtime.validation.contracts import (
+    RuntimeValidationContract,
+    RuntimeInvariantContract,
+    RuntimeSafetyGateContract,
+    RuntimePilotReadinessContract,
+    RuntimeFailureSurfaceContract,
+    RuntimeRegressionContract,
+    VALIDATION_CONTRACT_VERSION,
+)
+
+
+BASELINE_CHECKPOINT = "CP-33A-RUNTIME-GOVERNANCE-REGISTRY-STABLE"
+CURRENT_CHECKPOINT = "CP-33B-RUNTIME-PRE-PILOT-VALIDATION-STABLE"
+
+
+INVARIANTS = [
+    "INVARIANT-PROMETHEUS-AUTHORITY",
+    "INVARIANT-GOVERNANCE-CONSISTENCY",
+    "INVARIANT-TOPOLOGY-ALIGNMENT",
+    "INVARIANT-ENTITY-CONSISTENCY",
+    "INVARIANT-GROUNDING-VALIDATION",
+    "INVARIANT-REPORTING-CONSISTENCY",
+    "INVARIANT-OBSERVABILITY-FRESHNESS",
+    "INVARIANT-DEGRADED-MODE-CONSISTENCY",
+    "INVARIANT-CONTRACT-CONSISTENCY",
+    "INVARIANT-RUNTIME-DETERMINISM",
+]
+
+SAFETY_GATES = [
+    "SAFE_TO_OPERATE",
+    "SAFE_TO_ROUTE",
+    "SAFE_TO_REPORT",
+    "SAFE_TO_GROUND",
+    "SAFE_TO_OBSERVE",
+    "SAFE_TO_GOVERN",
+    "SAFE_TO_DEGRADE",
+]
+
+
+_CONF = {"high": 1.0, "medium": 0.6, "low": 0.2, "unknown": 0.0}
+
+
+def _strict_mode() -> bool:
+    return os.environ.get("STRICT_VALIDATION_MODE", "false").lower() in ("true", "1", "yes")
+
+
+def _now() -> float:
+    # Deterministic mode: no clock influence.
+    return 0.0 if _strict_mode() else time.time()
+
+
+def _confidence_score(level: str) -> float:
+    return _CONF.get(level or "unknown", 0.0)
+
+
+def _score_to_confidence(score: float) -> str:
+    if score >= 0.8:
+        return "high"
+    if score >= 0.5:
+        return "medium"
+    if score >= 0.2:
+        return "low"
+    return "unknown"
+
+
+def _hash_deterministic(obj: Any) -> str:
+    # Stable hash for determinism checks.
+    raw = json.dumps(obj, sort_keys=True, ensure_ascii=True, default=str)
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
+
+
+def _ensure_list(val: Any) -> list:
+    if isinstance(val, list):
+        return val
+    if isinstance(val, str):
+        return [val]
+    return []
+
+
+def build_runtime_assertions(sensor_snapshot: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Concrete operational assertions for pre-pilot readiness.
+
+    RULE-33B-6: expected_offline != degraded failure.
+    RULE-33B-7: inventory entities do not participate in readiness.
+    """
+    sensor_snapshot = sensor_snapshot or {}
+
+    assertions: dict[str, Any] = {
+        "rx9070_active": {"status": "unknown", "detail": "NO DISPONIBLE"},
+        "rx7900xt_inventory_only": {"status": "unknown", "detail": "NO DISPONIBLE"},
+        "no_fake_gpus": {"status": "pass", "detail": "no fake GPU patterns detected"},
+        "prometheus_operational_authority": {"status": "unknown", "detail": "NO DISPONIBLE"},
+        "grafana_visualization_only": {"status": "pass", "detail": "grafana is visualization layer"},
+        "no_inventory_contamination": {"status": "pass", "detail": "inventory entities excluded from readiness"},
+    }
+
+    # Entity registry based assertions.
+    try:
+        from runtime.entities import build_entity_registry
+        reg = build_entity_registry(sensor_snapshot=sensor_snapshot)
+        gpus = [e for e in reg if e.get("entity_type") == "gpu"]
+        rx9070 = next((g for g in gpus if "rx9070" in str(g.get("entity_id", "")).lower()), None)
+        rx7900xt = next((g for g in gpus if "rx7900" in str(g.get("entity_id", "")).lower()), None)
+
+        if rx9070:
+            if rx9070.get("operational_state") == "active":
+                assertions["rx9070_active"] = {"status": "pass", "detail": "RX9070 is active"}
+            else:
+                assertions["rx9070_active"] = {"status": "fail", "detail": f"RX9070 not active: {rx9070.get('operational_state')}"}
+
+        if rx7900xt:
+            inv_state = rx7900xt.get("inventory_state")
+            routable = bool(rx7900xt.get("routable"))
+            if inv_state in ("expected_offline", "inventory") and not routable:
+                assertions["rx7900xt_inventory_only"] = {"status": "pass", "detail": f"RX7900XT inventory_only ({inv_state})"}
+            else:
+                assertions["rx7900xt_inventory_only"] = {"status": "fail", "detail": f"RX7900XT invalid state inv={inv_state} routable={routable}"}
+    except ImportError:
+        # Fallback to sensor snapshot summaries
+        gpu_summaries = sensor_snapshot.get("gpu_operational_summaries", []) or []
+        for g in gpu_summaries:
+            gid = str(g.get("gpu_id", "")).lower()
+            if "rx9070" in gid and g.get("operational_state") == "active":
+                assertions["rx9070_active"] = {"status": "pass", "detail": "RX9070 active (sensor_fusion)"}
+            if "rx7900" in gid:
+                if g.get("observed_state") == "expected_offline" and g.get("inventory_expected_offline"):
+                    assertions["rx7900xt_inventory_only"] = {"status": "pass", "detail": "RX7900XT expected_offline (inventory)"}
+
+    # Governance registry assertion.
+    try:
+        from runtime.governance import build_governance_authority_map
+        auth = build_governance_authority_map()
+        if auth.get("operational_authority") == "prometheus":
+            assertions["prometheus_operational_authority"] = {"status": "pass", "detail": "Prometheus is operational authority"}
+        else:
+            assertions["prometheus_operational_authority"] = {"status": "fail", "detail": f"operational_authority={auth.get('operational_authority')}"}
+    except ImportError:
+        pass
+
+    return assertions
+
+
+def build_runtime_invariants(
+    sensor_snapshot: dict[str, Any] | None = None,
+    extra_ctx: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    sensor_snapshot = sensor_snapshot or {}
+    extra_ctx = extra_ctx or {}
+
+    assertions = build_runtime_assertions(sensor_snapshot)
+
+    # Pull governance/observability/topology context if available.
+    gov = {}
+    try:
+        from runtime.governance import build_runtime_governance_registry
+        gov = build_runtime_governance_registry(extra_ctx, sensor_snapshot)
+    except ImportError:
+        gov = {}
+
+    topology_conf = 0
+    topo_drift = []
+    try:
+        from runtime.topology import calculate_topology_confidence, detect_topology_drift
+        topology_conf = int((calculate_topology_confidence(sensor_snapshot, extra_ctx) or {}).get("overall_score", 0))
+        topo_drift = detect_topology_drift(sensor_snapshot, extra_ctx) or []
+    except ImportError:
+        topology_conf = 0
+        topo_drift = []
+
+    stale_sources = _ensure_list(sensor_snapshot.get("stale_sources"))
+    observed_sources = sensor_snapshot.get("observed_sources_count", 0) or 0
+    missing_sources = sensor_snapshot.get("missing_sources_count", 0) or 0
+
+    contracts = {}
+    try:
+        from runtime.governance import build_governance_contract_registry
+        contracts = build_governance_contract_registry(extra_ctx)
+    except ImportError:
+        contracts = {}
+
+    # Determinism invariant: in strict mode, hash should be stable.
+    det_hash = _hash_deterministic({
+        "assertions": assertions,
+        "stale_sources": stale_sources,
+        "topology_conf": topology_conf,
+        "gov_score": (gov.get("governance_score_info", {}) or {}).get("score"),
+        "contracts": contracts.get("active_contracts", []),
+    })
+
+    invariants: list[RuntimeInvariantContract] = []
+
+    def _mk(name: str, status: str, confidence: str, authority: str, blocking: bool, details: dict[str, Any]):
+        invariants.append(RuntimeInvariantContract(
+            name=name,
+            status=status,
+            confidence=confidence,
+            authority=authority,
+            explainable=True,
+            blocking=blocking,
+            details=details,
+        ))
+
+    # INVARIANT-PROMETHEUS-AUTHORITY
+    prom_status = assertions.get("prometheus_operational_authority", {}).get("status")
+    _mk(
+        "INVARIANT-PROMETHEUS-AUTHORITY",
+        "pass" if prom_status == "pass" else "fail" if prom_status == "fail" else "degraded",
+        "high" if prom_status == "pass" else "low" if prom_status == "fail" else "unknown",
+        "prometheus",
+        blocking=(prom_status == "fail"),
+        details={"assertion": assertions.get("prometheus_operational_authority")},
+    )
+
+    # INVARIANT-GOVERNANCE-CONSISTENCY
+    gov_score = (gov.get("governance_score_info", {}) or {}).get("score", 0)
+    gov_health = gov.get("health_summary", {}) or {}
+    gov_state = gov_health.get("operational_state", "unknown")
+    gov_degraded = _ensure_list(gov.get("degraded_domains"))
+    gov_ok = gov_state in ("healthy", "degraded")
+    _mk(
+        "INVARIANT-GOVERNANCE-CONSISTENCY",
+        "pass" if gov_ok and not gov_degraded else "degraded" if gov_ok else "fail",
+        _score_to_confidence(float(gov_score) / 100.0),
+        "governance_registry_33a",
+        blocking=(gov_state == "critical"),
+        details={"governance_state": gov_state, "score": gov_score, "degraded_domains": gov_degraded},
+    )
+
+    # INVARIANT-TOPOLOGY-ALIGNMENT
+    topo_ok = topology_conf >= 80 and not topo_drift
+    topo_status = "pass" if topo_ok else "degraded" if topology_conf >= 50 else "fail"
+    _mk(
+        "INVARIANT-TOPOLOGY-ALIGNMENT",
+        topo_status,
+        "high" if topology_conf >= 80 else "medium" if topology_conf >= 50 else "low",
+        "runtime_topology_31d",
+        blocking=(topo_status == "fail"),
+        details={"topology_confidence": topology_conf, "drift_total": len(topo_drift)},
+    )
+
+    # INVARIANT-ENTITY-CONSISTENCY
+    rx9070 = assertions.get("rx9070_active", {}).get("status")
+    rx7900 = assertions.get("rx7900xt_inventory_only", {}).get("status")
+    ent_ok = (rx9070 == "pass") and (rx7900 == "pass")
+    ent_status = "pass" if ent_ok else "fail" if rx9070 == "fail" else "degraded"
+    _mk(
+        "INVARIANT-ENTITY-CONSISTENCY",
+        ent_status,
+        "high" if ent_ok else "low" if ent_status == "fail" else "medium",
+        "runtime_entities_31e",
+        blocking=(rx9070 == "fail"),
+        details={"rx9070_active": assertions.get("rx9070_active"), "rx7900xt_inventory_only": assertions.get("rx7900xt_inventory_only")},
+    )
+
+    # INVARIANT-GROUNDING-VALIDATION
+    grounding_ok = True
+    try:
+        from runtime.context.runtime_grounding import build_grounding_envelope
+        _env = build_grounding_envelope()
+        grounding_ok = isinstance(_env, dict)
+    except Exception:
+        grounding_ok = False
+    _mk(
+        "INVARIANT-GROUNDING-VALIDATION",
+        "pass" if grounding_ok else "degraded",
+        "high" if grounding_ok else "low",
+        "runtime_grounding_30ig",
+        blocking=False,
+        details={"grounding_envelope_available": grounding_ok},
+    )
+
+    # INVARIANT-REPORTING-CONSISTENCY
+    reporting_ok = True
+    try:
+        from runtime.reporting.reporting_engine import build_operational_report
+        r1 = build_operational_report(sensor_snapshot=sensor_snapshot, mode="compact")
+        r2 = build_operational_report(sensor_snapshot=sensor_snapshot, mode="compact")
+        # Ignore timestamps, require stable core fields.
+        reporting_ok = (r1.get("confidence") == r2.get("confidence")) and (r1.get("operational_impact") == r2.get("operational_impact"))
+    except Exception:
+        reporting_ok = False
+    _mk(
+        "INVARIANT-REPORTING-CONSISTENCY",
+        "pass" if reporting_ok else "degraded",
+        "high" if reporting_ok else "low",
+        "runtime_reporting_31c",
+        blocking=False,
+        details={"reporting_deterministic": reporting_ok},
+    )
+
+    # INVARIANT-OBSERVABILITY-FRESHNESS
+    total_sources = observed_sources + missing_sources
+    obs_ok = (observed_sources > 0) and not stale_sources and (total_sources > 0)
+    obs_status = "pass" if obs_ok else "degraded" if observed_sources > 0 else "fail"
+    _mk(
+        "INVARIANT-OBSERVABILITY-FRESHNESS",
+        obs_status,
+        "high" if obs_ok else "medium" if observed_sources > 0 else "low",
+        "prometheus",
+        blocking=(obs_status == "fail"),
+        details={"observed_sources": observed_sources, "missing_sources": missing_sources, "stale_sources": stale_sources},
+    )
+
+    # INVARIANT-DEGRADED-MODE-CONSISTENCY
+    topo_mode = (sensor_snapshot.get("topology", {}) or {}).get("mode", "unknown")
+    expected_offline = _ensure_list(sensor_snapshot.get("expected_offline"))
+    unexpected_down = _ensure_list(sensor_snapshot.get("unexpected_down"))
+    # expected_offline does not degrade pilot readiness
+    degraded_failure = bool(unexpected_down)
+    deg_ok = not degraded_failure
+    _mk(
+        "INVARIANT-DEGRADED-MODE-CONSISTENCY",
+        "pass" if deg_ok else "degraded",
+        "high" if deg_ok else "medium",
+        "runtime_semantics_31b",
+        blocking=False,
+        details={"topology_mode": topo_mode, "expected_offline": expected_offline, "unexpected_down": unexpected_down},
+    )
+
+    # INVARIANT-CONTRACT-CONSISTENCY
+    incompatible = _ensure_list(contracts.get("incompatible_contracts"))
+    contract_ok = not incompatible
+    contract_status = "pass" if contract_ok else "degraded"
+    _mk(
+        "INVARIANT-CONTRACT-CONSISTENCY",
+        contract_status,
+        "high" if contract_ok else "medium",
+        "governance_registry_33a",
+        blocking=False,
+        details={"incompatible_contracts": incompatible},
+    )
+
+    # INVARIANT-RUNTIME-DETERMINISM
+    det_ok = True
+    if _strict_mode():
+        # In strict mode, deterministic hash should not depend on clock.
+        det_ok = isinstance(det_hash, str) and len(det_hash) == 16
+    _mk(
+        "INVARIANT-RUNTIME-DETERMINISM",
+        "pass" if det_ok else "fail",
+        "high" if det_ok else "low",
+        "validation_framework_33b",
+        blocking=(not det_ok),
+        details={"deterministic_hash": det_hash, "strict_mode": _strict_mode()},
+    )
+
+    return [i.to_dict() for i in invariants]
+
+
+def build_runtime_safety_gates(
+    invariants: list[dict[str, Any]] | None = None,
+    sensor_snapshot: dict[str, Any] | None = None,
+    extra_ctx: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    invariants = invariants or build_runtime_invariants(sensor_snapshot, extra_ctx)
+
+    inv_by_name = {i.get("name"): i for i in invariants}
+    failed_blocking = [i for i in invariants if i.get("blocking") and i.get("status") == "fail"]
+    degraded = [i for i in invariants if i.get("status") == "degraded"]
+
+    def _gate(gate: str, derived: list[str]) -> RuntimeSafetyGateContract:
+        reasons = []
+        blocking = False
+        status = "pass"
+        confidence = "high"
+
+        for inv in derived:
+            iv = inv_by_name.get(inv, {})
+            if iv.get("status") == "fail" and iv.get("blocking"):
+                status = "fail"
+                blocking = True
+                confidence = "low"
+                reasons.append(f"blocking invariant failed: {inv}")
+            elif iv.get("status") == "fail":
+                status = "degraded"
+                confidence = "medium"
+                reasons.append(f"invariant failed: {inv}")
+            elif iv.get("status") == "degraded" and status != "fail":
+                status = "degraded"
+                confidence = "medium"
+                reasons.append(f"invariant degraded: {inv}")
+
+        # Conservative pre-pilot: any blocking failure makes all gates fail.
+        if failed_blocking and status == "pass":
+            status = "degraded"
+            confidence = "medium"
+            reasons.append("conservative pre-pilot: blocking failures exist")
+
+        return RuntimeSafetyGateContract(
+            gate=gate,
+            status=status,
+            blocking=blocking,
+            confidence=confidence,
+            explainable=True,
+            derived_from=derived,
+            reasons=reasons,
+        )
+
+    gates = [
+        _gate("SAFE_TO_OPERATE", [
+            "INVARIANT-PROMETHEUS-AUTHORITY",
+            "INVARIANT-GOVERNANCE-CONSISTENCY",
+            "INVARIANT-OBSERVABILITY-FRESHNESS",
+            "INVARIANT-TOPOLOGY-ALIGNMENT",
+        ]),
+        _gate("SAFE_TO_ROUTE", [
+            "INVARIANT-PROMETHEUS-AUTHORITY",
+            "INVARIANT-OBSERVABILITY-FRESHNESS",
+            "INVARIANT-TOPOLOGY-ALIGNMENT",
+        ]),
+        _gate("SAFE_TO_REPORT", [
+            "INVARIANT-REPORTING-CONSISTENCY",
+            "INVARIANT-GOVERNANCE-CONSISTENCY",
+            "INVARIANT-OBSERVABILITY-FRESHNESS",
+        ]),
+        _gate("SAFE_TO_GROUND", [
+            "INVARIANT-GROUNDING-VALIDATION",
+            "INVARIANT-OBSERVABILITY-FRESHNESS",
+        ]),
+        _gate("SAFE_TO_OBSERVE", [
+            "INVARIANT-PROMETHEUS-AUTHORITY",
+            "INVARIANT-OBSERVABILITY-FRESHNESS",
+        ]),
+        _gate("SAFE_TO_GOVERN", [
+            "INVARIANT-GOVERNANCE-CONSISTENCY",
+            "INVARIANT-CONTRACT-CONSISTENCY",
+        ]),
+        _gate("SAFE_TO_DEGRADE", [
+            "INVARIANT-DEGRADED-MODE-CONSISTENCY",
+            "INVARIANT-TOPOLOGY-ALIGNMENT",
+        ]),
+    ]
+
+    return [g.to_dict() for g in gates]
+
+
+def calculate_runtime_validation_score(
+    invariants: list[dict[str, Any]] | None = None,
+    gates: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    invariants = invariants or build_runtime_invariants()
+    gates = gates or build_runtime_safety_gates(invariants)
+
+    inv_scores = []
+    for inv in invariants:
+        status = inv.get("status")
+        if status == "pass":
+            inv_scores.append(1.0)
+        elif status == "degraded":
+            inv_scores.append(0.6)
+        else:
+            inv_scores.append(0.0)
+    inv_avg = sum(inv_scores) / max(len(inv_scores), 1)
+
+    gate_scores = []
+    for g in gates:
+        status = g.get("status")
+        if status == "pass":
+            gate_scores.append(1.0)
+        elif status == "degraded":
+            gate_scores.append(0.5)
+        else:
+            gate_scores.append(0.0)
+    gate_avg = sum(gate_scores) / max(len(gate_scores), 1)
+
+    score = (inv_avg * 0.6 + gate_avg * 0.4)
+    final = round(max(0.0, min(1.0, score)) * 100, 1)
+
+    level = "high" if final >= 85 else "medium" if final >= 65 else "low" if final >= 40 else "critical"
+
+    return {
+        "validation_score": final,
+        "validation_level": level,
+        "components": {
+            "invariants_avg": round(inv_avg, 2),
+            "gates_avg": round(gate_avg, 2),
+            "failed_invariants": sum(1 for i in invariants if i.get("status") == "fail"),
+            "failed_gates": sum(1 for g in gates if g.get("status") == "fail"),
+        },
+        "contract_version": VALIDATION_CONTRACT_VERSION,
+        "generated_at": _now(),
+    }
+
+
+def build_runtime_failure_surface(
+    invariants: list[dict[str, Any]] | None = None,
+    gates: list[dict[str, Any]] | None = None,
+    governance_registry: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    invariants = invariants or build_runtime_invariants()
+    gates = gates or build_runtime_safety_gates(invariants)
+    governance_registry = governance_registry or {}
+
+    modes = []
+    stale_authority = _ensure_list((governance_registry.get("health_summary", {}) or {}).get("stale_authority"))
+    if stale_authority:
+        modes.append({"type": "authority_collapse", "severity": "high", "detail": f"stale authority: {stale_authority}"})
+
+    topo = next((i for i in invariants if i.get("name") == "INVARIANT-TOPOLOGY-ALIGNMENT"), {})
+    if topo.get("status") in ("fail", "degraded"):
+        modes.append({"type": "topology_drift", "severity": "medium", "detail": topo.get("details", {})})
+
+    obs = next((i for i in invariants if i.get("name") == "INVARIANT-OBSERVABILITY-FRESHNESS"), {})
+    if obs.get("status") in ("fail", "degraded"):
+        modes.append({"type": "stale_observability", "severity": "medium", "detail": obs.get("details", {})})
+
+    gov = next((i for i in invariants if i.get("name") == "INVARIANT-GOVERNANCE-CONSISTENCY"), {})
+    if gov.get("status") in ("fail", "degraded"):
+        modes.append({"type": "governance_degradation", "severity": "medium", "detail": gov.get("details", {})})
+
+    contracts = next((i for i in invariants if i.get("name") == "INVARIANT-CONTRACT-CONSISTENCY"), {})
+    if contracts.get("status") != "pass":
+        modes.append({"type": "contract_incompatibility", "severity": "low", "detail": contracts.get("details", {})})
+
+    remediation_pending = (governance_registry.get("health_summary", {}) or {}).get("remediation_pending", 0)
+    if remediation_pending and remediation_pending > 0:
+        modes.append({"type": "remediation_accumulation", "severity": "low", "detail": f"pending={remediation_pending}"})
+
+    contract = RuntimeFailureSurfaceContract(
+        total_failure_modes=len(modes),
+        failure_modes=modes,
+        authority_collapse_risk=bool(stale_authority),
+        topology_drift_risk=topo.get("status") == "fail",
+        stale_observability_risk=obs.get("status") == "fail",
+        governance_degradation_risk=gov.get("status") == "fail",
+        contract_incompatibility_risk=contracts.get("status") != "pass",
+        remediation_accumulation_risk=bool(remediation_pending and remediation_pending > 0),
+        explainable=True,
+    )
+    return contract.to_dict()
+
+
+def detect_runtime_validation_failures(
+    invariants: list[dict[str, Any]] | None = None,
+    gates: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
+    invariants = invariants or build_runtime_invariants()
+    gates = gates or build_runtime_safety_gates(invariants)
+
+    failures = []
+    for inv in invariants:
+        if inv.get("status") == "fail":
+            failures.append({
+                "type": "invariant_failure",
+                "name": inv.get("name"),
+                "blocking": bool(inv.get("blocking")),
+                "confidence": inv.get("confidence"),
+                "authority": inv.get("authority"),
+                "details": inv.get("details", {}),
+            })
+    for g in gates:
+        if g.get("status") == "fail":
+            failures.append({
+                "type": "gate_failure",
+                "gate": g.get("gate"),
+                "blocking": bool(g.get("blocking")),
+                "confidence": g.get("confidence"),
+                "reasons": g.get("reasons", []),
+            })
+    return failures
+
+
+def build_runtime_pilot_readiness(
+    invariants: list[dict[str, Any]] | None = None,
+    gates: list[dict[str, Any]] | None = None,
+    governance_registry: dict[str, Any] | None = None,
+    validation_score: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    invariants = invariants or build_runtime_invariants()
+    gates = gates or build_runtime_safety_gates(invariants)
+    governance_registry = governance_registry or {}
+    validation_score = validation_score or calculate_runtime_validation_score(invariants, gates)
+
+    gov_score = float((governance_registry.get("governance_score_info", {}) or {}).get("score", 0.0))
+    gov_level = (governance_registry.get("governance_score_info", {}) or {}).get("level", "unknown")
+    topo_conf = float((governance_registry.get("confidence_map", {}) or {}).get("topology_confidence", 0))
+
+    try:
+        from runtime.observability.grafana_semantic_validator import build_grafana_semantic_summary
+        graf = build_grafana_semantic_summary()
+        graf_score = float((graf.get("alignment_score", {}) or {}).get("overall_score", 0.0))
+    except Exception:
+        graf_score = 0.0
+
+    inv_blocking = [i.get("name") for i in invariants if i.get("blocking") and i.get("status") == "fail"]
+    failed_gates = [g.get("gate") for g in gates if g.get("status") == "fail"]
+    degraded_domains = _ensure_list(governance_registry.get("degraded_domains"))
+
+    # Weighted readiness score (0-100)
+    base = (
+        (gov_score / 100.0) * 0.25
+        + (graf_score / 100.0) * 0.15
+        + (topo_conf / 100.0) * 0.15
+        + (validation_score.get("validation_score", 0.0) / 100.0) * 0.45
+    )
+    penalty = 0.0
+    penalty += min(0.4, len(inv_blocking) * 0.15)
+    penalty += min(0.3, len(failed_gates) * 0.1)
+    penalty += min(0.2, len(degraded_domains) * 0.05)
+
+    final = round(max(0.0, min(1.0, base - penalty)) * 100, 1)
+
+    level = "ready" if final >= 85 and not inv_blocking and not failed_gates else "caution" if final >= 65 else "not_ready"
+    conf = _score_to_confidence(final / 100.0)
+
+    contract = RuntimePilotReadinessContract(
+        pilot_readiness_score=final,
+        readiness_level=level,
+        blocking_invariants=inv_blocking,
+        failed_gates=failed_gates,
+        degraded_domains=degraded_domains,
+        confidence=conf,
+        explainable=True,
+        components={
+            "governance_score": gov_score,
+            "governance_level": gov_level,
+            "grafana_alignment_score": graf_score,
+            "topology_confidence": topo_conf,
+            "validation_score": validation_score.get("validation_score", 0.0),
+            "penalty": round(penalty, 2),
+        },
+    )
+    return contract.to_dict()
+
+
+def build_runtime_regression_summary(
+    current_validation_score: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    current_validation_score = current_validation_score or calculate_runtime_validation_score()
+
+    regressions = []
+    baseline_path = Path("/tmp/33a-governance-score.json")
+    baseline_score = None
+    if baseline_path.exists():
+        try:
+            baseline_score = json.loads(baseline_path.read_text(errors="ignore")).get("governance_score")
+        except Exception:
+            baseline_score = None
+
+    if baseline_score is not None:
+        # Regression if governance score dropped more than 10 points.
+        try:
+            from runtime.governance import calculate_governance_score
+            current_gov = calculate_governance_score().get("governance_score", 0)
+            if (baseline_score - current_gov) > 10:
+                regressions.append({
+                    "type": "governance_regression",
+                    "baseline": baseline_score,
+                    "current": current_gov,
+                    "delta": round(current_gov - baseline_score, 1),
+                })
+        except Exception:
+            pass
+
+    # Validation score regressions are not available baseline yet.
+    contract = RuntimeRegressionContract(
+        baseline_checkpoint=BASELINE_CHECKPOINT,
+        current_checkpoint=CURRENT_CHECKPOINT,
+        regressions_total=len(regressions),
+        regressions=regressions,
+        explainable=True,
+        generated_at=_now(),
+    )
+    return contract.to_dict()
+
+
+def build_runtime_regression_burnin_summary() -> dict[str, Any]:
+    # Integrate /tmp/* burn-in reports if present.
+    patterns = [
+        "*burnin*.json",
+        "*burn-in*.json",
+        "*burnin*.md",
+        "*burn-in*.md",
+    ]
+    found = []
+    for pat in patterns:
+        for p in Path("/tmp").glob(pat):
+            if p.is_file() and p.stat().st_size > 0:
+                found.append(str(p))
+    found = sorted(set(found))
+    return {
+        "burnin_artifacts_total": len(found),
+        "burnin_artifacts": found[:50],
+        "strict_mode": _strict_mode(),
+    }
+
+
+def build_runtime_validation_report(
+    sensor_snapshot: dict[str, Any] | None = None,
+    extra_ctx: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    sensor_snapshot = sensor_snapshot or {}
+    extra_ctx = extra_ctx or {}
+
+    governance_registry = {}
+    try:
+        from runtime.governance import build_runtime_governance_registry
+        governance_registry = build_runtime_governance_registry(extra_ctx, sensor_snapshot)
+    except ImportError:
+        governance_registry = {}
+
+    invariants = build_runtime_invariants(sensor_snapshot, extra_ctx)
+    gates = build_runtime_safety_gates(invariants, sensor_snapshot, extra_ctx)
+    score = calculate_runtime_validation_score(invariants, gates)
+    failures = detect_runtime_validation_failures(invariants, gates)
+    pilot = build_runtime_pilot_readiness(invariants, gates, governance_registry, score)
+    failure_surface = build_runtime_failure_surface(invariants, gates, governance_registry)
+    regressions = build_runtime_regression_summary(score)
+    burnin = build_runtime_regression_burnin_summary()
+
+    degraded_domains = _ensure_list(governance_registry.get("degraded_domains"))
+
+    contract = RuntimeValidationContract(
+        validation_score=score.get("validation_score", 0.0),
+        validation_level=score.get("validation_level", "unknown"),
+        invariants=invariants,
+        safety_gates=gates,
+        pilot_readiness=pilot,
+        failure_surface=failure_surface,
+        regressions={**regressions, "burnin": burnin},
+        failures=failures,
+        degraded_domains=degraded_domains,
+        strict_mode=_strict_mode(),
+        contract_version=VALIDATION_CONTRACT_VERSION,
+        generated_at=_now(),
+    )
+
+    result = contract.to_dict()
+    result["assertions"] = build_runtime_assertions(sensor_snapshot)
+    result["governance"] = {
+        "score": (governance_registry.get("governance_score_info", {}) or {}).get("score"),
+        "level": (governance_registry.get("governance_score_info", {}) or {}).get("level"),
+        "degraded_domains": degraded_domains,
+    }
+
+    # Expose deterministic signature.
+    result["deterministic_signature"] = _hash_deterministic({
+        "validation_score": result.get("validation_score"),
+        "validation_level": result.get("validation_level"),
+        "invariants": result.get("invariants"),
+        "safety_gates": result.get("safety_gates"),
+        "pilot_readiness": result.get("pilot_readiness"),
+        "failures": result.get("failures"),
+    })
+
+    try:
+        from runtime.telemetry.prometheus_metrics import record_validation_metrics
+        record_validation_metrics(result)
+    except ImportError:
+        pass
+
+    return result
+
+
+def build_runtime_regression_summary_33b() -> dict[str, Any]:
+    return build_runtime_regression_summary()

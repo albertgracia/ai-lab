@@ -68,6 +68,8 @@ backups/
 
 # Local runtime
 runtime/
+!runtime/
+runtime/*
 !apps/metrics-dashboard/src/app/runtime/
 !apps/metrics-dashboard/src/app/runtime/page.tsx
 !runtime/control/
@@ -103,6 +105,13 @@ runtime/
 !runtime/governance/runtime_governance_registry.py
 runtime/governance/__pycache__/
 runtime/governance/**/*.pyc
+
+!runtime/validation/
+!runtime/validation/__init__.py
+!runtime/validation/contracts.py
+!runtime/validation/runtime_validation_framework.py
+runtime/validation/__pycache__/
+runtime/validation/**/*.pyc
 sessions/
 
 

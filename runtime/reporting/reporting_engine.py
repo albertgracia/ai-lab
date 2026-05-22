@@ -674,3 +674,50 @@ def build_reporting_score(
         "components": scores,
         "contract_version": REPORTING_CONTRACT_VERSION,
     }
+
+
+# ── FASE 33B: Validation summary integration ───────────────────────
+
+def build_validation_summary(
+    sensor_snapshot: dict[str, Any] | None = None,
+    extra_ctx: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Expose pre-pilot validation state for operational reports.
+
+    Unknown > inventado. Always returns a JSON-safe dict.
+    """
+    try:
+        from runtime.validation import build_runtime_validation_report
+        report = build_runtime_validation_report(sensor_snapshot=sensor_snapshot, extra_ctx=extra_ctx)
+        score = report.get("validation_score", 0.0)
+        level = report.get("validation_level", "unknown")
+        inv = report.get("invariants", []) or []
+        gates = report.get("safety_gates", []) or []
+        failures = report.get("failures", []) or []
+        pilot = report.get("pilot_readiness", {}) or {}
+
+        return {
+            "contract_version": report.get("contract_version", "33B"),
+            "validation_score": score,
+            "validation_level": level,
+            "failed_invariants": [i.get("name") for i in inv if i.get("status") == "fail"],
+            "failed_gates": [g.get("gate") for g in gates if g.get("status") == "fail"],
+            "blocking_failures": [f for f in failures if f.get("blocking")],
+            "pilot_readiness_score": pilot.get("pilot_readiness_score", 0.0),
+            "pilot_readiness_level": pilot.get("readiness_level", "unknown"),
+            "failure_surface_total": (report.get("failure_surface", {}) or {}).get("total_failure_modes", 0),
+            "deterministic_signature": report.get("deterministic_signature"),
+        }
+    except Exception as exc:
+        return {
+            "contract_version": "33B",
+            "validation_score": 0.0,
+            "validation_level": "unknown",
+            "failed_invariants": [],
+            "failed_gates": [],
+            "blocking_failures": [],
+            "pilot_readiness_score": 0.0,
+            "pilot_readiness_level": "unknown",
+            "failure_surface_total": 0,
+            "error": str(exc),
+        }

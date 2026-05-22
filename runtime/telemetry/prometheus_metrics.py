@@ -1676,6 +1676,36 @@ GOVERNANCE_CONFIDENCE_SCORE = Gauge(
     "Governance confidence score 0.0-1.0",
 )
 
+# ── FASE 33B: Runtime Pre-Pilot Validation Metrics ────────────
+VALIDATION_SCORE = Gauge(
+    "ailab_validation_score",
+    "Runtime validation score 0-100",
+)
+VALIDATION_FAILED_INVARIANTS_TOTAL = Gauge(
+    "ailab_validation_failed_invariants_total",
+    "Total failed invariants in validation framework",
+)
+VALIDATION_FAILED_GATES_TOTAL = Gauge(
+    "ailab_validation_failed_gates_total",
+    "Total failed safety gates in validation framework",
+)
+VALIDATION_RUNTIME_REGRESSIONS_TOTAL = Gauge(
+    "ailab_validation_runtime_regressions_total",
+    "Total detected runtime regressions (validation/gov/obs/topology)",
+)
+VALIDATION_FAILURE_SURFACE_TOTAL = Gauge(
+    "ailab_validation_failure_surface_total",
+    "Total failure modes detected in failure surface analysis",
+)
+VALIDATION_PILOT_READINESS_SCORE = Gauge(
+    "ailab_validation_pilot_readiness_score",
+    "Pilot readiness score 0-100",
+)
+VALIDATION_DEGRADED_DOMAINS_TOTAL = Gauge(
+    "ailab_validation_degraded_domains_total",
+    "Total degraded domains impacting validation",
+)
+
 
 def record_governance_metrics(registry: dict[str, Any]) -> None:
     score_info = registry.get("governance_score_info", {})
@@ -1701,3 +1731,28 @@ def record_governance_metrics(registry: dict[str, Any]) -> None:
     confidence = health.get("confidence", "unknown")
     conf_val = {"high": 1.0, "medium": 0.6, "low": 0.2, "unknown": 0.0}.get(confidence, 0.0)
     GOVERNANCE_CONFIDENCE_SCORE.set(conf_val)
+
+
+def record_validation_metrics(report: dict[str, Any]) -> None:
+    score = report.get("validation_score", 0.0)
+    VALIDATION_SCORE.set(float(max(0.0, min(100.0, score))))
+
+    invariants = report.get("invariants", []) or []
+    failed_invariants = [i for i in invariants if i.get("status") == "fail"]
+    VALIDATION_FAILED_INVARIANTS_TOTAL.set(float(len(failed_invariants)))
+
+    gates = report.get("safety_gates", []) or []
+    failed_gates = [g for g in gates if g.get("status") == "fail"]
+    VALIDATION_FAILED_GATES_TOTAL.set(float(len(failed_gates)))
+
+    regressions = (report.get("regressions", {}) or {}).get("regressions_total", 0)
+    VALIDATION_RUNTIME_REGRESSIONS_TOTAL.set(float(regressions or 0))
+
+    failure_surface = report.get("failure_surface", {}) or {}
+    VALIDATION_FAILURE_SURFACE_TOTAL.set(float(failure_surface.get("total_failure_modes", 0) or 0))
+
+    pilot = report.get("pilot_readiness", {}) or {}
+    VALIDATION_PILOT_READINESS_SCORE.set(float(pilot.get("pilot_readiness_score", 0.0) or 0.0))
+
+    degraded = report.get("degraded_domains", []) or []
+    VALIDATION_DEGRADED_DOMAINS_TOTAL.set(float(len(degraded)))

@@ -2574,6 +2574,175 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 })
             return
 
+        # ── FASE 33B: Runtime Pre-Pilot Validation Framework — always-on 200 ──
+        if self.path == "/runtime/validation":
+            try:
+                from runtime.validation import build_runtime_validation_report, VALIDATION_CONTRACT_VERSION
+                from runtime.telemetry.prometheus_metrics import record_validation_metrics
+                _report = build_runtime_validation_report()
+                record_validation_metrics(_report)
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/validation",
+                    "timestamp": time.time(),
+                    "contract_version": VALIDATION_CONTRACT_VERSION,
+                    "validation": _report,
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/validation",
+                    "timestamp": time.time(),
+                    "contract_version": "33B",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/validation/invariants":
+            try:
+                from runtime.validation import build_runtime_invariants, VALIDATION_CONTRACT_VERSION
+                _inv = build_runtime_invariants()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/validation/invariants",
+                    "timestamp": time.time(),
+                    "contract_version": VALIDATION_CONTRACT_VERSION,
+                    "invariants": _inv,
+                    "total_invariants": len(_inv),
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/validation/invariants",
+                    "timestamp": time.time(),
+                    "contract_version": "33B",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/validation/gates":
+            try:
+                from runtime.validation import build_runtime_safety_gates, VALIDATION_CONTRACT_VERSION
+                _gates = build_runtime_safety_gates()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/validation/gates",
+                    "timestamp": time.time(),
+                    "contract_version": VALIDATION_CONTRACT_VERSION,
+                    "safety_gates": _gates,
+                    "total_gates": len(_gates),
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/validation/gates",
+                    "timestamp": time.time(),
+                    "contract_version": "33B",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/validation/readiness":
+            try:
+                from runtime.validation import build_runtime_pilot_readiness, VALIDATION_CONTRACT_VERSION
+                _readiness = build_runtime_pilot_readiness()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/validation/readiness",
+                    "timestamp": time.time(),
+                    "contract_version": VALIDATION_CONTRACT_VERSION,
+                    "pilot_readiness": _readiness,
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/validation/readiness",
+                    "timestamp": time.time(),
+                    "contract_version": "33B",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/validation/failures":
+            try:
+                from runtime.validation import detect_runtime_validation_failures, VALIDATION_CONTRACT_VERSION
+                _fail = detect_runtime_validation_failures()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/validation/failures",
+                    "timestamp": time.time(),
+                    "contract_version": VALIDATION_CONTRACT_VERSION,
+                    "failures": _fail,
+                    "total_failures": len(_fail),
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/validation/failures",
+                    "timestamp": time.time(),
+                    "contract_version": "33B",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/validation/regressions":
+            try:
+                from runtime.validation import build_runtime_regression_summary, VALIDATION_CONTRACT_VERSION
+                _reg = build_runtime_regression_summary()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/validation/regressions",
+                    "timestamp": time.time(),
+                    "contract_version": VALIDATION_CONTRACT_VERSION,
+                    "regressions": _reg,
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/validation/regressions",
+                    "timestamp": time.time(),
+                    "contract_version": "33B",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/validation/score":
+            try:
+                from runtime.validation import calculate_runtime_validation_score, VALIDATION_CONTRACT_VERSION
+                from runtime.telemetry.prometheus_metrics import VALIDATION_SCORE
+                _score = calculate_runtime_validation_score()
+                VALIDATION_SCORE.set(float(_score.get("validation_score", 0)))
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/validation/score",
+                    "timestamp": time.time(),
+                    "contract_version": VALIDATION_CONTRACT_VERSION,
+                    "validation_score": _score,
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/validation/score",
+                    "timestamp": time.time(),
+                    "contract_version": "33B",
+                    "error": str(exc),
+                })
+            return
+
         self._send_json(
             404,
             {

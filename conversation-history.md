@@ -203,16 +203,50 @@ Los gaps restantes son de normalización semántica y no bloquean el grounding o
 
 ---
 
+### FASE 33B: Runtime Pre-Pilot Validation Framework — COMPLETED
+- Framework formal de validación pre-pilot con invariants, safety gates, failure surface y pilot readiness scoring
+- Nuevo: `runtime/validation/`:
+  - `runtime/validation/contracts.py` — 6 contracts (RuntimeValidationContract, RuntimeInvariantContract, RuntimeSafetyGateContract, RuntimePilotReadinessContract, RuntimeFailureSurfaceContract, RuntimeRegressionContract)
+  - `runtime/validation/runtime_validation_framework.py` — engine con:
+    - invariants (10): authority/governance/topology/entities/grounding/reporting/observability/degraded/contracts/determinism
+    - safety gates (7): SAFE_TO_OPERATE/ROUTE/REPORT/GROUND/OBSERVE/GOVERN/DEGRADE
+    - pilot readiness score (0-100) + readiness_level (ready/caution/not_ready)
+    - failure surface analysis + regression summary + burn-in artifact inventory (/tmp)
+    - STRICT_VALIDATION_MODE (deterministic): generated_at=0 + deterministic_signature estable
+  - `runtime/validation/__init__.py` — exports + VALIDATION_CONTRACT_VERSION
+- 7 endpoints always-on 200:
+  - `/runtime/validation`
+  - `/runtime/validation/invariants`
+  - `/runtime/validation/gates`
+  - `/runtime/validation/readiness`
+  - `/runtime/validation/failures`
+  - `/runtime/validation/regressions`
+  - `/runtime/validation/score`
+- 7 métricas Prometheus:
+  - `ailab_validation_score`
+  - `ailab_validation_failed_invariants_total`
+  - `ailab_validation_failed_gates_total`
+  - `ailab_validation_runtime_regressions_total`
+  - `ailab_validation_failure_surface_total`
+  - `ailab_validation_pilot_readiness_score`
+  - `ailab_validation_degraded_domains_total`
+- Integración reporting: `build_validation_summary()` en `runtime/reporting/reporting_engine.py`
+- Integración cognitive: `compress_validation_signals()` en `runtime/context/cognitive_compression.py`
+- Tests: 25 tests, validation APIs 200 via servidor local, determinismo validado
+- Tag: `CP-33B-RUNTIME-PRE-PILOT-VALIDATION-STABLE`
+
+---
+
 ## CURRENT STATE
 
-**Checkpoint:** `CP-33A-RUNTIME-GOVERNANCE-REGISTRY-STABLE`
+**Checkpoint:** `CP-33B-RUNTIME-PRE-PILOT-VALIDATION-STABLE`
 **HEAD:** `HEAD`
 
-### Fases completadas (desde 30I-D hasta 33A): 19 fases
-- 30I-D, 30I-E, 30I-F, 30I-F0, 30I-G, OBS-31A, OBS-31A.1, OBS-31A.2, OBS-31A.3, OBS-31A.4, OBS-31A.5, 31B, 31C, 31E, 31D, 32A, 32B, 33A
+### Fases completadas (desde 30I-D hasta 33B): 20 fases
+- 30I-D, 30I-E, 30I-F, 30I-F0, 30I-G, OBS-31A, OBS-31A.1, OBS-31A.2, OBS-31A.3, OBS-31A.4, OBS-31A.5, 31B, 31C, 31E, 31D, 32A, 32B, 33A, 33B
 - Storage hardening archive policy (CP-STORAGE-HARDENING-ARCHIVE-POLICY-STABLE)
 
-### Tags git: 52 tags (desde CP-21B-STABLE hasta CP-33A-RUNTIME-GOVERNANCE-REGISTRY-STABLE)
+### Tags git: 53 tags (desde CP-21B-STABLE hasta CP-33B-RUNTIME-PRE-PILOT-VALIDATION-STABLE)
 
 ### Próxima fase planificada
 **FASE 28.4 — Tool Contracts & Cross-Plan GC**
