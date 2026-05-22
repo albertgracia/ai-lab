@@ -1,15 +1,48 @@
 ---
 title: "Roadmap"
-summary: "Roadmap técnico alrededor del baseline 30I y la preparación previa a FASE 31, sin documentar Multi-GPU como ya implementado."
+summary: "Roadmap técnico actualizado a FASE 32B — Grafana Semantic Cleanup, runtime UI alignment, observability semantic maturity."
 order: 8
 ---
 
-## Qué contiene
-
-- baseline pre-Multi-GPU
-- readiness para FASE 31
-- límites explícitos del estado actual
-
 ## Estado actual
 
-AI-LAB está listo para seguir evolucionando, pero todavía no documenta Multi-GPU como funcionalidad operativa cerrada.
+**Checkpoint:** CP-32B-GRAFANA-SEMANTIC-CLEANUP-STABLE
+
+### Completado (18 fases desde 30I-D)
+
+| FASE | Estado |
+|------|--------|
+| 30I-D — Sensor Semantics Normalization | ✅ |
+| 30I-E — Operational Response Formatting | ✅ |
+| 30I-F — Runtime Cognitive Compression | ✅ |
+| 30I-F0 — Runtime Model Routing Cleanup | ✅ |
+| 30I-G — Deterministic Runtime Grounding | ✅ |
+| OBS-31A — Observability Source-of-Truth Audit | ✅ |
+| OBS-31A.1 — Prometheus Authority Audit | ✅ |
+| OBS-31A.2 — Grafana Drift Audit | ✅ |
+| OBS-31A.3 — Runtime-Observability Alignment | ✅ |
+| OBS-31A.4 — Observability Remediation Plan | ✅ |
+| OBS-31A.5 — Safe Quick Wins Execution | ✅ |
+| 31B — Runtime Semantic Maturity | ✅ |
+| 31C — Operational Reporting Discipline | ✅ |
+| 31E — Active/Inventory/Discoverable Separation | ✅ |
+| 31D — Runtime Topology Awareness | ✅ |
+| 32A — Runtime UI Alignment | ✅ |
+| 32B — Grafana Semantic Cleanup | ✅ |
+
+### Próxima fase
+**FASE 33A — Runtime Governance Registry**
+
+### Roadmap futuro
+- 33A — Runtime Governance Registry
+- 28.4 — Tool Contracts & Cross-Plan GC
+- Pilot técnico
+- Pilot operador
+- Multi-GPU (posterior)
+
+### Multi-GPU
+No documentado como funcionalidad operativa cerrada. Pendiente de:
+- Runtime maturity estable
+- Governance semantics cerradas
+- Scheduler contracts definidos
+- RX7900XT recovery (actualmente inventory/expected_offline)

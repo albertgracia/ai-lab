@@ -151,24 +151,44 @@ Los gaps restantes son de normalización semántica y no bloquean el grounding o
 - Astro build: PASS (197 páginas)
 - Tags: `CP-32A-RUNTIME-UI-ALIGNMENT-STABLE`, `CP-32A-VALIDATOR-REFINEMENT-STABLE`
 
+### FASE 32B: Grafana Semantic Cleanup — COMPLETED
+- Transformación de Grafana de colección legacy a capa de observabilidad semántica alineada con runtime cognition
+- Nuevo: `runtime/observability/grafana_semantic_validator.py` (383 líneas)
+  - `build_dashboard_inventory_32b()` — inventario de dashboards con metadata semántica
+  - `detect_fake_gpu_panels()` — 0 GPUs falsas en paneles activos
+  - `detect_stale_panels()` — 1 panel stale residual (node-exporter, `process_cpu_seconds_total`)
+  - `detect_orphan_datasources()` — 0 orphan DS tras filtrado
+  - `detect_metric_drift()` — 2 metric drifts (cross-references `ailab_*`)
+  - `detect_topology_dashboard_alignment()` — 0 topology issues
+  - `calculate_grafana_alignment_score()` — score 93.9 (high)
+  - `build_grafana_semantic_summary()` — orquestador completo
+- 3 endpoints always-on 200: `/runtime/observability/grafana/semantic-audit`, `/alignment-score`, `/dashboard-inventory`
+- 6 métricas Prometheus: `GRAFANA_ALIGNMENT_SCORE`, `GRAFANA_FAKE_PANELS_TOTAL`, `GRAFANA_STALE_PANELS_TOTAL`, `GRAFANA_ORPHAN_DATASOURCES_TOTAL`, `GRAFANA_METRIC_DRIFT_TOTAL`, `GRAFANA_RUNTIME_ALIGNED_DASHBOARDS_TOTAL`
+- 11/13 dashboards runtime-aligned, 8 legacy, 0 experimental
+- Dashboard taxonomy formalizada (12 categorías)
+- Governance dashboards alineados (overview, runtime, gpus)
+- Degraded mode semantics: healthy/degraded/critical/unknown
+- Tests: 20 tests, 70 assertions, 0 failures
+- Astro build: PASS (198 páginas)
+- Tag: `CP-32B-GRAFANA-SEMANTIC-CLEANUP-STABLE`
+
 ---
 
 ## CURRENT STATE
 
-**Checkpoint:** `CP-32A-RUNTIME-UI-ALIGNMENT-STABLE`
-**HEAD:** `bfb0be4a`
+**Checkpoint:** `CP-32B-GRAFANA-SEMANTIC-CLEANUP-STABLE`
+**HEAD:** `8d43e587`
 
-### Fases completadas (desde 30I-D hasta 32A): 17 fases
-- 30I-D, 30I-E, 30I-F, 30I-F0, 30I-G, OBS-31A, OBS-31A.1, OBS-31A.2, OBS-31A.3, OBS-31A.4, OBS-31A.5, 31B, 31C, 31E, 31D, 32A
+### Fases completadas (desde 30I-D hasta 32B): 18 fases
+- 30I-D, 30I-E, 30I-F, 30I-F0, 30I-G, OBS-31A, OBS-31A.1, OBS-31A.2, OBS-31A.3, OBS-31A.4, OBS-31A.5, 31B, 31C, 31E, 31D, 32A, 32B
 - Storage hardening archive policy (CP-STORAGE-HARDENING-ARCHIVE-POLICY-STABLE)
 
-### Tags git: 50 tags (desde CP-21B-STABLE hasta CP-32A-VALIDATOR-REFINEMENT-STABLE)
+### Tags git: 51 tags (desde CP-21B-STABLE hasta CP-32B-GRAFANA-SEMANTIC-CLEANUP-STABLE)
 
 ### Próxima fase planificada
-**FASE 32B — Grafana Semantic Cleanup**
+**FASE 33A — Runtime Governance Registry**
 
 ### Roadmap
-- 32B — Grafana Semantic Cleanup
 - 33A — Runtime Governance Registry
 - 28.4 — Tool Contracts & Cross-Plan GC
 - Pilot técnico
