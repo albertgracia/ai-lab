@@ -81,6 +81,15 @@ runtime/
 !runtime/context/prometheus_client.py
 !runtime/context/sensor_fusion.py
 !runtime/context/summary_builder.py
+!runtime/context/cognitive_compression.py
+!runtime/observability/
+!runtime/observability/__init__.py
+!runtime/observability/contracts.py
+!runtime/observability/prometheus_audit.py
+!runtime/observability/dashboard_validator.py
+!runtime/observability/drift_detector.py
+!runtime/observability/loki_audit.py
+!runtime/observability/metric_inventory.py
 sessions/
 
 

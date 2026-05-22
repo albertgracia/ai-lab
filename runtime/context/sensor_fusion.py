@@ -139,6 +139,8 @@ class RuntimeSensorFusionSnapshot:
     sensor_contract_version: str = SENSOR_CONTRACT_VERSION
     _gpu_metrics_cache: dict | None = None
     _global_confidence: str = "unknown"
+    # FASE OBS-31A: observability audit injected at collect()
+    observability_audit: dict[str, Any] | None = None
 
     def to_dict(self, max_chars: int = SENSOR_FUSION_MAX_CHARS) -> dict[str, Any]:
         engine = SensorFusionEngine()
@@ -185,6 +187,9 @@ class RuntimeSensorFusionSnapshot:
                 base["_truncated"] = True
                 serialized = json.dumps(base, ensure_ascii=False, default=str)[:max_chars]
                 serialized = serialized.rstrip(",") + ',"_truncated":true}'
+        if self.observability_audit:
+            base["observability_audit"] = self.observability_audit
+
         base["_runtime_generation"] = "30I"
         base["context_size_bytes"] = len(serialized)
         return base
@@ -213,7 +218,33 @@ class SensorFusionEngine:
         self._collect_cloudflare_tunnel(snapshot)
         self._compute_topology(snapshot)
         self._compute_domain_confidence(snapshot)
+        # FASE OBS-31A: Observability source-of-truth audit
+        self._collect_observability_audit(snapshot)
         return snapshot
+
+    def _collect_observability_audit(self, snapshot: RuntimeSensorFusionSnapshot) -> None:
+        try:
+            from runtime.observability import build_prometheus_audit_summary
+            _target_audit = build_prometheus_audit_summary()
+            snapshot.observability_audit = {
+                "contract_version": "OBS-31A",
+                "prometheus_targets": {
+                    "total": _target_audit.get("total_targets", 0),
+                    "healthy": _target_audit.get("classification", {}).get("healthy", 0),
+                    "degraded": _target_audit.get("classification", {}).get("degraded", 0),
+                    "expected_offline": _target_audit.get("classification", {}).get("expected_offline", 0),
+                },
+                "critical_targets_alignment_pct": _target_audit.get("critical_targets", {}).get("alignment_pct", 0.0),
+            }
+        except Exception:
+            snapshot.observability_audit = {
+                "contract_version": "OBS-31A",
+                "prometheus_targets": {
+                    "total": 0, "healthy": 0, "degraded": 0, "expected_offline": 0,
+                },
+                "critical_targets_alignment_pct": 0.0,
+                "error": "observability_audit_unavailable",
+            }
 
     def _freshness_for_domain(self, snapshot: RuntimeSensorFusionSnapshot, domain: str, source: str) -> SensorFreshness:
         age = snapshot.last_scrape_seconds_ago.get(domain)

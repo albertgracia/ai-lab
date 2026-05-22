@@ -1271,6 +1271,194 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 })
             return
 
+        # ── FASE OBS-31A: Observability Source-of-Truth Audit endpoints ──
+        if self.path == "/runtime/observability/audit":
+            try:
+                from runtime.observability import (
+                    build_prometheus_audit_summary,
+                )
+                from runtime.observability.dashboard_validator import DashboardValidator
+                from runtime.observability.drift_detector import DriftDetector
+                from runtime.observability.loki_audit import build_loki_audit_summary
+                from runtime.observability.metric_inventory import build_observability_health_score
+
+                _targets = build_prometheus_audit_summary()
+                _dashboards = DashboardValidator().build_dashboard_audit_summary()
+                _drift = DriftDetector().detect_all()
+                _loki = build_loki_audit_summary()
+                _score = build_observability_health_score(
+                    targets_healthy=_targets.get("classification", {}).get("healthy", 0),
+                    targets_total=_targets.get("total_targets", 0),
+                    dashboards_healthy=_dashboards.get("critical_dashboards_healthy", 0),
+                    dashboards_total=_dashboards.get("total_dashboards", 0),
+                    no_data_panels=_dashboards.get("total_no_data_panels", 0),
+                    stale_metrics=0,
+                    query_failures=0,
+                    runtime_alignment_score=_targets.get("critical_targets", {}).get("alignment_pct", 0) / 100.0,
+                )
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/audit",
+                    "timestamp": time.time(),
+                    "contract_version": "OBS-31A",
+                    "prometheus_audit": _targets,
+                    "dashboard_audit": _dashboards,
+                    "loki_audit": _loki,
+                    "drift_detection": _drift.to_dict(),
+                    "observability_health_score": _score,
+                })
+                try:
+                    from runtime.telemetry.prometheus_metrics import (
+                        record_observability_audit,
+                        record_observability_alignment_score,
+                    )
+                    record_observability_audit("full_audit", "ok")
+                    record_observability_alignment_score(_score.get("score", 0))
+                except ImportError:
+                    pass
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/audit",
+                    "timestamp": time.time(),
+                    "contract_version": "OBS-31A",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/observability/targets":
+            try:
+                from runtime.observability import build_prometheus_audit_summary
+                _data = build_prometheus_audit_summary()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/targets",
+                    "timestamp": time.time(),
+                    "contract_version": "OBS-31A",
+                    "prometheus_audit": _data,
+                })
+                try:
+                    from runtime.telemetry.prometheus_metrics import record_observability_audit
+                    record_observability_audit("targets", "ok")
+                except ImportError:
+                    pass
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/targets",
+                    "timestamp": time.time(),
+                    "contract_version": "OBS-31A",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/observability/dashboards":
+            try:
+                from runtime.observability.dashboard_validator import DashboardValidator
+                _data = DashboardValidator().build_dashboard_audit_summary()
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/dashboards",
+                    "timestamp": time.time(),
+                    "contract_version": "OBS-31A",
+                    "dashboard_audit": _data,
+                })
+                try:
+                    from runtime.telemetry.prometheus_metrics import record_observability_audit
+                    record_observability_audit("dashboards", "ok")
+                except ImportError:
+                    pass
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/dashboards",
+                    "timestamp": time.time(),
+                    "contract_version": "OBS-31A",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/observability/metrics":
+            try:
+                from runtime.observability.metric_inventory import build_metric_inventory
+                _metrics = build_metric_inventory()
+                _critical = sum(1 for m in _metrics if m.get("criticality") == "critical")
+                _high = sum(1 for m in _metrics if m.get("criticality") == "high")
+                _total = len(_metrics)
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/metrics",
+                    "timestamp": time.time(),
+                    "contract_version": "OBS-31A",
+                    "total_metrics": _total,
+                    "classification": {
+                        "critical": _critical,
+                        "high": _high,
+                        "medium": sum(1 for m in _metrics if m.get("criticality") == "medium"),
+                        "low": sum(1 for m in _metrics if m.get("criticality") == "low"),
+                        "info": sum(1 for m in _metrics if m.get("criticality") == "info"),
+                    },
+                    "metrics": _metrics,
+                })
+                try:
+                    from runtime.telemetry.prometheus_metrics import record_observability_audit
+                    record_observability_audit("metrics", "ok")
+                except ImportError:
+                    pass
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/metrics",
+                    "timestamp": time.time(),
+                    "contract_version": "OBS-31A",
+                    "total_metrics": 0,
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/observability/drift":
+            try:
+                from runtime.observability.drift_detector import DriftDetector
+                _drift = DriftDetector().detect_all()
+                _total = len(_drift.gpu_drift) + len(_drift.topology_drift) \
+                    + len(_drift.service_drift) + len(_drift.model_drift) + len(_drift.semantic_drift)
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/drift",
+                    "timestamp": time.time(),
+                    "contract_version": "OBS-31A",
+                    "total_drifts": _total,
+                    "drift": _drift.to_dict(),
+                })
+                if _total > 0:
+                    try:
+                        from runtime.telemetry.prometheus_metrics import (
+                            record_observability_runtime_drift,
+                        )
+                        for _d in _drift.gpu_drift:
+                            record_observability_runtime_drift("gpu", _d.get("severity", "low"))
+                    except ImportError:
+                        pass
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/observability/drift",
+                    "timestamp": time.time(),
+                    "contract_version": "OBS-31A",
+                    "error": str(exc),
+                })
+            return
+
         if self.path == "/runtime/reports/discipline":
             try:
                 from runtime.gateway.tool_request_classifier import FORBIDDEN_TOOL_RECOMMENDATIONS

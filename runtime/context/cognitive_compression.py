@@ -350,6 +350,35 @@ def compress_observability_signals(
             "freshness": "unavailable",
         })
 
+    # FASE OBS-31A: Observability source-of-truth audit signal
+    obs_audit = sensor_snapshot.get("observability_audit")
+    if obs_audit and isinstance(obs_audit, dict):
+        targets = obs_audit.get("prometheus_targets", {})
+        healthy = targets.get("healthy", 0)
+        total = targets.get("total", 0)
+        alignment = obs_audit.get("critical_targets_alignment_pct", 0.0)
+        audit_confidence = "high"
+        audit_severity = "info"
+
+        if alignment < 100.0 or (total > 0 and healthy < total):
+            if alignment < 50.0:
+                audit_confidence = "low"
+                audit_severity = "warning"
+            else:
+                audit_confidence = "medium"
+
+        signals.append({
+            "domain": "observability",
+            "severity": audit_severity,
+            "message": (
+                f"OBS-31A audit: {healthy}/{total} targets healthy, "
+                f"{alignment}% critical alignment"
+            ),
+            "evidence": ["observability_audit", "code"],
+            "confidence": audit_confidence,
+            "freshness": "fresh",
+        })
+
     return signals
 
 

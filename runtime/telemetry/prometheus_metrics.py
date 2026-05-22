@@ -1158,3 +1158,89 @@ def record_runtime_grounding_rejection_reason(reason: str) -> None:
 
 def record_runtime_grounding_unknown_state(state: str) -> None:
     RUNTIME_GROUNDING_UNKNOWN_STATE_TOTAL.labels(state=state or "unknown").inc()
+
+
+# ── FASE OBS-31A: Observability Source-of-Truth Audit Metrics ─────────────
+OBSERVABILITY_AUDIT_TOTAL = Counter(
+    "ailab_observability_audit_total",
+    "Observability source-of-truth audit executions",
+    ["audit_type", "status"],
+)
+OBSERVABILITY_DASHBOARD_HEALTH = Gauge(
+    "ailab_observability_dashboard_health",
+    "Dashboard health level (0=broken, 1=stale, 2=healthy)",
+    ["dashboard_uid"],
+)
+OBSERVABILITY_PANEL_BROKEN_TOTAL = Counter(
+    "ailab_observability_panel_broken_total",
+    "Broken panels detected during dashboard audit",
+    ["dashboard_uid", "reason"],
+)
+OBSERVABILITY_STALE_METRIC_TOTAL = Counter(
+    "ailab_observability_stale_metric_total",
+    "Stale metrics detected during metric inventory",
+    ["domain"],
+)
+OBSERVABILITY_RUNTIME_DRIFT_TOTAL = Counter(
+    "ailab_observability_runtime_drift_total",
+    "Runtime ↔ Grafana drift events detected",
+    ["drift_type", "severity"],
+)
+OBSERVABILITY_QUERY_VALIDATION_TOTAL = Counter(
+    "ailab_observability_query_validation_total",
+    "Query validation results by type and result",
+    ["query_type", "result"],
+)
+OBSERVABILITY_DATASOURCE_HEALTH = Gauge(
+    "ailab_observability_datasource_health",
+    "Datasource health (0=down, 1=degraded, 2=up)",
+    ["datasource_name"],
+)
+OBSERVABILITY_ALIGNMENT_SCORE = Gauge(
+    "ailab_observability_alignment_score",
+    "Runtime ↔ Grafana alignment score (0-100)",
+)
+
+
+def record_observability_audit(audit_type: str, status: str) -> None:
+    OBSERVABILITY_AUDIT_TOTAL.labels(
+        audit_type=audit_type or "unknown",
+        status=status or "unknown",
+    ).inc()
+
+
+def record_observability_dashboard_health(dashboard_uid: str, health: int) -> None:
+    OBSERVABILITY_DASHBOARD_HEALTH.labels(dashboard_uid=dashboard_uid or "unknown").set(float(health))
+
+
+def record_observability_panel_broken(dashboard_uid: str, reason: str) -> None:
+    OBSERVABILITY_PANEL_BROKEN_TOTAL.labels(
+        dashboard_uid=dashboard_uid or "unknown",
+        reason=reason or "unknown",
+    ).inc()
+
+
+def record_observability_stale_metric(domain: str) -> None:
+    OBSERVABILITY_STALE_METRIC_TOTAL.labels(domain=domain or "unknown").inc()
+
+
+def record_observability_runtime_drift(drift_type: str, severity: str) -> None:
+    OBSERVABILITY_RUNTIME_DRIFT_TOTAL.labels(
+        drift_type=drift_type or "unknown",
+        severity=severity or "unknown",
+    ).inc()
+
+
+def record_observability_query_validation(query_type: str, result: str) -> None:
+    OBSERVABILITY_QUERY_VALIDATION_TOTAL.labels(
+        query_type=query_type or "unknown",
+        result=result or "unknown",
+    ).inc()
+
+
+def record_observability_datasource_health(datasource_name: str, health: int) -> None:
+    OBSERVABILITY_DATASOURCE_HEALTH.labels(datasource_name=datasource_name or "unknown").set(float(health))
+
+
+def record_observability_alignment_score(score: float) -> None:
+    OBSERVABILITY_ALIGNMENT_SCORE.set(float(max(0.0, min(100.0, score))))
