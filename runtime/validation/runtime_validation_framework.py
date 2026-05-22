@@ -669,6 +669,80 @@ def build_runtime_invariants(
             details={"error": str(exc)},
         )
 
+    # ── FASE 35B: Semantic sterilization invariants ─────────────────
+    try:
+        from runtime.semantic import sterilize_semantic_entities, build_semantic_integrity_report
+        ster = sterilize_semantic_entities(extra_ctx={})
+        truth = (ster.get("operational_truth", {}) or {})
+
+        legacy_total = len(ster.get("legacy_entities", []) or [])
+        phantom_total = len(ster.get("phantom_entities", []) or [])
+
+        _mk(
+            "INVARIANT-NO-LEGACY-LEAKAGE",
+            "pass" if legacy_total == 0 else "fail",
+            "high" if legacy_total == 0 else "low",
+            "semantic_sterilization_35b",
+            blocking=(legacy_total > 0),
+            details={"legacy_leakage_total": legacy_total},
+        )
+
+        _mk(
+            "INVARIANT-NO-PHANTOM-ENTITIES",
+            "pass" if phantom_total == 0 else "degraded",
+            "high" if phantom_total == 0 else "medium",
+            "semantic_sterilization_35b",
+            blocking=False,
+            details={"phantom_entities_total": phantom_total},
+        )
+
+        unknown_operational = 0
+        for c in truth.get("classifications", []) or []:
+            if isinstance(c, dict) and c.get("operational") and c.get("semantic_state") == "STATE-UNKNOWN":
+                unknown_operational += 1
+        _mk(
+            "INVARIANT-NO-UNKNOWN-OPERATIONAL",
+            "pass" if unknown_operational == 0 else "fail",
+            "high" if unknown_operational == 0 else "low",
+            "semantic_sterilization_35b",
+            blocking=(unknown_operational > 0),
+            details={"unknown_operational_entities_total": unknown_operational},
+        )
+
+        cont = {c.get("contamination_type"): c for c in (ster.get("contaminations", []) or []) if isinstance(c, dict)}
+        disc_total = int((cont.get("discoverable_contamination", {}) or {}).get("total", 0) or 0)
+        inv_total = int((cont.get("inventory_contamination", {}) or {}).get("total", 0) or 0)
+        sep_ok = (disc_total == 0) and (inv_total == 0)
+        _mk(
+            "INVARIANT-STRICT-STATE-SEPARATION",
+            "pass" if sep_ok else "degraded",
+            "high" if sep_ok else "medium",
+            "semantic_sterilization_35b",
+            blocking=False,
+            details={"discoverable_contamination_total": disc_total, "inventory_contamination_total": inv_total},
+        )
+
+        sem = build_semantic_integrity_report(extra_ctx={})
+        score = float(sem.get("semantic_integrity_score", 0.0) or 0.0)
+        ok = score >= 85.0
+        _mk(
+            "INVARIANT-STERILIZED-OPERATIONAL-TRUTH",
+            "pass" if ok else "degraded",
+            "high" if ok else "medium",
+            "semantic_sterilization_35b",
+            blocking=False,
+            details={"semantic_integrity_score": score, "level": sem.get("semantic_integrity_level")},
+        )
+    except Exception as exc:
+        _mk(
+            "INVARIANT-STERILIZED-OPERATIONAL-TRUTH",
+            "degraded",
+            "low",
+            "semantic_sterilization_35b",
+            blocking=False,
+            details={"error": str(exc)},
+        )
+
     return [i.to_dict() for i in invariants]
 
 

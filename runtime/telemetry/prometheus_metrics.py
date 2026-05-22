@@ -1760,6 +1760,36 @@ INVENTORY_ENTITIES_TOTAL = Gauge(
     "Total inventory-only entities",
 )
 
+# ── FASE 35B: Semantic sterilization & identity hygiene ─────────────
+SEMANTIC_INTEGRITY_SCORE = Gauge(
+    "ailab_semantic_integrity_score",
+    "Semantic integrity score 0-100",
+)
+PHANTOM_ENTITIES_TOTAL = Gauge(
+    "ailab_phantom_entities_total",
+    "Total phantom entities detected",
+)
+LEGACY_LEAKAGE_TOTAL = Gauge(
+    "ailab_legacy_leakage_total",
+    "Total legacy leakage entities detected",
+)
+DISCOVERABLE_CONTAMINATION_TOTAL = Gauge(
+    "ailab_discoverable_contamination_total",
+    "Total discoverable contamination events",
+)
+INVENTORY_CONTAMINATION_TOTAL = Gauge(
+    "ailab_inventory_contamination_total",
+    "Total inventory contamination events",
+)
+UNKNOWN_OPERATIONAL_ENTITIES_TOTAL = Gauge(
+    "ailab_unknown_operational_entities_total",
+    "Total unknown entities incorrectly considered operational",
+)
+STERILIZED_OPERATIONAL_NODES_TOTAL = Gauge(
+    "ailab_sterilized_operational_nodes_total",
+    "Total operational nodes after sterilization",
+)
+
 # ── FASE 33A: Runtime Governance Registry Metrics ────────────
 GOVERNANCE_SCORE = Gauge(
     "ailab_governance_score",
@@ -2159,5 +2189,22 @@ def record_infrastructure_metrics(registry: dict[str, Any]) -> None:
         OPERATIONAL_INFRASTRUCTURE_NODES_TOTAL.set(float(len(inv.get("operational_nodes", []) or [])))
         INVENTORY_ENTITIES_TOTAL.set(float(len(inv.get("inventory_only_nodes", []) or [])))
         DISCOVERABLE_ENTITIES_TOTAL.set(float(len(inv.get("discoverable_nodes", []) or [])))
+    except Exception:
+        pass
+
+
+def record_semantic_metrics(report: dict[str, Any]) -> None:
+    """FASE 35B: record semantic integrity counters."""
+    try:
+        SEMANTIC_INTEGRITY_SCORE.set(float(max(0.0, min(100.0, float(report.get("semantic_integrity_score", 0.0) or 0.0)))))
+    except Exception:
+        pass
+    try:
+        PHANTOM_ENTITIES_TOTAL.set(float(report.get("phantom_entities_total", 0) or 0))
+        LEGACY_LEAKAGE_TOTAL.set(float(report.get("legacy_leakage_total", 0) or 0))
+        DISCOVERABLE_CONTAMINATION_TOTAL.set(float(report.get("discoverable_contamination_total", 0) or 0))
+        INVENTORY_CONTAMINATION_TOTAL.set(float(report.get("inventory_contamination_total", 0) or 0))
+        UNKNOWN_OPERATIONAL_ENTITIES_TOTAL.set(float(report.get("unknown_operational_entities_total", 0) or 0))
+        STERILIZED_OPERATIONAL_NODES_TOTAL.set(float(report.get("sterilized_operational_nodes_total", 0) or 0))
     except Exception:
         pass

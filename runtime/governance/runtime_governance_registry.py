@@ -748,6 +748,23 @@ def build_runtime_governance_registry(
         # Unknown > inventado.
         pass
 
+    # ── FASE 35B: Semantic integrity & identity hygiene ─────────────
+    try:
+        from runtime.semantic import build_semantic_integrity_report
+        sem = build_semantic_integrity_report(extra_ctx={})
+        result["semantic"] = {
+            "contract_version": "35B",
+            "semantic_integrity_score": sem.get("semantic_integrity_score", 0.0),
+            "semantic_integrity_level": sem.get("semantic_integrity_level", "unknown"),
+            "phantom_entities_total": sem.get("phantom_entities_total", 0),
+            "legacy_leakage_total": sem.get("legacy_leakage_total", 0),
+            "discoverable_contamination_total": sem.get("discoverable_contamination_total", 0),
+            "inventory_contamination_total": sem.get("inventory_contamination_total", 0),
+            "unknown_operational_entities_total": sem.get("unknown_operational_entities_total", 0),
+        }
+    except Exception:
+        pass
+
     result["drift"] = drift
 
     try:

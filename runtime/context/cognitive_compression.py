@@ -53,6 +53,9 @@ def build_runtime_cognitive_summary(
     infrastructure_signals = compress_infrastructure_signals(sensor_snapshot, extra_ctx)
     all_signals.extend(infrastructure_signals)
 
+    semantic_signals = compress_semantic_signals(sensor_snapshot, extra_ctx)
+    all_signals.extend(semantic_signals)
+
     if not all_signals:
         unavailable.append("all_domains")
 
@@ -650,6 +653,35 @@ def compress_infrastructure_signals(
             "message": msg,
             "evidence": ["infrastructure_registry_35a"],
             "confidence": "high" if score >= 85 else "medium" if score >= 65 else "low",
+            "freshness": "fresh",
+        })
+    except Exception:
+        return signals
+    return signals
+
+
+def compress_semantic_signals(
+    sensor_snapshot: dict[str, Any],
+    extra_ctx: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """FASE 35B: semantic contamination + hygiene signals."""
+    signals: list[dict[str, Any]] = []
+    extra_ctx = extra_ctx or {}
+    try:
+        from runtime.semantic import build_semantic_integrity_report
+        sem = build_semantic_integrity_report(extra_ctx=extra_ctx)
+        score = float(sem.get("semantic_integrity_score", 0.0) or 0.0)
+        sev = "info" if score >= 85 else "warning" if score >= 65 else "critical"
+        msg = (
+            f"semantic: score={score} legacy={sem.get('legacy_leakage_total', 0)} "
+            f"phantom={sem.get('phantom_entities_total', 0)} unknown_operational={sem.get('unknown_operational_entities_total', 0)}"
+        )
+        signals.append({
+            "domain": "semantic",
+            "severity": sev,
+            "message": msg,
+            "evidence": ["semantic_sterilization_35b"],
+            "confidence": "high",
             "freshness": "fresh",
         })
     except Exception:

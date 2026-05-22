@@ -525,6 +525,10 @@ _FASTPATH_INTENTS: dict[str, tuple[str, ...]] = {
         "infra", "infrastructure", "nodo", "node",
         "prometheus authority", "grafana", "control plane", "control-plane",
     ),
+    "semantic": (
+        "semantic", "sterilization", "esterilizacion", "hygiene", "higiene",
+        "phantom", "legacy leakage", "contamination", "contaminacion",
+    ),
 }
 
 

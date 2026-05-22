@@ -88,6 +88,10 @@ runtime/*
 !runtime/infrastructure/__init__.py
 !runtime/infrastructure/contracts.py
 !runtime/infrastructure/infrastructure_identity_registry.py
+!runtime/semantic/
+!runtime/semantic/__init__.py
+!runtime/semantic/contracts.py
+!runtime/semantic/semantic_sterilization.py
 !runtime/memory/memory_usefulness.py
 !runtime/observability/
 !runtime/context/evidence_guard.py

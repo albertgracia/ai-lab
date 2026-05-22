@@ -125,12 +125,8 @@ def _get_disabled_models() -> list[dict[str, Any]]:
 
 
 def _get_discovered_models() -> list[dict[str, Any]]:
-    return [
-        {
-            "id": "lmstudio-community/qwen2.5-coder-14b-instruct",
-            "note": "Alternate namespace of active model qwen2.5-coder-14b-instruct",
-        }
-    ]
+    # FASE 35B: never expose legacy model namespaces in reports.
+    return []
 
 
 def _get_active_nodes() -> list[dict[str, Any]]:

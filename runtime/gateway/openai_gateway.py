@@ -2801,6 +2801,135 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     "error": "unknown_infrastructure_endpoint",
                 })
                 return
+
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": self.path.lstrip("/"),
+                    "timestamp": time.time(),
+                    "contract_version": "35A",
+                    "error": str(exc),
+                })
+                return
+
+        # ── FASE 35B: Semantic sterilization & identity hygiene — always-on 200 ──
+        if self.path == "/runtime/semantic" or self.path.startswith("/runtime/semantic/"):
+            try:
+                from runtime.semantic import (
+                    build_operational_truth,
+                    sterilize_semantic_entities,
+                    build_identity_hygiene_summary,
+                    build_semantic_integrity_report,
+                )
+                from runtime.telemetry.prometheus_metrics import record_semantic_metrics
+
+                sem = build_semantic_integrity_report(extra_ctx={})
+                try:
+                    record_semantic_metrics(sem)
+                except Exception:
+                    pass
+
+                if self.path == "/runtime/semantic" or self.path == "/runtime/semantic/score":
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": self.path.lstrip("/"),
+                        "timestamp": time.time(),
+                        "contract_version": "35B",
+                        "semantic": sem,
+                    })
+                    return
+
+                if self.path == "/runtime/semantic/truth":
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/semantic/truth",
+                        "timestamp": time.time(),
+                        "contract_version": "35B",
+                        "truth": build_operational_truth(extra_ctx={}),
+                    })
+                    return
+
+                if self.path == "/runtime/semantic/phantom":
+                    ster = sterilize_semantic_entities(extra_ctx={})
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/semantic/phantom",
+                        "timestamp": time.time(),
+                        "contract_version": "35B",
+                        "phantom": ster.get("phantom_entities", []),
+                    })
+                    return
+
+                if self.path == "/runtime/semantic/legacy":
+                    ster = sterilize_semantic_entities(extra_ctx={})
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/semantic/legacy",
+                        "timestamp": time.time(),
+                        "contract_version": "35B",
+                        "legacy": ster.get("legacy_entities", []),
+                    })
+                    return
+
+                if self.path == "/runtime/semantic/discoverable":
+                    truth = build_operational_truth(extra_ctx={})
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/semantic/discoverable",
+                        "timestamp": time.time(),
+                        "contract_version": "35B",
+                        "discoverable_nodes": truth.get("discoverable_nodes", []),
+                    })
+                    return
+
+                if self.path == "/runtime/semantic/inventory":
+                    truth = build_operational_truth(extra_ctx={})
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/semantic/inventory",
+                        "timestamp": time.time(),
+                        "contract_version": "35B",
+                        "inventory_only_nodes": truth.get("inventory_only_nodes", []),
+                    })
+                    return
+
+                if self.path == "/runtime/semantic/hygiene":
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/semantic/hygiene",
+                        "timestamp": time.time(),
+                        "contract_version": "35B",
+                        "hygiene": build_identity_hygiene_summary(extra_ctx={}),
+                    })
+                    return
+
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": self.path.lstrip("/"),
+                    "timestamp": time.time(),
+                    "contract_version": "35B",
+                    "error": "unknown_semantic_endpoint",
+                })
+                return
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": self.path.lstrip("/"),
+                    "timestamp": time.time(),
+                    "contract_version": "35B",
+                    "error": str(exc),
+                })
+                return
             except Exception as exc:
                 self._send_json(200, {
                     "status": "degraded",
