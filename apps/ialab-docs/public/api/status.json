@@ -16,10 +16,10 @@
           "os": "linux"
         },
         "Ports": "0.0.0.0:11434->11434/tcp, [::]:11434->11434/tcp",
-        "RunningFor": "2 minutes ago",
+        "RunningFor": "13 minutes ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 2 minutes"
+        "Status": "Up 13 minutes"
       },
       {
         "Command": "\"/entrypoint.sh --api.dashboard=true --api.insecure=true --providers.docker=true --providers.docker.exposedbydefault=false --providers.file.directory=/dynamic --providers.file.watch=true --entrypoints.web.address=:80 --entrypoints.websecure.address=:443 --log.level=INFO\"",
@@ -28,7 +28,7 @@
         "Image": "traefik:latest",
         "Labels": "com.docker.compose.config-hash=6780ff2b9cf0676df176207420e3fc74ed5f6885479f7b307d28d61f72954b6b,com.docker.compose.container-number=1,com.docker.compose.depends_on=,com.docker.compose.image=sha256:eb328e2c806c53aafbbace6c451fa54d268961261a85452fcf0fb752a30c17be,com.docker.compose.oneoff=False,com.docker.compose.project.config_files=/opt/ai-lab/stacks/traefik/docker-compose.yml,com.docker.compose.project.working_dir=/opt/ai-lab/stacks/traefik,com.docker.compose.project=traefik,com.docker.compose.service=traefik,com.docker.compose.version=5.1.3,org.opencontainers.image.description=A modern reverse-proxy,org.opencontainers.image.documentation=https://docs.traefik.io,org.opencontainers.image.source=https://github.com/traefik/traefik,org.opencontainers.image.title=Traefik,org.opencontainers.image.url=https://traefik.io,org.opencontainers.image.vendor=Traefik Labs,org.opencontainers.image.version=v3.7.0",
         "LocalVolumes": "0",
-        "Mounts": "/opt/ai-lab/data/traefik/dynamic,/etc/localtime,/var/run/docker.sock,/opt/ai-lab/data/traefik/acme.json",
+        "Mounts": "/etc/localtime,/var/run/docker.sock,/opt/ai-lab/data/traefik/acme.json,/opt/ai-lab/data/traefik/dynamic",
         "Names": "traefik",
         "Networks": "proxy",
         "Platform": {
@@ -327,7 +327,7 @@
     {
       "node": "RX9070",
       "host": "192.168.1.50",
-      "vram_used_gib": 14.27,
+      "vram_used_gib": 14.28,
       "vram_total_gib": 15.81
     },
     {
