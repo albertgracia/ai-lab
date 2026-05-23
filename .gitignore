@@ -40,6 +40,9 @@ temp/
 .vscode/
 .idea/
 
+# Claude / editor artifacts
+.claude/
+
 # OS
 .DS_Store
 Thumbs.db
@@ -188,12 +191,34 @@ runtime/hardening/**/*.pyc
 !runtime/operator_intent/operator_intent_reasoning.py
 runtime/operator_intent/__pycache__/
 runtime/operator_intent/**/*.pyc
+
+!runtime/federation/
+!runtime/federation/__init__.py
+!runtime/federation/contracts.py
+runtime/federation/__pycache__/
+runtime/federation/**/*.pyc
+
+!runtime/domain_registry/
+!runtime/domain_registry/__init__.py
+!runtime/domain_registry/domain_registry.py
+runtime/domain_registry/__pycache__/
+runtime/domain_registry/**/*.pyc
+
+!runtime/contracts/
+!runtime/contracts/__init__.py
+!runtime/contracts/*.py
+runtime/contracts/__pycache__/
+runtime/contracts/**/*.pyc
 sessions/
 
 
 # Runtime/private heavy data
 data/
-.agent/
+
+# Agent layer
+.agent/*
+!.agent/agents/
+!.agent/agents/*.md
 docs/system_snapshot.json
 
 actions-runner/
