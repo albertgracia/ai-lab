@@ -517,15 +517,19 @@ FASE 31C → operational reporting discipline                          ✅ CP-31
 FASE 35C → live authority-backed cognition                            ✅ CP-35C-LIVE-AUTHORITY-BACKED-COGNITION-STABLE
 FASE 35D → operational fast-path                                       ✅ CP-35D-OPERATIONAL-FAST-PATH-STABLE
 FASE 36A → operational incident intelligence                           ✅ CP-36A-OPERATIONAL-INCIDENT-INTELLIGENCE-STABLE
+FASE DEV-36X → codebase memory integration                              ✅ CP-DEV-36X-CODEBASE-MEMORY-INTEGRATION-STABLE
+FASE DOC-36X → GitNexus structural cognition documentation               ✅ CP-DOC-36X-GITNEXUS-STRUCTURAL-COGNITION-STABLE
+FASE DOC-36X → Spanish localization                                      ✅ CP-DOC-36X-SPANISH-LOCALIZATION-STABLE
+FASE 35D-HF1 → fastpath routing priority fix                             ✅ CP-35D-HF1-FASTPATH-ROUTING-PRIORITY-STABLE
 ```
 
-Tags git: desde `CP-21B-STABLE` hasta `CP-35D-OPERATIONAL-FAST-PATH-STABLE`.
+Tags git: desde `CP-21B-STABLE` hasta `CP-35D-HF1-FASTPATH-ROUTING-PRIORITY-STABLE`.
 
 **Deuda saldada:** FASE 29.4.4-C — `/slo/health` ahora responde 200 siempre, con payload disabled cuando enforcement=false.
 
 ## Current Runtime Truth
 
-**Checkpoint actual:** `CP-31B-RUNTIME-SEMANTIC-MATURITY-STABLE`
+**Checkpoint actual:** `CP-35D-HF1-FASTPATH-ROUTING-PRIORITY-STABLE`
 
 **Runtime state source of truth:** `/runtime/maturity` (build_runtime_descriptor)
 
@@ -555,18 +559,11 @@ Tags git: desde `CP-21B-STABLE` hasta `CP-35D-OPERATIONAL-FAST-PATH-STABLE`.
 - models: `/mnt/ai-models`
 - archives: `/mnt/opencode/ai-lab-archives`
 
-**Próxima fase:** FASE 36A — Operational Incident Intelligence
+**Próxima fase:** Pilot técnico
 
 ### Roadmap actual
 
 ```
-31C — Operational Reporting Discipline
-31E — Active vs Inventory vs Discoverable Separation
-31D — Runtime Topology Awareness
-32A — Runtime UI Alignment
-32B — Grafana Semantic Cleanup
-33A — Runtime Governance Registry
-28.4 — Tool Contracts & Cross-Plan GC
 Pilot técnico
 Pilot operador
 Multi-GPU (posterior)
@@ -915,7 +912,7 @@ El objetivo **no** es maximizar flexibilidad a costa de estabilidad. AI-LAB prio
 
 ### Próximo
 
-- FASE 28.4 (tool contracts, cross-plan GC) — pendiente
+- Pilot técnico — siguiente fase planificada
 
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence

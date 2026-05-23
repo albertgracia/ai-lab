@@ -259,16 +259,66 @@ Los gaps restantes son de normalización semántica y no bloquean el grounding o
 
 ---
 
+### FASE DOC-36X: GitNexus Structural Cognition Documentation — COMPLETED
+
+**Objetivo:** Documentar la capa de cognición estructural de GitNexus (knowledge graph, execution flows, relationships) como parte de la documentación oficial de AI-LAB.
+
+**Cambios:**
+- 15 archivos (11 nuevos + 4 modificados) en `apps/ialab-docs/src/content/`
+  - Blog (2 posts): GitNexus cognition concept, execution flow walkthrough
+  - Reference docs (3): architecture overview, process documentation, truth layers
+  - Runbooks (5): exploration, debugging, impact analysis, PR review, refactoring
+  - Research page (1): operational truth infrastructure
+  - Index cards (4): blog, docs, experiments, research
+- 8 API endpoints documented (GitNexus MCP tools)
+- Mermaid diagrams: cognition flow, truth layers, dependency graph flow, blast radius process
+- Astro build: PASS (208 pages)
+
+**Tags:** `CP-DOC-36X-GITNEXUS-STRUCTURAL-COGNITION-STABLE`
+
+---
+
+### FASE DOC-36X Spanish: Spanish Localization — COMPLETED
+
+**Objetivo:** Traducir toda la documentación DOC-36X a español técnico manteniendo términos técnicos (GitNexus, FastPath, OperationalTruth, Blast Radius, etc.) en inglés.
+
+**Cambios:**
+- Los mismos 15 archivos traducidos siguiendo RULE-SPANISH rules
+- Runbooks en estilo SRE/NOC español
+- Términos preservados en inglés: FastPath, OperationalTruth, Blast Radius, MCP, knowledge graph
+- Astro build: PASS (208 pages)
+- Headings, narrative, runbooks → español; APIs, metrics, paths, contracts → inglés
+
+**Tags:** `CP-DOC-36X-SPANISH-LOCALIZATION-STABLE`
+
+---
+
+### FASE 35D-HF1: FastPath Routing Priority Fix — COMPLETED
+
+**Objetivo:** Corregir el routing para que consultas operacionales (estado runtime, estado governance, exporters down) usen tool_fastpath ANTES que report/cognitive/deep checks.
+
+**Cambios:**
+- `should_prioritize_operational_fastpath()` helper creado en `tool_request_classifier.py`
+- Evaluación insertada FIRST en `classify_chat_route()` antes de `get_qwen_escalation_reason()`, `_is_reasoning_request()`, `is_report_request_heavy()`, `is_report_request()`
+- `_DEEP_EXCLUSION_KEYWORDS`: forense, forensic, remediation, postmortem, implementation, implementación
+- `is_report_request()` short-circuit ahora protegido con deep keyword check
+- Tests: 28 tests nuevos en `test_fastpath_routing_priority_35d_hf1.py`
+- Regresión: 35D (25) + 34C (25) + 35C (13) + 36A (40) = 103 tests, todos PASS
+
+**Tags:** `CP-35D-HF1-FASTPATH-ROUTING-PRIORITY-STABLE`
+
+---
+
 ## CURRENT STATE
 
-**Checkpoint:** `CP-28.4-TOOL-CONTRACTS-CROSSPLAN-GC-STABLE`
-**HEAD:** `HEAD`
+**Checkpoint:** `CP-35D-HF1-FASTPATH-ROUTING-PRIORITY-STABLE`
+**HEAD:** `c020ccc1`
 
-### Fases completadas (desde 30I-D hasta 28.4): 21 fases
-- 30I-D, 30I-E, 30I-F, 30I-F0, 30I-G, OBS-31A, OBS-31A.1, OBS-31A.2, OBS-31A.3, OBS-31A.4, OBS-31A.5, 31B, 31C, 31E, 31D, 32A, 32B, 33A, 33B, 28.4
+### Fases completadas (desde 30I-D hasta 35D-HF1): 24 fases
+- 30I-D, 30I-E, 30I-F, 30I-F0, 30I-G, OBS-31A, OBS-31A.1, OBS-31A.2, OBS-31A.3, OBS-31A.4, OBS-31A.5, 31B, 31C, 31E, 31D, 32A, 32B, 33A, 33B, 28.4, DOC-36X, DOC-36X-Spanish, 35D-HF1
 - Storage hardening archive policy (CP-STORAGE-HARDENING-ARCHIVE-POLICY-STABLE)
 
-### Tags git: 54 tags (desde CP-21B-STABLE hasta CP-28.4-TOOL-CONTRACTS-CROSSPLAN-GC-STABLE)
+### Tags git: 57 tags (desde CP-21B-STABLE hasta CP-35D-HF1-FASTPATH-ROUTING-PRIORITY-STABLE)
 
 ### Próxima fase planificada
 **Pilot técnico**
