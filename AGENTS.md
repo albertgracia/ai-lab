@@ -176,6 +176,59 @@ Cuando se modifique `apps/ialab-docs/` en `/opt/ai-lab`:
   - si el problema encaja en un workflow existente, usar ese workflow
   - si no encaja, pedir aclaración o proponer el workflow correcto antes de actuar
 
+---
+
+## Federated Runtime Agent Constitution
+
+Este documento ya no es una guía informal: es doctrina operacional de runtime governance.
+
+### Authority Precedence
+
+Orden de precedencia (si hay conflicto, gana el nivel superior):
+
+1. Safety hard rules (no destructive ops sin aprobación explícita, no inventar estado, no saltarse gates)
+2. Operational truth (solo hechos verificables; lo no verificado es `NO DISPONIBLE`)
+3. Contracts-first (respetar contratos de entrada/salida entre dominios; no acoplar por conveniencia)
+4. Domain ownership (cada bounded context es owner de su semántica y de sus invariantes)
+5. UX/capabilities (preferencias, estilo, tooling), solo si no contradice lo anterior
+
+### Allowed Coupling (bounded contexts)
+
+Regla general: el core orquesta; los dominios razonan localmente. Evitar “god agents”.
+
+1. El core puede llamar dominios vía contracts (`runtime/contracts/*`, `runtime/federation/*`).
+2. Los dominios pueden depender de `contracts`, `domain_registry`, y tipos compartidos explícitos.
+3. La dependencia cruzada dominio→dominio requiere justificación y debe quedar declarada en el domain registry.
+
+### Forbidden Dependencies
+
+Estas dependencias están prohibidas por diseño (rompen aislamiento y causan singularidad):
+
+1. Observability MUST NOT importar lógica de orquestación del gateway/core.
+2. Authority MUST NOT depender de routing heuristics del core (la autoridad no decide placement).
+3. Operator intent MUST NOT ejecutar remediation (solo clasificación/razonamiento; ejecución es otro dominio).
+4. Structural cognition (GitNexus) MUST NOT modificar runtime state ni inventar topología.
+5. Memory MUST NOT contaminar rutas `minimal` ni inflar el core por defecto.
+
+### Operational Semantics (vocabulario obligatorio)
+
+Las respuestas operacionales deben etiquetar explícitamente el tipo de verdad:
+
+1. `authority-backed`: proviene de una fuente con autoridad (health endpoints, métricas, logs auditables, contracts)
+2. `operational`: refleja el estado operativo real observado (no intención, no deseos)
+3. `discoverable-only`: solo inventario/descubrimiento (LM Studio listings, scans), no implica activo
+4. `stale`: dato fuera de ventana o potencialmente desactualizado
+5. `degraded`: el runtime está operando con protecciones o reducción de capacidad
+6. `confidence`: alto/medio/bajo, con motivo (evidencia, frescura, cobertura)
+7. `remediation-safe`: propuesta que NO requiere acciones destructivas ni privilegios sin aprobación
+
+### Context Budget Discipline
+
+1. El core NO arrastra contexto global por defecto.
+2. Solo inyectar lo mínimo para decidir y ejecutar el siguiente paso seguro.
+3. Si algo requiere contexto amplio (p. ej. análisis estructural), delegar al dominio correspondiente y traer un summary contract.
+4. `runtime/state/*` es estado vivo: NO se versiona, NO se usa como “source of truth” documental.
+
 ## Git Discipline & Checkpoint Integrity Rule
 
 No tag without commit. No phase closed with dirty working tree. A partir de ahora, ningún checkpoint, tag o fase se considera cerrada si el código no está commiteado.
@@ -962,7 +1015,7 @@ El objetivo **no** es maximizar flexibilidad a costa de estabilidad. AI-LAB prio
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **ai-lab** (10145 symbols, 15369 relationships, 206 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **ai-lab** (12728 symbols, 19599 relationships, 258 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
