@@ -1,7 +1,7 @@
 ---
-title: "Giving AI-LAB Real Codebase Memory with GitNexus"
+title: "Dando a AI-LAB Memoria Estructural de la Codebase con GitNexus"
 date: "2026-05-23"
-summary: "How AI-LAB integrates GitNexus as structural codebase memory — dependency graphs, blast radius analysis, ownership cognition, and deterministic structural risk scoring."
+summary: "Cómo AI-LAB integra GitNexus como memoria estructural del código fuente — dependency graphs, blast radius analysis, ownership cognition y deterministic structural risk scoring."
 tags:
   - ai-lab
   - gitnexus
@@ -10,42 +10,42 @@ tags:
   - architecture
 ---
 
-# Giving AI-LAB Real Codebase Memory with GitNexus
+# Dando a AI-LAB Memoria Estructural de la Codebase con GitNexus
 
-AI-LAB has evolved from a simple LLM gateway into a runtime with operational cognition. It monitors itself via Prometheus, reasons about its state via sensor fusion, and makes governance decisions based on evidence.
+AI-LAB ha evolucionado de un LLM gateway simple a un runtime con cognición operacional. Se monitoriza a sí mismo via Prometheus, razona sobre su estado mediante sensor fusion y toma decisiones de governance basadas en evidencia.
 
-But there was a gap: **AI-LAB had no structural understanding of its own codebase.**
+Pero había un vacío: **AI-LAB no tenía comprensión estructural de su propio código fuente.**
 
-When the runtime detected a governance drift in the `authority` module, it couldn't reason about which other modules depended on it. When a validation invariant failed in `tool_registry.py`, there was no way to trace which execution flows would break.
+Cuando el runtime detectaba un governance drift en el módulo `authority`, no podía razonar sobre qué otros módulos dependían de él. Cuando un validation invariant fallaba en `tool_registry.py`, no había forma de trazar qué execution flows se romperían.
 
-GitNexus closes that gap.
+GitNexus cierra ese vacío.
 
-## The Three Truth Layers
+## Las Tres Capas de Verdad
 
-AI-LAB now operates on three distinct truth layers, each with a different responsibility:
+AI-LAB opera ahora sobre tres capas de verdad independientes, cada una con una responsabilidad distinta:
 
 ```
-Prometheus        →  Runtime authority truth   (what is happening now)
-OperationalTruth  →  Semantic runtime truth    (what the runtime knows)
-GitNexus          →  Codebase structural truth (what the code looks like)
+Prometheus        →  Runtime authority truth   (qué está pasando ahora)
+OperationalTruth  →  Semantic runtime truth    (qué sabe el runtime)
+GitNexus          →  Codebase structural truth (cómo es el código fuente)
 ```
 
-These three layers are independent but correlated. A spike in `ailab_governance_blocked_total` from Prometheus can be cross-referenced against GitNexus to determine which module has the widest blast radius — and which deployment should be prioritized.
+Estas tres capas son independientes pero correlacionables. Un pico en `ailab_governance_blocked_total` desde Prometheus se puede cruzar con GitNexus para determinar qué módulo tiene el blast radius más amplio y qué deploy debería priorizarse.
 
-## How GitNexus Integrates
+## Cómo se Integra GitNexus
 
-### Local AST Scanning, No External Dependencies
+### Escaneo AST Local, Sin Dependencias Externas
 
-The codebase memory module at `runtime/codebase/gitnexus_memory.py` scans Python AST in `/opt/ai-lab/runtime/`. It parses `import` statements, builds a directed dependency graph, and derives structural properties — all deterministically.
+El módulo de codebase memory en `runtime/codebase/gitnexus_memory.py` escanea el AST de Python en `/opt/ai-lab/runtime/`. Parsea sentencias `import`, construye un grafo dirigido de dependencias y deriva propiedades estructurales — todo de forma determinista.
 
 ```python
-modules = _scan_runtime_modules()       # 62 modules discovered
-edges   = _build_import_graph(modules)  # ~274 directed edges
+modules = _scan_runtime_modules()       # 62 módulos descubiertos
+edges   = _build_import_graph(modules)  # ~274 edges dirigidos
 ```
 
-### Ownership Mapping
+### Mapeo de Ownership
 
-Every module maps to a runtime domain via `OWNERSHIP_DOMAINS`:
+Cada módulo se asigna a un dominio operacional via `OWNERSHIP_DOMAINS`:
 
 ```python
 OWNERSHIP_DOMAINS = {
@@ -58,29 +58,29 @@ OWNERSHIP_DOMAINS = {
 }
 ```
 
-This means an import from `runtime/governance/` into `runtime/authority/` is a cross-domain dependency — governance depends on authority.
+Esto significa que un import desde `runtime/governance/` hacia `runtime/authority/` es una dependencia cross-domain — governance depende de authority.
 
 ### Blast Radius via BFS
 
-When a module changes, the blast radius engine traverses the dependency graph via BFS:
+Cuando un módulo cambia, el motor de blast radius recorre el grafo de dependencias mediante BFS:
 
 ```python
 def _build_blast_radius(modules, edges):
-    # For each module, BFS to find all impacted modules
-    # Severity: 1-2 = low, 3-5 = medium, 6+ = high
+    # Para cada módulo, BFS para encontrar todos los módulos impactados
+    # Severidad: 1-2 = baja, 3-5 = media, 6+ = alta
 ```
 
-If `runtime/gateway/openai_gateway.py` changes, the blast radius reveals which `runtime/llm/`, `runtime/router/`, and `runtime/telemetry/` modules are transitively affected.
+Si `runtime/gateway/openai_gateway.py` cambia, el blast radius revela qué módulos de `runtime/llm/`, `runtime/router/` y `runtime/telemetry/` se ven afectados transitivamente.
 
-### Structural Risk Detection
+### Detección de Riesgos Estructurales
 
-Three risk types are detected:
+Se detectan tres tipos de riesgo:
 
-- **High coupling**: module imports 5+ other modules
-- **High reverse coupling**: module is imported by 5+ other modules
-- **Wide blast radius**: module impacts 6+ other modules on change
+- **High Coupling**: el módulo importa 5+ otros módulos
+- **High Reverse Coupling**: el módulo es importado por 5+ otros módulos
+- **Wide Blast Radius**: el módulo impacta 6+ otros módulos al cambiar
 
-These produce a **structural health score** (0-100):
+Esto produce un **structural health score** (0-100):
 
 ```python
 score = base (100)
@@ -91,53 +91,53 @@ score = base (100)
 
 ## Gateway Endpoints
 
-The codebase memory is exposed via eight runtime endpoints:
+La codebase memory se expone mediante ocho endpoints del runtime:
 
-| Endpoint | Description |
+| Endpoint | Descripción |
 |---|---|
-| `GET /runtime/codebase/summary` | Structural health overview |
-| `GET /runtime/codebase/modules` | Module inventory with domains |
-| `GET /runtime/codebase/dependencies` | Full dependency edge list |
-| `GET /runtime/codebase/blast-radius` | Blast radius by module |
-| `GET /runtime/codebase/ownership` | Domain ownership map |
-| `GET /runtime/codebase/topology` | Module-domain topology |
-| `GET /runtime/codebase/risks` | Structural risk inventory |
-| `GET /runtime/codebase/score` | Deterministic health score |
+| `GET /runtime/codebase/summary` | Resumen de salud estructural |
+| `GET /runtime/codebase/modules` | Inventario de módulos con dominios |
+| `GET /runtime/codebase/dependencies` | Lista completa de edges de dependencia |
+| `GET /runtime/codebase/blast-radius` | Blast radius por módulo |
+| `GET /runtime/codebase/ownership` | Mapa de ownership por dominio |
+| `GET /runtime/codebase/topology` | Topología módulo-dominio |
+| `GET /runtime/codebase/risks` | Inventario de riesgos estructurales |
+| `GET /runtime/codebase/score` | Health score determinista |
 
-All endpoints return JSON with a `determinant_signature` for reproducibility.
+Todos los endpoints devuelven JSON con un `determinant_signature` para reproducibilidad.
 
-## Integration Points
+## Puntos de Integración
 
 ### Governance
 
-The governance registry includes `codebase_memory_health` as a monitored domain. If structural health drops below 50, governance flags it as a degradation.
+El registry de governance incluye `codebase_memory_health` como dominio monitorizado. Si el structural health cae por debajo de 50, governance lo marca como degradación.
 
 ### Validation
 
-Four DEV-36X invariants validate codebase memory integrity:
+Cuatro invariantes DEV-36X validan la integridad de la codebase memory:
 
-| Invariant | Purpose |
+| Invariant | Propósito |
 |---|---|
-| `INVARIANT-CODEBASE-MEMORY-GROUNDED` | Modules and edges must be non-zero |
-| `INVARIANT-NO-PHANTOM-MODULES` | All modules must be real directories |
-| `INVARIANT-BLAST-RADIUS-DETERMINISM` | Same codebase → same blast radius |
-| `INVARIANT-NO-RUNTIME-STATE-CONTAMINATION` | No `runtime/state/` in codebase graph |
+| `INVARIANT-CODEBASE-MEMORY-GROUNDED` | Módulos y edges deben ser no-zero |
+| `INVARIANT-NO-PHANTOM-MODULES` | Todos los módulos deben ser directorios reales |
+| `INVARIANT-BLAST-RADIUS-DETERMINISM` | Misma codebase → mismo blast radius |
+| `INVARIANT-NO-RUNTIME-STATE-CONTAMINATION` | Sin `runtime/state/` en el grafo de codebase |
 
 ### Incident Intelligence
 
-Incident detection for the `codebase` domain fires when:
+La detección de incidentes para el dominio `codebase` se activa cuando:
 
-- Structural health score < 50 (high severity)
-- High-risk count > 3 (high severity)
-- Wide blast radius detected (medium severity)
+- Structural health score < 50 (severidad alta)
+- High-risk count > 3 (severidad alta)
+- Wide blast radius detectado (severidad media)
 
 ### Cognitive Compression
 
-The cognitive summarizer includes `compress_codebase_signals()` which surfaces codebase health, high risks, hotspots, and wide blast radius in the operational summary.
+El cognitive summarizer incluye `compress_codebase_signals()` que muestra el codebase health, high risks, hotspots y wide blast radius en el resumen operacional.
 
-## Metrics
+## Métricas
 
-Six Prometheus counters track codebase structural health:
+Seis counters de Prometheus trackean la salud estructural de la codebase:
 
 - `ailab_codebase_modules_total`
 - `ailab_codebase_dependency_edges_total`
@@ -147,20 +147,20 @@ Six Prometheus counters track codebase structural health:
 - `ailab_codebase_ownership_domains_total`
 - `ailab_codebase_memory_freshness_seconds`
 
-## Why Not a Full IDE Integration?
+## ¿Por Qué No Una Integración IDE Completa?
 
-GitNexus is not a code analysis platform. It's a **structural memory layer**. It doesn't need to understand semantics, execution paths, or data flow. It answers three questions:
+GitNexus no es una plataforma de análisis de código. Es una **capa de memoria estructural**. No necesita entender semántica, execution paths ni data flow. Responde tres preguntas:
 
-1. What does the codebase look like structurally?
-2. What breaks if I change X?
-3. Who owns what?
+1. ¿Cómo es la codebase estructuralmente?
+2. ¿Qué se rompe si cambio X?
+3. ¿Quién es dueño de qué?
 
-That's all the runtime needs for operational cognition.
+Eso es todo lo que el runtime necesita para cognición operacional.
 
-## Current State
+## Estado Actual
 
-- **Index**: 460 files, 10,145 nodes, 15,369 edges (GitNexus v1.6.5)
-- **Modules**: 62 runtime modules, ~274 dependency edges
-- **Score**: varies by codebase state, typically 20-80
-- **Cache**: 30-second TTL with deterministic invalidation
-- **Tests**: 31 tests, all passing deterministically
+- **Índice**: 460 archivos, 10,145 nodos, 15,369 edges (GitNexus v1.6.5)
+- **Módulos**: 62 módulos del runtime, ~274 edges de dependencia
+- **Score**: varía según el estado de la codebase, típicamente 20-80
+- **Caché**: TTL de 30 segundos con invalidación determinista
+- **Tests**: 31 tests, todos pasan deterministamente

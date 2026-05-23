@@ -6,66 +6,66 @@ severity: "high"
 
 # Incident-to-Module Analysis
 
-## Purpose
+## Propósito
 
-Map runtime incidents to source code modules using codebase structural data, enabling targeted remediation.
+Mapear incidentes del runtime a módulos de código fuente usando datos estructurales de la codebase, permitiendo remediación dirigida.
 
-## Steps
+## Pasos
 
-### 1. Get active incidents
+### 1. Obtener incidentes activos
 
 ```bash
 curl -s http://192.168.1.30:8008/runtime/incidents | jq '.active_incidents[] | {incident_id, primary_domain, severity, title}'
 ```
 
-### 2. For each incident, map domain to codebase
+### 2. Para cada incidente, mapear dominio a codebase
 
-Using `OWNERSHIP_DOMAINS` mapping:
+Usando el mapping de `OWNERSHIP_DOMAINS`:
 
-| Incident domain | Codebase module path |
+| Dominio del incidente | Ruta del módulo en codebase |
 |---|---|
 | authority | `runtime/authority/` |
 | governance | `runtime/governance/` |
 | validation | `runtime/validation/` |
 | observability | `runtime/observability/` |
 
-### 3. Check blast radius
+### 3. Verificar blast radius
 
 ```bash
-curl -s "http://192.168.1.30:8008/runtime/codebase/blast-radius?module_path=<domain>" | jq '.results[] | {module_path, total_impacted, severity}'
+curl -s "http://192.168.1.30:8008/runtime/codebase/blast-radius?module_path=<dominio>" | jq '.results[] | {module_path, total_impacted, severity}'
 ```
 
-### 4. Check if module is a hotspot
+### 4. Verificar si el módulo es un hotspot
 
 ```bash
 curl -s http://192.168.1.30:8008/runtime/codebase/topology | jq '.hotspots'
 ```
 
-### 5. Determine remediation priority
+### 5. Determinar prioridad de remediación
 
-| Incident severity | Blast radius | Hotspot | Priority |
+| Severidad del incidente | Blast radius | Hotspot | Prioridad |
 |---|---|---|---|
-| critical | high | yes | IMMEDIATE |
-| high | high | yes | HIGH |
-| high | medium | no | MEDIUM |
-| medium | low | no | LOW |
+| critical | alto | sí | INMEDIATA |
+| high | alto | sí | ALTA |
+| high | medio | no | MEDIA |
+| medium | bajo | no | BAJA |
 
-### 6. Plan fix
+### 6. Planificar fix
 
-- If hotspot + wide blast: staged fix with integration tests
-- If low blast: direct fix, unit tests sufficient
-- If high reverse coupling: interface-compatible fix only
+- Si hotspot + wide blast: fix por fases con integration tests
+- Si blast bajo: fix directo, unit tests suficientes
+- Si high reverse coupling: fix solo compatible con interfaz existente
 
-### 7. Verify after fix
+### 7. Verificar después del fix
 
 ```bash
-# Re-check structural health
+# Re-verificar salud estructural
 curl -s http://192.168.1.30:8008/runtime/codebase/score | jq '.score.structural_health_score'
 
-# Re-check incidents
+# Re-verificar incidentes
 curl -s http://192.168.1.30:8008/runtime/incidents | jq '.incident_count'
 ```
 
-### 8. Close incident
+### 8. Cerrar incidente
 
-Confirm remediation in the incident tracker and update related runbooks if applicable.
+Confirmar la remediación en el tracker de incidentes y actualizar los runbooks relacionados si aplica.

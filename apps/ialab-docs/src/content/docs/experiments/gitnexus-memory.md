@@ -1,22 +1,22 @@
 ---
-title: "GitNexus Structural Memory Integration"
+title: "Integración de Memoria Estructural GitNexus"
 summary: "Experimento: integrar GitNexus como memoria estructural del codebase AI-LAB. Indexación local, dependency graph, blast radius, ownership y structural risk scoring."
 order: 90
 ---
 
-# GitNexus Structural Memory Integration
+# Integración de Memoria Estructural GitNexus
 
-## Objectives
+## Objetivos
 
-1. Index the AI-LAB runtime codebase locally via GitNexus
-2. Build a deterministic dependency graph from AST scanning
-3. Compute blast radius for each module via BFS
-4. Map modules to operational ownership domains
-5. Detect structural risks (high coupling, reverse coupling, wide blast)
-6. Generate a reproducible structural health score (0-100)
-7. Integrate with governance, validation, incidents, and reporting
+1. Indexar la codebase del runtime AI-LAB localmente via GitNexus
+2. Construir un grafo de dependencias determinista mediante AST scanning
+3. Calcular el blast radius para cada módulo mediante BFS
+4. Mapear módulos a dominios operacionales de ownership
+5. Detectar riesgos estructurales (high coupling, reverse coupling, wide blast)
+6. Generar un structural health score reproducible (0-100)
+7. Integrar con governance, validation, incidents y reporting
 
-## Architecture
+## Arquitectura
 
 ```ascii
 Runtime source (/opt/ai-lab/runtime/)
@@ -43,44 +43,44 @@ Runtime source (/opt/ai-lab/runtime/)
     8 Gateway Endpoints + 6 Prometheus Metrics + 4 Invariants
 ```
 
-## Results
+## Resultados
 
-### Index
+### Índice
 
-- GitNexus v1.6.5 local index: 460 files, 10,145 nodes, 15,369 edges
-- Runtime modules discovered: 62
-- Dependency edges: ~274
-- Ownership domains: 24
+- Índice local GitNexus v1.6.5: 460 archivos, 10,145 nodos, 15,369 edges
+- Módulos del runtime descubiertos: 62
+- Edges de dependencia: ~274
+- Dominios de ownership: 24
 
-### Score Range
+### Rango de Score
 
-- Typical: 20-80 (depends on coupling density)
-- Formula: `100 - high_risks*5 - medium_risks*2 - edge_density_penalty`
-- Deterministic: same codebase → same score
+- Típico: 20-80 (depende de la densidad de coupling)
+- Fórmula: `100 - high_risks*5 - medium_risks*2 - edge_density_penalty`
+- Determinista: misma codebase → mismo score
 
-### Key Findings
+### Hallazgos Clave
 
-1. The `gateway` module has the highest reverse coupling (15 dependents) — changes here have the widest blast radius
-2. `governance`, `authority`, and `validation` form a high-coupling triad
-3. Cross-domain edges reveal that operational domains are more coupled than expected
-4. AST-only scanning is sufficient for structural cognition — no full semantic analysis needed
+1. El módulo `gateway` tiene el reverse coupling más alto (15 dependientes) — los cambios aquí tienen el blast radius más amplio
+2. `governance`, `authority` y `validation` forman una tríada de alto coupling
+3. Los edges cross-domain revelan que los dominios operacionales están más acoplados de lo esperado
+4. El escaneo solo con AST es suficiente para cognición estructural — no se necesita análisis semántico completo
 
-## Status
+## Estado
 
-- Indexing: **COMPLETED**
-- Dependency graph: **COMPLETED**
-- Blast radius: **COMPLETED**
-- Ownership mapping: **COMPLETED**
-- Structural risk detection: **COMPLETED**
-- Gateway endpoints (8): **COMPLETED**
-- Prometheus metrics (6): **COMPLETED**
-- Governance integration: **COMPLETED**
-- Validation invariants (4): **COMPLETED**
-- Incident intelligence: **COMPLETED**
-- Cognitive compression: **COMPLETED**
-- Reporting integration: **COMPLETED**
+- Indexación: **COMPLETADA**
+- Grafo de dependencias: **COMPLETADO**
+- Blast radius: **COMPLETADO**
+- Ownership mapping: **COMPLETADO**
+- Detección de riesgos estructurales: **COMPLETADA**
+- Gateway endpoints (8): **COMPLETADOS**
+- Prometheus metrics (6): **COMPLETADAS**
+- Integración con governance: **COMPLETADA**
+- Invariantes de validación (4): **COMPLETADOS**
+- Incident intelligence: **COMPLETADO**
+- Cognitive compression: **COMPLETADO**
+- Integración con reporting: **COMPLETADA**
 - Tests (31): **PASSING**
 
-## Verdict
+## Veredicto
 
-GitNexus structural memory integration successfully provides AI-LAB with grounded, deterministic, operational codebase cognition without external dependencies or LLM-based analysis.
+La integración de memoria estructural GitNexus proporciona a AI-LAB cognición de codebase determinista, grounded y operacional sin dependencias externas ni análisis basado en LLM.

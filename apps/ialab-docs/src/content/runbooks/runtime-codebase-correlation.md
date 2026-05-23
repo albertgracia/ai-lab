@@ -6,56 +6,56 @@ severity: "info"
 
 # Runtime-Codebase Correlation
 
-## Purpose
+## Propósito
 
-Cross-reference runtime operational metrics with codebase structural data to identify root causes and impact scope.
+Cruzar métricas operacionales del runtime con datos estructurales de la codebase para identificar causas raíz y alcance del impacto.
 
-## Steps
+## Pasos
 
-### 1. Identify runtime signal
+### 1. Identificar señal del runtime
 
-From a Grafana dashboard or incident report, identify an anomalous metric:
+Desde un dashboard de Grafana o un reporte de incidentes, identificar una métrica anómala:
 
 ```bash
 curl -s http://192.168.1.30:8008/metrics | grep "ailab_governance_blocked_total"
 ```
 
-### 2. Map to codebase domain
+### 2. Mapear al dominio de codebase
 
-The metric prefix indicates the domain (e.g., `governance` → `runtime/governance/`).
+El prefijo de la métrica indica el dominio (ej., `governance` → `runtime/governance/`).
 
-### 3. Check module blast radius
+### 3. Verificar blast radius del módulo
 
 ```bash
 curl -s "http://192.168.1.30:8008/runtime/codebase/blast-radius?module_path=governance" | jq .
 ```
 
-### 4. Check ownership
+### 4. Verificar ownership
 
 ```bash
 curl -s http://192.168.1.30:8008/runtime/codebase/ownership | jq '.domains[] | select(.domain == "governance")'
 ```
 
-### 5. Check structural risks
+### 5. Verificar riesgos estructurales
 
 ```bash
 curl -s http://192.168.1.30:8008/runtime/codebase/risks | jq '.risks[] | select(.domain == "governance")'
 ```
 
-### 6. Correlate
+### 6. Correlacionar
 
-| If runtime shows | And codebase shows | Conclusion |
+| Si el runtime muestra | Y la codebase muestra | Conclusión |
 |---|---|---|
-| governance_blocked > 0 | governance reverse_coupling high | Governance hub change — test all dependents |
-| validation score < 50 | validation wide blast radius | Validation change cascading — check upstream |
-| observability stale | observability low coupling | Isolated observability issue — safe fix |
+| governance_blocked > 0 | governance reverse_coupling alto | Cambio en hub de governance — probar todos los dependientes |
+| validation score < 50 | validation wide blast radius | Cambio en validation en cascada — verificar upstream |
+| observability stale | observability coupling bajo | Issue aislado de observability — fix seguro |
 
-### 7. Generate cross-layer report
+### 7. Generar reporte cross-layer
 
 ```bash
 curl -s http://192.168.1.30:8008/runtime/report/codebase | jq .
 ```
 
-### 8. Document
+### 8. Documentar
 
-Record the correlation finding in the relevant incident or change log.
+Registrar el hallazgo de correlación en el incidente o change log correspondiente.

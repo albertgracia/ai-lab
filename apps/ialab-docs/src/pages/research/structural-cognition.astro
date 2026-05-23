@@ -2,11 +2,11 @@
 import Layout from "../../layouts/Layout.astro";
 ---
 
-<Layout title="Structural Cognition · Research · AI-LAB">
+<Layout title="Cognición Estructural · Research · AI-LAB">
   <section class="mx-auto max-w-7xl px-6 py-16 space-y-10">
     <header class="rounded-3xl border border-purple-500/30 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black p-10">
       <p class="text-sm uppercase tracking-[0.35em] text-purple-400">AI-LAB Research · DEV-36X</p>
-      <h1 class="mt-4 text-5xl font-black text-white">Structural Codebase Cognition</h1>
+      <h1 class="mt-4 text-5xl font-black text-white">Cognición Estructural de la Codebase</h1>
       <p class="mt-4 max-w-4xl text-xl leading-9 text-zinc-300">
         Investigación sobre cómo un runtime operacional puede entender su propio código fuente
         de forma determinista, grounded y sin depender de sistemas externos.
@@ -15,7 +15,7 @@ import Layout from "../../layouts/Layout.astro";
 
     <section class="space-y-8">
       <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
-        <h2 class="text-2xl font-black text-cyan-400">Cognition Flow</h2>
+        <h2 class="text-2xl font-black text-cyan-400">Flujo de Cognición</h2>
         <div class="mt-6 bg-zinc-900 rounded-xl p-6 text-sm text-zinc-300 font-mono">
           <pre class="whitespace-pre-wrap">
 Runtime cognition (operational):
@@ -30,7 +30,7 @@ Correlation:
       </div>
 
       <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
-        <h2 class="text-2xl font-black text-cyan-400">Truth Layers</h2>
+        <h2 class="text-2xl font-black text-cyan-400">Capas de Verdad</h2>
         <p class="mt-4 text-zinc-400 leading-relaxed">
           AI-LAB separa tres fuentes de verdad independientes. Cada una tiene un propósito,
           un formato y un consumidor distinto. No se mezclan.
@@ -52,7 +52,7 @@ Correlation:
       </div>
 
       <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
-        <h2 class="text-2xl font-black text-cyan-400">Dependency Graph Flow</h2>
+        <h2 class="text-2xl font-black text-cyan-400">Flujo del Grafo de Dependencias</h2>
         <div class="mt-6 bg-zinc-900 rounded-xl p-6">
           <pre class="text-sm text-zinc-300 font-mono whitespace-pre-wrap">
 runtime/*.py
@@ -75,39 +75,39 @@ Reverse edges → blast radius BFS → impacted modules</pre>
       </div>
 
       <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
-        <h2 class="text-2xl font-black text-cyan-400">Key Findings</h2>
+        <h2 class="text-2xl font-black text-cyan-400">Hallazgos Clave</h2>
         <ul class="mt-4 space-y-4 text-zinc-400">
           <li class="flex gap-3">
             <span class="text-cyan-400 font-bold">1.</span>
-            <span><strong class="text-white">Determinism is achievable.</strong> Same codebase → same graph, same blast radius, same score. No LLM, no heuristics, no external API.</span>
+            <span><strong class="text-white">El determinismo es alcanzable.</strong> Misma codebase → mismo grafo, mismo blast radius, mismo score. Sin LLM, sin heurísticas, sin API externa.</span>
           </li>
           <li class="flex gap-3">
             <span class="text-cyan-400 font-bold">2.</span>
-            <span><strong class="text-white">AST-only scanning is sufficient.</strong> No need for full semantic analysis. Import-level granularity provides enough signal for operational cognition.</span>
+            <span><strong class="text-white">El escaneo solo con AST es suficiente.</strong> No se necesita análisis semántico completo. La granularidad a nivel de imports proporciona suficiente señal para cognición operacional.</span>
           </li>
           <li class="flex gap-3">
             <span class="text-cyan-400 font-bold">3.</span>
-            <span><strong class="text-white">30-second refresh is adequate.</strong> Codebase changes infrequently compared to runtime metrics. TTL cache avoids unnecessary re-scans.</span>
+            <span><strong class="text-white">Un refresh de 30 segundos es adecuado.</strong> La codebase cambia con poca frecuencia comparada con las métricas del runtime. La caché TTL evita re-escaneos innecesarios.</span>
           </li>
           <li class="flex gap-3">
             <span class="text-cyan-400 font-bold">4.</span>
-            <span><strong class="text-white">Three truth layers are better than one.</strong> Prometheus for numbers, OperationalTruth for meaning, GitNexus for structure. Each independently verifiable.</span>
+            <span><strong class="text-white">Tres capas de verdad son mejores que una.</strong> Prometheus para números, OperationalTruth para significado, GitNexus para estructura. Cada una verificable independientemente.</span>
           </li>
           <li class="flex gap-3">
             <span class="text-cyan-400 font-bold">5.</span>
-            <span><strong class="text-white">Blast radius works as operational risk.</strong> A module's structural impact correlates with incident severity — hotspots are also operational risk concentrators.</span>
+            <span><strong class="text-white">El blast radius funciona como riesgo operacional.</strong> El impacto estructural de un módulo se correlaciona con la severidad de los incidentes — los hotspots también son concentradores de riesgo operacional.</span>
           </li>
         </ul>
       </div>
 
       <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
-        <h2 class="text-2xl font-black text-cyan-400">Questions for Future Research</h2>
+        <h2 class="text-2xl font-black text-cyan-400">Preguntas para Investigación Futura</h2>
         <ul class="mt-4 space-y-3 text-zinc-400">
-          <li>Can structural health score predict incident likelihood?</li>
-          <li>Does high reverse coupling correlate with governance drift frequency?</li>
-          <li>Can blast radius inform automated test coverage requirements?</li>
-          <li>Should ownership domains be weighted by module criticality?</li>
-          <li>Can cross-layer correlation enable predictive remediation?</li>
+          <li>¿Puede el structural health score predecir la probabilidad de incidentes?</li>
+          <li>¿Se correlaciona el high reverse coupling con la frecuencia de governance drift?</li>
+          <li>¿Puede el blast radius informar requisitos de cobertura de tests automatizados?</li>
+          <li>¿Deberían ponderarse los ownership domains por criticidad del módulo?</li>
+          <li>¿Puede la correlación entre capas habilitar remediación predictiva?</li>
         </ul>
       </div>
     </section>

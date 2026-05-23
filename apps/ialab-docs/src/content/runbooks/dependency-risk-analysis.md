@@ -6,81 +6,81 @@ severity: "medium"
 
 # Dependency Risk Analysis
 
-## Purpose
+## Propósito
 
-Identify structural risks in the runtime dependency graph — high coupling, reverse coupling, and authority dependency spread.
+Identificar riesgos estructurales en el grafo de dependencias del runtime — high coupling, reverse coupling y authority dependency spread.
 
-## Steps
+## Pasos
 
-### 1. Fetch all structural risks
+### 1. Obtener todos los riesgos estructurales
 
 ```bash
 curl -s http://192.168.1.30:8008/runtime/codebase/risks | jq '.risks'
 ```
 
-### 2. Analyze by risk type
+### 2. Analizar por tipo de riesgo
 
 #### High Coupling
 
-Modules importing 5+ other modules:
+Módulos que importan 5+ otros módulos:
 
 ```bash
 curl -s http://192.168.1.30:8008/runtime/codebase/risks | jq '.risks[] | select(.risk_type == "high_coupling")'
 ```
 
-**Implication**: These modules have wide surface area and are sensitive to changes in many upstream modules.
+**Implicación**: Estos módulos tienen una superficie amplia y son sensibles a cambios en muchos módulos upstream.
 
 #### High Reverse Coupling
 
-Modules imported by 5+ other modules:
+Módulos importados por 5+ otros módulos:
 
 ```bash
 curl -s http://192.168.1.30:8008/runtime/codebase/risks | jq '.risks[] | select(.risk_type == "high_reverse_coupling")'
 ```
 
-**Implication**: These modules are structural hubs. Breaking changes propagate to many dependents.
+**Implicación**: Estos módulos son hubs estructurales. Los cambios que rompen compatibilidad se propagan a muchos dependientes.
 
 #### Wide Blast Radius
 
-Modules impacting 6+ other modules on change:
+Módulos que impactan 6+ otros módulos al cambiar:
 
 ```bash
 curl -s http://192.168.1.30:8008/runtime/codebase/risks | jq '.risks[] | select(.risk_type == "wide_blast_radius")'
 ```
 
-**Implication**: High-risk changes. Require comprehensive testing and staged rollout.
+**Implicación**: Cambios de alto riesgo. Requieren pruebas exhaustivas y despliegue por fases.
 
-### 3. Check domain dependency matrix
+### 3. Verificar domain dependency matrix
 
 ```bash
 curl -s http://192.168.1.30:8008/runtime/codebase/topology | jq '.domain_dependency_matrix'
 ```
 
-### 4. Calculate risk score
+### 4. Calcular risk score
 
 ```bash
 curl -s http://192.168.1.30:8008/runtime/codebase/score | jq .
 ```
 
-### 5. Remediation
+### 5. Remedición
 
-| Risk | Remediation |
+| Riesgo | Remedición |
 |---|---|
-| High reverse coupling | Stabilize interfaces, reduce public surface |
-| High coupling | Abstract dependencies, split module |
-| Wide blast radius | Introduce indirection layer, add integration tests |
-| Authority spread | Review authority contracts, reduce direct imports |
+| High reverse coupling | Estabilizar interfaces, reducir superficie pública |
+| High coupling | Abstraer dependencias, dividir módulo |
+| Wide blast radius | Introducir capa de indirección, agregar integration tests |
+| Authority spread | Revisar contracts de authority, reducir imports directos |
 
-### 6. Track over time
+### 6. Monitorear en el tiempo
 
-Compare scores across versions:
+Comparar scores entre versiones:
 
 ```bash
-# Before refactor
+# Antes del refactor
 curl -s http://192.168.1.30:8008/runtime/codebase/score | jq '.score.structural_health_score'
 
-# After refactor
+# Después del refactor
 curl -s http://192.168.1.30:8008/runtime/codebase/score | jq '.score.structural_health_score'
 ```
 
-A sustained improvement of 10+ points validates the refactoring.
+Una mejora sostenida de 10+ puntos valida el refactoring.

@@ -6,80 +6,80 @@ severity: "high"
 
 # Safe Refactor Workflow
 
-## Purpose
+## Propósito
 
-Before modifying any runtime module, verify blast radius, reverse coupling, and structural risks to avoid unexpected breakage.
+Antes de modificar cualquier módulo del runtime, verificar blast radius, reverse coupling y riesgos estructurales para evitar roturas inesperadas.
 
-## Prerequisites
+## Prerrequisitos
 
-- Gateway operational (`curl -s http://192.168.1.30:8008/health`)
-- Codebase memory endpoints responding
+- Gateway operativo (`curl -s http://192.168.1.30:8008/health`)
+- Endpoints de codebase memory respondiendo
 
-## Steps
+## Pasos
 
-### 1. Identify target module
+### 1. Identificar el módulo objetivo
 
 ```
 TARGET_MODULE="governance"
 ```
 
-### 2. Check blast radius
+### 2. Verificar blast radius
 
 ```bash
 curl -s "http://192.168.1.30:8008/runtime/codebase/blast-radius?module_path=${TARGET_MODULE}" | jq .
 ```
 
-Review:
-- `total_impacted`: how many modules change propagates to
-- `affected_domains`: which operational domains are affected
-- `severity`: low/medium/high
+Revisar:
+- `total_impacted`: a cuántos módulos se propaga el cambio
+- `affected_domains`: qué dominios operacionales están afectados
+- `severity`: baja/media/alta
 
-### 3. Check reverse coupling
+### 3. Verificar reverse coupling
 
 ```bash
 curl -s http://192.168.1.30:8008/runtime/codebase/risks | jq ".risks[] | select(.details.module == \"${TARGET_MODULE}\")"
 ```
 
-If `risk_type == "high_reverse_coupling"`:
-- Module is imported by 5+ other modules
-- Changes require testing of all dependents
+Si `risk_type == "high_reverse_coupling"`:
+- El módulo es importado por 5+ otros módulos
+- Los cambios requieren pruebas de todos los dependientes
 
-### 4. Check structural health
+### 4. Verificar salud estructural
 
 ```bash
 curl -s http://192.168.1.30:8008/runtime/codebase/score | jq .
 ```
 
-If `level == "critical"` (< 50):
-- Proceed with extra caution
-- Run full validation gate after change
+Si `level == "critical"` (< 50):
+- Proceder con precaución extra
+- Ejecutar validation gate completo después del cambio
 
-### 5. Verify invariants before change
+### 5. Verificar invariantes antes del cambio
 
 ```bash
 curl -s http://192.168.1.30:8008/runtime/validation/invariants | jq '.invariants[] | select(.name | startswith("INVARIANT-CODEBASE"))'
 ```
 
-### 6. Make change
+### 6. Hacer el cambio
 
-- Small, reversible, single-purpose
-- Maintain existing patterns and conventions
+- Pequeño, reversible, de un solo propósito
+- Mantener patrones y convenciones existentes
 
-### 7. Re-check after change
+### 7. Re-verificar después del cambio
 
 ```bash
 curl -s "http://192.168.1.30:8008/runtime/codebase/summary" | jq '.score'
 ```
 
-Compare `structural_health_score` with pre-change value. A drop > 10 points indicates structural regression.
+Comparar `structural_health_score` con el valor pre-cambio. Una caída > 10 puntos indica regresión estructural.
 
-### 8. Run tests
+### 8. Ejecutar tests
 
 ```bash
 python3 -m pytest tests/ -k "codebase" -v
 ```
 
-### 9. Verify invariants
+### 9. Verificar invariantes
 
 ```bash
 curl -s http://192.168.1.30:8008/runtime/validation/invariants | jq '.failures[] | select(.blocking)'
@@ -87,11 +87,11 @@ curl -s http://192.168.1.30:8008/runtime/validation/invariants | jq '.failures[]
 
 ## Rollback
 
-If invariants fail or structural health drops > 20 points:
+Si los invariantes fallan o el structural health baja > 20 puntos:
 
 ```bash
-git checkout -- <changed files>
+git checkout -- <archivos modificados>
 git status --short
 ```
 
-Re-verify health score returns to pre-change value.
+Re-verificar que el health score retorna al valor pre-cambio.

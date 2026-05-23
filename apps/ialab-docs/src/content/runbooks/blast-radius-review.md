@@ -6,47 +6,47 @@ severity: "medium"
 
 # Blast Radius Review
 
-## Purpose
+## Propósito
 
-Identify which runtime modules have the widest impact radius to prioritize refactoring, testing, and governance attention.
+Identificar qué módulos del runtime tienen el radio de impacto más amplio para priorizar refactoring, testing y atención de governance.
 
-## Steps
+## Pasos
 
-### 1. Fetch all blast radius results
+### 1. Obtener todos los resultados de blast radius
 
 ```bash
 curl -s http://192.168.1.30:8008/runtime/codebase/blast-radius | jq '.results[] | select(.severity == "high")'
 ```
 
-### 2. Review high-severity modules
+### 2. Revisar módulos de severidad alta
 
-For each module with `severity == "high"`:
+Para cada módulo con `severity == "high"`:
 
-- `module_path`: module location
-- `total_impacted`: how many modules are transitively affected
-- `affected_domains`: operational domains reached
+- `module_path`: ubicación del módulo
+- `total_impacted`: cuántos módulos están afectados transitivamente
+- `affected_domains`: dominios operacionales alcanzados
 
-### 3. Cross-reference with structural risks
+### 3. Cruzar con riesgos estructurales
 
 ```bash
 curl -s http://192.168.1.30:8008/runtime/codebase/risks | jq '.risks[] | select(.risk_type == "wide_blast_radius")'
 ```
 
-### 4. Check hotspots
+### 4. Verificar hotspots
 
 ```bash
 curl -s http://192.168.1.30:8008/runtime/codebase/topology | jq '.hotspots'
 ```
 
-### 5. Prioritize
+### 5. Priorizar
 
-| Condition | Action |
+| Condición | Acción |
 |---|---|
-| blast radius high + hotspot | Highest priority — plan guided refactor |
-| blast radius high only | High priority — increase test coverage |
-| reverse coupling high | Medium priority — review interface stability |
-| low blast radius + low coupling | Low priority — safe to change |
+| blast radius alto + hotspot | Prioridad máxima — planificar refactor guiado |
+| blast radius alto solamente | Prioridad alta — aumentar cobertura de tests |
+| reverse coupling alto | Prioridad media — revisar estabilidad de interfaces |
+| blast radius bajo + coupling bajo | Prioridad baja — seguro de cambiar |
 
-### 6. Document
+### 6. Documentar
 
-Record findings in the relevant phase documentation. Update affected domains in the domain dependency matrix.
+Registrar los hallazgos en la documentación de fase correspondiente. Actualizar los dominios afectados en la domain dependency matrix.

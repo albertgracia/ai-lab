@@ -1,7 +1,7 @@
 ---
-title: "How AI-LAB Correlates Runtime Incidents with Source Code"
+title: "Cómo AI-LAB Correlaciona Incidentes del Runtime con el Código Fuente"
 date: "2026-05-23"
-summary: "AI-LAB bridges runtime incidents and codebase structure — mapping operational failures to source modules, blast radius, and ownership domains."
+summary: "AI-LAB puentea incidentes del runtime con la estructura del código fuente — mapeando fallos operacionales a módulos, blast radius y dominios de ownership."
 tags:
   - ai-lab
   - incidents
@@ -10,20 +10,20 @@ tags:
   - runtime
 ---
 
-# How AI-LAB Correlates Runtime Incidents with Source Code
+# Cómo AI-LAB Correlaciona Incidentes del Runtime con el Código Fuente
 
-When a runtime incident fires — say, `INC-AUTHORITY-AUTHORITY-FRESHNESS-...` — the operator needs to know two things:
+Cuando se dispara un incidente del runtime — por ejemplo, `INC-AUTHORITY-AUTHORITY-FRESHNESS-...` — el operador necesita saber dos cosas:
 
-1. What caused it?
-2. What else will it affect?
+1. ¿Qué lo causó?
+2. ¿Qué más va a afectar?
 
-Before DEV-36X, AI-LAB could answer the first question via its incident intelligence engine (FASE 36A). But the second question required manual code inspection.
+Antes de DEV-36X, AI-LAB podía responder la primera pregunta mediante su motor de incident intelligence (FASE 36A). Pero la segunda requería inspección manual del código.
 
-Now, incident reports include codebase context automatically.
+Ahora, los reportes de incidentes incluyen contexto de la codebase automáticamente.
 
-## The Correlation
+## La Correlación
 
-Incident intelligence reports (`build_incident_intelligence_summary()`) now include a `codebase` block:
+Los reportes de incident intelligence (`build_incident_intelligence_summary()`) ahora incluyen un bloque `codebase`:
 
 ```json
 {
@@ -43,35 +43,35 @@ Incident intelligence reports (`build_incident_intelligence_summary()`) now incl
 }
 ```
 
-This allows the operator to see: "The authority module is failing, and it's a structural hotspot with 9 reverse dependencies — changes here will impact governance, validation, and reporting."
+Esto permite al operador ver: "El módulo authority está fallando, y es un hotspot estructural con 9 reverse dependencies — los cambios aquí impactarán governance, validation y reporting."
 
-## How It Works
+## Cómo Funciona
 
-### Step 1: Codebase Incident Detection
+### Paso 1: Detección de Incidentes en la Codebase
 
-`detect_codebase_incidents()` in `incident_intelligence.py` monitors the codebase structural health score:
+`detect_codebase_incidents()` en `incident_intelligence.py` monitoriza el structural health score:
 
 ```python
 if shs < 50:
-    # Fire INC-CODEBASE-CODEBASE-HEALTH-LOW
-    # severity: critical if < 30, high if < 50
+    # Disparar INC-CODEBASE-CODEBASE-HEALTH-LOW
+    # severity: critical si < 30, high si < 50
 
 if high_risks > 3:
-    # Fire INC-CODEBASE-CODEBASE-HIGH-RISKS
+    # Disparar INC-CODEBASE-CODEBASE-HIGH-RISKS
     # severity: high
 
 # Wide blast radius entries
 for r in risks_list:
     if r["risk_type"] == "wide_blast_radius":
-        # Fire INC-CODEBASE-CODEBASE-WIDE-BLAST-RADIUS
+        # Disparar INC-CODEBASE-CODEBASE-WIDE-BLAST-RADIUS
         # severity: medium
 ```
 
-These incidents merge with other domain incidents through the correlation engine.
+Estos incidentes se fusionan con otros incidentes de dominio a través del motor de correlación.
 
-### Step 2: Cross-Domain Correlation
+### Paso 2: Correlación Cross-Domain
 
-If the codebase has a wide blast radius in `governance`, and an `INC-GOVERNANCE-GOVERNANCE-SCORE-LOW` is active, the correlation engine links them:
+Si la codebase tiene un wide blast radius en `governance`, y un `INC-GOVERNANCE-GOVERNANCE-SCORE-LOW` está activo, el motor de correlación los enlaza:
 
 ```python
 correlation_results.append({
@@ -84,9 +84,9 @@ correlation_results.append({
 })
 ```
 
-### Step 3: Enriched Reporting
+### Paso 3: Reporting Enriquecido
 
-The reporting engine (`build_incident_intelligence_summary()`) enriches incident data with codebase ownership and hotspots:
+El motor de reporting (`build_incident_intelligence_summary()`) enriquece los datos de incidentes con ownership de codebase y hotspots:
 
 ```python
 codebase_enrichment = {
@@ -97,12 +97,12 @@ codebase_enrichment = {
 }
 ```
 
-## Real Scenario
+## Escenario Real
 
-An operator sees this in a report:
+Un operador ve esto en un reporte:
 
 ```
-INCIDENTS: 1 active (highest=high)
+INCIDENTS: 1 activo (highest=high)
   - INC-GOVERNANCE-GOVERNANCE-SCORE-LOW (score: 32/100)
   - BLAST RADIUS: validation, authority, codebase
 
@@ -112,31 +112,31 @@ CODEBASE:
   - hotspots: gateway(15), governance(12), authority(9)
 ```
 
-The operator can immediately infer:
-- The governance score drop is not isolated — the codebase structural health is already critical
-- `governance` is a hotspot with 12 reverse dependencies: fixing governance will also fix validation
-- The `gateway` module (15 reverse deps) is the highest-risk module overall
+El operador puede inferir inmediatamente:
+- La caída del governance score no está aislada — el structural health de la codebase ya es crítico
+- `governance` es un hotspot con 12 reverse dependencies: arreglar governance también arreglará validation
+- El módulo `gateway` (15 reverse deps) es el módulo de mayor riesgo en general
 
-## Cognitive Summary Integration
+## Integración con Cognitive Compression
 
-The cognitive compression engine surfaces codebase health in every runtime summary:
+El motor de cognitive compression muestra el codebase health en cada resumen del runtime:
 
 ```
 codebase: health=45/100 (critical), 62 modules, 274 edges, 4 high risks, 3 hotspots
 ```
 
-If a wide blast radius exists:
+Si existe un wide blast radius:
 
 ```
 wide blast radius: module runtime/governance impacts 12 modules on change
 ```
 
-## Why This Matters
+## Por Qué Esto Importa
 
-Without codebase correlation, incidents are isolated events. With it, every incident carries structural context:
+Sin correlación de codebase, los incidentes son eventos aislados. Con ella, cada incidente lleva contexto estructural:
 
-- **Severity is contextual**: a governance failure in a module with 12 dependents is worse than the same failure in an isolated module
-- **Remediation is guided**: the blast radius tells you what to test after a fix
-- **Ownership is clear**: domain mapping tells you who to notify
+- **La severidad es contextual**: un fallo de governance en un módulo con 12 dependientes es peor que el mismo fallo en un módulo aislado
+- **La remediación está guiada**: el blast radius te dice qué probar después de un fix
+- **El ownership está claro**: el domain mapping te dice a quién notificar
 
-This is not static documentation. It's live structural cognition — updated every 30 seconds via deterministic AST scanning.
+Esto no es documentación estática. Es cognición estructural en vivo — actualizada cada 30 segundos mediante escaneo AST determinista.

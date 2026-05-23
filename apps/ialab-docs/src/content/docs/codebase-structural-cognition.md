@@ -1,20 +1,20 @@
 ---
-title: "Codebase Structural Cognition"
+title: "Cognición Estructural de la Codebase"
 summary: "Documentación técnica de la integración GitNexus como memoria estructural del código fuente: dependency graphs, blast radius, ownership mapping, structural risks y cognitive pipeline."
 order: 35
 ---
 
-# Codebase Structural Cognition
+# Cognición Estructural de la Codebase
 
 ## Overview
 
-AI-LAB's codebase structural cognition module (`runtime/codebase/`) provides deterministic, grounded understanding of the runtime's own source code structure. It answers three operational questions:
+El módulo de cognición estructural de la codebase de AI-LAB (`runtime/codebase/`) proporciona comprensión determinista y grounded de la estructura del código fuente del propio runtime. Responde tres preguntas operacionales:
 
-1. **What does the codebase look like structurally?** — module inventory, dependency graph, domain topology
-2. **What breaks if I change X?** — blast radius analysis via BFS traversal
-3. **Who owns what?** — ownership mapping from module paths to operational domains
+1. **¿Cómo es la codebase estructuralmente?** — inventario de módulos, grafo de dependencias, topología de dominios
+2. **¿Qué se rompe si cambio X?** — blast radius analysis mediante recorrido BFS
+3. **¿Quién es dueño de qué?** — ownership mapping desde rutas de módulos a dominios operacionales
 
-## Architecture
+## Arquitectura
 
 ```
 runtime/codebase/
@@ -23,33 +23,33 @@ runtime/codebase/
 └── gitnexus_memory.py       # AST scanner, graph builder, risk engine
 ```
 
-### Truth Separation
+### Separación de Verdad
 
-AI-LAB maintains three independent truth layers:
+AI-LAB mantiene tres capas de verdad independientes:
 
-| Layer | Source | Responsibility |
+| Capa | Fuente | Responsabilidad |
 |---|---|---|
-| **Prometheus** | Gateway :8008/metrics | Runtime authority truth — what is happening now |
-| **OperationalTruth** | Sensor fusion + maturity | Semantic runtime truth — what the runtime knows |
-| **GitNexus** | `runtime/codebase/` AST scan | Codebase structural truth — what the code looks like |
+| **Prometheus** | Gateway :8008/metrics | Runtime authority truth — qué está pasando ahora |
+| **OperationalTruth** | Sensor fusion + maturity | Semantic runtime truth — qué sabe el runtime |
+| **GitNexus** | `runtime/codebase/` AST scan | Codebase structural truth — cómo es el código |
 
-### Deterministic by Construction
+### Determinista por Construcción
 
-Every codebase memory call produces a `determinant_signature` — a SHA-256 hash of the module list, edge list, and risk inventory. Same codebase → same signature. This enables:
+Cada llamada a codebase memory produce un `determinant_signature` — un hash SHA-256 de la lista de módulos, la lista de edges y el inventario de riesgos. Misma codebase → misma firma. Esto permite:
 
-- Reproducible blast radius analysis
-- Change detection via signature comparison
-- Validation invariants that check determinism
+- Análisis de blast radius reproducible
+- Detección de cambios mediante comparación de firmas
+- Invariantes de validación que verifican el determinismo
 
-### Cache Layer
+### Capa de Caché
 
-A TTL-based cache (default 30 seconds) prevents re-scanning on every request. Cache state is exposed via `get_codebase_cache_state()`.
+Una caché basada en TTL (por defecto 30 segundos) evita re-escaneos en cada petición. El estado de la caché se expone via `get_codebase_cache_state()`.
 
-## Module Scanning
+## Escaneo de Módulos
 
-### AST Import Parsing
+### Parsing de AST de Imports
 
-`_parse_imports()` reads each `.py` file, parses its AST, and extracts all `import` and `from ... import` statements:
+`_parse_imports()` lee cada archivo `.py`, parsea su AST y extrae todas las sentencias `import` y `from ... import`:
 
 ```python
 for node in ast.walk(tree):
@@ -61,11 +61,11 @@ for node in ast.walk(tree):
             targets.append(node.module)
 ```
 
-Edges are filtered to only `runtime.*` imports between tracked modules.
+Los edges se filtran para incluir solo imports `runtime.*` entre módulos trackeados.
 
 ### Ownership Domains
 
-Each module path maps to an operational domain via `OWNERSHIP_DOMAINS`:
+Cada ruta de módulo se asigna a un dominio operacional via `OWNERSHIP_DOMAINS`:
 
 | Domain | Module Paths |
 |---|---|
@@ -79,11 +79,11 @@ Each module path maps to an operational domain via `OWNERSHIP_DOMAINS`:
 | `reporting` | `runtime/reporting` |
 | `telemetry` | `runtime/telemetry` |
 | `infrastructure` | `runtime/infrastructure` |
-| ... | ... (24 domains total) |
+| ... | ... (24 dominios en total) |
 
 ## Blast Radius Engine
 
-The blast radius is computed via BFS traversal through reverse dependency edges:
+El blast radius se calcula mediante recorrido BFS a través de los reverse dependency edges:
 
 ```python
 for each module:
@@ -98,33 +98,33 @@ for each module:
                 queue.append(dependent)
 ```
 
-Severity classification:
+Clasificación de severidad:
 
-| Impacted modules | Severity |
+| Módulos impactados | Severidad |
 |---|---|
-| 1-2 | low |
-| 3-5 | medium |
-| 6+ | high |
+| 1-2 | baja |
+| 3-5 | media |
+| 6+ | alta |
 
-## Structural Risk Detection
+## Detección de Riesgos Estructurales
 
-Three risk types are identified automatically:
+Se identifican tres tipos de riesgo automáticamente:
 
 ### High Coupling
-Module imports 5+ other modules. Indicates the module has wide-ranging external dependencies.
+El módulo importa 5+ otros módulos. Indica que el módulo tiene dependencias externas de amplio alcance.
 
 ### High Reverse Coupling
-Module is imported by 5+ other modules. Indicates the module is a hub — changes here propagate widely.
+El módulo es importado por 5+ otros módulos. Indica que el módulo es un hub — los cambios aquí se propagan ampliamente.
 
 ### Wide Blast Radius
-Module change impacts 6+ other modules via transitive dependency chains.
+Un cambio en el módulo impacta 6+ otros módulos mediante cadenas de dependencias transitivas.
 
 ### Authority Dependency Spread
-Detected when the authority module is imported by 3+ other domains — indicating operational dependency concentration.
+Se detecta cuando el módulo authority es importado por 3+ dominios distintos — indicando concentración de dependencia operacional.
 
 ## Structural Health Score
 
-The score formula:
+La fórmula del score:
 
 ```
 base = 100
@@ -134,9 +134,9 @@ base -= edge_density penalty (max -15 if density > 5.0)
 score = max(10, min(100, base))
 ```
 
-Levels:
+Niveles:
 
-| Score | Level |
+| Score | Nivel |
 |---|---|
 | >= 80 | healthy |
 | 50-79 | degraded |
@@ -144,7 +144,7 @@ Levels:
 
 ## Gateway API
 
-All endpoints under `GET /runtime/codebase/*` return JSON with `determinant_signature`.
+Todos los endpoints bajo `GET /runtime/codebase/*` devuelven JSON con `determinant_signature`.
 
 ### Summary
 
@@ -202,57 +202,57 @@ GET /runtime/codebase/score
 Response: { score: { structural_health_score, level, modules_total, ... } }
 ```
 
-## Metrics
+## Métricas
 
-Six Prometheus counters track codebase memory:
+Seis counters de Prometheus trackean la codebase memory:
 
-| Metric | Type | Description |
+| Métrica | Tipo | Descripción |
 |---|---|---|
-| `ailab_codebase_modules_total` | Gauge | Total scanned modules |
-| `ailab_codebase_dependency_edges_total` | Gauge | Total dependency edges |
-| `ailab_codebase_structural_health_score` | Gauge | Current health score (0-100) |
-| `ailab_codebase_hotspots_total` | Gauge | Modules with >= 3 dependencies |
-| `ailab_codebase_risks_total` | Gauge | Total structural risks |
-| `ailab_codebase_ownership_domains_total` | Gauge | Unique ownership domains |
-| `ailab_codebase_memory_freshness_seconds` | Gauge | Seconds since last memory generation |
+| `ailab_codebase_modules_total` | Gauge | Total de módulos escaneados |
+| `ailab_codebase_dependency_edges_total` | Gauge | Total de edges de dependencia |
+| `ailab_codebase_structural_health_score` | Gauge | Health score actual (0-100) |
+| `ailab_codebase_hotspots_total` | Gauge | Módulos con >= 3 dependencias |
+| `ailab_codebase_risks_total` | Gauge | Total de riesgos estructurales |
+| `ailab_codebase_ownership_domains_total` | Gauge | Dominios de ownership únicos |
+| `ailab_codebase_memory_freshness_seconds` | Gauge | Segundos desde la última generación de memoria |
 
-## Integration Points
+## Puntos de Integración
 
-### Governance Integration
+### Integración con Governance
 
-The governance registry includes `codebase_memory_health` as a monitored domain. Structural health score < 50 triggers a governance degradation flag.
+El registry de governance incluye `codebase_memory_health` como dominio monitorizado. Un structural health score < 50 dispara un flag de degradación en governance.
 
-### Validation Integration
+### Integración con Validation
 
-Four invariants ensure codebase memory integrity:
+Cuatro invariantes aseguran la integridad de la codebase memory:
 
-| Invariant | Blocking | Description |
+| Invariant | Blocking | Descripción |
 |---|---|---|
-| `INVARIANT-CODEBASE-MEMORY-GROUNDED` | No | Pass if modules > 0 and edges > 0 |
-| `INVARIANT-NO-PHANTOM-MODULES` | No | Pass if level != unknown or modules > 0 |
-| `INVARIANT-BLAST-RADIUS-DETERMINISM` | No | Pass if same signature in strict mode |
-| `INVARIANT-NO-RUNTIME-STATE-CONTAMINATION` | Yes | Fail-blocking if any module path contains `runtime/state` |
+| `INVARIANT-CODEBASE-MEMORY-GROUNDED` | No | Pass si modules > 0 y edges > 0 |
+| `INVARIANT-NO-PHANTOM-MODULES` | No | Pass si level != unknown o modules > 0 |
+| `INVARIANT-BLAST-RADIUS-DETERMINISM` | No | Pass si misma firma en strict mode |
+| `INVARIANT-NO-RUNTIME-STATE-CONTAMINATION` | Sí | Fail-blocking si algún module path contiene `runtime/state` |
 
 ### Incident Intelligence
 
-`detect_codebase_incidents()` fires when:
+`detect_codebase_incidents()` se dispara cuando:
 - Structural health score < 50 (high/critical)
 - High-risk count > 3 (high)
-- Wide blast radius detected (medium)
+- Wide blast radius detectado (medium)
 
-Incident reports are enriched with codebase ownership and hotspots.
+Los reportes de incidentes se enriquecen con ownership de codebase y hotspots.
 
 ### Cognitive Compression
 
-`compress_codebase_signals()` in `cognitive_compression.py` surfaces:
-- Structural health score and level
+`compress_codebase_signals()` en `cognitive_compression.py` expone:
+- Structural health score y nivel
 - High risk count
-- Hotspot modules
+- Módulos hotspot
 - Wide blast radius entries
 
-### Operational Reporting
+### Reporting Operacional
 
-`build_codebase_memory_summary()` in `reporting_engine.py` exposes:
+`build_codebase_memory_summary()` en `reporting_engine.py` expone:
 - `structural_health_score`
 - `modules_total`, `edges_total`
 - `high_risks`, `medium_risks`
@@ -261,7 +261,7 @@ Incident reports are enriched with codebase ownership and hotspots.
 
 ## Runbooks
 
-See:
+Ver:
 
 - [Safe Refactor Workflow](/runbooks/safe-refactor-workflow)
 - [Blast Radius Review](/runbooks/blast-radius-review)

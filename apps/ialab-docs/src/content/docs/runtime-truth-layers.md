@@ -1,14 +1,14 @@
 ---
-title: "Runtime Truth Layers"
+title: "Capas de Verdad del Runtime"
 summary: "Arquitectura de las tres capas de verdad del runtime AI-LAB: Prometheus, OperationalTruth y GitNexus. Separación de responsabilidades y correlación entre fuentes."
 order: 10
 ---
 
-# Runtime Truth Layers
+# Capas de Verdad del Runtime
 
-AI-LAB operates on three independent truth layers, each with distinct responsibilities, sources, and consumers.
+AI-LAB opera sobre tres capas de verdad independientes, cada una con responsabilidades, fuentes y consumidores distintos.
 
-## The Three Layers
+## Las Tres Capas
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -43,57 +43,57 @@ AI-LAB operates on three independent truth layers, each with distinct responsibi
 └─────────────────────────────────────────────────────────┘
 ```
 
-## Layer Responsibilities
+## Responsabilidades de Cada Capa
 
 ### 1. Prometheus — Runtime Authority Truth
 
-**Source**: Gateway (:8008/metrics), Router (:8083/metrics), Live API (:8084/metrics), GPU exporters (:9182, :9183), node_exporter (:9100)
+**Fuente**: Gateway (:8008/metrics), Router (:8083/metrics), Live API (:8084/metrics), GPU exporters (:9182, :9183), node_exporter (:9100)
 
-**Responsibility**: What is happening right now in the runtime.
+**Responsabilidad**: Qué está pasando ahora mismo en el runtime.
 
-- Request counts, latencies, streaming stats
-- GPU temperature, VRAM, load
-- Scrape health of all targets
-- Alert rule evaluation
+- Conteos de requests, latencias, estadísticas de streaming
+- Temperatura GPU, VRAM, carga
+- Salud de scrape de todos los targets
+- Evaluación de reglas de alerta
 
-**Consumed by**: Grafana dashboards, alertmanager, sensor fusion, fastpath
+**Consumido por**: Grafana dashboards, alertmanager, sensor fusion, fastpath
 
-**Contract**: Standard Prometheus exposition format. No semantic interpretation — raw numerical data.
+**Contrato**: Formato estándar de exposición Prometheus. Sin interpretación semántica — datos numéricos raw.
 
 ### 2. OperationalTruth — Semantic Runtime Truth
 
-**Source**: `runtime/semantics/runtime_maturity.py`, `runtime/context/sensor_fusion.py`, `runtime/governance/`, `runtime/validation/`
+**Fuente**: `runtime/semantics/runtime_maturity.py`, `runtime/context/sensor_fusion.py`, `runtime/governance/`, `runtime/validation/`
 
-**Responsibility**: What the runtime knows about itself, semantically.
+**Responsabilidad**: Qué sabe el runtime sobre sí mismo, semánticamente.
 
 - Domain health confidence scores
-- Degradation state (which domains, why)
-- Evidence catalog for governance decisions
-- Runtime maturity level
-- Topology mode inference
+- Estado de degradación (qué dominios, por qué)
+- Catálogo de evidencia para decisiones de governance
+- Nivel de madurez del runtime
+- Inferencia de modo de topología
 
-**Consumed by**: Reporting engine, cognitive compression, incidents, governance, operator UI
+**Consumido por**: Reporting engine, cognitive compression, incidents, governance, operator UI
 
-**Contract**: Dict-based with `freshness`, `confidence`, `determinant_signature`. No raw metrics — interpreted state.
+**Contrato**: Basado en dict con `freshness`, `confidence`, `determinant_signature`. Sin métricas raw — estado interpretado.
 
 ### 3. GitNexus — Codebase Structural Truth
 
-**Source**: `runtime/codebase/` — AST scan of `/opt/ai-lab/runtime/`
+**Fuente**: `runtime/codebase/` — AST scan de `/opt/ai-lab/runtime/`
 
-**Responsibility**: What the codebase looks like structurally.
+**Responsabilidad**: Cómo es la codebase estructuralmente.
 
-- Module inventory (62 modules)
-- Dependency graph (274 directed edges)
-- Blast radius per module (BFS traversal)
-- Ownership mapping (24 domains)
-- Structural risks (high coupling, reverse coupling, wide blast)
+- Inventario de módulos (62 módulos)
+- Grafo de dependencias (274 edges dirigidos)
+- Blast radius por módulo (recorrido BFS)
+- Ownership mapping (24 dominios)
+- Riesgos estructurales (high coupling, reverse coupling, wide blast)
 - Health score (0-100)
 
-**Consumed by**: Validation invariants, governance registry, incident intelligence, cognitive compression, reporting
+**Consumido por**: Validation invariants, governance registry, incident intelligence, cognitive compression, reporting
 
-**Contract**: JSON with `determinant_signature`. Same codebase → same graph → same signature.
+**Contrato**: JSON con `determinant_signature`. Misma codebase → mismo grafo → misma firma.
 
-## Correlation Between Layers
+## Correlación Entre Capas
 
 ### Prometheus ↔ OperationalTruth
 
@@ -103,36 +103,36 @@ AI-LAB operates on three independent truth layers, each with distinct responsibi
 ### OperationalTruth ↔ GitNexus
 
 - Governance degradation alerts → codebase blast radius check
-- Incident intelligence → codebase ownership and hotspot enrichment
+- Incident intelligence → codebase ownership y hotspot enrichment
 
 ### Prometheus ↔ GitNexus
 
-- Prometheus `ailab_governance_blocked_total` spike → GitNexus governance module reverse coupling check
-- No direct coupling — correlated via OperationalTruth
+- Pico en `ailab_governance_blocked_total` de Prometheus → verificación de reverse coupling del módulo governance en GitNexus
+- Sin acoplamiento directo — se correlacionan via OperationalTruth
 
-## Design Rules
+## Reglas de Diseño
 
 ### RULE-TL-1
 
-Prometheus is the only runtime authority source. No codebase memory can override Prometheus metrics.
+Prometheus es la única fuente de runtime authority. Ninguna codebase memory puede sobrescribir métricas de Prometheus.
 
 ### RULE-TL-2
 
-OperationalTruth is the only semantic interpreter. Raw Prometheus metrics go through sensor fusion before reaching cognitive layers.
+OperationalTruth es el único intérprete semántico. Las métricas raw de Prometheus pasan por sensor fusion antes de llegar a las capas cognitivas.
 
 ### RULE-TL-3
 
-GitNexus is grounded, deterministic, and read-only. No autonomous modifications. No runtime state indexing.
+GitNexus es grounded, determinista y de solo lectura. Sin modificaciones autónomas. Sin indexación de runtime state.
 
 ### RULE-TL-4
 
-Cross-layer correlation is additive, not substitutive. A governance incident enriched with codebase blast radius does not replace the incident — it supplements it.
+La correlación entre capas es aditiva, no sustitutiva. Un incidente de governance enriquecido con blast radius de codebase no reemplaza el incidente — lo complementa.
 
 ### RULE-TL-5
 
-No layer depends on another for core functionality. If GitNexus is unavailable, the runtime continues operating on Prometheus + OperationalTruth.
+Ninguna capa depende de otra para su funcionalidad core. Si GitNexus no está disponible, el runtime continúa operando con Prometheus + OperationalTruth.
 
-## Layer Stack
+## Stack de Capas
 
 ```
 FastPath / Cognitive Summary
@@ -144,4 +144,4 @@ FastPath / Cognitive Summary
   GPU / Gateway / Router          AST scan / import graph
 ```
 
-Each layer is independently observable, independently testable, and independently versioned via `determinant_signature`.
+Cada capa es independientemente observable, independientemente testeable e independientemente versionada mediante `determinant_signature`.
