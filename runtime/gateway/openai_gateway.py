@@ -494,6 +494,12 @@ def inject_agent_context(payload):
     payload["_ai_lab_route_family"] = route.family
     payload["_ai_lab_route_variant"] = route.variant
     payload["_ai_lab_route_reason"] = route.reason
+    try:
+        from runtime.operator_intent import analyze_operator_intent
+
+        payload["_operator_intent"] = analyze_operator_intent(user_text)
+    except Exception:
+        payload["_operator_intent"] = {"contract_version": "36C", "category": "UNKNOWN", "confidence": {"label": "unknown", "score": 0.0}}
     record_route_family_metrics(route.family)
     try:
         if _HAVE_PROFILE_LOADER:

@@ -182,6 +182,12 @@ runtime/gc/**/*.pyc
 !runtime/hardening/runtime_operational_hardening.py
 runtime/hardening/__pycache__/
 runtime/hardening/**/*.pyc
+
+!runtime/operator_intent/
+!runtime/operator_intent/__init__.py
+!runtime/operator_intent/operator_intent_reasoning.py
+runtime/operator_intent/__pycache__/
+runtime/operator_intent/**/*.pyc
 sessions/
 
 
