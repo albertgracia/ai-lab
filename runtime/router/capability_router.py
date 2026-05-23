@@ -46,6 +46,23 @@ except ImportError:
     pass
 
 
+def get_federation_routing_metadata(user_text: str, *, route_family: str = "unknown", request_id: str = "") -> dict:
+    """FEDERATION-ROLE-EXECUTION-01: return bounded routing metadata.
+
+    This is intentionally non-invasive: it does not change model routing.
+    """
+
+    try:
+        from runtime.federation.contracts import FederatedExecutionIntent
+        from runtime.federation.role_router import build_routing_metadata
+
+        intent = FederatedExecutionIntent(user_text=user_text or "", route_family=route_family or "unknown", request_id=request_id or "")
+        return build_routing_metadata(intent)
+    except Exception:
+        # Never fail capability routing due to federation metadata.
+        return {}
+
+
 def choose_model(task_type="general"):
     """Return the best model_id (str) for *task_type*.
 

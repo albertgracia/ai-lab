@@ -1,0 +1,225 @@
+"""FEDERATION-ROLE-EXECUTION-01: minimal federated role routing.
+
+Hard rules:
+- Pure routing metadata only (no heavy logic execution).
+- No remediation/autofix.
+- No async orchestration, no loops.
+- Must respect domain registry coupling constraints.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from runtime.domain_registry.domain_registry import validate_dependency
+from runtime.federation.contracts import (
+    AuthorityWeight,
+    ContextBudgetHint,
+    DelegationReason,
+    FEDERATION_CONTRACT_VERSION,
+    FederatedExecutionIntent,
+    FederatedRoleDecision,
+)
+
+
+_REMEDIATION_MARKERS = (
+    "restart ",
+    "systemctl ",
+    "sudo ",
+    "rm -",
+    "delete ",
+    "apply patch",
+    "autofix",
+    "fix it",
+)
+
+
+@dataclass(frozen=True)
+class RoutingCognitionMetadata:
+    """Flattened metadata keys expected by the gateway/core."""
+
+    federation: dict
+    domain: str
+    role: str
+    delegated_to: str
+    reasoning_scope: str
+    context_budget: dict
+
+    def to_dict(self) -> dict:
+        return {
+            "_federation": self.federation,
+            "_domain": self.domain,
+            "_role": self.role,
+            "_delegated_to": self.delegated_to,
+            "_reasoning_scope": self.reasoning_scope,
+            "_context_budget": self.context_budget,
+        }
+
+
+def _contains_any(text: str, markers: tuple[str, ...]) -> bool:
+    t = (text or "").lower()
+    return any(m in t for m in markers)
+
+
+def _decision_to_metadata(decision: FederatedRoleDecision) -> RoutingCognitionMetadata:
+    federation = {
+        "contract_version": decision.contract_version,
+        "domain": decision.domain,
+        "role": decision.role,
+        "delegated_to": decision.delegated_to,
+        "reason": decision.reason.value,
+        "authority_weight": decision.authority_weight.value,
+    }
+    return RoutingCognitionMetadata(
+        federation=federation,
+        domain=decision.domain,
+        role=decision.role,
+        delegated_to=decision.delegated_to,
+        reasoning_scope=decision.context_budget.reasoning_scope,
+        context_budget=decision.context_budget.to_dict(),
+    )
+
+
+def resolve_role(intent: FederatedExecutionIntent) -> FederatedRoleDecision:
+    """Resolve the bounded domain/role that should answer.
+
+    This function MUST remain deterministic and side-effect free.
+    """
+
+    text = (intent.user_text or "").strip()
+    t = text.lower()
+
+    # Safety: never route requests that look like remediation/execution.
+    if _contains_any(t, _REMEDIATION_MARKERS):
+        decision = FederatedRoleDecision(
+            contract_version=FEDERATION_CONTRACT_VERSION,
+            domain="operator_intent",
+            role="operator_intent",
+            delegated_to="operator_intent",
+            reason=DelegationReason.SAFETY_BLOCK,
+            authority_weight=AuthorityWeight.LOW,
+            context_budget=ContextBudgetHint(max_chars=600, max_items=6, reasoning_scope="bounded"),
+        )
+        _enforce_gateway_coupling(decision.domain)
+        return decision
+
+    # Route-family hint (when provided by upstream).
+    rf = (intent.route_family or "").lower()
+    if rf in {"report", "observe"}:
+        # Observability heavy: prefer bounded observability framing.
+        decision = FederatedRoleDecision(
+            contract_version=FEDERATION_CONTRACT_VERSION,
+            domain="observability",
+            role="observability",
+            delegated_to="observability",
+            reason=DelegationReason.ROUTE_FAMILY_HINT,
+            authority_weight=AuthorityWeight.MEDIUM,
+            context_budget=ContextBudgetHint(max_chars=1000, max_items=10, reasoning_scope="bounded"),
+        )
+        _enforce_gateway_coupling(decision.domain)
+        return decision
+
+    # Keyword routing.
+    if any(k in t for k in ("incident", "incidente", "postmortem", "rca", "outage")):
+        decision = FederatedRoleDecision(
+            contract_version=FEDERATION_CONTRACT_VERSION,
+            domain="incidents",
+            role="incidents",
+            delegated_to="incidents",
+            reason=DelegationReason.KEYWORD_MATCH,
+            authority_weight=AuthorityWeight.MEDIUM,
+            context_budget=ContextBudgetHint(max_chars=1200, max_items=12, reasoning_scope="bounded"),
+        )
+        _enforce_gateway_coupling(decision.domain)
+        return decision
+
+    if any(k in t for k in ("prometheus", "grafana", "metrics", "métricas", "telemetry", "ttfb", "latency")):
+        decision = FederatedRoleDecision(
+            contract_version=FEDERATION_CONTRACT_VERSION,
+            domain="observability",
+            role="observability",
+            delegated_to="observability",
+            reason=DelegationReason.KEYWORD_MATCH,
+            authority_weight=AuthorityWeight.HIGH,
+            context_budget=ContextBudgetHint(max_chars=1100, max_items=10, reasoning_scope="bounded"),
+        )
+        _enforce_gateway_coupling(decision.domain)
+        return decision
+
+    if any(k in t for k in ("operational truth", "authority", "freshness", "grounded", "evidence")):
+        decision = FederatedRoleDecision(
+            contract_version=FEDERATION_CONTRACT_VERSION,
+            domain="authority",
+            role="authority",
+            delegated_to="authority",
+            reason=DelegationReason.KEYWORD_MATCH,
+            authority_weight=AuthorityWeight.HIGH,
+            context_budget=ContextBudgetHint(max_chars=900, max_items=8, reasoning_scope="bounded"),
+        )
+        _enforce_gateway_coupling(decision.domain)
+        return decision
+
+    if any(k in t for k in ("systemd", "service", "puerto", "port ", "dns", "ntp", "time semantics", "timezone")):
+        decision = FederatedRoleDecision(
+            contract_version=FEDERATION_CONTRACT_VERSION,
+            domain="infrastructure",
+            role="infra",
+            delegated_to="infrastructure",
+            reason=DelegationReason.KEYWORD_MATCH,
+            authority_weight=AuthorityWeight.MEDIUM,
+            context_budget=ContextBudgetHint(max_chars=900, max_items=8, reasoning_scope="bounded"),
+        )
+        _enforce_gateway_coupling(decision.domain)
+        return decision
+
+    if any(k in t for k in ("semantic integrity", "semantic state", "stale", "discoverable", "inventory", "phantom", "legacy")):
+        decision = FederatedRoleDecision(
+            contract_version=FEDERATION_CONTRACT_VERSION,
+            domain="semantic",
+            role="semantic",
+            delegated_to="semantic",
+            reason=DelegationReason.KEYWORD_MATCH,
+            authority_weight=AuthorityWeight.MEDIUM,
+            context_budget=ContextBudgetHint(max_chars=1000, max_items=10, reasoning_scope="bounded"),
+        )
+        _enforce_gateway_coupling(decision.domain)
+        return decision
+
+    if any(k in t for k in ("doc", "docs", "runbook", "document", "manual", "guía", "guia")):
+        decision = FederatedRoleDecision(
+            contract_version=FEDERATION_CONTRACT_VERSION,
+            domain="docs",
+            role="docs",
+            delegated_to="docs",
+            reason=DelegationReason.KEYWORD_MATCH,
+            authority_weight=AuthorityWeight.LOW,
+            context_budget=ContextBudgetHint(max_chars=800, max_items=10, reasoning_scope="bounded"),
+        )
+        _enforce_gateway_coupling(decision.domain)
+        return decision
+
+    # Default: operator intent keeps boundedness without claiming authority.
+    decision = FederatedRoleDecision(
+        contract_version=FEDERATION_CONTRACT_VERSION,
+        domain="operator_intent",
+        role="operator_intent",
+        delegated_to="operator_intent",
+        reason=DelegationReason.DEFAULT_CORE,
+        authority_weight=AuthorityWeight.LOW,
+        context_budget=ContextBudgetHint(max_chars=700, max_items=8, reasoning_scope="bounded"),
+    )
+    _enforce_gateway_coupling(decision.domain)
+    return decision
+
+
+def build_routing_metadata(intent: FederatedExecutionIntent) -> dict:
+    """Return non-invasive federation metadata for payload/trace."""
+
+    decision = resolve_role(intent)
+    return _decision_to_metadata(decision).to_dict()
+
+
+def _enforce_gateway_coupling(domain: str) -> None:
+    ok, reason = validate_dependency(src="gateway", dst=domain)
+    if not ok:
+        raise ValueError(f"federation_role_router_forbidden:{reason}")
