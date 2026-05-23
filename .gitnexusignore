@@ -1,0 +1,26 @@
+# GitNexus index exclusions (FASE 36B+)
+# Goal: keep structural truth clean; avoid operational/runtime data and build artifacts.
+
+# Git / environments
+.git/
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Node / build outputs
+node_modules/
+dist/
+
+# Runtime operational data (never index)
+runtime/state/
+
+# Common temp/log/data folders
+tmp/
+logs/
+data/
+
+
+# Astro docs build artifacts
+apps/ialab-docs/dist/
+apps/ialab-docs/node_modules/

@@ -44,6 +44,10 @@ temp/
 .DS_Store
 Thumbs.db
 
+# AI / Agent generated context
+CLAUDE.md
+.gitnexus/
+
 # AI / Models
 models/
 gguf/
@@ -127,6 +131,9 @@ runtime/reporting/**/*.pyc
 !runtime/gateway/
 !runtime/gateway/__init__.py
 !runtime/gateway/openai_gateway.py
+!runtime/gateway/process_guard.py
+# Legacy local file-metrics shim replaced by runtime/telemetry/gateway_metrics.py.
+runtime/gateway/gateway_metrics.py
 runtime/gateway/__pycache__/
 runtime/gateway/**/*.pyc
 
