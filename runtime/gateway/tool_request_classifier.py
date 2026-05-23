@@ -340,9 +340,13 @@ def is_report_request(text_or_payload: Any) -> bool:
 
     # FASE 34C: operational fast-path queries are NOT treated as report requests.
     # This prevents expensive grounding/report context construction for short NOC-like prompts.
-    fp_intent = detect_operational_fastpath_intent(t)
-    if fp_intent in {"governance", "validation", "observability", "watchdogs"} and len(t) <= 220:
-        return False
+    # HOTFIX 35D-HF1: check deep-path exclusion keywords first — forensics, remediation,
+    # deep diagnostics, and code-generation must still go through report/cognitive routing.
+    _has_deep_kw = any(kw in t for kw in _DEEP_EXCLUSION_KEYWORDS)
+    if not _has_deep_kw:
+        fp_intent = detect_operational_fastpath_intent(t)
+        if fp_intent in {"governance", "validation", "observability", "watchdogs"} and len(t) <= 220:
+            return False
 
     markers = (
         "informe",
@@ -361,6 +365,10 @@ def is_report_request(text_or_payload: Any) -> bool:
         "analisis",
         "análisis",
         "audit",
+        "forense",
+        "forensic",
+        "remediation",
+        "postmortem",
     )
     return any(marker in t for marker in markers)
 
@@ -539,6 +547,59 @@ _FASTPATH_INTENTS: dict[str, tuple[str, ...]] = {
         "phantom", "legacy leakage", "contamination", "contaminacion",
     ),
 }
+
+
+# ── HOTFIX 35D-HF1: Deep-path exclusion keywords ──────────────────
+
+_DEEP_EXCLUSION_KEYWORDS = (
+    # Forensics / deep analysis
+    "forense", "forensic", "forenses", "forensics",
+    "análisis forense", "analisis forense",
+    "diagnóstico profundo", "diagnostico profundo",
+    "deep analysis", "deep forensic",
+    # Remediation
+    "remediation", "remediation plan", "remediation strategy",
+    "plan de remediación", "plan de remediacion",
+    "mitigación", "mitigacion",
+    # Full reports
+    "informe exhaustivo", "informe completo",
+    "exhaustive report", "comprehensive report",
+    "full diagnostic", "full diagnosis",
+    # Architecture deep
+    "arquitectura detallada", "detailed architecture",
+    "architecture report", "architecture analysis",
+    # Implementation / coding
+    "implementa", "implementation", "implementación",
+    "código", "codigo", "code", "coding",
+    "escribe un", "write a", "crea un", "create a",
+)
+
+
+def should_prioritize_operational_fastpath(
+    user_text: str,
+    tool_fastpath: bool,
+    intent_mode: str,
+) -> bool:
+    """Returns True if an operational query should use tool_fastpath
+    before report/cognitive/deep checks.
+
+    Conditions:
+    1. tool_fastpath is enabled
+    2. The text has detectable operational intent
+    3. No deep-path exclusion keywords are present
+    """
+    if not tool_fastpath:
+        return False
+    t = (user_text or "").lower().strip()
+    if not t:
+        return False
+    intent = detect_operational_fastpath_intent(t)
+    if intent is None:
+        return False
+    for kw in _DEEP_EXCLUSION_KEYWORDS:
+        if kw in t:
+            return False
+    return True
 
 
 def detect_operational_fastpath_intent(user_text: str) -> str | None:
@@ -972,6 +1033,12 @@ def classify_chat_route(
 ) -> RuntimeRoute:
     """Segment chat requests into explicit runtime families."""
     text = user_text or request_text
+
+    # HOTFIX 35D-HF1: operational fastpath priority — checked FIRST
+    # so that compact operational queries (estado runtime, qué exporters están down)
+    # use tool_fastpath before is_report_request or qwen escalation catches them.
+    if should_prioritize_operational_fastpath(text, tool_fastpath, intent_mode):
+        return RuntimeRoute(family="tool_fastpath", variant="operational", reason="fastpath_priority")
 
     # FASE 30B.1: qwen escalation check — runs BEFORE report/greeting/observe checks
     qwen_reason = get_qwen_escalation_reason(text)
