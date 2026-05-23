@@ -25,6 +25,10 @@ from runtime.federation.contracts import (
     FederatedExecutionIntent,
     FederatedRoleDecision,
 )
+from runtime.federation.federation_observability import (
+    FederationPropagationTrace,
+    record_propagation_trace,
+)
 
 
 _REMEDIATION_MARKERS = (
@@ -242,6 +246,23 @@ def build_routing_metadata(intent: FederatedExecutionIntent) -> dict:
     base["_budget_overflow"] = {decision.domain: envelope.to_metadata()["overflow"]}
     if envelope.truncated or envelope.rejected:
         base["_truncated_domains"] = [decision.domain]
+
+    # FEDERATION-OBSERVABILITY-01: record in-memory propagation trace.
+    overflow = envelope.to_metadata()["overflow"]
+    has_overflow = bool((overflow.get("chars") or 0) > 0 or (overflow.get("items") or 0) > 0)
+    record_propagation_trace(
+        FederationPropagationTrace(
+            source_domain="gateway",
+            target_domain=decision.domain,
+            authority_weight=base["_federation"].get("authority_weight", "unknown"),
+            budget_consumed=envelope.to_metadata()["consumed"],
+            overflow=has_overflow,
+            truncated=bool(envelope.truncated),
+            degraded=bool(envelope.degraded),
+            rejected=bool(envelope.rejected),
+            path_depth=1,
+        )
+    )
     return base
 
 
