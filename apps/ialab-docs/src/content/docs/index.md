@@ -25,9 +25,19 @@ order: 1
 - `30I-D` — Sensor Semantics Normalization
 - `STORAGE-HARDENING` — External Archive Policy
 
+## Nuevas secciones
+
+- **Codebase Structural Cognition**: integración GitNexus, dependency graph, blast radius, ownership, structural risk scoring.
+- **Runtime Truth Layers**: las tres capas de verdad del runtime — Prometheus, OperationalTruth y GitNexus.
+- **Experiments**: GitNexus Structural Memory Integration (DEV-36X).
+
+## Fases añadidas
+
+- `DEV-36X` — Codebase Memory Integration (GitNexus, dependency graph, blast radius, ownership, structural cognition)
+
 ## Checkpoint actual
 
-**CP-DOC-30I-RUNTIME-SENSOR-FUSION-DOCS-STABLE**
+**CP-DOC-36X-GITNEXUS-STRUCTURAL-COGNITION-STABLE**
 
 ## Estado estable
 

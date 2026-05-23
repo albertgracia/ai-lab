@@ -1,0 +1,115 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout title="Structural Cognition · Research · AI-LAB">
+  <section class="mx-auto max-w-7xl px-6 py-16 space-y-10">
+    <header class="rounded-3xl border border-purple-500/30 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black p-10">
+      <p class="text-sm uppercase tracking-[0.35em] text-purple-400">AI-LAB Research · DEV-36X</p>
+      <h1 class="mt-4 text-5xl font-black text-white">Structural Codebase Cognition</h1>
+      <p class="mt-4 max-w-4xl text-xl leading-9 text-zinc-300">
+        Investigación sobre cómo un runtime operacional puede entender su propio código fuente
+        de forma determinista, grounded y sin depender de sistemas externos.
+      </p>
+    </header>
+
+    <section class="space-y-8">
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
+        <h2 class="text-2xl font-black text-cyan-400">Cognition Flow</h2>
+        <div class="mt-6 bg-zinc-900 rounded-xl p-6 text-sm text-zinc-300 font-mono">
+          <pre class="whitespace-pre-wrap">
+Runtime cognition (operational):
+  Prometheus metrics → Sensor Fusion → Domain Confidence → Governance Decision
+
+Codebase cognition (structural):
+  AST Scan → Dependency Graph → Blast Radius → Structural Risk → Health Score
+
+Correlation:
+  Incident (runtime) + Blast Radius (codebase) → Targeted Remediation</pre>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
+        <h2 class="text-2xl font-black text-cyan-400">Truth Layers</h2>
+        <p class="mt-4 text-zinc-400 leading-relaxed">
+          AI-LAB separa tres fuentes de verdad independientes. Cada una tiene un propósito,
+          un formato y un consumidor distinto. No se mezclan.
+        </p>
+        <div class="mt-6 grid gap-4 md:grid-cols-3">
+          <div class="rounded-xl border border-orange-500/30 bg-zinc-900 p-5">
+            <p class="text-sm uppercase tracking-wider text-orange-400">Prometheus</p>
+            <p class="mt-2 text-zinc-400 text-sm">Runtime authority truth. Qué está pasando ahora en el runtime. Métricas raw, scrape targets, alertas.</p>
+          </div>
+          <div class="rounded-xl border border-cyan-500/30 bg-zinc-900 p-5">
+            <p class="text-sm uppercase tracking-wider text-cyan-400">OperationalTruth</p>
+            <p class="mt-2 text-zinc-400 text-sm">Semantic runtime truth. Qué sabe el runtime de sí mismo. Confianza por dominio, madurez, degradación.</p>
+          </div>
+          <div class="rounded-xl border border-emerald-500/30 bg-zinc-900 p-5">
+            <p class="text-sm uppercase tracking-wider text-emerald-400">GitNexus</p>
+            <p class="mt-2 text-zinc-400 text-sm">Codebase structural truth. Cómo es el código fuente. Módulos, dependencias, ownership, riesgos estructurales.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
+        <h2 class="text-2xl font-black text-cyan-400">Dependency Graph Flow</h2>
+        <div class="mt-6 bg-zinc-900 rounded-xl p-6">
+          <pre class="text-sm text-zinc-300 font-mono whitespace-pre-wrap">
+runtime/*.py
+    │
+    ▼
+AST.parse() → extract imports → filter runtime.* imports
+    │
+    ▼
+Adjacency list (source → [targets])
+    │
+    ▼
+Domain mapping via OWNERSHIP_DOMAINS
+    │
+    ▼
+Cross-domain dependency matrix
+    │
+    ▼
+Reverse edges → blast radius BFS → impacted modules</pre>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
+        <h2 class="text-2xl font-black text-cyan-400">Key Findings</h2>
+        <ul class="mt-4 space-y-4 text-zinc-400">
+          <li class="flex gap-3">
+            <span class="text-cyan-400 font-bold">1.</span>
+            <span><strong class="text-white">Determinism is achievable.</strong> Same codebase → same graph, same blast radius, same score. No LLM, no heuristics, no external API.</span>
+          </li>
+          <li class="flex gap-3">
+            <span class="text-cyan-400 font-bold">2.</span>
+            <span><strong class="text-white">AST-only scanning is sufficient.</strong> No need for full semantic analysis. Import-level granularity provides enough signal for operational cognition.</span>
+          </li>
+          <li class="flex gap-3">
+            <span class="text-cyan-400 font-bold">3.</span>
+            <span><strong class="text-white">30-second refresh is adequate.</strong> Codebase changes infrequently compared to runtime metrics. TTL cache avoids unnecessary re-scans.</span>
+          </li>
+          <li class="flex gap-3">
+            <span class="text-cyan-400 font-bold">4.</span>
+            <span><strong class="text-white">Three truth layers are better than one.</strong> Prometheus for numbers, OperationalTruth for meaning, GitNexus for structure. Each independently verifiable.</span>
+          </li>
+          <li class="flex gap-3">
+            <span class="text-cyan-400 font-bold">5.</span>
+            <span><strong class="text-white">Blast radius works as operational risk.</strong> A module's structural impact correlates with incident severity — hotspots are also operational risk concentrators.</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
+        <h2 class="text-2xl font-black text-cyan-400">Questions for Future Research</h2>
+        <ul class="mt-4 space-y-3 text-zinc-400">
+          <li>Can structural health score predict incident likelihood?</li>
+          <li>Does high reverse coupling correlate with governance drift frequency?</li>
+          <li>Can blast radius inform automated test coverage requirements?</li>
+          <li>Should ownership domains be weighted by module criticality?</li>
+          <li>Can cross-layer correlation enable predictive remediation?</li>
+        </ul>
+      </div>
+    </section>
+  </section>
+</Layout>
