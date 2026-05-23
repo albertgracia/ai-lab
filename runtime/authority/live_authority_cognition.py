@@ -274,6 +274,14 @@ def query_infrastructure_identity(*, extra_ctx: dict[str, Any] | None = None) ->
 
 def calculate_authority_freshness(snapshot: dict[str, Any]) -> dict[str, Any]:
     reasons = []
+    model_truth = ((snapshot.get("operational_truth", {}) or {}).get("models", {}) or {})
+    model_fresh = model_truth.get("freshness", {}) or {}
+    if str(model_fresh.get("status", "")) in ("expired", "unavailable"):
+        return AuthorityFreshness(
+            status="stale",
+            confidence="low",
+            reasons=["model_authority_stale", *list(model_fresh.get("reasons", []) or [])],
+        ).to_dict()
     prom = snapshot.get("prometheus", {}) or {}
     t = (prom.get("targets", {}) or {})
     fetch = (prom.get("fetch", {}) or {}).get("targets", {})
@@ -317,6 +325,19 @@ def build_authority_backed_context(*, extra_ctx: dict[str, Any] | None = None, l
     runtime = query_runtime_authority(extra_ctx=extra_ctx)
     infra = query_infrastructure_identity(extra_ctx=extra_ctx)
     truth = query_operational_truth(extra_ctx=extra_ctx)
+    try:
+        from runtime.models.operational_truth import build_operational_model_truth
+
+        model_truth = build_operational_model_truth(extra_ctx=extra_ctx)
+    except Exception as exc:
+        model_truth = {
+            "contract_version": "OBS-HF-LMSTUDIO-1",
+            "freshness": {"status": "unavailable", "confidence": "low", "reasons": ["model_truth_error"]},
+            "summary": {"operational_total": 0, "rejected_total": 0},
+            "operational_models": [],
+            "discoverable_only_models": [],
+            "error": str(exc),
+        }
 
     base = {
         "contract_version": AUTHORITY_CONTRACT_VERSION,
@@ -332,6 +353,9 @@ def build_authority_backed_context(*, extra_ctx: dict[str, Any] | None = None, l
             "operational_nodes": truth.get("operational_nodes", []),
             "inventory_only_nodes": truth.get("inventory_only_nodes", []),
             "discoverable_nodes": truth.get("discoverable_nodes", []),
+            "models": model_truth,
+            "operational_models": [m.get("id") for m in (model_truth.get("operational_models", []) or []) if isinstance(m, dict)],
+            "discoverable_only_models": [m.get("id") for m in (model_truth.get("discoverable_only_models", []) or []) if isinstance(m, dict)],
         },
     }
     base["freshness"] = calculate_authority_freshness(base)

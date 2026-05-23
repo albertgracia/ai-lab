@@ -59,18 +59,9 @@ def choose_model(task_type="general"):
     if _USE_DISCOVERY:
         try:
             discovery = discover_all_models(force=False)
-            for node in discovery.get("nodes", []):
-                if not node.get("online"):
-                    continue
-                for model in node.get("models", []):
-                    model_id = model.get("id") if isinstance(model, dict) else model
-                    if model_id:
-                        # FASE 29.3: normalize and check if disabled in registry
-                        normalized = normalize_model_id(model_id)
-                        reg_entry = MODEL_REGISTRY.get(normalized, MODEL_REGISTRY.get(model_id, {}))
-                        if not reg_entry.get("enabled", True):
-                            continue
-                        candidates.append(model_id)
+            from runtime.models.operational_truth import get_operational_model_ids
+
+            candidates.extend(get_operational_model_ids(discovery=discovery))
         except Exception:
             pass
 

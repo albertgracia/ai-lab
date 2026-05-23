@@ -146,6 +146,23 @@ def calculate_operational_confidence(
 def _detect_partial_states(authority: dict[str, Any], routability: list[dict[str, Any]]) -> list[dict[str, Any]]:
     partial: list[PartialState] = []
     fresh = (authority.get("freshness", {}) or {})
+    model_truth = ((authority.get("operational_truth", {}) or {}).get("models", {}) or {})
+    model_summary = model_truth.get("summary", {}) or {}
+    model_fresh = model_truth.get("freshness", {}) or {}
+    if str(model_fresh.get("status", "")) in ("expired", "unavailable"):
+        partial.append(PartialState(
+            domain="models",
+            missing=list(model_fresh.get("reasons", []) or []) or ["model_authority_stale"],
+            severity="critical",
+            description="model authority stale or unavailable",
+        ))
+    if int(model_summary.get("discoverable_only_total", 0) or 0) > 0 and int(model_summary.get("operational_total", 0) or 0) == 0:
+        partial.append(PartialState(
+            domain="models",
+            missing=["operational_models"],
+            severity="warning",
+            description="models are discoverable only, not operational",
+        ))
     if str(fresh.get("status")) in ("partial", "unavailable"):
         partial.append(PartialState(
             domain="authority",
@@ -198,6 +215,7 @@ def _sanitize_discoverables(discoverables: list[dict[str, Any]]) -> list[dict[st
 
 def _build_evidence_catalog(authority: dict[str, Any], routability: list[dict[str, Any]], incidents: dict[str, Any], codebase: dict[str, Any]) -> list[dict[str, Any]]:
     ev: list[PrecisionEvidence] = []
+    model_truth = ((authority.get("operational_truth", {}) or {}).get("models", {}) or {})
     fresh = (authority.get("freshness", {}) or {})
     status = str(fresh.get("status", "unknown"))
     strength = EvidenceStrength.CONFIRMED if status == "fresh" else EvidenceStrength.PARTIAL if status == "partial" else EvidenceStrength.UNKNOWN
@@ -224,6 +242,19 @@ def _build_evidence_catalog(authority: dict[str, Any], routability: list[dict[st
         freshness="fresh" if routability else "unknown",
         confidence="high" if routability else "unknown",
     ))
+    ev.append(PrecisionEvidence(
+        evidence_type="model_truth",
+        strength=EvidenceStrength.GROUNDED if (model_truth.get("operational_models") or []) else EvidenceStrength.PARTIAL,
+        source="lmstudio_operational_truth_obs_hf",
+        payload={
+            "summary": model_truth.get("summary", {}) if isinstance(model_truth, dict) else {},
+            "freshness": model_truth.get("freshness", {}) if isinstance(model_truth, dict) else {},
+            "confidence": model_truth.get("confidence", {}) if isinstance(model_truth, dict) else {},
+        },
+        freshness=((model_truth.get("freshness", {}) or {}).get("status", "unknown") if isinstance(model_truth, dict) else "unknown"),
+        confidence=((model_truth.get("confidence", {}) or {}).get("label", "unknown") if isinstance(model_truth, dict) else "unknown"),
+    ))
+
     ev.append(PrecisionEvidence(
         evidence_type="incidents",
         strength=EvidenceStrength.GROUNDED if incidents else EvidenceStrength.PARTIAL,
@@ -290,6 +321,8 @@ def build_runtime_precision_report(
     except Exception:
         codebase = {}
 
+    model_truth = ((authority.get("operational_truth", {}) or {}).get("models", {}) or {})
+    model_summary = model_truth.get("summary", {}) or {}
     partial_states = _detect_partial_states(authority, routability)
     conflicts = _detect_authority_conflicts(authority, routability)
 
@@ -334,6 +367,16 @@ def build_runtime_precision_report(
         "evidence": evidence,
         "conflicts": conflicts,
         "partial": partial_states,
+        "models": {
+            "operational_total": int(model_summary.get("operational_total", 0) or 0),
+            "loaded_total": int(model_summary.get("loaded_total", 0) or 0),
+            "discoverable_only_total": int(model_summary.get("discoverable_only_total", 0) or 0),
+            "rejected_total": int(model_summary.get("rejected_total", 0) or 0),
+            "ctx_zero_rejected": int(model_summary.get("ctx_zero_rejected", 0) or 0),
+            "empty_skills_rejected": int(model_summary.get("empty_skills_rejected", 0) or 0),
+            "freshness": model_truth.get("freshness", {}) if isinstance(model_truth, dict) else {},
+            "confidence": model_truth.get("confidence", {}) if isinstance(model_truth, dict) else {},
+        },
         "discoverable": {
             "total": len(discoverable),
             "entities": discoverable[:50],
@@ -347,7 +390,9 @@ def build_runtime_precision_report(
             "authority_conflicts_total": len(conflicts),
             "partial_state_total": len(partial_states),
             "stale_evidence_total": sum(1 for r in (authority_conf.reasons or []) if "unavailable" in r or "stale" in r),
-            "discovery_leakage_total": 0,
+            "discovery_leakage_total": int(model_summary.get("discoverable_only_total", 0) or 0),
+            "ctx_zero_rejected_total": int(model_summary.get("ctx_zero_rejected", 0) or 0),
+            "empty_skills_rejected_total": int(model_summary.get("empty_skills_rejected", 0) or 0),
             "precision_degraded_responses_total": 1 if certainty == OperationalCertainty.UNCERTAIN else 0,
             "confidence_downgrade_total": len(partial_states) + len(conflicts),
         },
@@ -358,6 +403,7 @@ def build_runtime_precision_report(
         "precision": payload.get("precision"),
         "conflicts": payload.get("conflicts"),
         "partial": payload.get("partial"),
+        "model_truth": payload.get("models", {}),
         "discoverable_total": payload.get("discoverable", {}).get("total"),
         "inventory_total": payload.get("inventory", {}).get("total"),
     })
@@ -381,12 +427,17 @@ def build_precision_summary(report: dict[str, Any]) -> dict[str, Any]:
     fresh = (auth.get("freshness", {}) or {}).get("status", "unknown")
     discoverable_total = int((report.get("discoverable", {}) or {}).get("total", 0) or 0)
     inventory_total = int((report.get("inventory", {}) or {}).get("total", 0) or 0)
+    model_info = report.get("models", {}) or {}
+    operational_models = int(model_info.get("operational_total", 0) or 0)
+    discoverable_only_models = int(model_info.get("discoverable_only_total", 0) or 0)
     precision = report.get("precision", {}) or {}
 
     lines = [
         "Runtime operational.",
         f"Authority: {fresh}.",
-        f"Discoverable: {discoverable_total} (not operational).",
+        f"Operational models: {operational_models}.",
+        f"Discoverable models: {discoverable_only_models} (not operational).",
+        f"Discoverable entities: {discoverable_total} (not operational).",
         f"Inventory-only: {inventory_total}.",
         f"Confidence: {label} ({round(score, 1)}).",
     ]

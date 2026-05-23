@@ -107,11 +107,26 @@ def _safe_read_json(path: Path) -> dict[str, Any] | None:
 
 
 def _get_active_models() -> list[dict[str, Any]]:
-    return [
-        {"id": "llama-3.1-8b-instruct", "role": "lightweight / greetings / observe"},
-        {"id": "qwen2.5-coder-14b-instruct", "role": "coding / report / reasoning / creative"},
-        {"id": "text-embedding-nomic-embed-text-v1.5", "role": "embeddings / semantic recall"},
-    ]
+    try:
+        from runtime.models.operational_truth import build_operational_model_truth
+
+        truth = build_operational_model_truth(extra_ctx={"force_model_truth": False})
+        models = []
+        for item in truth.get("operational_models", []) or []:
+            if not isinstance(item, dict):
+                continue
+            models.append({
+                "id": item.get("id"),
+                "role": " / ".join(item.get("skills", []) or []),
+                "ctx": item.get("ctx", 0),
+                "state": "operational",
+                "confidence": (truth.get("confidence", {}) or {}).get("label", "unknown"),
+            })
+        if models:
+            return models
+    except Exception:
+        pass
+    return []
 
 
 def _get_disabled_models() -> list[dict[str, Any]]:
