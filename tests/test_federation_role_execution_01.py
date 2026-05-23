@@ -59,14 +59,16 @@ def test_remediation_markers_are_safety_blocked_to_operator_intent():
 def test_metadata_is_non_invasive_and_has_required_keys():
     intent = FederatedExecutionIntent(user_text="prometheus metrics", route_family="observe", request_id="req-1")
     meta = build_routing_metadata(intent)
-    assert set(meta.keys()) == {
+    # Metadata is allowed to grow, but must include the non-invasive core keys.
+    for k in (
         "_federation",
         "_domain",
         "_role",
         "_delegated_to",
         "_reasoning_scope",
         "_context_budget",
-    }
+    ):
+        assert k in meta
     assert meta["_federation"]["domain"] == meta["_domain"]
     assert meta["_federation"]["delegated_to"] == meta["_delegated_to"]
     assert meta["_delegated_to"] != "remediation"

@@ -12,6 +12,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from runtime.domain_registry.domain_registry import validate_dependency
+from runtime.federation.context_budget import (
+    build_federation_budget_metadata,
+    default_domain_limits,
+    enforce_context_budget,
+)
 from runtime.federation.contracts import (
     AuthorityWeight,
     ContextBudgetHint,
@@ -216,7 +221,28 @@ def build_routing_metadata(intent: FederatedExecutionIntent) -> dict:
     """Return non-invasive federation metadata for payload/trace."""
 
     decision = resolve_role(intent)
-    return _decision_to_metadata(decision).to_dict()
+    base = _decision_to_metadata(decision).to_dict()
+
+    # FEDERATION-CONTEXT-BUDGETS-01: enforce deterministic domain budget for routing payload.
+    # This is metadata-only: we never block routing; we only cap what we attach.
+    limits = default_domain_limits()
+    envelope = enforce_context_budget(
+        domain=decision.domain,
+        payload={
+            "user_text": intent.user_text or "",
+            "route_family": intent.route_family or "unknown",
+            "request_id": intent.request_id or "",
+            "evidence_scope": intent.evidence_scope or "unknown",
+        },
+        limits=limits,
+    )
+
+    base["_context_budget"] = envelope.to_metadata()["budget"]
+    base.update(build_federation_budget_metadata(envelopes=[envelope]))
+    base["_budget_overflow"] = {decision.domain: envelope.to_metadata()["overflow"]}
+    if envelope.truncated or envelope.rejected:
+        base["_truncated_domains"] = [decision.domain]
+    return base
 
 
 def _enforce_gateway_coupling(domain: str) -> None:

@@ -57,7 +57,13 @@ def get_federation_routing_metadata(user_text: str, *, route_family: str = "unkn
         from runtime.federation.role_router import build_routing_metadata
 
         intent = FederatedExecutionIntent(user_text=user_text or "", route_family=route_family or "unknown", request_id=request_id or "")
-        return build_routing_metadata(intent)
+        meta = build_routing_metadata(intent)
+        # Ensure context budget keys are present even when routing returns minimal.
+        meta.setdefault("_budget_consumed", {})
+        meta.setdefault("_budget_remaining", {})
+        meta.setdefault("_budget_overflow", {})
+        meta.setdefault("_truncated_domains", [])
+        return meta
     except Exception:
         # Never fail capability routing due to federation metadata.
         return {}
