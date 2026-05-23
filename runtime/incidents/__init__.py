@@ -41,6 +41,7 @@ __all__ = [
     "build_incident_hypotheses",
     "build_incident_recommendations",
     "build_blast_radius_summary",
+    "build_incident_intelligence_summary",
 ]
 
 
@@ -63,6 +64,7 @@ _LAZY = {
     "build_incident_hypotheses": ("runtime.incidents.incident_intelligence", "build_incident_hypotheses"),
     "build_incident_recommendations": ("runtime.incidents.incident_intelligence", "build_incident_recommendations"),
     "build_blast_radius_summary": ("runtime.incidents.incident_intelligence", "build_blast_radius_summary"),
+    "build_incident_intelligence_summary": ("runtime.incidents.incident_summary", "build_incident_intelligence_summary"),
 }
 
 

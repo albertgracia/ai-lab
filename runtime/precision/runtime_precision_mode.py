@@ -279,7 +279,7 @@ def build_runtime_precision_report(
         inventory = []
 
     try:
-        from runtime.reporting.reporting_engine import build_incident_intelligence_summary
+        from runtime.incidents.incident_summary import build_incident_intelligence_summary
         incidents = build_incident_intelligence_summary(extra_ctx=extra_ctx)
     except Exception:
         incidents = {}

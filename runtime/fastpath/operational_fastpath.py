@@ -211,7 +211,7 @@ def build_fast_operational_summary(
 
     incident_line = None
     try:
-        from runtime.reporting.reporting_engine import build_incident_intelligence_summary
+        from runtime.incidents.incident_summary import build_incident_intelligence_summary
         inc = build_incident_intelligence_summary(extra_ctx=extra_ctx)
         inc_data = inc.get("incidents", {}) or {}
         active = int(inc_data.get("active_incidents_total", 0) or 0)

@@ -257,11 +257,9 @@ def profile_reporting_latency(extra_ctx: dict[str, Any] | None = None, sensor_sn
 
     def _build():
         start = time.perf_counter()
-        try:
-            from runtime.reporting import build_operational_report
-            build_operational_report(sensor_snapshot=sensor_snapshot, mode="compact")
-        except Exception:
-            pass
+        # Reporting is a consumer of performance facts. Do not import reporting
+        # here; keep the key for contract stability and mark it decoupled.
+        _ = (extra_ctx, sensor_snapshot)
         return round((time.perf_counter() - start) * 1000.0, 2)
 
     ms, used_cache = _get_cached("latency:reporting", _build, ttl_s=3)
@@ -269,6 +267,7 @@ def profile_reporting_latency(extra_ctx: dict[str, Any] | None = None, sensor_sn
         "contract_version": PERFORMANCE_CONTRACT_VERSION,
         "reporting_ms": float(ms),
         "used_cache": used_cache,
+        "measurement": "decoupled",
         "generated_at": _now(),
     }
 
@@ -443,7 +442,7 @@ def build_fast_operational_summary(intent: str, *, extra_ctx: dict[str, Any] | N
     elif intent == "observability":
         def _obs():
             try:
-                from runtime.reporting.reporting_engine import build_live_observability_summary
+                from runtime.observability.live_observability_summary import build_live_observability_summary
                 return build_live_observability_summary(extra_ctx=extra_ctx)
             except Exception:
                 return {}

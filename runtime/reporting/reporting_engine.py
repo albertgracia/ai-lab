@@ -790,42 +790,10 @@ def build_validation_summary(
 def build_live_observability_summary(
     extra_ctx: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Expose live observability diagnostics for operational reporting.
+    """Compatibility wrapper for observability-produced facts."""
+    from runtime.observability.live_observability_summary import build_live_observability_summary as _build
 
-    Network calls are disabled by default unless AI_LAB_ENABLE_LIVE_OBSERVABILITY_NETWORK=true.
-    Unknown > inventado.
-    """
-    extra_ctx = extra_ctx or {}
-    try:
-        from runtime.observability import run_live_observability_diagnostics
-        rep = run_live_observability_diagnostics(extra_ctx=extra_ctx)
-        score = rep.get("score", {}) or {}
-        incidents = rep.get("incidents", {}) or {}
-        staleness = rep.get("authority_staleness", {}) or {}
-        exporters = rep.get("exporters", {}) or {}
-        scrape = rep.get("scrape", {}) or {}
-
-        return {
-            "contract_version": rep.get("contract_version", "OBS-34B"),
-            "live_observability_score": score.get("live_observability_score", 0.0),
-            "live_observability_level": score.get("live_observability_level", "unknown"),
-            "highest_incident_severity": incidents.get("highest_severity", "info"),
-            "incidents_total": incidents.get("incidents_total", 0),
-            "authority_freshness": staleness.get("authority_freshness", "unknown"),
-            "scrape_failures_total": scrape.get("scrape_failures_total", 0),
-            "exporter_unreachable_total": (exporters.get("summary", {}) or {}).get("unreachable_total", 0),
-            "exporter_flapping_total": (((exporters.get("summary", {}) or {}).get("flapping", {}) or {}).get("flapping_total", 0)),
-            "deterministic_signature": rep.get("deterministic_signature"),
-        }
-    except Exception as exc:
-        return {
-            "contract_version": "OBS-34B",
-            "live_observability_score": 0.0,
-            "live_observability_level": "unknown",
-            "incidents_total": 0,
-            "authority_freshness": "unknown",
-            "error": str(exc),
-        }
+    return _build(extra_ctx=extra_ctx)
 
 # ── FASE 34C: Runtime performance summary integration ───────────────
 
@@ -1110,48 +1078,7 @@ def build_incident_intelligence_summary(
     extra_ctx: dict[str, Any] | None = None,
     sensor_snapshot: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """FASE 36A: compact incident intelligence summary for operational reports.
+    """Compatibility wrapper for incidents-produced facts."""
+    from runtime.incidents.incident_summary import build_incident_intelligence_summary as _build
 
-    Includes DEV-36X codebase dependency/ownership enrichment.
-    """
-    extra_ctx = extra_ctx or {}
-    sensor_snapshot = sensor_snapshot or {}
-    try:
-        from runtime.incidents import build_incident_intelligence_report
-        rep = build_incident_intelligence_report(extra_ctx=extra_ctx, sensor_snapshot=sensor_snapshot)
-
-        # DEV-36X: enrich with codebase dependency/ownership context
-        codebase_enrichment: dict[str, Any] = {}
-        try:
-            from runtime.codebase import build_codebase_summary, build_codebase_ownership
-            cb = build_codebase_summary(extra_ctx=extra_ctx)
-            co = build_codebase_ownership(extra_ctx=extra_ctx)
-            codebase_enrichment = {
-                "structural_health_score": (cb.get("score", {}) or {}).get("structural_health_score", 0.0),
-                "structural_health_level": (cb.get("score", {}) or {}).get("level", "unknown"),
-                "modules_total": (cb.get("score", {}) or {}).get("modules_total", 0),
-                "ownership_domains": co.get("domains_total", 0),
-                "hotspots": (cb.get("summary", {}) or {}).get("hotspots", []),
-            }
-        except Exception:
-            codebase_enrichment = {"error": "codebase module unavailable"}
-
-        return {
-            "contract_version": "36A",
-            "incidents": {
-                "active_incidents_total": rep.get("incident_count", 0),
-                "highest_severity": rep.get("highest_severity", "info"),
-                "affected_domains": rep.get("affected_domains", []),
-            },
-            "blast_radius": rep.get("blast_radius_summary", {}),
-            "correlations_total": len(rep.get("correlation_results", []) or []),
-            "recommendations_total": rep.get("recommendations_total", 0),
-            "codebase": codebase_enrichment,
-            "deterministic_signature": rep.get("deterministic_signature"),
-        }
-    except Exception as exc:
-        return {
-            "contract_version": "36A",
-            "incidents": {"active_incidents_total": 0, "highest_severity": "unknown", "affected_domains": []},
-            "codebase": {"error": str(exc)},
-        }
+    return _build(extra_ctx=extra_ctx, sensor_snapshot=sensor_snapshot)
