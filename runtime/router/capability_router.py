@@ -63,6 +63,25 @@ def get_federation_routing_metadata(user_text: str, *, route_family: str = "unkn
         meta.setdefault("_budget_remaining", {})
         meta.setdefault("_budget_overflow", {})
         meta.setdefault("_truncated_domains", [])
+
+        # CORE-HARDENING-FEDERATION-GUARDS-01: ensure guard metadata is present.
+        try:
+            from runtime.federation.federation_guards import build_guard_summary, validate_federation_metadata
+
+            guard = validate_federation_metadata(meta)
+            meta.setdefault("_federation_guard", build_guard_summary(guard))
+            # If role_router already set guard metadata, do not overwrite.
+            for k, v in guard.to_metadata().items():
+                meta.setdefault(k, v)
+        except Exception:
+            meta.setdefault("_federation_guard", {"contract_version": "GUARDS-01", "status": "degraded", "degraded": True})
+            meta.setdefault("_guard_status", "degraded")
+            meta.setdefault("_guard_degraded", True)
+            meta.setdefault("_guard_reason_codes", ["guard_exception"])
+            meta.setdefault(
+                "_guard_violations",
+                [{"code": "guard_exception", "severity": "critical", "message": "guard exception (caught)", "evidence": {}}],
+            )
         return meta
     except Exception:
         # Never fail capability routing due to federation metadata.

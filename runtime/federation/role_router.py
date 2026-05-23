@@ -29,6 +29,7 @@ from runtime.federation.federation_observability import (
     FederationPropagationTrace,
     record_propagation_trace,
 )
+from runtime.federation.federation_guards import build_guard_summary, validate_federation_metadata
 
 
 _REMEDIATION_MARKERS = (
@@ -263,6 +264,19 @@ def build_routing_metadata(intent: FederatedExecutionIntent) -> dict:
             path_depth=1,
         )
     )
+
+    # CORE-HARDENING-FEDERATION-GUARDS-01: fail-safe validation of federation metadata.
+    try:
+        guard = validate_federation_metadata(base)
+        base["_federation_guard"] = build_guard_summary(guard)
+        base.update(guard.to_metadata())
+    except Exception:
+        # Never leak guard exceptions.
+        base["_federation_guard"] = {"contract_version": "GUARDS-01", "status": "degraded", "degraded": True}
+        base["_guard_status"] = "degraded"
+        base["_guard_degraded"] = True
+        base["_guard_reason_codes"] = ["guard_exception"]
+        base["_guard_violations"] = [{"code": "guard_exception", "severity": "critical", "message": "guard exception (caught)", "evidence": {}}]
     return base
 
 
