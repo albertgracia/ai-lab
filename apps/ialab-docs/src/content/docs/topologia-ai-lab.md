@@ -1,22 +1,34 @@
 ---
 title: "Topología AI-LAB"
-summary: "Diagrama de alto nivel del flujo OpenCode, router y nodos GPU."
+summary: "Diagrama real de alto nivel: clientes, gateway, truth layers, backend de inferencia, observabilidad y cognición estructural."
 order: 2
 ---
 
 ```mermaid
 flowchart LR
-    User[Usuario / OpenCode] --> Router[AI-LAB Router API]
+  U[Usuario / OpenCode / OpenWebUI] --> G[Gateway :8008]
+  G --> LM[LM Studio :1234\nRX9070]
+  G --> FP[FastPath 35D]
+  G --> OI[Operator Intent 36C\n_operator_intent]
 
-    Router --> RX9070[Gaming PC RX9070]
-    Router --> RX7900[Gaming PC RX7900XT]
+  subgraph AUTH[Authority]
+    PROM[Prometheus :9090] --> GRAF[Grafana :3000]
+  end
 
-    RX9070 --> LM1[LM Studio]
-    RX7900 --> LM2[LM Studio]
+  PROM --> G
 
-    Router --> Docker[Docker Stack]
+  subgraph OT[OperationalTruth]
+    SF[Sensor fusion + topology + maturity]
+  end
+  PROM --> SF
+  SF --> G
 
-    Docker --> Traefik[Traefik]
-    Docker --> Qdrant[Qdrant]
-    Docker --> WebUI[Open WebUI]
+  subgraph SC[Structural Cognition]
+    GN[GitNexus :4747]\n(codebase truth)
+  end
+  GN --> G
+
+  Q[Qdrant :6333]\n(memory layer) --> G
+  INV[RX7900XT :1234]\nexpected_offline (inventory):::inv
+  classDef inv fill:#fff6f6,stroke:#d33,stroke-width:1px;
 eof

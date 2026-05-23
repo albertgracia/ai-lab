@@ -29,6 +29,21 @@ runtime/codebase/
 └── gitnexus_memory.py       # AST scanner, graph builder, risk engine
 ```
 
+## Diagrama: GitNexus Structural Cognition Flow
+
+```mermaid
+flowchart TD
+  SRC[/runtime/*.py/] --> IDX[npx gitnexus analyze\n(index-only)]
+  IDX --> GRAPH[Structural graph\n(nodes/edges/clusters/flows)]
+  GRAPH --> SIG[Signals\n(hotspots, coupling, blast radius, drift)]
+  SIG --> INC[Incident intelligence\n(enrichment)]
+  SIG --> GOV[Governance / Validation\n(risk gates)]
+  SIG --> REP[Reporting\n(operator summary)]
+
+  NOTE[.gitnexusignore\n(governance)] -.-> IDX
+  STATE[runtime/state/*] -. excluded .-> IDX
+```
+
 ### Separación de Verdad
 
 AI-LAB mantiene tres capas de verdad independientes:

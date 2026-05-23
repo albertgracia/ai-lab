@@ -11,6 +11,8 @@ order: 2
 - **Archive governance** — manifests, exclusiones, recursividad y storage hygiene como parte del runtime governance
 - **Governance visibility** (FASE 30E) — transparencia de decisiones de gobernanza
 - **Tool policies** (FASE 22A-22B) — 3 modos de tools, bash sanitizer, confirmation gate
+- **Operational Truth vs Discoverable** — separación active/loaded/discoverable/disabled y anti-drift.
+- **Worktree governance** — reglas de staging, runtime/state, commits y tags.
 
 ## Principios
 
@@ -20,6 +22,6 @@ order: 2
 - Toda decisión de governance debe ser visible
 - Confianza per-domain, no global
 
-## Checkpoint actual
+## Estado
 
-**CP-30I-D-SENSOR-SEMANTICS-NORMALIZED-STABLE** — trust boundaries normalizadas, confidence por dominio y evidence catalog alineado con sensor summaries.
+Governance se aplica como disciplina transversal: evidencia, confianza por dominio, límites de autoridad y trazabilidad de cambios.

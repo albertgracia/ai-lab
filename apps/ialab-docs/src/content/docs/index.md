@@ -6,13 +6,13 @@ order: 1
 
 ## Qué contiene
 
-- **Runtime**: estado actual, capa de madurez, sensor fusion, semántica de sensores y contrato `OBSERVED_RUNTIME`.
-- **Architecture**: observability fabric, pipeline de sensor fusion, reporting evidence-bound, storage archive policy y baseline pre-Multi-GPU.
+- **Runtime**: estado actual, madurez, sensor fusion, semántica, authority/precision y contratos operacionales.
+- **Architecture**: dominios reales (bounded contexts), truth layers, evidence-bound runtime, baseline pre-Multi-GPU.
 - **Observability**: Prometheus, GPU metrics, dominios de sensores, dashboards y calidad de fuentes.
-- **Governance**: enforcement, trust boundaries y archive governance.
+- **Governance**: trust boundaries, operational truth, confidence semantics, worktree governance.
 - **Experiments**: burn-ins y validaciones de grounding para qwen y summaries GPU.
 - **Schemas**: contratos normalizados de `OBSERVED_RUNTIME`, `sensor_snapshot`, `gpu_operational_summary` y archive manifests.
-- **Roadmap**: baseline pre-Multi-GPU y readiness de FASE 31.
+- **Roadmap**: stabilization-first, governance-first y preparación pre-Multi-GPU (sin prometer scheduler inmediato).
 
 ## Fases cubiertas
 
@@ -25,6 +25,16 @@ order: 1
 - `30I-D` — Sensor Semantics Normalization
 - `STORAGE-HARDENING` — External Archive Policy
 
+## Alineación reciente
+
+- `35C` — Authority-backed cognition
+- `36A` — Operational incident intelligence
+- `36B` — Precision semantics
+- `36C` — Operator intent reasoning (metadata, no ejecución)
+- `ARCH-STABILIZATION-PASS-01`
+- `WORKTREE-GOVERNANCE-CLEANUP`
+- `OBS-HF-LMSTUDIO-OPERATIONAL-TRUTH`
+
 ## Nuevas secciones
 
 - **Codebase Structural Cognition**: integración GitNexus, dependency graph, blast radius, ownership, structural risk scoring.
@@ -35,15 +45,18 @@ order: 1
 
 - `DEV-36X` — Codebase Memory Integration (GitNexus, dependency graph, blast radius, ownership, structural cognition)
 
-## Checkpoint actual
-
-**CP-DOC-36X-GITNEXUS-STRUCTURAL-COGNITION-STABLE**
-
 ## Estado estable
 
-AI-LAB ya no opera solo como LLM + routing + prompts. Opera como runtime observacional cognitivo con evidencia respaldada por Prometheus, sensor fusion, reporting evidence-bound, semántica de GPUs y governance de storage.
+AI-LAB ya no opera como “LLM + prompts”. Opera como runtime **evidence-bound** con:
+
+- autoridad (Prometheus) separada de cognición,
+- verdad operacional semántica (OperationalTruth),
+- cognición estructural (GitNexus) como señal complementaria,
+- governance explícita y verificable,
+- y routing determinista con fastpath operacional.
 
 ## Próximos pasos
 
-- Refinar presentación de respuestas cortas GPU sobre el contrato 30I-D.
-- Mantener baseline estable antes de reactivar trabajo Multi-GPU.
+- Consolidar documentación de domains reales (authority/precision/operator_intent).
+- Madurar memoria (Qdrant) con governance clara: implemented vs experimental vs planned.
+- Mantener baseline estable antes de reactivar Multi-GPU.

@@ -1,26 +1,28 @@
 ---
 title: "Servicios Persistentes (systemd)"
-summary: "Servicios systemd del AI-LAB y gestiÃ³n de arranque."
+summary: "Servicios systemd del AI-LAB y gestión de arranque (core runtime + docs + métricas)."
 order: 12
 ---
 
 ## Servicios Activos
 
-| Servicio | Puerto | DescripciÃ³n | Estado |
+| Servicio | Puerto | Descripción | Estado |
 |---|---|---|---|
-| `ailab-traefik.service` | 80/443 | Proxy inverso Traefik (Docker compose wrapper) | âœ… Enabled |
-| `ailab-gateway.service` | 8008 | Gateway OpenAI-compatible con sanitizaciÃ³n | âœ… Enabled |
-| `ailab-router.service` | 8083 | Router API cognitivo FastAPI | âœ… Enabled |
-| `ailab-live-state.service` | â€” | Snapshots de estado del sistema cada 5s | âœ… Enabled |
-| `ailab-heartbeat.service` | â€” | Heartbeat persistente del cluster (30s) | âœ… Enabled |
-| `ailab-live-api.service` | 8084 | Live API (status.json, topology, SSE) | âœ… Enabled |
-| `ailab-docs.service` | 4322 | Portal de documentaciÃ³n Astro | âœ… Enabled |
+| `ailab-gateway.service` | 8008 | Gateway OpenAI-compatible con sanitización | ✅ Enabled |
+| `ailab-router.service` | 8083 | Router API (API interna) | ✅ Enabled |
+| `ailab-live-state.service` | — | Snapshots de estado del sistema | ✅ Enabled |
+| `ailab-heartbeat.service` | — | Heartbeat persistente del cluster | ✅ Enabled |
+| `ailab-live-api.service` | 8084 | Live API (estado vivo, embeddings) | ✅ Enabled |
+| `ailab-docs.service` | 4322 | Portal de documentación Astro (privado) | ✅ Enabled |
+| `ailab-metrics.service` | 3010 | Dashboard SSR (público) | ✅ Enabled |
 
-## GestiÃ³n
+Nota: stacks externos (p.ej. reverse proxy) pueden existir, pero no forman parte del core runtime salvo que estén en el flujo de autoridad/evidencia.
+
+## Gestión
 
 ```bash
 # Estado de todos los servicios
-echo '19682507' | sudo -S systemctl status ailab-*
+systemctl status ailab-*
 
 # Reiniciar un servicio
 sudo systemctl restart ailab-gateway.service
@@ -36,10 +38,9 @@ sudo systemctl disable ailab-gateway.service
 ## Dependencias
 
 `ailab-router.service` depende de `ailab-gateway.service` (After).
-`ailab-traefik.service` depende de `docker.service` y `network-online.target`.
-Todos dependen de `network-online.target`.
+Todos los servicios core dependen de `network-online.target`.
 
-## LÃ­mites de Recursos
+## Límites de Recursos
 
 | Servicio | MemoryMax |
 |---|---|
@@ -49,21 +50,20 @@ Todos dependen de `network-online.target`.
 | ailab-heartbeat | 128M |
 | ailab-live-api | 128M |
 | ailab-docs | 512M |
-| ailab-traefik | Sin lÃ­mite (Docker) |
+| (stacks externos) | N/A |
 
-## RecuperaciÃ³n Post-Reboot
+## Recuperación Post-Reboot
 
-Todos los servicios systemd arrancan automÃ¡ticamente al iniciar el sistema.
+Todos los servicios systemd arrancan automáticamente al iniciar el sistema.
 Adicionalmente, el script `scripts/startup.sh` se ejecuta via cron `@reboot`
-para verificar que todos los stacks Docker (Traefik, Prometheus) tambiÃ©n
-estÃ©n operativos:
+para verificar que los componentes externos necesarios también estén operativos:
 
 ```bash
-# Verificar Ãºltimo arranque
+# Verificar último arranque
 cat /opt/ai-lab/logs/startup.log
 
 # Ejecutar manualmente
 /opt/ai-lab/scripts/startup.sh
 ```
 
-Para mÃ¡s detalles, consultar el runbook de post-reboot y el incidente registrado.
+Para más detalles, consultar el runbook de post-reboot y el incidente registrado.

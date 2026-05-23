@@ -1,12 +1,20 @@
 ---
 title: "Roadmap"
-summary: "Roadmap técnico actualizado a FASE 28.4 — Tool Contracts & Cross-Plan GC, execution governance y GC dry-run."
+summary: "Roadmap realista stabilization-first: authority + precision + governance + burn-in + memory maturity antes de reactivar Multi-GPU."
 order: 8
 ---
 
-## Estado actual
+## Estado actual (real)
 
-**Checkpoint:** CP-28.4-TOOL-CONTRACTS-CROSSPLAN-GC-STABLE
+AI-LAB está en modo **stabilization-first** y **governance-first** tras:
+
+- ARCH-STABILIZATION-PASS-01
+- 36A (incident intelligence)
+- DEV-36X / DOC-36X (GitNexus structural cognition)
+- 36B (precision semantics)
+- OBS-HF-LMSTUDIO-OPERATIONAL-TRUTH
+- WORKTREE-GOVERNANCE-CLEANUP
+- 36C (operator intent reasoning)
 
 ### Completado (21 fases desde 30I-D)
 
@@ -33,13 +41,20 @@ order: 8
 | 33B — Runtime Pre-Pilot Validation Framework | ✅ |
 | 28.4 — Tool Contracts & Cross-Plan GC | ✅ |
 
-### Próxima fase
-**Pilot técnico**
+## Próximas prioridades
 
-### Roadmap futuro
+1. Semantic stabilization (contratos y semántica operativa consistente)
+2. Authority hardening (freshness/gaps/confidence por dominio)
+3. Precision semantics (degradación segura, conflict handling)
+4. Burn-in operacional y cognitivo (no solo tests)
+5. Memory maturity (Qdrant governance, recall ROI, contaminación)
+6. Distributed cognition (topología + dominios + authority chain)
+
+## Roadmap futuro
+
 - Pilot técnico
 - Pilot operador
-- Multi-GPU (posterior)
+- Multi-GPU federation (futuro)
 
 ### Multi-GPU
 No documentado como funcionalidad operativa cerrada. Pendiente de:

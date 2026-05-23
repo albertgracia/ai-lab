@@ -4,6 +4,11 @@ summary: "Diseño y plan de implementación para HARD FACTS estructurado en JSON
 order: 18
 ---
 
+> Nota: este documento es **research histórico** (plan/hipótesis). Para el estado real implementado hoy, ver:
+>
+> - `/docs/memory/qdrant-memory-layer`
+> - `/docs/runtime-truth-layers`
+
 ## 1. Motivación
 
 El bloque HARD FACTS actual es texto plano. El modelo lo parsea línea por línea

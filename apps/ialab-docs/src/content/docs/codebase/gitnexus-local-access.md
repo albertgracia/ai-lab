@@ -74,3 +74,8 @@ En el host AI-LAB:
 - GitNexus es **codebase structural truth**.
 - Prometheus sigue siendo **runtime authority**.
 - Este fix es UI/cliente, no cambia el runtime.
+
+## Governance (.gitnexusignore)
+
+- `.gitnexusignore` es parte de la disciplina: excluye `runtime/state/*` y otros artefactos no versionables.
+- El objetivo es evitar indexar estado vivo o datos pesados que distorsionan el grafo.

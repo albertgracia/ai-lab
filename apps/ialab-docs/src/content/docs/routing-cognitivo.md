@@ -1,19 +1,18 @@
 ---
 title: "Routing Cognitivo"
-summary: "Sistema de decisión inteligente del AI-LAB."
+summary: "Routing determinista del runtime AI-LAB: route families, perfiles, fastpath, autoridad/precisión y reglas de escalación."
 order: 6
 ---
 
-El Routing Cognitivo es el sistema de decisión central del AI-LAB.
+El routing del runtime AI-LAB es **determinista**: el LLM no decide qué ruta o modelo se usa.
 
-Su función es determinar:
+Su función es seleccionar **route family** y aplicar perfiles/guards para:
 
-- qué modelo usar
-- qué GPU utilizar
-- cómo distribuir inferencia
-- qué contexto recuperar
-- cuándo usar grounding
-- cómo optimizar recursos
+- elegir modelo (según intención y políticas)
+- decidir si aplica fastpath
+- aplicar profiles (tokens/temp/tools/memory)
+- aplicar evidence/grounding y governance
+- mantener separación active/loaded/discoverable/disabled
 
 ---
 
@@ -30,48 +29,28 @@ Seleccionar automáticamente:
 
 ---
 
-# Flujo conceptual
+# Flujo (real)
 
 ```mermaid
-graph TD
+flowchart TD
+  U[Usuario] --> G[Gateway :8008]
+  G --> C[Classifier\n(route family + reasons)]
 
-A[Usuario] --> B[Router API / Gateway]
+  C -->|saludos / lightweight| MIN[minimal/observe\nllama-3.1-8b]
+  C -->|coding / architecture / report| HEAVY[report/coding\nqwen2.5-coder-14b]
+  C -->|operational intent + tools| FP[tool_fastpath\noperational]
 
-B --> C[Classifier: greeting/casual/report/observe/tool/general]
-
-C --> D[minimal/casual/greet/observe]
-C --> E[fast/general/chat]
-C --> F[coding]
-C --> G[reasoning]
-C --> H[tool_use/tool_fastpath]
-
-D --> I[observe_profile → llama-3.1-8b]
-E --> J[chat_profile → qwen2.5-14b]
-F --> K[coding_profile → qwen2.5-14b]
-G --> L[analysis_profile → qwen2.5-32b]
-H --> M[agent_profile → qwen3.6-27b]
-
-I --> N[disabled_policy → sin tools]
-J --> N
-K --> O[readonly_policy → tools limitadas]
-L --> N
-M --> P[agent_policy → tools completas + 428 gate]
-
-N --> Q[minimal_policy → sin memoria]
-O --> Q
-P --> R[full_policy → memoria completa]
-
-Q --> S[LM Studio RX9070]
-R --> S
-S --> T[Respuesta]
+  MIN --> LM[LM Studio :1234]
+  HEAVY --> LM
+  FP --> OT[OperationalTruth\n(sensor fusion)]
+  OT --> G
+  LM --> G
+  G --> U
 ```
 
-## Perfiles por ruta
+## Reglas clave
 
-| Ruta | Perfil | Modelo | Tools | Memoria |
-|------|--------|--------|-------|---------|
-| minimal/casual/greeting/observe | observe | llama-3.1-8b | disabled | minimal |
-| fast/general/chat | chat | qwen2.5-14b | disabled | light |
-| coding | coding | qwen2.5-14b | readonly | light |
-| reasoning | analysis | qwen2.5-32b | disabled | full |
-| tool_use/tool_fastpath | agent | qwen3.6-27b | agentic | full |
+- **Fastpath primero**: preguntas operacionales (runtime/GPUs/observabilidad) se responden compacto y evidence-bound.
+- **Escalación controlada**: qwen se reserva para intentos con razones explícitas (p.ej. coding/architecture/diagnostic).
+- **Authority y precision**: si falta evidencia, se responde `NO DISPONIBLE` o se marca degradación; nunca se inventa infraestructura.
+- **Operator intent (36C)**: se adjunta como metadata (`_operator_intent`) para guiar formato/seguridad, sin ejecución.

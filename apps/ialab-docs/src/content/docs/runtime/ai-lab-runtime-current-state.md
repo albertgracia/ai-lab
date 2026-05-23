@@ -96,4 +96,11 @@ CP-30I-RUNTIME-SENSOR-FUSION-STABLE
 
 ## Fase actual
 
-**30I** — Runtime Sensor Fusion. 186 tests PASS. 30 tags desde CP-21B-STABLE.
+El baseline observacional se apoya en 30I-D (sensor semantics). Sobre ese baseline, el runtime añadió:
+
+- 35C: authority-backed cognition
+- 36A: incident intelligence
+- 36B: precision semantics
+- 36C: operator intent reasoning (metadata)
+
+Multi-GPU sigue pospuesto: RX7900XT permanece como inventario expected_offline.

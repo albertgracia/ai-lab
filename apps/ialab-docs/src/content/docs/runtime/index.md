@@ -12,6 +12,9 @@ order: 2
 - **Runtime Sensor Semantics**: normalización 30I-D de observed vs derived, freshness, confidence y source_of_truth.
 - **GPU Operational Summaries**: summaries compactos para respuestas cortas GPU.
 - **Observed Runtime Contract**: contrato de `OBSERVED_RUNTIME` como interfaz cognitiva del runtime.
+- **Authority-Backed Cognition (35C)**: separación autoridad/cognición, freshness/gaps.
+- **Precision Semantics (36B)**: partial evidence, conflicts y degradación segura.
+- **Operator Intent Reasoning (36C)**: metadata determinista para intención operativa.
 
 ## Fases cubiertas
 
@@ -20,9 +23,12 @@ order: 2
 - `30I-C`
 - `30I-D`
 
-## Checkpoint actual
+## Alineación reciente
 
-**CP-30I-D-SENSOR-SEMANTICS-NORMALIZED-STABLE**
+- `35C` — Authority-backed cognition
+- `36A` — Operational incident intelligence
+- `36B` — Precision semantics
+- `36C` — Operator intent reasoning
 
 ## Estado estable
 
@@ -32,3 +38,4 @@ El runtime expone un contrato operativo suficiente para responder preguntas sobr
 
 - Afinar presentación compacta de respuestas GPU cortas.
 - Mantener la semántica estable como prerequisito para scheduler Multi-GPU.
+ - Consolidar autoridad + precisión como disciplina operacional (no solo docs).

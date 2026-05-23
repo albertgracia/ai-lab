@@ -1,22 +1,29 @@
 ---
 title: "Operación Privada AI-LAB"
-summary: "Runbook operativo interno del laboratorio AI-LAB."
+summary: "Runbook operativo interno (realineado): endpoints core, autoridad/precisión, fastpath, y verificación sin tocar runtime/state."
 order: 27
 ---
 
 > Documento interno operativo del laboratorio AI-LAB.
 
+> Nota: evita comandos destructivos y no versiona `runtime/state/*`. Para estado real del runtime, usa primero:
+> - `/docs/runtime/runtime-current-state`
+> - `GET http://127.0.0.1:8008/health`
+> - `GET http://127.0.0.1:8008/runtime/precision/score`
+> - `GET http://127.0.0.1:8008/runtime/authority/score`
+
 ---
 
-# Infraestructura Principal
+# Infraestructura Principal (estado esperado)
 
 | Servicio | Host | Puerto | Estado |
 |---|---|---|---|
 | AI-LAB Main Node | 192.168.1.30 | - | ONLINE |
-| Main LM Studio | 192.168.1.200 | 1234 | ONLINE |
+| LM Studio (backend activo) | 192.168.1.50 | 1234 | ONLINE |
 | GPU Node RX9070 | 192.168.1.50 | 1234 | ONLINE |
 | GPU Node RX7900XT | 192.168.1.60 | 1234 | OFFLINE |
-| Router API | 192.168.1.30 | 8008 | ONLINE |
+| Gateway (entrypoint chat) | 192.168.1.30 | 8008 | ONLINE |
+| Router API (interna) | 192.168.1.30 | 8083 | ONLINE |
 | OpenCode | 192.168.1.30 | 4096 | ONLINE |
 | Traefik | 192.168.1.30 | 80/443 | ONLINE |
 | Qdrant | 192.168.1.30 | 6333 | ONLINE |
@@ -25,32 +32,35 @@ order: 27
 
 ---
 
-# Router Cognitivo
+# Gateway (entrypoint)
 
 ## Estado
 
 Servicio:
 
 ```bash
-sudo systemctl status ialab-router-api
+sudo systemctl status ailab-gateway
 ```
 
 Restart:
 
 ```bash
-sudo systemctl restart ialab-router-api
+sudo systemctl restart ailab-gateway
 ```
 
 Logs:
 
 ```bash
-journalctl -u ialab-router-api -f
+journalctl -u ailab-gateway -f
 ```
 
 Health:
 
 ```bash
-curl http://127.0.0.1:8008/health
+curl -s http://127.0.0.1:8008/health | jq .
+
+curl -s http://127.0.0.1:8008/runtime/precision/score | jq .
+curl -s http://127.0.0.1:8008/runtime/authority/score | jq .
 ```
 
 Modelos:
