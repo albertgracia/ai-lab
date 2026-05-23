@@ -202,19 +202,43 @@ def build_fast_operational_summary(*, extra_ctx: dict[str, Any] | None = None, a
     authority = authority or _build_fastpath_authority_snapshot(extra_ctx=extra_ctx)
     fresh = authority.get("freshness", {}) or {}
     prom = authority.get("prometheus_targets", {}) or {}
+
+    incident_line = None
+    try:
+        from runtime.reporting.reporting_engine import build_incident_intelligence_summary
+        inc = build_incident_intelligence_summary(extra_ctx=extra_ctx)
+        inc_data = inc.get("incidents", {}) or {}
+        active = int(inc_data.get("active_incidents_total", 0) or 0)
+        sev = str(inc_data.get("highest_severity", "info"))
+        if active > 0:
+            incident_line = f"Incidents: {active} active [{sev}]"
+    except Exception:
+        pass
+
     header = "Operational summary"
     lines = _noc_lines(
         header,
-        f"Runtime: healthy_degraded",  # default; precise state comes from governance/validation
+        incident_line or "",
+        f"Runtime: healthy_degraded",
         f"Prometheus authority: {fresh.get('status', 'unknown')}",
         f"Targets: {prom.get('scrape_up', 0)}/{prom.get('active_total', 0)} UP",
         f"Exporters down: {prom.get('scrape_down', 0)}",
     )
+    signals: list[dict[str, Any]] = []
+    if incident_line:
+        signals.append(OperationalSignal(
+            domain="incidents",
+            severity=sev if sev in ("critical", "error", "warning", "info") else "info",
+            message=f"{active} active incidents",
+            evidence=["incident_intelligence"],
+            confidence="high",
+            freshness="fresh",
+        ).to_dict())
     summ = OperationalSummary(
         mode=str(extra_ctx.get("verbosity", "operational")),
         lines=lines,
-        signals=[],
-        deterministic_signature=_hash({"lines": lines, "authority": authority.get("deterministic_signature")}),
+        signals=signals,
+        deterministic_signature=_hash({"lines": lines, "signals": signals, "incident_line": incident_line, "authority": authority.get("deterministic_signature")}),
     ).to_dict()
     return summ
 

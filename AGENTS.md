@@ -514,9 +514,12 @@ FASE OBS-31A.5 → safe quick wins execution                        ✅ CP-OBS-3
 FASE 31B → runtime semantic maturity & degraded mode governance    ✅ CP-31B-RUNTIME-SEMANTIC-MATURITY-STABLE
 FASE 31B-HF1 → OpenCode runtime context alignment                   ✅ CP-31B-HF1-OPENCODE-CONTEXT-ALIGNMENT-STABLE
 FASE 31C → operational reporting discipline                          ✅ CP-31C-OPERATIONAL-REPORTING-DISCIPLINE-STABLE
+FASE 35C → live authority-backed cognition                            ✅ CP-35C-LIVE-AUTHORITY-BACKED-COGNITION-STABLE
+FASE 35D → operational fast-path                                       ✅ CP-35D-OPERATIONAL-FAST-PATH-STABLE
+FASE 36A → operational incident intelligence                           ✅ CP-36A-OPERATIONAL-INCIDENT-INTELLIGENCE-STABLE
 ```
 
-Tags git: 50 tags desde `CP-21B-STABLE` hasta `CP-31C-OPERATIONAL-REPORTING-DISCIPLINE-STABLE`.
+Tags git: desde `CP-21B-STABLE` hasta `CP-35D-OPERATIONAL-FAST-PATH-STABLE`.
 
 **Deuda saldada:** FASE 29.4.4-C — `/slo/health` ahora responde 200 siempre, con payload disabled cuando enforcement=false.
 
@@ -552,7 +555,7 @@ Tags git: 50 tags desde `CP-21B-STABLE` hasta `CP-31C-OPERATIONAL-REPORTING-DISC
 - models: `/mnt/ai-models`
 - archives: `/mnt/opencode/ai-lab-archives`
 
-**Próxima fase:** FASE 31C — Operational Reporting Discipline
+**Próxima fase:** FASE 36A — Operational Incident Intelligence
 
 ### Roadmap actual
 
@@ -913,3 +916,47 @@ El objetivo **no** es maximizar flexibilidad a costa de estabilidad. AI-LAB prio
 ### Próximo
 
 - FASE 28.4 (tool contracts, cross-plan GC) — pendiente
+
+<!-- gitnexus:start -->
+# GitNexus — Code Intelligence
+
+This project is indexed by GitNexus as **ai-lab** (10145 symbols, 15369 relationships, 206 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+
+> If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
+
+## Always Do
+
+- **MUST run impact analysis before editing any symbol.** Before modifying a function, class, or method, run `gitnexus_impact({target: "symbolName", direction: "upstream"})` and report the blast radius (direct callers, affected processes, risk level) to the user.
+- **MUST run `gitnexus_detect_changes()` before committing** to verify your changes only affect expected symbols and execution flows.
+- **MUST warn the user** if impact analysis returns HIGH or CRITICAL risk before proceeding with edits.
+- When exploring unfamiliar code, use `gitnexus_query({query: "concept"})` to find execution flows instead of grepping. It returns process-grouped results ranked by relevance.
+- When you need full context on a specific symbol — callers, callees, which execution flows it participates in — use `gitnexus_context({name: "symbolName"})`.
+
+## Never Do
+
+- NEVER edit a function, class, or method without first running `gitnexus_impact` on it.
+- NEVER ignore HIGH or CRITICAL risk warnings from impact analysis.
+- NEVER rename symbols with find-and-replace — use `gitnexus_rename` which understands the call graph.
+- NEVER commit changes without running `gitnexus_detect_changes()` to check affected scope.
+
+## Resources
+
+| Resource | Use for |
+|----------|---------|
+| `gitnexus://repo/ai-lab/context` | Codebase overview, check index freshness |
+| `gitnexus://repo/ai-lab/clusters` | All functional areas |
+| `gitnexus://repo/ai-lab/processes` | All execution flows |
+| `gitnexus://repo/ai-lab/process/{name}` | Step-by-step execution trace |
+
+## CLI
+
+| Task | Read this skill file |
+|------|---------------------|
+| Understand architecture / "How does X work?" | `.claude/skills/gitnexus/gitnexus-exploring/SKILL.md` |
+| Blast radius / "What breaks if I change X?" | `.claude/skills/gitnexus/gitnexus-impact-analysis/SKILL.md` |
+| Trace bugs / "Why is X failing?" | `.claude/skills/gitnexus/gitnexus-debugging/SKILL.md` |
+| Rename / extract / split / refactor | `.claude/skills/gitnexus/gitnexus-refactoring/SKILL.md` |
+| Tools, resources, schema reference | `.claude/skills/gitnexus/gitnexus-guide/SKILL.md` |
+| Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
+
+<!-- gitnexus:end -->

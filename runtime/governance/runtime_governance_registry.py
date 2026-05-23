@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import threading
 import time
 from typing import Any
 
@@ -15,6 +16,8 @@ from runtime.governance.contracts import (
     GovernanceContractRegistry,
     GOVERNANCE_CONTRACT_VERSION,
 )
+
+_RECURSION_GUARD = threading.local()
 
 GOVERNANCE_DOMAINS = [
     "runtime", "topology", "observability", "reporting",
@@ -799,6 +802,41 @@ def build_runtime_governance_registry(
         pass
 
     result["drift"] = drift
+
+    # ── FASE 36A: Incident intelligence pressure ─────────────────────
+    # Re-entrance guard: incident intelligence calls validation detection,
+    # which calls this registry. Prevent infinite recursion.
+    _guard = getattr(_RECURSION_GUARD, "in_governance", False)
+    if not _guard:
+        _RECURSION_GUARD.in_governance = True
+        try:
+            from runtime.incidents import build_incident_intelligence_report
+            inc = build_incident_intelligence_report(extra_ctx=extra_ctx, sensor_snapshot=sensor_snapshot)
+            result["incident_pressure"] = {
+                "contract_version": "36A",
+                "active_incidents_total": inc.get("incident_count", 0),
+                "highest_severity": inc.get("highest_severity", "info"),
+                "affected_domains": inc.get("affected_domains", []),
+                "blast_radius_entries_total": (inc.get("blast_radius_summary", {}) or {}).get("blast_radius_entries", 0),
+            }
+        except Exception:
+            result["incident_pressure"] = {
+                "contract_version": "36A",
+                "active_incidents_total": 0,
+                "highest_severity": "unknown",
+                "affected_domains": [],
+                "blast_radius_entries_total": 0,
+            }
+        finally:
+            _RECURSION_GUARD.in_governance = False
+    else:
+        result["incident_pressure"] = {
+            "contract_version": "36A",
+            "active_incidents_total": 0,
+            "highest_severity": "info",
+            "affected_domains": [],
+            "blast_radius_entries_total": 0,
+        }
 
     try:
         from runtime.telemetry.prometheus_metrics import record_governance_metrics

@@ -1016,3 +1016,34 @@ def build_execution_governance_summary() -> dict[str, Any]:
         "gc": gc,
         "safe_to_execute": bool(tool_gov.get("invalid_tool_contracts_total", 0) == 0) and bool(gc.get("gc_safety_level") in ("high", "medium")),
     }
+
+
+def build_incident_intelligence_summary(
+    *,
+    extra_ctx: dict[str, Any] | None = None,
+    sensor_snapshot: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """FASE 36A: compact incident intelligence summary for operational reports."""
+    extra_ctx = extra_ctx or {}
+    sensor_snapshot = sensor_snapshot or {}
+    try:
+        from runtime.incidents import build_incident_intelligence_report
+        rep = build_incident_intelligence_report(extra_ctx=extra_ctx, sensor_snapshot=sensor_snapshot)
+        return {
+            "contract_version": "36A",
+            "incidents": {
+                "active_incidents_total": rep.get("incident_count", 0),
+                "highest_severity": rep.get("highest_severity", "info"),
+                "affected_domains": rep.get("affected_domains", []),
+            },
+            "blast_radius": rep.get("blast_radius_summary", {}),
+            "correlations_total": len(rep.get("correlation_results", []) or []),
+            "recommendations_total": rep.get("recommendations_total", 0),
+            "deterministic_signature": rep.get("deterministic_signature"),
+        }
+    except Exception as exc:
+        return {
+            "contract_version": "36A",
+            "incidents": {"active_incidents_total": 0, "highest_severity": "unknown", "affected_domains": []},
+            "error": str(exc),
+        }

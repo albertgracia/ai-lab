@@ -123,6 +123,10 @@ runtime/*
 !runtime/observability/loki_audit.py
 !runtime/observability/metric_inventory.py
 !runtime/ui_alignment_validator.py
+!runtime/incidents/
+!runtime/incidents/__init__.py
+!runtime/incidents/contracts.py
+!runtime/incidents/incident_intelligence.py
 !runtime/governance/
 !runtime/governance/__init__.py
 !runtime/governance/contracts.py

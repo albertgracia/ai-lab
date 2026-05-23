@@ -62,6 +62,9 @@ def build_runtime_cognitive_summary(
     fastpath_signals = compress_fastpath_signals(sensor_snapshot, extra_ctx)
     all_signals.extend(fastpath_signals)
 
+    incident_signals = compress_incident_signals(sensor_snapshot, extra_ctx)
+    all_signals.extend(incident_signals)
+
     if not all_signals:
         unavailable.append("all_domains")
 
@@ -1191,6 +1194,79 @@ def build_actionable_summary(
         }
 
     return result
+
+
+def compress_incident_signals(
+    sensor_snapshot: dict[str, Any],
+    extra_ctx: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """FASE 36A: surface incident intelligence signals."""
+    signals: list[dict[str, Any]] = []
+    extra_ctx = extra_ctx or {}
+    _ = sensor_snapshot
+
+    try:
+        from runtime.incidents import build_incident_intelligence_report
+        rep = build_incident_intelligence_report(extra_ctx=extra_ctx, sensor_snapshot={})
+        count = int(rep.get("incident_count", 0) or 0)
+        highest = rep.get("highest_severity", "info")
+        affected = rep.get("affected_domains", []) or []
+
+        if count > 0:
+            sev = "critical" if highest in ("critical", "high") else "warning" if highest == "medium" else "info"
+            msg = f"incidents: {count} active, highest={highest}, domains={', '.join(affected[:4])}"
+            signals.append({
+                "domain": "incidents",
+                "severity": sev,
+                "message": msg,
+                "evidence": ["incident_intelligence_36a"],
+                "confidence": "high" if count > 0 else "medium",
+                "freshness": "fresh",
+            })
+        else:
+            signals.append({
+                "domain": "incidents",
+                "severity": "info",
+                "message": "no active incidents",
+                "evidence": ["incident_intelligence_36a"],
+                "confidence": "high",
+                "freshness": "fresh",
+            })
+
+        blast = rep.get("blast_radius_summary", {}) or {}
+        br_entries = int(blast.get("blast_radius_entries", 0) or 0)
+        if br_entries > 0:
+            signals.append({
+                "domain": "incidents",
+                "severity": "warning" if br_entries > 3 else "info",
+                "message": f"blast radius: {br_entries} entries across {len(blast.get('affected_domains', []))} domains",
+                "evidence": ["incident_intelligence_36a"],
+                "confidence": "medium",
+                "freshness": "fresh",
+            })
+
+        correlations = rep.get("correlation_results", []) or []
+        if correlations:
+            signals.append({
+                "domain": "incidents",
+                "severity": "info",
+                "message": f"cross-domain correlations: {len(correlations)}",
+                "evidence": ["incident_intelligence_36a"],
+                "confidence": "medium",
+                "freshness": "fresh",
+            })
+
+    except Exception:
+        signals.append({
+            "domain": "incidents",
+            "severity": "info",
+            "message": "incident intelligence module not available",
+            "evidence": ["code"],
+            "confidence": "low",
+            "freshness": "unavailable",
+        })
+
+    return signals
 
 
 def _fallback_summary(reason: str) -> dict[str, Any]:

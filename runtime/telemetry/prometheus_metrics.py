@@ -2357,3 +2357,62 @@ def record_synthetic_state_blocked(reason: str) -> None:
         STERILIZED_OPERATIONAL_NODES_TOTAL.set(float(report.get("sterilized_operational_nodes_total", 0) or 0))
     except Exception:
         pass
+
+
+# ── FASE 36A: Operational Incident Intelligence Metrics ─────────────
+ACTIVE_INCIDENTS_TOTAL = Gauge(
+    "ailab_active_incidents_total",
+    "Total active operational incidents",
+)
+INCIDENT_HIGHEST_SEVERITY = Gauge(
+    "ailab_incident_highest_severity",
+    "Highest incident severity (0=critical, 1=high, 2=medium, 3=low, 4=info)",
+)
+INCIDENT_AFFECTED_DOMAINS_TOTAL = Gauge(
+    "ailab_incident_affected_domains_total",
+    "Total domains affected by active incidents",
+)
+INCIDENT_BLAST_RADIUS_ENTRIES_TOTAL = Gauge(
+    "ailab_incident_blast_radius_entries_total",
+    "Total blast radius entries across all incidents",
+)
+INCIDENT_RECOMMENDATIONS_TOTAL = Gauge(
+    "ailab_incident_recommendations_total",
+    "Total incident recommendations generated",
+)
+INCIDENT_SIGNALS_EVALUATED_TOTAL = Gauge(
+    "ailab_incident_signals_evaluated_total",
+    "Total incident signals evaluated in last report",
+)
+INCIDENT_CORRELATIONS_TOTAL = Gauge(
+    "ailab_incident_correlations_total",
+    "Total cross-domain correlations detected",
+)
+INCIDENT_HYPOTHESES_TOTAL = Gauge(
+    "ailab_incident_hypotheses_total",
+    "Total incident hypotheses generated",
+)
+
+_SEVERITY_TO_NUM = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
+
+
+def record_incident_intelligence_metrics(report: dict[str, Any]) -> None:
+    try:
+        ACTIVE_INCIDENTS_TOTAL.set(float(report.get("incident_count", 0) or 0))
+        highest = report.get("highest_severity", "info")
+        INCIDENT_HIGHEST_SEVERITY.set(float(_SEVERITY_TO_NUM.get(highest, 4)))
+        affected = report.get("affected_domains", []) or []
+        INCIDENT_AFFECTED_DOMAINS_TOTAL.set(float(len(affected)))
+        blast = report.get("blast_radius_summary", {}) or {}
+        INCIDENT_BLAST_RADIUS_ENTRIES_TOTAL.set(float(blast.get("blast_radius_entries", 0) or 0))
+        INCIDENT_RECOMMENDATIONS_TOTAL.set(float(report.get("recommendations_total", 0) or 0))
+        INCIDENT_SIGNALS_EVALUATED_TOTAL.set(float(report.get("total_signals_evaluated", 0) or 0))
+        correlations = report.get("correlation_results", []) or []
+        INCIDENT_CORRELATIONS_TOTAL.set(float(len(correlations)))
+        total_hypotheses = sum(
+            len(i.get("hypotheses", []) or [])
+            for i in (report.get("active_incidents", []) or [])
+        )
+        INCIDENT_HYPOTHESES_TOTAL.set(float(total_hypotheses))
+    except Exception:
+        pass

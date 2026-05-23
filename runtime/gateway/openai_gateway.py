@@ -3164,6 +3164,88 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 })
                 return
 
+        # ── FASE 36A: Operational incident intelligence — always-on 200 ──
+        if self.path == "/runtime/incidents" or self.path.startswith("/runtime/incidents/"):
+            try:
+                from runtime.incidents import (
+                    build_incident_intelligence_report,
+                )
+                from runtime.telemetry.prometheus_metrics import record_incident_intelligence_metrics
+
+                if self.path == "/runtime/incidents" or self.path == "/runtime/incidents/report":
+                    rep = build_incident_intelligence_report(extra_ctx={}, sensor_snapshot={})
+                    try:
+                        record_incident_intelligence_metrics(rep)
+                    except Exception:
+                        pass
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": self.path.lstrip("/"),
+                        "timestamp": time.time(),
+                        "contract_version": "36A",
+                        "incident_report": rep,
+                    })
+                    return
+
+                if self.path == "/runtime/incidents/active":
+                    rep = build_incident_intelligence_report(extra_ctx={}, sensor_snapshot={})
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/incidents/active",
+                        "timestamp": time.time(),
+                        "contract_version": "36A",
+                        "active_incidents": rep.get("active_incidents", []),
+                        "incident_count": rep.get("incident_count", 0),
+                        "highest_severity": rep.get("highest_severity", "info"),
+                    })
+                    return
+
+                if self.path == "/runtime/incidents/correlations":
+                    rep = build_incident_intelligence_report(extra_ctx={}, sensor_snapshot={})
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/incidents/correlations",
+                        "timestamp": time.time(),
+                        "contract_version": "36A",
+                        "correlation_results": rep.get("correlation_results", []),
+                    })
+                    return
+
+                if self.path == "/runtime/incidents/blast-radius":
+                    rep = build_incident_intelligence_report(extra_ctx={}, sensor_snapshot={})
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/incidents/blast-radius",
+                        "timestamp": time.time(),
+                        "contract_version": "36A",
+                        "blast_radius_summary": rep.get("blast_radius_summary", {}),
+                    })
+                    return
+
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": self.path.lstrip("/"),
+                    "timestamp": time.time(),
+                    "contract_version": "36A",
+                    "error": "unknown_incidents_endpoint",
+                })
+                return
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": self.path.lstrip("/"),
+                    "timestamp": time.time(),
+                    "contract_version": "36A",
+                    "error": str(exc),
+                })
+                return
+
         if self.path == "/runtime/reports/discipline":
             try:
                 from runtime.gateway.tool_request_classifier import FORBIDDEN_TOOL_RECOMMENDATIONS

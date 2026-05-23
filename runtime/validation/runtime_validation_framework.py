@@ -878,6 +878,72 @@ def build_runtime_invariants(
             details={"error": str(exc)},
         )
 
+    # ── FASE 36A: Operational incident intelligence invariants ─────
+    try:
+        from runtime.incidents import build_incident_intelligence_report
+        irep = build_incident_intelligence_report(extra_ctx=extra_ctx, sensor_snapshot=sensor_snapshot)
+        inc_count = int(irep.get("incident_count", 0) or 0)
+        highest = irep.get("highest_severity", "info")
+
+        # INVARIANT-NO-CRITICAL-INCIDENTS: no incidents = pass
+        inc_ok = inc_count == 0
+        _mk(
+            "INVARIANT-NO-CRITICAL-INCIDENTS",
+            "pass" if inc_ok else "degraded" if highest in ("low", "medium") else "fail",
+            "high" if inc_ok else "medium" if highest in ("low", "medium") else "low",
+            "incident_intelligence_36a",
+            blocking=(highest in ("critical", "high")),
+            details={"active_incidents": inc_count, "highest_severity": highest},
+        )
+
+        # INVARIANT-INCIDENT-GROUNDING: no synthetic/ungrounded incidents
+        corr = irep.get("correlation_results", []) or []
+        blast = irep.get("blast_radius_summary", {}) or {}
+        det = irep.get("deterministic_signature", "")
+        has_grounding = bool(det) and (inc_count == 0 or bool(corr) or bool(blast.get("blast_radius_entries")))
+        _mk(
+            "INVARIANT-INCIDENT-GROUNDING",
+            "pass" if has_grounding else "degraded",
+            "high" if has_grounding else "medium",
+            "incident_intelligence_36a",
+            blocking=False,
+            details={"deterministic": bool(det), "has_correlations": bool(corr), "has_blast_radius": bool(blast.get("blast_radius_entries"))},
+        )
+
+        # INVARIANT-BLAST-RADIUS-DETERMINISM
+        irep2 = build_incident_intelligence_report(extra_ctx=extra_ctx, sensor_snapshot=sensor_snapshot)
+        blast_det = irep.get("deterministic_signature") == irep2.get("deterministic_signature") if _strict_mode() else True
+        _mk(
+            "INVARIANT-BLAST-RADIUS-DETERMINISM",
+            "pass" if blast_det else "degraded",
+            "high" if blast_det else "medium",
+            "incident_intelligence_36a",
+            blocking=False,
+            details={"strict_mode": _strict_mode(), "deterministic": bool(blast_det)},
+        )
+
+        # INVARIANT-NO-SYNTHETIC-INCIDENTS
+        all_sigs = irep.get("total_signals_evaluated", 0)
+        has_real_signals = all_sigs > 0 or inc_count == 0
+        _mk(
+            "INVARIANT-NO-SYNTHETIC-INCIDENTS",
+            "pass" if has_real_signals else "degraded",
+            "high" if has_real_signals else "medium",
+            "incident_intelligence_36a",
+            blocking=False,
+            details={"total_signals_evaluated": all_sigs},
+        )
+
+    except Exception as exc:
+        _mk(
+            "INVARIANT-NO-CRITICAL-INCIDENTS",
+            "degraded",
+            "low",
+            "incident_intelligence_36a",
+            blocking=False,
+            details={"error": str(exc)},
+        )
+
     return [i.to_dict() for i in invariants]
 
 
