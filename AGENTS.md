@@ -521,15 +521,16 @@ FASE DEV-36X → codebase memory integration                              ✅ CP
 FASE DOC-36X → GitNexus structural cognition documentation               ✅ CP-DOC-36X-GITNEXUS-STRUCTURAL-COGNITION-STABLE
 FASE DOC-36X → Spanish localization                                      ✅ CP-DOC-36X-SPANISH-LOCALIZATION-STABLE
 FASE 35D-HF1 → fastpath routing priority fix                             ✅ CP-35D-HF1-FASTPATH-ROUTING-PRIORITY-STABLE
+FASE 36B → runtime precision mode                                        ✅ CP-36B-RUNTIME-PRECISION-MODE-STABLE
 ```
 
-Tags git: desde `CP-21B-STABLE` hasta `CP-35D-HF1-FASTPATH-ROUTING-PRIORITY-STABLE`.
+Tags git: desde `CP-21B-STABLE` hasta `CP-36B-RUNTIME-PRECISION-MODE-STABLE`.
 
 **Deuda saldada:** FASE 29.4.4-C — `/slo/health` ahora responde 200 siempre, con payload disabled cuando enforcement=false.
 
 ## Current Runtime Truth
 
-**Checkpoint actual:** `CP-35D-HF1-FASTPATH-ROUTING-PRIORITY-STABLE`
+**Checkpoint actual:** `CP-36B-RUNTIME-PRECISION-MODE-STABLE`
 
 **Runtime state source of truth:** `/runtime/maturity` (build_runtime_descriptor)
 
@@ -559,11 +560,13 @@ Tags git: desde `CP-21B-STABLE` hasta `CP-35D-HF1-FASTPATH-ROUTING-PRIORITY-STAB
 - models: `/mnt/ai-models`
 - archives: `/mnt/opencode/ai-lab-archives`
 
-**Próxima fase:** Pilot técnico
+**Próxima fase:** FASE 36C — Operator Intent Reasoning
 
 ### Roadmap actual
 
 ```
+36C — Operator Intent Reasoning
+36D — Autonomous Observability Triage
 Pilot técnico
 Pilot operador
 Multi-GPU (posterior)
@@ -912,7 +915,49 @@ El objetivo **no** es maximizar flexibilidad a costa de estabilidad. AI-LAB prio
 
 ### Próximo
 
-- Pilot técnico — siguiente fase planificada
+- FASE 36C — Operator Intent Reasoning
+- FASE 36D — Autonomous Observability Triage
+
+## FASE 36B — Runtime Precision Mode
+
+**Objetivo:** precisión operacional extrema sin sobreafirmaciones: manejar evidencia parcial/ambigua, authority conflictiva, confidence degradada y señales contradictorias con disciplina de grounding (Unknown > hallucination).
+
+**Componentes añadidos:**
+- `runtime/precision/` (engine + contracts): evidence classification, conflict/partial handling, confidence aggregation (operational/authority/observability/routing/incidents/codebase).
+- FastPath operacional: summary confidence-aware y compacto, evita ruido low-confidence.
+
+**Garantías:**
+- No `lmstudio-community` leakage en payloads operacionales.
+- Discoverable != routable (discoverables visibles como discoverable, NO active/NO routable/NO operational).
+- Partial evidence reduce confidence; conflicts degradan certainty (no fake certainty).
+
+**APIs (always-on 200):**
+- `/runtime/precision`
+- `/runtime/precision/confidence`
+- `/runtime/precision/evidence`
+- `/runtime/precision/conflicts`
+- `/runtime/precision/partial`
+- `/runtime/precision/discoverable`
+- `/runtime/precision/score`
+
+**Validation invariants (36B):**
+- `INVARIANT-PRECISION-CONFIDENCE`
+- `INVARIANT-NO-OVERASSERTION`
+- `INVARIANT-NO-DISCOVERY-LEAKAGE`
+- `INVARIANT-CONFIDENCE-DETERMINISM`
+- `INVARIANT-NO-LMSTUDIO-LEAKAGE`
+
+**Métricas Prometheus (36B):**
+- `ailab_operational_precision_score`
+- `ailab_confidence_integrity_score`
+- `ailab_authority_conflicts_total`
+- `ailab_partial_state_total`
+- `ailab_discovery_leakage_total`
+- `ailab_stale_evidence_total`
+- `ailab_precision_degraded_responses_total`
+- `ailab_confidence_downgrade_total`
+
+**Checkpoint:** commit `ac322c3b`, tag `CP-36B-RUNTIME-PRECISION-MODE-STABLE`.
 
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence

@@ -309,24 +309,70 @@ Los gaps restantes son de normalización semántica y no bloquean el grounding o
 
 ---
 
+### FASE 36B: Runtime Precision Mode — COMPLETED
+
+**Objetivo:** Convertir AI-LAB desde un runtime operacional grounded hacia un runtime con precisión operacional extrema: evidencia ambigua/partial, authority conflictiva, confidence degradada y señales contradictorias SIN hallucinations ni sobreafirmaciones.
+
+**Principios (resumen):** Confirmed > inferred, Authority > discovery, Operational > inventory, Unknown > hallucination, Partial evidence reduce confidence, Discoverable != routable, Precision > completeness, Operational compactness preserved.
+
+**Cambios implementados:**
+- Nuevo paquete `runtime/precision/`:
+  - Engine + contracts para evidence classification, confidence y precision summaries.
+  - Manejo explícito de `partial` y `conflicts` (degrada confidence, no inventa certainty).
+  - Sanitización: no `lmstudio-community` leakage, aislamiento de discoverables (NO operational/NO routable).
+- FastPath operacional: summary precision-aware (compacto, confidence-aware; evita ruido low-confidence).
+- Integraciones:
+  - `runtime/gateway/openai_gateway.py`: APIs always-on 200:
+    - `GET /runtime/precision`
+    - `GET /runtime/precision/confidence`
+    - `GET /runtime/precision/evidence`
+    - `GET /runtime/precision/conflicts`
+    - `GET /runtime/precision/partial`
+    - `GET /runtime/precision/discoverable`
+    - `GET /runtime/precision/score`
+  - `runtime/validation/runtime_validation_framework.py`: invariants 36B:
+    - `INVARIANT-PRECISION-CONFIDENCE`
+    - `INVARIANT-NO-OVERASSERTION`
+    - `INVARIANT-NO-DISCOVERY-LEAKAGE`
+    - `INVARIANT-CONFIDENCE-DETERMINISM`
+    - `INVARIANT-NO-LMSTUDIO-LEAKAGE`
+  - `runtime/governance/runtime_governance_registry.py`: anexos de precision (score, conflicts, partial, determinism_signature).
+  - `runtime/reporting/reporting_engine.py`: annex de precision en explainability + helper `build_precision_summary()`.
+  - `runtime/context/cognitive_compression.py`: signals de precision (confidence degradation, ambiguity pressure).
+- Métricas Prometheus (36B):
+  - `ailab_operational_precision_score`
+  - `ailab_confidence_integrity_score`
+  - `ailab_authority_conflicts_total`
+  - `ailab_partial_state_total`
+  - `ailab_discovery_leakage_total`
+  - `ailab_stale_evidence_total`
+  - `ailab_precision_degraded_responses_total`
+  - `ailab_confidence_downgrade_total`
+- Tests: `tests/test_runtime_precision_mode_36b.py` (25 tests) PASS.
+
+**Checkpoint:**
+- Commit: `ac322c3b` (`feat(precision): implement FASE 36B runtime precision mode`)
+- Tag: `CP-36B-RUNTIME-PRECISION-MODE-STABLE`
+
+---
+
 ## CURRENT STATE
 
-**Checkpoint:** `CP-35D-HF1-FASTPATH-ROUTING-PRIORITY-STABLE`
-**HEAD:** `c020ccc1`
+**Checkpoint:** `CP-36B-RUNTIME-PRECISION-MODE-STABLE`
+**HEAD:** `ac322c3b`
 
-### Fases completadas (desde 30I-D hasta 35D-HF1): 24 fases
-- 30I-D, 30I-E, 30I-F, 30I-F0, 30I-G, OBS-31A, OBS-31A.1, OBS-31A.2, OBS-31A.3, OBS-31A.4, OBS-31A.5, 31B, 31C, 31E, 31D, 32A, 32B, 33A, 33B, 28.4, DOC-36X, DOC-36X-Spanish, 35D-HF1
+### Fases completadas (desde 30I-D hasta 36B): 25 fases
+- 30I-D, 30I-E, 30I-F, 30I-F0, 30I-G, OBS-31A, OBS-31A.1, OBS-31A.2, OBS-31A.3, OBS-31A.4, OBS-31A.5, 31B, 31C, 31E, 31D, 32A, 32B, 33A, 33B, 28.4, DOC-36X, DOC-36X-Spanish, 35D-HF1, 36B
 - Storage hardening archive policy (CP-STORAGE-HARDENING-ARCHIVE-POLICY-STABLE)
 
-### Tags git: 57 tags (desde CP-21B-STABLE hasta CP-35D-HF1-FASTPATH-ROUTING-PRIORITY-STABLE)
+### Tags git: 58 tags (desde CP-21B-STABLE hasta CP-36B-RUNTIME-PRECISION-MODE-STABLE)
 
 ### Próxima fase planificada
-**Pilot técnico**
+**FASE 36C — Operator Intent Reasoning**
 
 ### Roadmap
-- Pilot técnico
-- Pilot operador
-- Multi-GPU (posterior)
+- 36C — Operator Intent Reasoning
+- 36D — Autonomous Observability Triage
 
 ### Nota
 Este archivo se actualiza con resumen ejecutivo. Para detalle completo de cada fase, consultar commits y tags git.
