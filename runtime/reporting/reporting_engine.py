@@ -877,6 +877,53 @@ def build_authority_freshness_summary(*, extra_ctx: dict[str, Any] | None = None
         return {"contract_version": "35C", "error": str(exc)}
 
 
+# ── DEV-36X: Codebase memory summary ─────────────────────────────
+
+def build_codebase_memory_summary(
+    *,
+    extra_ctx: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Expose codebase structural health for operational reports."""
+    try:
+        from runtime.codebase import (
+            build_codebase_summary,
+            build_codebase_structural_risks,
+            get_codebase_memory_freshness,
+        )
+        summ = build_codebase_summary(extra_ctx=extra_ctx)
+        risks = build_codebase_structural_risks(extra_ctx=extra_ctx)
+        fresh = get_codebase_memory_freshness(extra_ctx=extra_ctx)
+
+        score = summ.get("score", {}) or {}
+        summary = summ.get("summary", {}) or {}
+
+        return {
+            "contract_version": summ.get("contract_version", "DEV-36X"),
+            "structural_health_score": score.get("structural_health_score", 0.0),
+            "structural_health_level": score.get("level", "unknown"),
+            "modules_total": score.get("modules_total", 0),
+            "edges_total": score.get("edges_total", 0),
+            "hotspots": summary.get("hotspots", []),
+            "domain_dependencies": summary.get("domain_dependencies", {}),
+            "risks_total": len(risks.get("risks", []) or []),
+            "high_risks": score.get("high_risks", 0),
+            "medium_risks": score.get("medium_risks", 0),
+            "freshness": fresh.get("freshness", {}),
+            "deterministic_signature": summ.get("determinant_signature"),
+        }
+    except Exception as exc:
+        return {
+            "contract_version": "DEV-36X",
+            "structural_health_score": 0.0,
+            "structural_health_level": "unavailable",
+            "modules_total": 0,
+            "edges_total": 0,
+            "hotspots": [],
+            "risks_total": 0,
+            "error": str(exc),
+        }
+
+
 def build_fastpath_operational_summary(*, extra_ctx: dict[str, Any] | None = None, sensor_snapshot: dict[str, Any] | None = None) -> dict[str, Any]:
     """FASE 35D: compact operational summary for NOC."""
     extra_ctx = extra_ctx or {}
@@ -1023,12 +1070,32 @@ def build_incident_intelligence_summary(
     extra_ctx: dict[str, Any] | None = None,
     sensor_snapshot: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """FASE 36A: compact incident intelligence summary for operational reports."""
+    """FASE 36A: compact incident intelligence summary for operational reports.
+
+    Includes DEV-36X codebase dependency/ownership enrichment.
+    """
     extra_ctx = extra_ctx or {}
     sensor_snapshot = sensor_snapshot or {}
     try:
         from runtime.incidents import build_incident_intelligence_report
         rep = build_incident_intelligence_report(extra_ctx=extra_ctx, sensor_snapshot=sensor_snapshot)
+
+        # DEV-36X: enrich with codebase dependency/ownership context
+        codebase_enrichment: dict[str, Any] = {}
+        try:
+            from runtime.codebase import build_codebase_summary, build_codebase_ownership
+            cb = build_codebase_summary(extra_ctx=extra_ctx)
+            co = build_codebase_ownership(extra_ctx=extra_ctx)
+            codebase_enrichment = {
+                "structural_health_score": (cb.get("score", {}) or {}).get("structural_health_score", 0.0),
+                "structural_health_level": (cb.get("score", {}) or {}).get("level", "unknown"),
+                "modules_total": (cb.get("score", {}) or {}).get("modules_total", 0),
+                "ownership_domains": co.get("domains_total", 0),
+                "hotspots": (cb.get("summary", {}) or {}).get("hotspots", []),
+            }
+        except Exception:
+            codebase_enrichment = {"error": "codebase module unavailable"}
+
         return {
             "contract_version": "36A",
             "incidents": {
@@ -1039,11 +1106,12 @@ def build_incident_intelligence_summary(
             "blast_radius": rep.get("blast_radius_summary", {}),
             "correlations_total": len(rep.get("correlation_results", []) or []),
             "recommendations_total": rep.get("recommendations_total", 0),
+            "codebase": codebase_enrichment,
             "deterministic_signature": rep.get("deterministic_signature"),
         }
     except Exception as exc:
         return {
             "contract_version": "36A",
             "incidents": {"active_incidents_total": 0, "highest_severity": "unknown", "affected_domains": []},
-            "error": str(exc),
+            "codebase": {"error": str(exc)},
         }

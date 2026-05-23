@@ -2015,8 +2015,57 @@ def record_tool_gc_metrics(tool_gov: dict[str, Any], plan_reg: dict[str, Any], g
         try:
             from runtime.plans.plan_registry import detect_invalid_plan_references
             drift += len(detect_invalid_plan_references())
-        except Exception:
-            pass
+    except Exception:
+        pass
+
+
+# ── DEV-36X: Codebase Memory Metrics ─────────────────────────────────
+CODEBASE_MODULES_TOTAL = Gauge(
+    "ailab_codebase_modules_total",
+    "Total codebase modules tracked",
+)
+CODEBASE_DEPENDENCY_EDGES_TOTAL = Gauge(
+    "ailab_codebase_dependency_edges_total",
+    "Total dependency edges in codebase graph",
+)
+CODEBASE_STRUCTURAL_HEALTH_SCORE = Gauge(
+    "ailab_codebase_structural_health_score",
+    "Codebase structural health score (0-100)",
+)
+CODEBASE_HOTSPOTS_TOTAL = Gauge(
+    "ailab_codebase_hotspots_total",
+    "Total codebase hotspots (highly coupled modules)",
+)
+CODEBASE_RISKS_TOTAL = Gauge(
+    "ailab_codebase_risks_total",
+    "Total structural risks detected",
+)
+CODEBASE_OWNERSHIP_DOMAINS_TOTAL = Gauge(
+    "ailab_codebase_ownership_domains_total",
+    "Total ownership domains",
+)
+CODEBASE_MEMORY_FRESHNESS_SECONDS = Gauge(
+    "ailab_codebase_memory_freshness_seconds",
+    "Seconds since codebase memory was last refreshed",
+)
+
+
+def record_codebase_memory_metrics(memory: dict[str, Any]) -> None:
+    try:
+        CODEBASE_MODULES_TOTAL.set(float(memory.get("modules_total", 0) or 0))
+        CODEBASE_DEPENDENCY_EDGES_TOTAL.set(float(memory.get("edges_total", 0) or 0))
+        score = memory.get("score", {}) or {}
+        CODEBASE_STRUCTURAL_HEALTH_SCORE.set(float(score.get("structural_health_score", 0.0) or 0.0))
+        summary = memory.get("summary", {}) or {}
+        hotspots = summary.get("hotspots", []) or []
+        CODEBASE_HOTSPOTS_TOTAL.set(float(len(hotspots)))
+        risks = memory.get("risks", []) or []
+        CODEBASE_RISKS_TOTAL.set(float(len(risks)))
+        ownership = memory.get("ownership", []) or []
+        CODEBASE_OWNERSHIP_DOMAINS_TOTAL.set(float(len(ownership)))
+        CODEBASE_MEMORY_FRESHNESS_SECONDS.set(float(summary.get("freshness_seconds", 0) or 0))
+    except Exception:
+        pass
         CROSSPLAN_REFERENCE_DRIFT_TOTAL.set(float(drift))
     except Exception:
         pass

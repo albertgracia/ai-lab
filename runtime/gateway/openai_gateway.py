@@ -3246,6 +3246,144 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 })
                 return
 
+        # ── DEV-36X: Codebase memory — always-on 200 ──
+        if self.path == "/runtime/codebase" or self.path.startswith("/runtime/codebase/"):
+            try:
+                from runtime.codebase.gitnexus_memory import (
+                    load_codebase_memory,
+                    build_codebase_dependency_graph,
+                    build_codebase_module_topology,
+                    build_codebase_ownership,
+                    build_codebase_blast_radius_analysis,
+                    build_codebase_structural_risks,
+                    build_codebase_summary,
+                    build_codebase_score,
+                    reset_codebase_memory_cache,
+                )
+                from runtime.telemetry.prometheus_metrics import record_codebase_memory_metrics
+                reset_codebase_memory_cache()
+
+                if self.path == "/runtime/codebase" or self.path == "/runtime/codebase/summary":
+                    mem = load_codebase_memory()
+                    try:
+                        record_codebase_memory_metrics(mem.to_dict())
+                    except Exception:
+                        pass
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": self.path.lstrip("/"),
+                        "timestamp": time.time(),
+                        "contract_version": "DEV-36X",
+                        "codebase_memory": mem.to_dict(),
+                    })
+                    return
+
+                if self.path == "/runtime/codebase/modules":
+                    mem = load_codebase_memory()
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/codebase/modules",
+                        "timestamp": time.time(),
+                        "contract_version": "DEV-36X",
+                        "modules": mem.modules,
+                        "modules_total": len(mem.modules),
+                    })
+                    return
+
+                if self.path == "/runtime/codebase/dependencies":
+                    dep = build_codebase_dependency_graph()
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/codebase/dependencies",
+                        "timestamp": time.time(),
+                        "contract_version": "DEV-36X",
+                        "dependency_graph": dep,
+                    })
+                    return
+
+                if self.path == "/runtime/codebase/blast-radius":
+                    br = build_codebase_blast_radius_analysis()
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/codebase/blast-radius",
+                        "timestamp": time.time(),
+                        "contract_version": "DEV-36X",
+                        "blast_radius": br,
+                    })
+                    return
+
+                if self.path == "/runtime/codebase/ownership":
+                    own = build_codebase_ownership()
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/codebase/ownership",
+                        "timestamp": time.time(),
+                        "contract_version": "DEV-36X",
+                        "ownership": own,
+                    })
+                    return
+
+                if self.path == "/runtime/codebase/topology":
+                    topo = build_codebase_module_topology()
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/codebase/topology",
+                        "timestamp": time.time(),
+                        "contract_version": "DEV-36X",
+                        "topology": topo,
+                    })
+                    return
+
+                if self.path == "/runtime/codebase/risks":
+                    risks = build_codebase_structural_risks()
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/codebase/risks",
+                        "timestamp": time.time(),
+                        "contract_version": "DEV-36X",
+                        "risks": risks,
+                    })
+                    return
+
+                if self.path == "/runtime/codebase/score":
+                    score = build_codebase_score()
+                    self._send_json(200, {
+                        "status": "ok",
+                        "service": "ai-lab-openai-gateway",
+                        "endpoint": "runtime/codebase/score",
+                        "timestamp": time.time(),
+                        "contract_version": "DEV-36X",
+                        "score": score,
+                    })
+                    return
+
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": self.path.lstrip("/"),
+                    "timestamp": time.time(),
+                    "contract_version": "DEV-36X",
+                    "error": "unknown_codebase_endpoint",
+                })
+                return
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": self.path.lstrip("/"),
+                    "timestamp": time.time(),
+                    "contract_version": "DEV-36X",
+                    "error": str(exc),
+                })
+                return
+
         if self.path == "/runtime/reports/discipline":
             try:
                 from runtime.gateway.tool_request_classifier import FORBIDDEN_TOOL_RECOMMENDATIONS

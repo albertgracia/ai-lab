@@ -838,6 +838,37 @@ def build_runtime_governance_registry(
             "blast_radius_entries_total": 0,
         }
 
+    # ── DEV-36X: Codebase memory health ────────────────────────────
+    try:
+        from runtime.codebase import (
+            build_codebase_summary,
+            build_codebase_structural_risks,
+        )
+        cb = build_codebase_summary()
+        cb_score = cb.get("score", {}) or {}
+        cb_risks = build_codebase_structural_risks()
+        risks_data = cb_risks.get("risks", []) or []
+        result["codebase_memory_health"] = {
+            "contract_version": "DEV-36X",
+            "structural_health_score": cb_score.get("structural_health_score", 0.0),
+            "level": cb_score.get("level", "unknown"),
+            "modules_total": cb_score.get("modules_total", 0),
+            "edges_total": cb_score.get("edges_total", 0),
+            "risks_total": len(risks_data),
+            "hotspots": (cb.get("summary", {}) or {}).get("hotspots", []),
+            "determinant_signature": cb.get("determinant_signature", ""),
+        }
+    except Exception:
+        result["codebase_memory_health"] = {
+            "contract_version": "DEV-36X",
+            "structural_health_score": 0.0,
+            "level": "unknown",
+            "modules_total": 0,
+            "edges_total": 0,
+            "risks_total": 0,
+            "hotspots": [],
+        }
+
     try:
         from runtime.telemetry.prometheus_metrics import record_governance_metrics
         record_governance_metrics(result)

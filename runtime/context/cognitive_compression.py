@@ -65,6 +65,9 @@ def build_runtime_cognitive_summary(
     incident_signals = compress_incident_signals(sensor_snapshot, extra_ctx)
     all_signals.extend(incident_signals)
 
+    codebase_signals = compress_codebase_signals(sensor_snapshot, extra_ctx)
+    all_signals.extend(codebase_signals)
+
     if not all_signals:
         unavailable.append("all_domains")
 
@@ -1265,6 +1268,93 @@ def compress_incident_signals(
             "confidence": "low",
             "freshness": "unavailable",
         })
+
+    return signals
+
+
+def compress_codebase_signals(
+    sensor_snapshot: dict[str, Any],
+    extra_ctx: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """DEV-36X: surface codebase structural health signals."""
+    signals: list[dict[str, Any]] = []
+    extra_ctx = extra_ctx or {}
+
+    try:
+        from runtime.codebase import (
+            build_codebase_summary,
+            build_codebase_structural_risks,
+        )
+        summ = build_codebase_summary(extra_ctx=extra_ctx)
+        risks = build_codebase_structural_risks(extra_ctx=extra_ctx)
+
+        score = summ.get("score", {}) or {}
+        summary = summ.get("summary", {}) or {}
+        shs = float(score.get("structural_health_score", 0.0) or 0.0)
+        level = score.get("level", "unknown")
+        modules_total = int(score.get("modules_total", 0) or 0)
+        edges_total = int(score.get("edges_total", 0) or 0)
+        hotspots = summary.get("hotspots", []) or []
+        risks_list = risks.get("risks", []) or []
+        high_risks = int(score.get("high_risks", 0) or 0)
+
+        sev = "info"
+        if shs < 50 or high_risks > 3:
+            sev = "warning"
+        elif shs < 80:
+            sev = "info"
+
+        msg = (
+            f"codebase: health={shs}/100 ({level}), "
+            f"{modules_total} modules, {edges_total} edges, "
+            f"{high_risks} high risks, {len(hotspots)} hotspots"
+        )
+        signals.append({
+            "domain": "codebase",
+            "severity": sev,
+            "message": msg,
+            "evidence": ["codebase_memory_dev36x"],
+            "confidence": "high" if shs >= 80 else "medium" if shs >= 50 else "low",
+            "freshness": "fresh",
+        })
+
+        # Structural risk signals
+        if high_risks > 0:
+            signals.append({
+                "domain": "codebase",
+                "severity": "warning" if high_risks > 3 else "info",
+                "message": f"codebase structural risk: {high_risks} high-severity risks detected",
+                "evidence": ["codebase_memory_dev36x"],
+                "confidence": "high",
+                "freshness": "fresh",
+            })
+
+        # Hotspot signals
+        if hotspots:
+            signals.append({
+                "domain": "codebase",
+                "severity": "info",
+                "message": f"codebase hotspots: {', '.join(hotspots[:4])}",
+                "evidence": ["codebase_memory_dev36x"],
+                "confidence": "medium",
+                "freshness": "fresh",
+            })
+
+        # Wide blast radius risk signals
+        for r in risks_list:
+            if r.get("risk_type") == "wide_blast_radius":
+                signals.append({
+                    "domain": "codebase",
+                    "severity": "warning",
+                    "message": f"wide blast radius: {r.get('description', '')}",
+                    "evidence": ["codebase_memory_dev36x"],
+                    "confidence": "high",
+                    "freshness": "fresh",
+                })
+                break
+
+    except Exception:
+        return signals
 
     return signals
 

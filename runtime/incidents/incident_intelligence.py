@@ -843,6 +843,74 @@ def detect_execution_incidents(
     return signals
 
 
+def detect_codebase_incidents(
+    extra_ctx: dict[str, Any] | None = None,
+    sensor_snapshot: dict[str, Any] | None = None,
+) -> list[IncidentSignal]:
+    """DEV-36X: detect codebase structural health incidents."""
+    signals: list[IncidentSignal] = []
+    extra_ctx = extra_ctx or {}
+    _ = sensor_snapshot
+
+    try:
+        from runtime.codebase import build_codebase_summary, build_codebase_structural_risks
+        summ = build_codebase_summary(extra_ctx=extra_ctx)
+        risks = build_codebase_structural_risks(extra_ctx=extra_ctx)
+
+        score = summ.get("score", {}) or {}
+        shs = float(score.get("structural_health_score", 100.0) or 100.0)
+        high_risks = int(score.get("high_risks", 0) or 0)
+        risks_list = risks.get("risks", []) or []
+
+        if shs < 50:
+            signals.append(IncidentSignal(
+                domain="codebase",
+                signal_type="codebase_health_low",
+                severity="critical" if shs < 30 else "high",
+                description=f"codebase structural health score: {shs}/100 ({score.get('level', 'unknown')})",
+                evidence=["codebase_memory_dev36x"],
+                confidence="high",
+                freshness="fresh",
+            ))
+
+        if high_risks > 3:
+            signals.append(IncidentSignal(
+                domain="codebase",
+                signal_type="codebase_high_risks",
+                severity="high",
+                description=f"{high_risks} high-severity structural risks in codebase",
+                evidence=["codebase_memory_dev36x"],
+                confidence="high",
+                freshness="fresh",
+            ))
+
+        wide_blast = [r for r in risks_list if r.get("risk_type") == "wide_blast_radius"]
+        if wide_blast:
+            for r in wide_blast[:2]:
+                signals.append(IncidentSignal(
+                    domain="codebase",
+                    signal_type="codebase_wide_blast_radius",
+                    severity="medium",
+                    description=r.get("description", "wide blast radius detected"),
+                    evidence=["codebase_memory_dev36x"],
+                    confidence="high",
+                    freshness="fresh",
+                ))
+
+    except Exception:
+        signals.append(IncidentSignal(
+            domain="codebase",
+            signal_type="codebase_module_error",
+            severity="low",
+            description="codebase memory module not available for incident detection",
+            evidence=["code"],
+            confidence="low",
+            freshness="unavailable",
+        ))
+
+    return signals
+
+
 # ── Signal correlation engine ────────────────────────────────────────
 
 
@@ -1157,6 +1225,7 @@ def _build_incident_intelligence_report_inner(
     signals.extend(detect_storage_incidents(extra_ctx, sensor_snapshot))
     signals.extend(detect_gpu_incidents(extra_ctx, sensor_snapshot))
     signals.extend(detect_execution_incidents(extra_ctx, sensor_snapshot))
+    signals.extend(detect_codebase_incidents(extra_ctx, sensor_snapshot))
 
     total_evaluated = len(signals)
 

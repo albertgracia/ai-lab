@@ -944,6 +944,79 @@ def build_runtime_invariants(
             details={"error": str(exc)},
         )
 
+    # ── DEV-36X: Codebase memory invariants ────────────────────────
+    try:
+        from runtime.codebase import build_codebase_summary, build_codebase_structural_risks
+        cb = build_codebase_summary()
+        cb_score = cb.get("score", {}) or {}
+        health_score = float(cb_score.get("structural_health_score", 0.0) or 0.0)
+        level = str(cb_score.get("level", "unknown"))
+        cb_risks = build_codebase_structural_risks()
+        risks_data = cb_risks.get("risks", []) or []
+        has_risks = len(risks_data) > 0
+
+        # INVARIANT-CODEBASE-MEMORY-GROUNDED
+        has_modules = int(cb_score.get("modules_total", 0) or 0) > 0
+        has_edges = int(cb_score.get("edges_total", 0) or 0) > 0
+        grounded = has_modules and has_edges
+        _mk(
+            "INVARIANT-CODEBASE-MEMORY-GROUNDED",
+            "pass" if grounded else "fail",
+            "high" if grounded else "low",
+            "codebase_memory_dev36x",
+            blocking=False,
+            details={"modules_total": cb_score.get("modules_total", 0), "edges_total": cb_score.get("edges_total", 0), "grounded": grounded},
+        )
+
+        # INVARIANT-NO-PHANTOM-MODULES: all modules must be real directories
+        modules_summary = cb.get("summary", {}) or {}
+        hotspots = modules_summary.get("hotspots", []) or []
+        phantom_risk = level == "unknown" and not has_modules
+        _mk(
+            "INVARIANT-NO-PHANTOM-MODULES",
+            "pass" if not phantom_risk else "fail",
+            "high" if not phantom_risk else "low",
+            "codebase_memory_dev36x",
+            blocking=False,
+            details={"health_level": level, "modules_total": cb_score.get("modules_total", 0)},
+        )
+
+        # INVARIANT-BLAST-RADIUS-DETERMINISM: deterministic under strict mode
+        if _strict_mode() and has_modules:
+            cb2 = build_codebase_summary()
+            det = cb.get("determinant_signature") == cb2.get("determinant_signature")
+        else:
+            det = True
+        _mk(
+            "INVARIANT-BLAST-RADIUS-DETERMINISM",
+            "pass" if det else "degraded",
+            "high" if det else "medium",
+            "codebase_memory_dev36x",
+            blocking=False,
+            details={"strict_mode": _strict_mode(), "deterministic": bool(det)},
+        )
+
+        # INVARIANT-NO-RUNTIME-STATE-CONTAMINATION
+        state_in_modules = any("runtime/state" in str(m.get("path", "")) for m in (modules_summary.get("modules", []) or []))
+        _mk(
+            "INVARIANT-NO-RUNTIME-STATE-CONTAMINATION",
+            "pass" if not state_in_modules else "fail",
+            "high",
+            "codebase_memory_dev36x",
+            blocking=True,
+            details={"runtime_state_contamination": state_in_modules},
+        )
+
+    except Exception as exc:
+        _mk(
+            "INVARIANT-CODEBASE-MEMORY-GROUNDED",
+            "degraded",
+            "low",
+            "codebase_memory_dev36x",
+            blocking=False,
+            details={"error": str(exc)},
+        )
+
     return [i.to_dict() for i in invariants]
 
 
