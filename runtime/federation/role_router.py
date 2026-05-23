@@ -28,8 +28,16 @@ from runtime.federation.contracts import (
 from runtime.federation.federation_observability import (
     FederationPropagationTrace,
     record_propagation_trace,
+    record_trust_propagation,
 )
 from runtime.federation.federation_guards import build_guard_summary, validate_federation_metadata
+from runtime.federation.trust_propagation import (
+    TrustEvidence,
+    TrustLineageNode,
+    build_trust_envelope,
+    build_trust_summary,
+    propagate_trust,
+)
 
 
 _REMEDIATION_MARKERS = (
@@ -247,6 +255,52 @@ def build_routing_metadata(intent: FederatedExecutionIntent) -> dict:
     base["_budget_overflow"] = {decision.domain: envelope.to_metadata()["overflow"]}
     if envelope.truncated or envelope.rejected:
         base["_truncated_domains"] = [decision.domain]
+
+    # FEDERATION-TRUST-PROPAGATION-01: deterministic trust propagation metadata.
+    try:
+        evidence = [
+            TrustEvidence(
+                evidence_type="routing_metadata",
+                authority_backed=bool(decision.domain == "authority"),
+                freshness_seconds=0,
+            )
+        ]
+        lineage = [TrustLineageNode(domain="gateway", evidence_count=1)]
+        trust_env = build_trust_envelope(
+            source_domain="gateway",
+            target_domain=decision.domain,
+            origin_domain="gateway",
+            evidence=evidence,
+            lineage=lineage,
+            ttl_seconds=120,
+        )
+        trust = propagate_trust(trust_env)
+        base["_trust_score"] = trust.trust_score
+        base["_trust_degraded"] = bool(trust.degraded)
+        base["_trust_freshness"] = {"freshness_seconds": 0, "stale": bool(trust.stale)}
+        base["_trust_ttl"] = trust.semantic_ttl
+        base["_trust_lineage_depth"] = trust.lineage_depth
+        base["_recursive_risk"] = bool(trust.recursive_risk)
+        base["_trust_attenuation"] = trust.attenuation_factor
+        base["_trust_summary"] = build_trust_summary(trust)
+
+        record_trust_propagation(
+            target_domain=decision.domain,
+            trust_score=float(trust.trust_score),
+            attenuation_factor=float(trust.attenuation_factor),
+            degraded=bool(trust.degraded),
+            recursive_risk=bool(trust.recursive_risk),
+            stale=bool(trust.stale),
+            ttl_expired=bool(trust.semantic_ttl <= 0),
+        )
+    except Exception:
+        base["_trust_score"] = 0.0
+        base["_trust_degraded"] = True
+        base["_trust_freshness"] = {"freshness_seconds": 0, "stale": True}
+        base["_trust_ttl"] = 0
+        base["_trust_lineage_depth"] = 0
+        base["_recursive_risk"] = False
+        base["_trust_attenuation"] = 0.0
 
     # FEDERATION-OBSERVABILITY-01: record in-memory propagation trace.
     overflow = envelope.to_metadata()["overflow"]

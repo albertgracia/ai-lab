@@ -156,6 +156,16 @@ _degraded_propagations_total = 0
 _rejected_domains_total = 0
 _depth_max = 0
 
+# Trust propagation tracking (FEDERATION-TRUST-PROPAGATION-01)
+_trust_degradations_total = 0
+_recursive_risk_total = 0
+_stale_propagations_total = 0
+_ttl_expirations_total = 0
+
+_trust_sum_by_domain: Counter[str] = Counter()
+_trust_count_by_domain: Counter[str] = Counter()
+_attenuation_sum_by_domain: Counter[str] = Counter()
+
 _overflow_by_domain: Counter[str] = Counter()
 _cross_domain_paths: Counter[str] = Counter()
 
@@ -174,6 +184,7 @@ def reset_federation_observability_state() -> None:
 
     global _domain_calls_total, _delegated_requests_total, _budget_overflows_total
     global _truncations_total, _degraded_propagations_total, _rejected_domains_total, _depth_max
+    global _trust_degradations_total, _recursive_risk_total, _stale_propagations_total, _ttl_expirations_total
     with _lock:
         _traces.clear()
         _domain_calls_total = 0
@@ -183,6 +194,10 @@ def reset_federation_observability_state() -> None:
         _degraded_propagations_total = 0
         _rejected_domains_total = 0
         _depth_max = 0
+        _trust_degradations_total = 0
+        _recursive_risk_total = 0
+        _stale_propagations_total = 0
+        _ttl_expirations_total = 0
         _overflow_by_domain.clear()
         _cross_domain_paths.clear()
         _consumed_chars_sum.clear()
@@ -191,6 +206,37 @@ def reset_federation_observability_state() -> None:
         _truncations_by_domain.clear()
         _rejected_by_domain.clear()
         _degraded_by_domain.clear()
+        _trust_sum_by_domain.clear()
+        _trust_count_by_domain.clear()
+        _attenuation_sum_by_domain.clear()
+
+
+def record_trust_propagation(
+    *,
+    target_domain: str,
+    trust_score: float,
+    attenuation_factor: float,
+    degraded: bool,
+    recursive_risk: bool,
+    stale: bool,
+    ttl_expired: bool,
+) -> None:
+    """Record trust propagation metrics (metadata-only)."""
+
+    global _trust_degradations_total, _recursive_risk_total, _stale_propagations_total, _ttl_expirations_total
+    with _lock:
+        d = target_domain or "unknown"
+        _trust_sum_by_domain[d] += float(trust_score)
+        _attenuation_sum_by_domain[d] += float(attenuation_factor)
+        _trust_count_by_domain[d] += 1
+        if degraded:
+            _trust_degradations_total += 1
+        if recursive_risk:
+            _recursive_risk_total += 1
+        if stale:
+            _stale_propagations_total += 1
+        if ttl_expired:
+            _ttl_expirations_total += 1
 
 
 def record_propagation_trace(trace: FederationPropagationTrace) -> None:
@@ -238,6 +284,10 @@ def get_overflow_summary() -> dict[str, Any]:
             "overflow_by_domain": dict(_overflow_by_domain),
             "truncations_total": int(_truncations_total),
             "rejected_domains_total": int(_rejected_domains_total),
+            "trust_degradations_total": int(_trust_degradations_total),
+            "recursive_risk_total": int(_recursive_risk_total),
+            "stale_propagations_total": int(_stale_propagations_total),
+            "ttl_expirations_total": int(_ttl_expirations_total),
         }
 
 
@@ -317,7 +367,8 @@ def get_federation_observability_snapshot() -> FederationObservabilitySnapshot:
     with _lock:
         per_domain_stats = _build_per_domain_stats()
         hotspots = get_domain_hotspots(min_events=3)
-        return FederationObservabilitySnapshot(
+        # Extend snapshot with trust aggregates in overflow_by_domain/cross_domain_paths only via existing fields.
+        snap = FederationObservabilitySnapshot(
             contract_version=FEDERATION_OBSERVABILITY_CONTRACT_VERSION,
             domain_calls_total=int(_domain_calls_total),
             delegated_requests_total=int(_delegated_requests_total),
@@ -331,3 +382,26 @@ def get_federation_observability_snapshot() -> FederationObservabilitySnapshot:
             per_domain=[s.to_dict() for s in per_domain_stats],
             hotspots=[h.to_dict() for h in hotspots],
         )
+        return snap
+
+
+def get_trust_summary() -> dict[str, Any]:
+    """Return deterministic trust aggregates (no endpoints)."""
+
+    with _lock:
+        avg_trust: dict[str, float] = {}
+        avg_att: dict[str, float] = {}
+        for d, n in _trust_count_by_domain.items():
+            if int(n) <= 0:
+                continue
+            avg_trust[d] = float(_trust_sum_by_domain.get(d) or 0.0) / float(n)
+            avg_att[d] = float(_attenuation_sum_by_domain.get(d) or 0.0) / float(n)
+        return {
+            "contract_version": FEDERATION_OBSERVABILITY_CONTRACT_VERSION,
+            "trust_degradations_total": int(_trust_degradations_total),
+            "recursive_risk_total": int(_recursive_risk_total),
+            "stale_propagations_total": int(_stale_propagations_total),
+            "ttl_expirations_total": int(_ttl_expirations_total),
+            "average_trust_by_domain": dict(avg_trust),
+            "average_attenuation_by_domain": dict(avg_att),
+        }
