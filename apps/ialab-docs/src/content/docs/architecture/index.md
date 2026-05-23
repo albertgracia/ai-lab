@@ -42,4 +42,4 @@ La arquitectura ya tiene capa de evidencia, contrato de sensores y política de 
 
 - mantener la baseline pre-Multi-GPU
 - no mezclar scheduler con observability contract
- - documentar authority + precision + operator intent como núcleo cognitivo
+- documentar authority + precision + operator intent como núcleo cognitivo
