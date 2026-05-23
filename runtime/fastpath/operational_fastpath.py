@@ -240,7 +240,12 @@ def build_fast_operational_summary(
         f"Exporters down: {prom.get('scrape_down', 0)}",
     )
     # Precision > completeness: prefer precision lines when available.
-    lines = (precision_lines or base_lines)[:10]
+    lines = list(precision_lines or base_lines)
+    # Keep the operational header stable for NOC/tests, even when precision
+    # mode returns a compact payload without the header line.
+    if precision_lines and (not lines or "Operational summary" not in str(lines[0])):
+        lines = ["Operational summary", *lines]
+    lines = lines[:10]
     signals: list[dict[str, Any]] = []
     if incident_line:
         signals.append(OperationalSignal(

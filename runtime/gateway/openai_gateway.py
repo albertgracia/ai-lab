@@ -66,17 +66,11 @@ from runtime.context.runtime_grounding import (
     validate_response_against_observed_runtime,
     build_grounding_envelope,
 )
-from runtime.gateway.gateway_metrics import (
-    load_metrics,
-    record_request,
-    record_error as record_error_legacy,
-)
 from runtime.errors import (
     build_error_event, emit_error, classify_exception,
     RuntimeErrorCategory, classify_timeout_stage,
 )
 
-record_error = record_error_legacy  # legacy compat for existing call sites
 from runtime.telemetry.prometheus_metrics import GOVERNANCE_BLOCKED, GOVERNANCE_BLOCKED_BY_REASON, TOOL_PARALLEL_BLOCKED, prime_route_family_metrics, record_route_family_metrics
 from prometheus_client import generate_latest as prom_generate_latest, REGISTRY as prom_REGISTRY
 from collections import defaultdict
@@ -968,7 +962,8 @@ class GatewayHandler(BaseHTTPRequestHandler):
             return
 
         if self.path == "/metrics":
-            metrics = load_metrics()
+            # Source of truth for gateway counters is in-memory telemetry.
+            metrics = get_metrics()
             prom_text = (
                 "# HELP ailab_requests_total Total requests\n"
                 "# TYPE ailab_requests_total counter\n"
@@ -1152,7 +1147,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 state = _dummy.get_degraded_state()
                 self._send_json(200, state.to_dict())
             except Exception as exc:
-                record_error_legacy(self.path, exc)
+                register_error(exc)
                 self._send_json(500, {"error": "degraded_state_unavailable", "detail": str(exc)})
             return
 
@@ -1206,7 +1201,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 tracker.rebuild_from_nodes()
                 self._send_json(200, tracker.to_dict())
             except Exception as exc:
-                record_error_legacy(self.path, exc)
+                register_error(exc)
                 self._send_json(500, {"error": "models_state_unavailable", "detail": str(exc)})
             return
 
@@ -3449,7 +3444,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
 
             self._send_json(
                 200,
-                load_metrics(),
+                get_metrics(),
             )
             return
 
@@ -3468,12 +3463,8 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 )
 
                 record_routing_decision()
-                record_request(
-                    self.path,
-                    model=None,
-                    latency_ms=latency_ms,
-                    stream=False,
-                )
+                register_request(self.path, model=None)
+                register_latency(latency_ms)
 
                 self._send_json(
                     response.status_code,
@@ -3481,7 +3472,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 )
 
             except Exception as exc:
-                record_error_legacy(self.path, exc)
+                register_error(exc)
                 emit_error(build_error_event(
                     exc, origin_stage="upstream", component="gateway",
                     source_file=__file__, slo_impact=True,
@@ -4743,12 +4734,10 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     pass
 
             record_routing_decision()
-            record_request(
-                self.path,
-                model=payload.get("model"),
-                latency_ms=latency_ms,
-                stream=stream_enabled,
-            )
+            register_request(self.path, model=payload.get("model"))
+            register_latency(latency_ms)
+            if stream_enabled:
+                register_stream()
             record_model_selection(task_type, selected_model, get_active_backend()["name"], latency_ms)
 
             # FASE 29.4: Record stream backlog
@@ -4800,7 +4789,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                         if _HAVE_SLO and chunk_count and chunk_count > 0:
                             _circuit_breakers.record_success(selected_model)
                     except Exception as exc:
-                        record_error_legacy(self.path, exc)
+                        register_error(exc)
                         emit_error(build_error_event(
                             exc, origin_stage="streaming", component="gateway",
                             source_file=__file__, streaming=True,
@@ -4816,7 +4805,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 try:
                     data = response.json()
                 except Exception as exc:
-                    record_error_legacy(self.path, exc)
+                    register_error(exc)
                     emit_error(build_error_event(
                         exc, category=RuntimeErrorCategory.UPSTREAM_INVALID_RESPONSE,
                         origin_stage="upstream", component="gateway",
@@ -5252,7 +5241,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
             if _HAVE_SLO and 'selected_model' in dir() and selected_model:
                 _circuit_breakers.record_failure(selected_model)
                 _slo_state.record_timeout(True)
-            record_error_legacy(self.path, exc)
+            register_error(exc)
             _stage = classify_timeout_stage(exc)
             emit_error(build_error_event(
                 exc, origin_stage=_stage, component="gateway",
@@ -5276,7 +5265,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
             latency_ms = int((time.time() - start_time) * 1000)
             if _HAVE_SLO and 'selected_model' in dir() and selected_model:
                 _circuit_breakers.record_failure(selected_model)
-            record_error_legacy(self.path, exc)
+            register_error(exc)
             emit_error(build_error_event(
                 exc, origin_stage="gateway", component="gateway",
                 source_file=__file__, streaming=stream_enabled,
