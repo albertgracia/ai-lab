@@ -14,6 +14,12 @@ El módulo de cognición estructural de la codebase de AI-LAB (`runtime/codebase
 2. **¿Qué se rompe si cambio X?** — blast radius analysis mediante recorrido BFS
 3. **¿Quién es dueño de qué?** — ownership mapping desde rutas de módulos a dominios operacionales
 
+## Acceso a GitNexus UI
+
+Si accedes a la UI de GitNexus desde un PC remoto y ves **“Waiting for server to start”**, revisa:
+
+- `docs/codebase/gitnexus-local-access.md`
+
 ## Arquitectura
 
 ```

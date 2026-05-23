@@ -84,3 +84,11 @@ Runtime source (/opt/ai-lab/runtime/)
 ## Veredicto
 
 La integración de memoria estructural GitNexus proporciona a AI-LAB cognición de codebase determinista, grounded y operacional sin dependencias externas ni análisis basado en LLM.
+
+## Nota Operacional (UI)
+
+Si la UI de GitNexus se queda en **“Waiting for server to start”** desde un PC remoto, el problema suele ser el default backend URL (`http://localhost:4747`).
+
+Ver:
+
+- `runbooks/gitnexus-local-ui-backend-url.md`
