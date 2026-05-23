@@ -1920,6 +1920,40 @@ VALIDATION_DEGRADED_DOMAINS_TOTAL = Gauge(
     "Total degraded domains impacting validation",
 )
 
+# ── FASE 36B: Runtime Precision Mode Metrics ─────────────────────
+OPERATIONAL_PRECISION_SCORE = Gauge(
+    "ailab_operational_precision_score",
+    "Operational precision score 0-100",
+)
+CONFIDENCE_INTEGRITY_SCORE = Gauge(
+    "ailab_confidence_integrity_score",
+    "Confidence integrity score 0-100",
+)
+AUTHORITY_CONFLICTS_TOTAL = Gauge(
+    "ailab_authority_conflicts_total",
+    "Total authority conflicts detected by precision engine",
+)
+PARTIAL_STATE_TOTAL = Gauge(
+    "ailab_partial_state_total",
+    "Total partial evidence states detected by precision engine",
+)
+DISCOVERY_LEAKAGE_TOTAL = Gauge(
+    "ailab_discovery_leakage_total",
+    "Total discovery leakage events detected",
+)
+STALE_EVIDENCE_TOTAL = Gauge(
+    "ailab_stale_evidence_total",
+    "Total stale evidence indicators",
+)
+PRECISION_DEGRADED_RESPONSES_TOTAL = Counter(
+    "ailab_precision_degraded_responses_total",
+    "Total precision-mode responses with degraded certainty",
+)
+CONFIDENCE_DOWNGRADE_TOTAL = Counter(
+    "ailab_confidence_downgrade_total",
+    "Total confidence downgrade events (partial/conflict)",
+)
+
 # ── FASE 34A: Runtime Operational Hardening Metrics ────────────
 HARDENING_SCORE = Gauge(
     "ailab_hardening_score",
@@ -2012,9 +2046,8 @@ def record_tool_gc_metrics(tool_gov: dict[str, Any], plan_reg: dict[str, Any], g
     try:
         # Drift is 0 in this phase unless invalid references exist.
         drift = 0
-        try:
-            from runtime.plans.plan_registry import detect_invalid_plan_references
-            drift += len(detect_invalid_plan_references())
+        from runtime.plans.plan_registry import detect_invalid_plan_references
+        drift += len(detect_invalid_plan_references())
     except Exception:
         pass
 
@@ -2120,6 +2153,30 @@ def record_validation_metrics(report: dict[str, Any]) -> None:
 
     degraded = report.get("degraded_domains", []) or []
     VALIDATION_DEGRADED_DOMAINS_TOTAL.set(float(len(degraded)))
+
+
+def record_precision_metrics(report: dict[str, Any]) -> None:
+    try:
+        prec = report.get("precision", {}) or {}
+        OPERATIONAL_PRECISION_SCORE.set(float(prec.get("operational_precision_score", 0.0) or 0.0))
+        CONFIDENCE_INTEGRITY_SCORE.set(float(prec.get("confidence_integrity_score", 0.0) or 0.0))
+        AUTHORITY_CONFLICTS_TOTAL.set(float(prec.get("authority_conflicts_total", 0) or 0))
+        PARTIAL_STATE_TOTAL.set(float(prec.get("partial_state_total", 0) or 0))
+        DISCOVERY_LEAKAGE_TOTAL.set(float(prec.get("discovery_leakage_total", 0) or 0))
+        STALE_EVIDENCE_TOTAL.set(float(prec.get("stale_evidence_total", 0) or 0))
+    except Exception:
+        pass
+
+    try:
+        # Counters: only increment, never set.
+        degraded = int((report.get("precision", {}) or {}).get("precision_degraded_responses_total", 0) or 0)
+        downgrade = int((report.get("precision", {}) or {}).get("confidence_downgrade_total", 0) or 0)
+        if degraded > 0:
+            PRECISION_DEGRADED_RESPONSES_TOTAL.inc(float(degraded))
+        if downgrade > 0:
+            CONFIDENCE_DOWNGRADE_TOTAL.inc(float(downgrade))
+    except Exception:
+        pass
 
 
 # ── FASE 34A: Runtime Operational Hardening metrics recorder ─────────

@@ -782,6 +782,28 @@ def build_runtime_governance_registry(
     except Exception:
         pass
 
+    # ── FASE 36B: Runtime Precision Mode integration ───────────────
+    try:
+        from runtime.precision import build_runtime_precision_report
+        rep = build_runtime_precision_report(
+            extra_ctx={"enable_network": False, "fastpath": True},
+            sensor_snapshot=sensor_snapshot or {},
+        )
+        prec = rep.get("precision", {}) or {}
+        result["precision"] = {
+            "contract_version": rep.get("contract_version", "36B"),
+            "operational_precision_score": prec.get("operational_precision_score"),
+            "confidence_integrity": prec.get("confidence_integrity_score"),
+            "authority_conflicts_total": prec.get("authority_conflicts_total"),
+            "partial_state_total": prec.get("partial_state_total"),
+            "stale_evidence_total": prec.get("stale_evidence_total"),
+            "discovery_leakage_total": prec.get("discovery_leakage_total"),
+            "confidence_label": ((rep.get("confidence", {}) or {}).get("operational", {}) or {}).get("label"),
+            "deterministic_signature": rep.get("deterministic_signature"),
+        }
+    except Exception:
+        pass
+
     # ── FASE 35D: Operational fast-path health integration ─────────
     try:
         from runtime.fastpath import build_fastpath_response

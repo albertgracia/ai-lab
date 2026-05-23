@@ -305,6 +305,94 @@ def build_runtime_invariants(
         details={"reporting_deterministic": reporting_ok},
     )
 
+    # ── FASE 36B: Precision Mode invariants ─────────────────────────
+    prec_rep: dict[str, Any] = {}
+    try:
+        from runtime.precision import build_runtime_precision_report
+        prec_rep = build_runtime_precision_report(extra_ctx={"enable_network": False, **extra_ctx}, sensor_snapshot=sensor_snapshot)
+    except Exception:
+        prec_rep = {}
+
+    # INVARIANT-PRECISION-CONFIDENCE
+    conf = ((prec_rep.get("confidence", {}) or {}).get("operational", {}) or {}) if isinstance(prec_rep, dict) else {}
+    conf_label = str(conf.get("label", "unknown"))
+    conf_score = float(conf.get("score", 0.0) or 0.0)
+    conf_ok = conf_label in ("high", "medium", "low") and conf_score >= 0.0
+    _mk(
+        "INVARIANT-PRECISION-CONFIDENCE",
+        "pass" if conf_ok else "degraded",
+        "high" if conf_ok else "low",
+        "precision_engine_36b",
+        blocking=False,
+        details={"confidence_label": conf_label, "confidence_score": conf_score},
+    )
+
+    # INVARIANT-NO-OVERASSERTION
+    partial_total = int(((prec_rep.get("precision", {}) or {}).get("partial_state_total", 0)) or 0) if isinstance(prec_rep, dict) else 0
+    conflict_total = int(((prec_rep.get("precision", {}) or {}).get("authority_conflicts_total", 0)) or 0) if isinstance(prec_rep, dict) else 0
+    overassertion = (conf_label == "high") and (partial_total > 0 or conflict_total > 0)
+    _mk(
+        "INVARIANT-NO-OVERASSERTION",
+        "pass" if not overassertion else "fail",
+        "high" if not overassertion else "low",
+        "precision_engine_36b",
+        blocking=bool(overassertion),
+        details={"partial_state_total": partial_total, "authority_conflicts_total": conflict_total, "confidence_label": conf_label},
+    )
+
+    # INVARIANT-NO-DISCOVERY-LEAKAGE
+    discoverable = (prec_rep.get("discoverable", {}) or {}) if isinstance(prec_rep, dict) else {}
+    disc_entities = discoverable.get("entities", []) if isinstance(discoverable, dict) else []
+    leak = False
+    for e in disc_entities[:50]:
+        if not isinstance(e, dict):
+            continue
+        if e.get("routable") is True or e.get("operational_state") == "active":
+            leak = True
+            break
+    _mk(
+        "INVARIANT-NO-DISCOVERY-LEAKAGE",
+        "pass" if not leak else "fail",
+        "high" if not leak else "low",
+        "precision_engine_36b",
+        blocking=bool(leak),
+        details={"discoverable_total": discoverable.get("total", 0), "leak_detected": leak},
+    )
+
+    # INVARIANT-CONFIDENCE-DETERMINISM
+    det_ok = True
+    try:
+        from runtime.precision import build_runtime_precision_report
+        r1 = build_runtime_precision_report(extra_ctx={"enable_network": False, **extra_ctx}, sensor_snapshot=sensor_snapshot)
+        r2 = build_runtime_precision_report(extra_ctx={"enable_network": False, **extra_ctx}, sensor_snapshot=sensor_snapshot)
+        det_ok = (r1.get("deterministic_signature") == r2.get("deterministic_signature"))
+    except Exception:
+        det_ok = False
+    _mk(
+        "INVARIANT-CONFIDENCE-DETERMINISM",
+        "pass" if det_ok else "degraded",
+        "high" if det_ok else "low",
+        "precision_engine_36b",
+        blocking=False,
+        details={"precision_deterministic": det_ok},
+    )
+
+    # INVARIANT-NO-LMSTUDIO-LEAKAGE
+    lm_leak = False
+    try:
+        raw = json.dumps(prec_rep, sort_keys=True, ensure_ascii=True, default=str).lower()
+        lm_leak = "lmstudio-community" in raw
+    except Exception:
+        lm_leak = False
+    _mk(
+        "INVARIANT-NO-LMSTUDIO-LEAKAGE",
+        "pass" if not lm_leak else "fail",
+        "high" if not lm_leak else "low",
+        "precision_engine_36b",
+        blocking=bool(lm_leak),
+        details={"lmstudio_leak": lm_leak},
+    )
+
     # INVARIANT-OBSERVABILITY-FRESHNESS
     total_sources = observed_sources + missing_sources
     obs_ok = (observed_sources > 0) and not stale_sources and (total_sources > 0)

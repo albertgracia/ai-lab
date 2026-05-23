@@ -656,7 +656,47 @@ def build_explainability_summary(
         valid_recommendations=recommendations,
         stale_observability=stale if isinstance(stale, list) else [],
     )
-    return report.to_dict()
+    d = report.to_dict()
+    # FASE 36B: precision summary annex (confidence-aware, no overassertion)
+    try:
+        from runtime.precision import build_runtime_precision_report, build_precision_summary
+        rep = build_runtime_precision_report(extra_ctx=extra_ctx or {}, sensor_snapshot=sensor_snapshot or {})
+        d["precision"] = build_precision_summary(rep)
+    except Exception:
+        d["precision"] = {"contract_version": "36B", "status": "unavailable"}
+    return d
+
+
+def build_precision_summary(
+    sensor_snapshot: dict[str, Any] | None = None,
+    extra_ctx: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Expose precision-mode state for operational reports.
+
+    Unknown > inventado. Always returns a JSON-safe dict.
+    """
+    try:
+        from runtime.precision import build_runtime_precision_report, build_precision_summary as _build
+        rep = build_runtime_precision_report(extra_ctx=extra_ctx or {}, sensor_snapshot=sensor_snapshot or {})
+        summ = _build(rep)
+        prec = rep.get("precision", {}) or {}
+        op = ((rep.get("confidence", {}) or {}).get("operational", {}) or {})
+        return {
+            "contract_version": rep.get("contract_version", "36B"),
+            "precision_summary": (summ.get("precision_summary", {}) or {}),
+            "operational_precision_score": prec.get("operational_precision_score", 0.0),
+            "confidence_integrity_score": prec.get("confidence_integrity_score", 0.0),
+            "authority_conflicts_total": prec.get("authority_conflicts_total", 0),
+            "partial_state_total": prec.get("partial_state_total", 0),
+            "confidence_label": op.get("label", "unknown"),
+            "deterministic_signature": rep.get("deterministic_signature"),
+        }
+    except Exception as exc:
+        return {
+            "contract_version": "36B",
+            "status": "unavailable",
+            "error": str(exc),
+        }
 
 
 # ── Reporting score ────────────────────────────────────────────────

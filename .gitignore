@@ -100,6 +100,11 @@ runtime/*
 !runtime/fastpath/__init__.py
 !runtime/fastpath/contracts.py
 !runtime/fastpath/operational_fastpath.py
+
+!runtime/precision/
+!runtime/precision/__init__.py
+!runtime/precision/contracts.py
+!runtime/precision/runtime_precision_mode.py
 !runtime/memory/memory_usefulness.py
 !runtime/observability/
 !runtime/context/evidence_guard.py

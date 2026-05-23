@@ -68,6 +68,9 @@ def build_runtime_cognitive_summary(
     codebase_signals = compress_codebase_signals(sensor_snapshot, extra_ctx)
     all_signals.extend(codebase_signals)
 
+    precision_signals = compress_precision_signals(sensor_snapshot, extra_ctx)
+    all_signals.extend(precision_signals)
+
     if not all_signals:
         unavailable.append("all_domains")
 
@@ -166,6 +169,41 @@ def compress_gpu_signals(
                 "freshness": freshness.get("status", "unknown"),
             })
 
+    return signals
+
+
+def compress_precision_signals(
+    sensor_snapshot: dict[str, Any],
+    extra_ctx: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """FASE 36B: surface confidence degradation and ambiguity.
+
+    Precision > completeness. Unknown > inventado.
+    """
+    extra_ctx = extra_ctx or {}
+    signals: list[dict[str, Any]] = []
+    try:
+        from runtime.precision import build_runtime_precision_report
+        rep = build_runtime_precision_report(extra_ctx={"enable_network": False, **(extra_ctx or {})}, sensor_snapshot=sensor_snapshot)
+        prec = rep.get("precision", {}) or {}
+        op = ((rep.get("confidence", {}) or {}).get("operational", {}) or {})
+        label = str(op.get("label", "unknown"))
+        score = float(op.get("score", 0.0) or 0.0)
+        conflicts = int(prec.get("authority_conflicts_total", 0) or 0)
+        partial = int(prec.get("partial_state_total", 0) or 0)
+
+        if label in ("low", "unknown") or conflicts or partial:
+            severity = "warning" if label == "medium" else "critical" if label in ("low", "unknown") else "info"
+            signals.append({
+                "domain": "precision",
+                "severity": severity,
+                "message": f"precision confidence={label} score={round(score, 1)} conflicts={conflicts} partial={partial}",
+                "evidence": ["authority", "entities"],
+                "confidence": label,
+                "freshness": ((rep.get("authority", {}) or {}).get("freshness", {}) or {}).get("status", "unknown"),
+            })
+    except Exception:
+        return signals
     return signals
 
 

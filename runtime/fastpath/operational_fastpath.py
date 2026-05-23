@@ -197,8 +197,14 @@ def _quality_score(lines: list[str]) -> float:
     return 40.0
 
 
-def build_fast_operational_summary(*, extra_ctx: dict[str, Any] | None = None, authority: dict[str, Any] | None = None) -> dict[str, Any]:
+def build_fast_operational_summary(
+    *,
+    extra_ctx: dict[str, Any] | None = None,
+    authority: dict[str, Any] | None = None,
+    sensor_snapshot: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     extra_ctx = extra_ctx or {}
+    sensor_snapshot = sensor_snapshot or {}
     authority = authority or _build_fastpath_authority_snapshot(extra_ctx=extra_ctx)
     fresh = authority.get("freshness", {}) or {}
     prom = authority.get("prometheus_targets", {}) or {}
@@ -215,15 +221,26 @@ def build_fast_operational_summary(*, extra_ctx: dict[str, Any] | None = None, a
     except Exception:
         pass
 
+    # FASE 36B: precision-aware operational summary (compact)
+    precision_lines: list[str] = []
+    try:
+        from runtime.precision import build_runtime_precision_report, build_precision_summary
+        rep = build_runtime_precision_report(extra_ctx=extra_ctx, sensor_snapshot=sensor_snapshot)
+        summ = build_precision_summary(rep)
+        precision_lines = list(((summ.get("precision_summary", {}) or {}).get("lines", []) or []))
+    except Exception:
+        precision_lines = []
+
     header = "Operational summary"
-    lines = _noc_lines(
+    base_lines = _noc_lines(
         header,
         incident_line or "",
-        f"Runtime: healthy_degraded",
         f"Prometheus authority: {fresh.get('status', 'unknown')}",
         f"Targets: {prom.get('scrape_up', 0)}/{prom.get('active_total', 0)} UP",
         f"Exporters down: {prom.get('scrape_down', 0)}",
     )
+    # Precision > completeness: prefer precision lines when available.
+    lines = (precision_lines or base_lines)[:10]
     signals: list[dict[str, Any]] = []
     if incident_line:
         signals.append(OperationalSignal(
@@ -470,7 +487,7 @@ def build_fastpath_response(
             return build_fast_infrastructure_summary(user_text=user_text, extra_ctx=extra_ctx, authority=auth)
         if cls == "FAST_GPU":
             return build_fast_gpu_summary(extra_ctx=extra_ctx, authority=auth)
-        return build_fast_operational_summary(extra_ctx=extra_ctx, authority=auth)
+        return build_fast_operational_summary(extra_ctx=extra_ctx, authority=auth, sensor_snapshot=sensor_snapshot)
 
     summary, used_cache = _get_cached(cache_key, _build_summary, ttl_s=int(extra_ctx.get("ttl_s", 5) or 5))
     elapsed_s = max(0.0, time.perf_counter() - start)

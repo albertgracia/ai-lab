@@ -3834,6 +3834,170 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 })
             return
 
+        # ── FASE 36B: Runtime Precision Mode — always-on 200 ─────────
+        if self.path == "/runtime/precision":
+            try:
+                from runtime.precision import build_runtime_precision_report, PRECISION_CONTRACT_VERSION
+                from runtime.telemetry.prometheus_metrics import record_precision_metrics
+                rep = build_runtime_precision_report(extra_ctx={"enable_network": False}, sensor_snapshot={})
+                record_precision_metrics(rep)
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/precision",
+                    "timestamp": time.time(),
+                    "contract_version": PRECISION_CONTRACT_VERSION,
+                    "precision": rep,
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/precision",
+                    "timestamp": time.time(),
+                    "contract_version": "36B",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/precision/confidence":
+            try:
+                from runtime.precision import build_runtime_precision_report, PRECISION_CONTRACT_VERSION
+                rep = build_runtime_precision_report(extra_ctx={"enable_network": False}, sensor_snapshot={})
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/precision/confidence",
+                    "timestamp": time.time(),
+                    "contract_version": PRECISION_CONTRACT_VERSION,
+                    "confidence": rep.get("confidence", {}),
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/precision/confidence",
+                    "timestamp": time.time(),
+                    "contract_version": "36B",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/precision/evidence":
+            try:
+                from runtime.precision import build_runtime_precision_report, PRECISION_CONTRACT_VERSION
+                rep = build_runtime_precision_report(extra_ctx={"enable_network": False}, sensor_snapshot={})
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/precision/evidence",
+                    "timestamp": time.time(),
+                    "contract_version": PRECISION_CONTRACT_VERSION,
+                    "evidence": rep.get("evidence", []),
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/precision/evidence",
+                    "timestamp": time.time(),
+                    "contract_version": "36B",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/precision/conflicts":
+            try:
+                from runtime.precision import build_runtime_precision_report, PRECISION_CONTRACT_VERSION
+                rep = build_runtime_precision_report(extra_ctx={"enable_network": False}, sensor_snapshot={})
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/precision/conflicts",
+                    "timestamp": time.time(),
+                    "contract_version": PRECISION_CONTRACT_VERSION,
+                    "conflicts": rep.get("conflicts", []),
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/precision/conflicts",
+                    "timestamp": time.time(),
+                    "contract_version": "36B",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/precision/partial":
+            try:
+                from runtime.precision import build_runtime_precision_report, PRECISION_CONTRACT_VERSION
+                rep = build_runtime_precision_report(extra_ctx={"enable_network": False}, sensor_snapshot={})
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/precision/partial",
+                    "timestamp": time.time(),
+                    "contract_version": PRECISION_CONTRACT_VERSION,
+                    "partial": rep.get("partial", []),
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/precision/partial",
+                    "timestamp": time.time(),
+                    "contract_version": "36B",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/precision/discoverable":
+            try:
+                from runtime.precision import build_runtime_precision_report, PRECISION_CONTRACT_VERSION
+                rep = build_runtime_precision_report(extra_ctx={"enable_network": False}, sensor_snapshot={})
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/precision/discoverable",
+                    "timestamp": time.time(),
+                    "contract_version": PRECISION_CONTRACT_VERSION,
+                    "discoverable": rep.get("discoverable", {}),
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/precision/discoverable",
+                    "timestamp": time.time(),
+                    "contract_version": "36B",
+                    "error": str(exc),
+                })
+            return
+
+        if self.path == "/runtime/precision/score":
+            try:
+                from runtime.precision import build_runtime_precision_report, PRECISION_CONTRACT_VERSION
+                rep = build_runtime_precision_report(extra_ctx={"enable_network": False}, sensor_snapshot={})
+                self._send_json(200, {
+                    "status": "ok",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/precision/score",
+                    "timestamp": time.time(),
+                    "contract_version": PRECISION_CONTRACT_VERSION,
+                    "precision": rep.get("precision", {}),
+                })
+            except Exception as exc:
+                self._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/precision/score",
+                    "timestamp": time.time(),
+                    "contract_version": "36B",
+                    "error": str(exc),
+                })
+            return
+
         # ── FASE 34A: Runtime Operational Hardening — always-on 200 ──
         if self.path == "/runtime/hardening":
             try:
