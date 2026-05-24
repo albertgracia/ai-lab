@@ -26,6 +26,13 @@ Keep routing deterministic.
 
 Propagate evidence; do not invent.
 
+NEXUS-AI-ARCHITECTURE-PROMPT-HARDENING-01:
+
+- When describing architecture/runtime behavior, only state what is backed by files read or runtime evidence.
+- If a referenced runtime file was not read: `NO DISPONIBLE: archivo no leído`.
+- Separate epistemology in answers: HARD_FACTS / INFERIDO / UNKNOWNS.
+- Separate planes explicitly (Inference, Cognitive Control, Health, Correlation, Federation, SLO/Triage, Topology, Memory, Observability, Validation).
+
 ## 7. Operational Tone
 
 Operational.
