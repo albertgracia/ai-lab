@@ -16,10 +16,10 @@
           "os": "linux"
         },
         "Ports": "0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp",
-        "RunningFor": "7 hours ago",
+        "RunningFor": "8 hours ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 7 hours"
+        "Status": "Up 8 hours"
       },
       {
         "Command": "\"bash start.sh\"",
@@ -36,10 +36,10 @@
           "os": "linux"
         },
         "Ports": "0.0.0.0:3000->8080/tcp, [::]:3000->8080/tcp",
-        "RunningFor": "6 days ago",
+        "RunningFor": "7 days ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 7 hours (healthy)"
+        "Status": "Up 8 hours (healthy)"
       },
       {
         "Command": "\"/usr/bin/promtail -config.file=/etc/promtail/promtail.yml\"",
@@ -48,7 +48,7 @@
         "Image": "grafana/promtail:3.4.2",
         "Labels": "cluster=ai-lab,com.docker.compose.config-hash=6d30a25a335dab0bd6643662b679eeca08b9ad3961738551cd43fdd8b419abe2,com.docker.compose.container-number=1,com.docker.compose.depends_on=,com.docker.compose.image=sha256:c6e9a987ca086cbfef945b8ebd708eb09f98b5e78bfb659e4e5a8b3bd604d11b,com.docker.compose.oneoff=False,com.docker.compose.project.config_files=/opt/ai-lab/stacks/promtail/docker-compose.yml,com.docker.compose.project.working_dir=/opt/ai-lab/stacks/promtail,com.docker.compose.project=promtail,com.docker.compose.replace=promtail,com.docker.compose.service=promtail,com.docker.compose.version=5.1.3,env=homelab,org.opencontainers.image.ref.name=ubuntu,org.opencontainers.image.version=24.04,role=logs",
         "LocalVolumes": "0",
-        "Mounts": "/var/run/docker.sock,/opt/ai-lab/stacks/promtail/promtail.yml,/run/log,/var/lib/docker/containers,/var/log,/var/log/journal",
+        "Mounts": "/opt/ai-lab/stacks/promtail/promtail.yml,/run/log,/var/lib/docker/containers,/var/log,/var/log/journal,/var/run/docker.sock",
         "Names": "promtail",
         "Networks": "proxy",
         "Platform": {
@@ -59,7 +59,7 @@
         "RunningFor": "7 days ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 7 hours"
+        "Status": "Up 8 hours"
       },
       {
         "Command": "\"/docker-entrypoint.sh nginx -g 'daemon off;'\"",
@@ -79,7 +79,7 @@
         "RunningFor": "11 days ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 7 hours"
+        "Status": "Up 8 hours"
       },
       {
         "Command": "\"docker-entrypoint.sh node server.js\"",
@@ -99,7 +99,7 @@
         "RunningFor": "11 days ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 7 hours"
+        "Status": "Up 8 hours"
       },
       {
         "Command": "\"/docker-entrypoint.sh nginx -g 'daemon off;'\"",
@@ -119,7 +119,7 @@
         "RunningFor": "11 days ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 7 hours"
+        "Status": "Up 8 hours"
       },
       {
         "Command": "\"/docker-entrypoint.sh nginx -g 'daemon off;'\"",
@@ -139,7 +139,7 @@
         "RunningFor": "11 days ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 7 hours"
+        "Status": "Up 8 hours"
       },
       {
         "Command": "\"/docker-entrypoint.sh nginx -g 'daemon off;'\"",
@@ -159,7 +159,7 @@
         "RunningFor": "11 days ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 7 hours"
+        "Status": "Up 8 hours"
       },
       {
         "Command": "\"/docker-entrypoint.sh nginx -g 'daemon off;'\"",
@@ -179,7 +179,7 @@
         "RunningFor": "11 days ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 7 hours"
+        "Status": "Up 8 hours"
       },
       {
         "Command": "\"docker-entrypoint.sh node server.js\"",
@@ -199,7 +199,7 @@
         "RunningFor": "11 days ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 7 hours"
+        "Status": "Up 8 hours"
       },
       {
         "Command": "\"docker-entrypoint.sh postgres\"",
@@ -219,7 +219,7 @@
         "RunningFor": "11 days ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 7 hours (healthy)"
+        "Status": "Up 8 hours (healthy)"
       },
       {
         "Command": "\"/usr/bin/cadvisor -logtostderr --docker_only=true --housekeeping_interval=30s\"",
@@ -228,7 +228,7 @@
         "Image": "gcr.io/cadvisor/cadvisor:v0.52.1",
         "Labels": "cluster=ai-lab,com.docker.compose.config-hash=adc117158f2d1b39d3f13b27d5e30cf02bd5d9b20ddbced53a49ce547eb2d4f9,com.docker.compose.container-number=1,com.docker.compose.depends_on=,com.docker.compose.image=sha256:f40e65878e25c2e78ea037f73a449527a0fb994e303dc3e34cb6b187b4b91435,com.docker.compose.oneoff=False,com.docker.compose.project.config_files=/opt/ai-lab/stacks/observability/docker-compose.yml,com.docker.compose.project.working_dir=/opt/ai-lab/stacks/observability,com.docker.compose.project=observability,com.docker.compose.service=cadvisor,com.docker.compose.version=5.1.3,env=homelab,role=containers",
         "LocalVolumes": "0",
-        "Mounts": "/var/lib/docker,/var/run,/dev/disk,/,/sys",
+        "Mounts": "/dev/disk,/,/sys,/var/lib/docker,/var/run",
         "Names": "cadvisor",
         "Networks": "proxy",
         "Platform": {
@@ -239,7 +239,7 @@
         "RunningFor": "11 days ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 7 hours (healthy)"
+        "Status": "Up 8 hours (healthy)"
       },
       {
         "Command": "\"/bin/node_exporter --path.procfs=/host/proc --path.sysfs=/host/sys --path.rootfs=/rootfs --collector.systemd --collector.processes --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($|/)\"",
@@ -259,7 +259,7 @@
         "RunningFor": "11 days ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 7 hours"
+        "Status": "Up 8 hours"
       },
       {
         "Command": "\"./entrypoint.sh\"",
@@ -279,7 +279,7 @@
         "RunningFor": "2 weeks ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 7 hours"
+        "Status": "Up 8 hours"
       },
       {
         "Command": "\"/portainer\"",
@@ -299,7 +299,7 @@
         "RunningFor": "2 weeks ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 7 hours"
+        "Status": "Up 8 hours"
       }
     ]
   },
@@ -307,7 +307,7 @@
     {
       "node": "RX9070",
       "host": "192.168.1.50",
-      "vram_used_gib": 14.49,
+      "vram_used_gib": 14.24,
       "vram_total_gib": 15.81
     },
     {
