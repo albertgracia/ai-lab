@@ -375,3 +375,84 @@ def handle_evidence_routes(handler: Any) -> bool:
             "error": str(exc),
         })
         return True
+
+
+def handle_guard_routes(handler: Any) -> bool:
+    """Handle /runtime/guards* endpoints (read-only, fail-safe)."""
+
+    path = getattr(handler, "path", "")
+    if not (path == "/runtime/guards" or path.startswith("/runtime/guards/")):
+        return False
+
+    import urllib.parse
+
+    try:
+        parsed = urllib.parse.urlparse(path)
+        clean_path = parsed.path
+        qs = urllib.parse.parse_qs(parsed.query or "")
+        limit = 50
+        try:
+            if "limit" in qs and qs["limit"]:
+                limit = int(qs["limit"][0])
+        except Exception:
+            limit = 50
+
+        from runtime.federation.federation_guards import (
+            get_federation_guard_events,
+            get_federation_guard_runtime_state,
+            get_federation_guard_summary,
+        )
+
+        if clean_path == "/runtime/guards" or clean_path == "/runtime/guards/summary":
+            handler._send_json(200, {
+                "status": "ok",
+                "service": "ai-lab-openai-gateway",
+                "endpoint": clean_path.lstrip("/"),
+                "timestamp": time.time(),
+                "contract_version": "CG-01",
+                "summary": get_federation_guard_summary(),
+            })
+            return True
+
+        if clean_path == "/runtime/guards/state":
+            handler._send_json(200, {
+                "status": "ok",
+                "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/guards/state",
+                "timestamp": time.time(),
+                "contract_version": "CG-01",
+                "state": get_federation_guard_runtime_state(),
+            })
+            return True
+
+        if clean_path == "/runtime/guards/events":
+            handler._send_json(200, {
+                "status": "ok",
+                "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/guards/events",
+                "timestamp": time.time(),
+                "contract_version": "CG-01",
+                "events": get_federation_guard_events(limit=limit),
+            })
+            return True
+
+        handler._send_json(200, {
+            "status": "degraded",
+            "service": "ai-lab-openai-gateway",
+            "endpoint": clean_path.lstrip("/"),
+            "timestamp": time.time(),
+            "contract_version": "CG-01",
+            "error": "unknown_guards_endpoint",
+        })
+        return True
+
+    except Exception as exc:
+        handler._send_json(200, {
+            "status": "degraded",
+            "service": "ai-lab-openai-gateway",
+            "endpoint": "runtime/guards",
+            "timestamp": time.time(),
+            "contract_version": "CG-01",
+            "error": str(exc),
+        })
+        return True

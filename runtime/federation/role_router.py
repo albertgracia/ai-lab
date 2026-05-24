@@ -32,7 +32,11 @@ from runtime.federation.federation_observability import (
     record_evidence_lineage,
     observe_evidence_id,
 )
-from runtime.federation.federation_guards import build_guard_summary, validate_federation_metadata
+from runtime.federation.federation_guards import (
+    build_guard_summary,
+    observe_federation_metadata_for_cognitive_guards,
+    validate_federation_metadata,
+)
 from runtime.federation.trust_propagation import (
     TrustEvidence,
     TrustLineageNode,
@@ -449,6 +453,21 @@ def build_routing_metadata(intent: FederatedExecutionIntent) -> dict:
         base["_guard_degraded"] = True
         base["_guard_reason_codes"] = ["guard_exception"]
         base["_guard_violations"] = [{"code": "guard_exception", "severity": "critical", "message": "guard exception (caught)", "evidence": {}}]
+
+    # FEDERATION-COGNITIVE-GUARDS-01: bounded cognitive protection layer (metadata-only).
+    try:
+        base.update(observe_federation_metadata_for_cognitive_guards(base))
+    except Exception:
+        # Fail-safe: never leak guard exceptions.
+        base["_cognitive_guard"] = {
+            "contract_version": "CG-01",
+            "state": "DEGRADED",
+            "degraded": True,
+            "caps_applied": [],
+            "signals": {},
+        }
+        base["_guard_state"] = "DEGRADED"
+        base["_guard_degraded"] = True
     return base
 
 

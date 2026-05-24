@@ -78,6 +78,41 @@ import threading
 
 prime_route_family_metrics()
 
+
+def _build_federation_cognitive_guard_metrics() -> str:
+    """Render federation cognitive guard metrics as Prometheus text.
+
+    Fail-safe: returns zeros on any error.
+    """
+
+    try:
+        from runtime.federation.federation_guards import get_federation_guard_summary
+
+        summ = get_federation_guard_summary() or {}
+        st = (summ.get("state") or {}).get("state") or "NORMAL"
+        counters = summ.get("counters") or {}
+        state_map = {"NORMAL": 0, "DEGRADED": 1, "CONSTRAINED": 2, "SAFE_MODE": 3}
+        st_val = float(state_map.get(str(st), 0))
+        caps = float(counters.get("caps_applied_total", 0) or 0)
+        replay = float(counters.get("replay_detections_total", 0) or 0)
+        storm = float(counters.get("storm_detections_total", 0) or 0)
+        esc = float(counters.get("authority_escalations_total", 0) or 0)
+        return (
+            f"ailab_federation_guard_state {st_val}\n"
+            f"ailab_federation_guard_caps_applied_total {caps}\n"
+            f"ailab_federation_guard_replay_detections_total {replay}\n"
+            f"ailab_federation_guard_storm_detections_total {storm}\n"
+            f"ailab_federation_guard_authority_escalations_total {esc}\n"
+        )
+    except Exception:
+        return (
+            "ailab_federation_guard_state 0\n"
+            "ailab_federation_guard_caps_applied_total 0\n"
+            "ailab_federation_guard_replay_detections_total 0\n"
+            "ailab_federation_guard_storm_detections_total 0\n"
+            "ailab_federation_guard_authority_escalations_total 0\n"
+        )
+
 # ── FASE 29.4: SLO Enforcement & Adaptive Runtime Protection ──
 try:
     from runtime.slo import (
@@ -1035,6 +1070,17 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 + "# HELP ailab_governance_parser_failures_total Parser failures\n"
                 + "# TYPE ailab_governance_parser_failures_total counter\n"
                 + f"ailab_governance_parser_failures_total {PARSER_FAILURES}\n"
+                + "# HELP ailab_federation_guard_state Federation guard runtime state (NORMAL=0,DEGRADED=1,CONSTRAINED=2,SAFE_MODE=3)\n"
+                + "# TYPE ailab_federation_guard_state gauge\n"
+                + "# HELP ailab_federation_guard_caps_applied_total Federation cognitive guards caps applied\n"
+                + "# TYPE ailab_federation_guard_caps_applied_total counter\n"
+                + "# HELP ailab_federation_guard_replay_detections_total Federation cognitive guards replay detections\n"
+                + "# TYPE ailab_federation_guard_replay_detections_total counter\n"
+                + "# HELP ailab_federation_guard_storm_detections_total Federation cognitive guards storm detections\n"
+                + "# TYPE ailab_federation_guard_storm_detections_total counter\n"
+                + "# HELP ailab_federation_guard_authority_escalations_total Federation cognitive guards authority escalation detections\n"
+                + "# TYPE ailab_federation_guard_authority_escalations_total counter\n"
+                + _build_federation_cognitive_guard_metrics()
                 + "\n# ── prometheus_client managed metrics ──\n"
                 + prom_generate_latest(prom_REGISTRY).decode("utf-8")
             )
@@ -3033,6 +3079,13 @@ class GatewayHandler(BaseHTTPRequestHandler):
             from runtime.gateway.runtime_api_routes import handle_evidence_routes
 
             handle_evidence_routes(self)
+            return
+
+        # ── FEDERATION-COGNITIVE-GUARDS-01: Guard explainability APIs — always-on 200 ──
+        if self.path == "/runtime/guards" or self.path.startswith("/runtime/guards/"):
+            from runtime.gateway.runtime_api_routes import handle_guard_routes
+
+            handle_guard_routes(self)
             return
 
         # ── DEV-36X: Codebase memory — always-on 200 ──
