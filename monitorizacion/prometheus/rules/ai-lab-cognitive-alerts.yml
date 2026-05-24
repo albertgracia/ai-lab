@@ -1,0 +1,252 @@
+# AI-LAB Cognitive Alerting Rules
+# PROMETHEUS-ALERTING-COGNITIVE-01
+#
+# Deploy to: /home/albert/docker/monitorizacion/prometheus/config/rules/ai-lab-cognitive-alerts.yml
+# Prometheus host: 192.168.1.40:9090
+#
+# All rules are bounded, deterministic, fail-safe.
+# No unbounded labels, no high cardinality, no side-effects.
+
+groups:
+  - name: ai_lab_cognitive_alerts
+    interval: 30s
+    limit: 20
+    rules:
+
+      # ── Federation Guards ──────────────────────────────────────────────
+
+      - alert: AI-LABFederationSafeMode
+        expr: ailab_federation_guard_state >= 3
+        labels:
+          severity: critical
+          team: ai-lab
+          category: federation_guards
+        annotations:
+          summary: "Federation Guard in SAFE MODE (state={{ $value }})"
+          description: "Federation cognitive guard has entered safe mode. All non-essential operations are blocked. Immediate investigation required."
+
+      - alert: AI-LABFederationConstrained
+        expr: ailab_federation_guard_state >= 2
+        labels:
+          severity: warning
+          team: ai-lab
+          category: federation_guards
+        annotations:
+          summary: "Federation Guard CONSTRAINED (state={{ $value }})"
+          description: "Federation cognitive guard is constrained. Operations may be limited."
+
+      - alert: AI-LABReplayStorm
+        expr: increase(ailab_federation_guard_replay_detections_total[5m]) > 25
+        labels:
+          severity: critical
+          team: ai-lab
+          category: federation_guards
+        annotations:
+          summary: "Replay storm detected ({{ $value }} events in 5m)"
+          description: "High rate of replay detections suggests an attack or bug in the federation guard logic."
+
+      - alert: AI-LABStormHeuristicTriggered
+        expr: increase(ailab_federation_guard_storm_detections_total[5m]) > 10
+        labels:
+          severity: critical
+          team: ai-lab
+          category: federation_guards
+        annotations:
+          summary: "Storm heuristic triggered ({{ $value }} events in 5m)"
+          description: "Storm heuristic detections exceeded threshold. Potential coordinated request storm."
+
+      - alert: AI-LABAuthorityEscalationDetected
+        expr: increase(ailab_federation_guard_authority_escalations_total[10m]) > 5
+        labels:
+          severity: warning
+          team: ai-lab
+          category: federation_guards
+        annotations:
+          summary: "Authority escalation detected ({{ $value }} events in 10m)"
+          description: "Multiple authority escalation attempts detected. Review federation trust chain."
+
+      # ── Evidence Lineage ───────────────────────────────────────────────
+
+      - alert: AI-LABInvalidLineage
+        expr: ailab_evidence_invalid_lineage_total > 0
+        labels:
+          severity: critical
+          team: ai-lab
+          category: evidence_lineage
+        annotations:
+          summary: "Invalid evidence lineage detected ({{ $value }})"
+          description: "Evidence lineage integrity check failed. Evidence trust chain may be compromised."
+
+      - alert: AI-LABHighReplayRisk
+        expr: ailab_evidence_replay_risk_total > 10
+        labels:
+          severity: warning
+          team: ai-lab
+          category: evidence_lineage
+        annotations:
+          summary: "High evidence replay risk ({{ $value }})"
+          description: "Elevated replay risk detected in evidence lineage. Investigate evidence provenance."
+
+      - alert: AI-LABStaleEvidence
+        expr: ailab_evidence_stale_total > 20
+        labels:
+          severity: warning
+          team: ai-lab
+          category: evidence_lineage
+        annotations:
+          summary: "Stale evidence detected ({{ $value }})"
+          description: "Significant amount of evidence has gone stale. Review evidence refresh cadence."
+
+      - alert: AI-LABDeepLineage
+        expr: ailab_evidence_lineage_depth_max > 8
+        labels:
+          severity: warning
+          team: ai-lab
+          category: evidence_lineage
+        annotations:
+          summary: "Deep evidence lineage (depth={{ $value }})"
+          description: "Evidence lineage depth exceeds maximum. Automatic pruning may be needed."
+
+      # ── Cognitive SLO ──────────────────────────────────────────────────
+
+      - alert: AI-LABSLOViolation
+        expr: increase(ailab_slo_violations_total[10m]) > 0
+        labels:
+          severity: warning
+          team: ai-lab
+          category: cognitive_slo
+        annotations:
+          summary: "SLO violation detected ({{ $value }} in 10m)"
+          description: "Service Level Objective violation occurred. Review SLO dashboard for details."
+
+      - alert: AI-LABSLOSafeMode
+        expr: increase(ailab_slo_safe_mode_total[10m]) > 0
+        labels:
+          severity: critical
+          team: ai-lab
+          category: cognitive_slo
+        annotations:
+          summary: "SLO safe mode triggered ({{ $value }} in 10m)"
+          description: "SLO has entered safe mode. Runtime may be operating with degraded functionality."
+
+      - alert: AI-LABSLORegistryInconsistent
+        expr: ailab_slo_registry_consistency < 1
+        labels:
+          severity: critical
+          team: ai-lab
+          category: cognitive_slo
+        annotations:
+          summary: "Registry consistency check failed"
+          description: "Model registry consistency SLO is degraded. Registry may be out of sync."
+
+      - alert: AI-LABGatewayUnavailable
+        expr: ailab_slo_gateway_health < 1
+        labels:
+          severity: critical
+          team: ai-lab
+          category: cognitive_slo
+        annotations:
+          summary: "Gateway unavailable"
+          description: "AI-LAB gateway health check failed. Gateway may be down or unresponsive."
+
+      - alert: AI-LABLMStudioUnavailable
+        expr: ailab_slo_lmstudio_health < 1
+        labels:
+          severity: critical
+          team: ai-lab
+          category: cognitive_slo
+        annotations:
+          summary: "LM Studio unavailable"
+          description: "LM Studio health check failed. Inference backend may be down or unreachable."
+
+      # ── Model Registry ─────────────────────────────────────────────────
+
+      - alert: AI-LABDeprecatedAliasReappeared
+        expr: ailab_registry_deprecated_aliases_total > 1
+        labels:
+          severity: warning
+          team: ai-lab
+          category: model_registry
+        annotations:
+          summary: "Deprecated alias reappeared ({{ $value }})"
+          description: "Deprecated model aliases detected in registry. Review alias deprecation policy."
+
+      - alert: AI-LABNoRoutableModels
+        expr: ailab_registry_routable_models_total < 1
+        labels:
+          severity: critical
+          team: ai-lab
+          category: model_registry
+        annotations:
+          summary: "No routable models available"
+          description: "Model registry reports zero routable models. Inference routing will fail."
+
+      # ── Architecture Governance ────────────────────────────────────────
+
+      - alert: AI-LABGovernanceViolations
+        expr: ailab_architecture_governance_violations_total > 10
+        labels:
+          severity: warning
+          team: ai-lab
+          category: architecture_governance
+        annotations:
+          summary: "Architecture governance violations ({{ $value }})"
+          description: "Architecture governance policies are being violated. Review governance dashboard."
+
+      - alert: AI-LABHighRiskArchitecture
+        expr: ailab_architecture_high_risk_total > 5
+        labels:
+          severity: warning
+          team: ai-lab
+          category: architecture_governance
+        annotations:
+          summary: "High risk architecture modules ({{ $value }})"
+          description: "Excessive high-risk architecture modules detected. Consider refactoring."
+
+  - name: ai_lab_cognitive_recording_rules
+    interval: 60s
+    limit: 10
+    rules:
+
+      - record: ai_lab:federation_guard_events_rate5m
+        expr: |
+          rate((
+            ailab_federation_guard_replay_detections_total
+            + ailab_federation_guard_storm_detections_total
+            + ailab_federation_guard_authority_escalations_total
+            + ailab_federation_guard_caps_applied_total
+          )[5m])
+
+      - record: ai_lab:evidence_replay_rate5m
+        expr: |
+          rate((
+            ailab_evidence_replay_risk_total
+            + ailab_evidence_invalid_lineage_total
+          )[5m])
+
+      - record: ai_lab:slo_violations_rate5m
+        expr: |
+          rate((
+            ailab_slo_violations_total
+            + ailab_slo_safe_mode_total
+          )[5m])
+
+      - record: ai_lab:architecture_risk_score
+        expr: |
+          (
+            clamp_max(ailab_architecture_high_risk_total, 20) * 3
+            + clamp_max(ailab_architecture_critical_modules_total, 10) * 5
+            + clamp_max(ailab_architecture_governance_violations_total, 30) * 2
+          ) / (
+            3 + 5 + 2
+          )
+
+      - record: ai_lab:runtime_health_score
+        expr: |
+          (
+            ailab_slo_gateway_health
+            + ailab_slo_lmstudio_health
+            + ailab_slo_registry_consistency
+            + (ailab_registry_routable_models_total > bool(1))
+            + (ailab_federation_guard_state < bool(2))
+          ) / 5
