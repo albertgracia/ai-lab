@@ -3261,6 +3261,13 @@ class GatewayHandler(BaseHTTPRequestHandler):
             handle_fastpath_routes(self)
             return
 
+        # ── FASE 36D: Autonomous observability triage — always-on 200 ──
+        if self.path == "/runtime/triage" or self.path.startswith("/runtime/triage/"):
+            from runtime.gateway.runtime_api_routes import handle_triage_routes
+
+            handle_triage_routes(self)
+            return
+
         # ── FASE 36A: Operational incident intelligence — always-on 200 ──
         if self.path == "/runtime/incidents" or self.path.startswith("/runtime/incidents/"):
             from runtime.gateway.runtime_api_routes import handle_incidents_routes

@@ -2522,3 +2522,53 @@ def record_incident_intelligence_metrics(report: dict[str, Any]) -> None:
         INCIDENT_HYPOTHESES_TOTAL.set(float(total_hypotheses))
     except Exception:
         pass
+
+
+# ── FASE 36D: Autonomous Observability Triage Metrics ──────────
+
+TRIAGE_INCIDENTS_TOTAL = Gauge(
+    "ailab_triage_incidents_total",
+    "Total active triage incidents",
+)
+TRIAGE_CRITICAL_TOTAL = Gauge(
+    "ailab_triage_critical_total",
+    "Total critical triage incidents",
+)
+TRIAGE_HIGH_TOTAL = Gauge(
+    "ailab_triage_high_total",
+    "Total high severity triage incidents",
+)
+TRIAGE_WARNING_TOTAL = Gauge(
+    "ailab_triage_warning_total",
+    "Total warning severity triage incidents",
+)
+TRIAGE_PLATFORM_BLAST_TOTAL = Gauge(
+    "ailab_triage_platform_blast_radius_total",
+    "Total incidents with PLATFORM blast radius",
+)
+TRIAGE_FEDERATION_BLAST_TOTAL = Gauge(
+    "ailab_triage_federation_blast_radius_total",
+    "Total incidents with FEDERATION blast radius",
+)
+TRIAGE_LMSTUDIO_RELATED_TOTAL = Gauge(
+    "ailab_triage_lmstudio_related_total",
+    "Total LM Studio-related triage incidents",
+)
+TRIAGE_REGISTRY_RELATED_TOTAL = Gauge(
+    "ailab_triage_registry_related_total",
+    "Total registry-related triage incidents",
+)
+
+
+def record_triage_prometheus_metrics(metrics: dict[str, Any]) -> None:
+    try:
+        TRIAGE_INCIDENTS_TOTAL.set(float(metrics.get("ailab_triage_incidents_total", 0)))
+        TRIAGE_CRITICAL_TOTAL.set(float(metrics.get("ailab_triage_critical_total", 0)))
+        TRIAGE_HIGH_TOTAL.set(float(metrics.get("ailab_triage_high_total", 0)))
+        TRIAGE_WARNING_TOTAL.set(float(metrics.get("ailab_triage_warning_total", 0)))
+        TRIAGE_PLATFORM_BLAST_TOTAL.set(float(metrics.get("ailab_triage_platform_blast_radius_total", 0)))
+        TRIAGE_FEDERATION_BLAST_TOTAL.set(float(metrics.get("ailab_triage_federation_blast_radius_total", 0)))
+        TRIAGE_LMSTUDIO_RELATED_TOTAL.set(float(metrics.get("ailab_triage_lmstudio_related_total", 0)))
+        TRIAGE_REGISTRY_RELATED_TOTAL.set(float(metrics.get("ailab_triage_registry_related_total", 0)))
+    except Exception:
+        pass

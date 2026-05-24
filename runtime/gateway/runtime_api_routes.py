@@ -646,3 +646,119 @@ def handle_architecture_routes(handler: Any) -> bool:
             "error": str(exc),
         })
         return True
+
+
+def handle_triage_routes(handler: Any) -> bool:
+    """Handle /runtime/triage* endpoints (read-only, fail-safe, always-on 200)."""
+
+    path = getattr(handler, "path", "")
+    if not (path == "/runtime/triage" or path.startswith("/runtime/triage/")):
+        return False
+
+    import urllib.parse
+
+    try:
+        parsed = urllib.parse.urlparse(path)
+        clean_path = parsed.path
+        qs = urllib.parse.parse_qs(parsed.query or "")
+        limit = 20
+        try:
+            if "limit" in qs and qs["limit"]:
+                limit = int(qs["limit"][0])
+        except Exception:
+            limit = 20
+
+        from runtime.triage.autonomous_triage import (
+            build_runtime_triage_snapshot,
+            get_active_triage_incidents,
+            get_triage_summary,
+            get_triage_recommendations,
+            get_triage_snapshots,
+            record_triage_metrics,
+            TRIAGE_CONTRACT_VERSION,
+        )
+
+        if clean_path == "/runtime/triage" or clean_path == "/runtime/triage/snapshot":
+            snapshot = build_runtime_triage_snapshot()
+            record_triage_metrics()
+            handler._send_json(200, {
+                "status": "ok",
+                "service": "ai-lab-openai-gateway",
+                "endpoint": clean_path.lstrip("/"),
+                "timestamp": time.time(),
+                "contract_version": TRIAGE_CONTRACT_VERSION,
+                "triage_snapshot": snapshot,
+            })
+            return True
+
+        if clean_path == "/runtime/triage/summary":
+            record_triage_metrics()
+            handler._send_json(200, {
+                "status": "ok",
+                "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/triage/summary",
+                "timestamp": time.time(),
+                "contract_version": TRIAGE_CONTRACT_VERSION,
+                "triage_summary": get_triage_summary(),
+            })
+            return True
+
+        if clean_path == "/runtime/triage/incidents":
+            record_triage_metrics()
+            handler._send_json(200, {
+                "status": "ok",
+                "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/triage/incidents",
+                "timestamp": time.time(),
+                "contract_version": TRIAGE_CONTRACT_VERSION,
+                "incidents": get_active_triage_incidents(),
+                "total": len(get_active_triage_incidents()),
+            })
+            return True
+
+        if clean_path == "/runtime/triage/recommendations":
+            record_triage_metrics()
+            handler._send_json(200, {
+                "status": "ok",
+                "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/triage/recommendations",
+                "timestamp": time.time(),
+                "contract_version": TRIAGE_CONTRACT_VERSION,
+                "recommendations": get_triage_recommendations(),
+                "total": len(get_triage_recommendations()),
+            })
+            return True
+
+        if clean_path == "/runtime/triage/snapshots":
+            snapshots = get_triage_snapshots(limit=limit)
+            handler._send_json(200, {
+                "status": "ok",
+                "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/triage/snapshots",
+                "timestamp": time.time(),
+                "contract_version": TRIAGE_CONTRACT_VERSION,
+                "snapshots": snapshots,
+                "total": len(snapshots),
+            })
+            return True
+
+        handler._send_json(200, {
+            "status": "degraded",
+            "service": "ai-lab-openai-gateway",
+            "endpoint": clean_path.lstrip("/"),
+            "timestamp": time.time(),
+            "contract_version": TRIAGE_CONTRACT_VERSION,
+            "error": "unknown_triage_endpoint",
+        })
+        return True
+
+    except Exception as exc:
+        handler._send_json(200, {
+            "status": "degraded",
+            "service": "ai-lab-openai-gateway",
+            "endpoint": "runtime/triage",
+            "timestamp": time.time(),
+            "contract_version": TRIAGE_CONTRACT_VERSION,
+            "error": str(exc),
+        })
+        return True
