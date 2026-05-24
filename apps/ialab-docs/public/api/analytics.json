@@ -1,8 +1,9 @@
 {
   "health": {
-    "score": 40,
+    "score": 30,
     "reasons": [
-      "1 GPU(s) offline"
+      "1 GPU(s) offline",
+      "Router down"
     ],
     "level": "poor"
   },
@@ -45,5 +46,5 @@
       "gpu_overheat": 0
     }
   },
-  "timestamp": 1779648368.1369119
+  "timestamp": 1779652454.6435924
 }
