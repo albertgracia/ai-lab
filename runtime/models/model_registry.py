@@ -1,4 +1,16 @@
-"""Model Registry — capability scoring, multi-factor routing intelligence.
+"""MODEL-REGISTRY-CANONICAL-01: canonical model registry for AI-LAB.
+
+This module is the single source of truth for *model identities*.
+
+Hard rules:
+- Deterministic, import-safe, lightweight.
+- No network calls, no persistence, no dynamic discovery.
+- Fail-safe helpers: never raise for unknown inputs.
+
+Notes:
+- The bottom of this file contains the legacy capability-scoring registry.
+  It remains for backward compatibility with existing routing/scoring.
+  New code should prefer the canonical helpers defined near the top.
 
 Architecture:
     model_registry.py
@@ -9,11 +21,197 @@ All existing APIs are preserved.  If this module fails to load,
 the original routing behaviour is used as fallback.
 """
 
-# ── model registry ────────────────────────────────────────────────────────
+# ── canonical registry (single source of truth) ───────────────────────────
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any
+
+
+class ModelRole(str, Enum):
+    CODER = "CODER"
+    FASTPATH = "FASTPATH"
+    EMBEDDING = "EMBEDDING"
+    REASONING = "REASONING"
+    ORCHESTRATION = "ORCHESTRATION"
+
+
+@dataclass(frozen=True)
+class ModelDescriptor:
+    canonical_id: str
+    role: ModelRole
+    provider: str
+    aliases: tuple[str, ...] = ()
+    deprecated_aliases: tuple[str, ...] = ()
+    routable: bool = True
+    supports_streaming: bool = True
+    supports_tools: bool = False
+    supports_embeddings: bool = False
+    preferred_runtime: str = "lmstudio"
+    cognitive_domain: str = "runtime"
+    status: str = "active"  # active|disabled|inventory
+
+    def to_public_dict(self) -> dict[str, Any]:
+        return {
+            "canonical_id": self.canonical_id,
+            "role": self.role.value,
+            "provider": self.provider,
+            "aliases": list(self.aliases or ()),
+            "deprecated_aliases": list(self.deprecated_aliases or ()),
+            "routable": bool(self.routable),
+            "supports_streaming": bool(self.supports_streaming),
+            "supports_tools": bool(self.supports_tools),
+            "supports_embeddings": bool(self.supports_embeddings),
+            "preferred_runtime": self.preferred_runtime,
+            "cognitive_domain": self.cognitive_domain,
+            "status": self.status,
+        }
+
+
+# Canonical models (must remain stable identifiers)
+MODEL_QWEN_14B = "qwen/qwen2.5-coder-14b-instruct"
+MODEL_LLAMA_8B = "llama-3.1-8b-instruct"
+MODEL_NOMIC_EMBED = "text-embedding-nomic-embed-text-v1.5"
+
+DEPRECATED_QWEN_14B_ALIAS = "lmstudio-community/qwen2.5-coder-14b-instruct"
+TOLERATED_QWEN_14B_ALIAS = "qwen2.5-coder-14b-instruct"
+
+
+_CANONICAL_MODELS: tuple[ModelDescriptor, ...] = (
+    ModelDescriptor(
+        canonical_id=MODEL_QWEN_14B,
+        role=ModelRole.CODER,
+        provider="qwen",
+        aliases=(TOLERATED_QWEN_14B_ALIAS,),
+        deprecated_aliases=(DEPRECATED_QWEN_14B_ALIAS,),
+        routable=True,
+        supports_streaming=True,
+        supports_tools=False,
+        supports_embeddings=False,
+        preferred_runtime="lmstudio",
+        cognitive_domain="coding",
+        status="active",
+    ),
+    ModelDescriptor(
+        canonical_id=MODEL_LLAMA_8B,
+        role=ModelRole.FASTPATH,
+        provider="meta",
+        aliases=(),
+        deprecated_aliases=(),
+        routable=True,
+        supports_streaming=True,
+        supports_tools=False,
+        supports_embeddings=False,
+        preferred_runtime="lmstudio",
+        cognitive_domain="fastpath",
+        status="active",
+    ),
+    ModelDescriptor(
+        canonical_id=MODEL_NOMIC_EMBED,
+        role=ModelRole.EMBEDDING,
+        provider="nomic",
+        aliases=(),
+        deprecated_aliases=(),
+        routable=False,
+        supports_streaming=False,
+        supports_tools=False,
+        supports_embeddings=True,
+        preferred_runtime="lmstudio",
+        cognitive_domain="embeddings",
+        status="active",
+    ),
+)
+
+
+_DESCRIPTOR_BY_CANONICAL: dict[str, ModelDescriptor] = {m.canonical_id: m for m in _CANONICAL_MODELS}
+
+# Build alias maps deterministically.
+_ALIAS_TO_CANONICAL: dict[str, str] = {}
+_DEPRECATED_ALIAS_SET: set[str] = set()
+for m in _CANONICAL_MODELS:
+    _ALIAS_TO_CANONICAL[m.canonical_id.lower()] = m.canonical_id
+    for a in m.aliases:
+        _ALIAS_TO_CANONICAL[str(a).lower()] = m.canonical_id
+    for da in m.deprecated_aliases:
+        _ALIAS_TO_CANONICAL[str(da).lower()] = m.canonical_id
+        _DEPRECATED_ALIAS_SET.add(str(da).lower())
+
+
+def normalize_model_id(model_id: str | None) -> str:
+    """Normalize any incoming model_id into a canonical_id when possible.
+
+    Examples:
+    - qwen2.5-coder-14b-instruct -> qwen/qwen2.5-coder-14b-instruct
+    - qwen/qwen2.5-coder-14b-instruct -> qwen/qwen2.5-coder-14b-instruct
+    - lmstudio-community/qwen2.5-coder-14b-instruct -> qwen/qwen2.5-coder-14b-instruct (deprecated alias)
+    """
+
+    mid = (model_id or "").strip()
+    if not mid:
+        return ""
+    key = mid.lower()
+    return _ALIAS_TO_CANONICAL.get(key, mid)
+
+
+def is_deprecated_model(model_id: str | None) -> bool:
+    mid = (model_id or "").strip().lower()
+    if not mid:
+        return False
+    return mid in _DEPRECATED_ALIAS_SET
+
+
+def get_canonical_model(model_id: str | None) -> str:
+    """Return the canonical model id (or empty string if input is empty)."""
+
+    return normalize_model_id(model_id)
+
+
+def get_model_role(model_id: str | None) -> str:
+    canonical = normalize_model_id(model_id)
+    desc = _DESCRIPTOR_BY_CANONICAL.get(canonical)
+    return desc.role.value if desc else "UNKNOWN"
+
+
+def get_routable_models() -> list[str]:
+    # Deterministic ordering.
+    out = [m.canonical_id for m in _CANONICAL_MODELS if bool(m.routable)]
+    out.sort()
+    return out
+
+
+def get_preferred_model_for_role(role: str | ModelRole) -> str:
+    r = role.value if isinstance(role, ModelRole) else str(role or "").upper()
+    for m in _CANONICAL_MODELS:
+        if m.role.value == r and m.routable:
+            return m.canonical_id
+    # Fail-safe fallback (no routing decisions): return empty.
+    return ""
+
+
+def build_public_registry_snapshot() -> dict[str, Any]:
+    models = [m.to_public_dict() for m in sorted(_CANONICAL_MODELS, key=lambda x: x.canonical_id)]
+    deprecated = sorted({a for m in _CANONICAL_MODELS for a in (m.deprecated_aliases or ())})
+    tolerated = sorted({a for m in _CANONICAL_MODELS for a in (m.aliases or ())})
+    routable = sorted([m.canonical_id for m in _CANONICAL_MODELS if m.routable])
+    return {
+        "contract_version": "MODEL-REGISTRY-CANONICAL-01",
+        "canonical_models": models,
+        "routable_models": routable,
+        "aliases_tolerated": tolerated,
+        "aliases_deprecated": deprecated,
+        "total": int(len(models)),
+        "routable_total": int(len(routable)),
+        "deprecated_total": int(len(deprecated)),
+    }
+
+
+# ── legacy capability scoring registry (kept for backward compatibility) ───
 # Every model currently loaded on our GPU nodes.
 # Add / update here when you load new models in LM Studio.
 
-MODEL_REGISTRY = {
+LEGACY_MODEL_REGISTRY = {
     # ── RX9070 (192.168.1.50) · 16 GB VRAM ────────────────────────────
     "llama-3.1-8b-instruct": {
         "display_name": "Llama 3.1 8B",
@@ -154,7 +352,8 @@ MODEL_REGISTRY = {
     },
 }
 
-model_registry = MODEL_REGISTRY
+MODEL_REGISTRY = LEGACY_MODEL_REGISTRY  # backward compat alias
+model_registry = LEGACY_MODEL_REGISTRY
 
 MODEL_ALIASES = {
     "Qwen2.5-Coder-32B-Instruct-GGUF-Q4_K_M": "qwen2.5-coder-32b-instruct",
@@ -203,8 +402,8 @@ def score_model(task_type, model_id, node_state=None):
     -------
     int  (0‑100)
     """
-    canonical = normalize_model_id(model_id)
-    model = MODEL_REGISTRY.get(model_id) or MODEL_REGISTRY.get(canonical)
+    canonical = normalize_legacy_model_id(model_id)
+    model = LEGACY_MODEL_REGISTRY.get(model_id) or LEGACY_MODEL_REGISTRY.get(canonical)
     if not model:
         try:
             from runtime.models.model_classifier import score_unknown_model
@@ -234,9 +433,9 @@ def get_best_model(task_type, available_models=None):
     -------
     list[tuple[str, int]]  (best first)
     """
-    candidates = available_models or list(MODEL_REGISTRY.keys())
+    candidates = available_models or list(LEGACY_MODEL_REGISTRY.keys())
     # FASE 29.3: filter out disabled models
-    candidates = [m for m in candidates if MODEL_REGISTRY.get(m, {}).get("enabled", True)]
+    candidates = [m for m in candidates if LEGACY_MODEL_REGISTRY.get(m, {}).get("enabled", True)]
     scored = [(mid, score_model(task_type, mid)) for mid in candidates]
     scored.sort(key=lambda x: x[1], reverse=True)
     return scored
@@ -248,7 +447,7 @@ def best_for_task(task_type, available_models=None):
     return ranked[0][0] if ranked else None
 
 
-def normalize_model_id(model_id: str) -> str:
+def normalize_legacy_model_id(model_id: str) -> str:
     if not model_id:
         return model_id
     if model_id in MODEL_ALIASES:
@@ -265,9 +464,9 @@ def normalize_model_id(model_id: str) -> str:
 
 
 def get_model_metadata(model_id: str):
-    canonical = normalize_model_id(model_id)
-    if canonical in MODEL_REGISTRY:
-        meta = dict(MODEL_REGISTRY[canonical])
+    canonical = normalize_legacy_model_id(model_id)
+    if canonical in LEGACY_MODEL_REGISTRY:
+        meta = dict(LEGACY_MODEL_REGISTRY[canonical])
         meta["id"] = canonical
         meta["source"] = "registry"
         return meta
@@ -315,7 +514,7 @@ def get_model_skills(model_id: str) -> list[str]:
 
 
 def merge_registry_with_discovery(model_id: str, discovered: dict) -> dict:
-    canonical = normalize_model_id(model_id)
+    canonical = normalize_legacy_model_id(model_id)
     meta = get_model_metadata(canonical) or {"id": canonical, "source": "heuristic"}
     merged = dict(meta)
     discovered = discovered or {}

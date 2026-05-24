@@ -21,9 +21,11 @@ LMSTUDIO_BASE_URL = os.getenv("AI_LAB_LMSTUDIO_URL", "http://192.168.1.50:1234/v
 MODELS_URL = f"{LMSTUDIO_BASE_URL}/models"
 CHAT_URL = f"{LMSTUDIO_BASE_URL}/chat/completions"
 
-MODEL_QWEN = "qwen/qwen2.5-coder-14b-instruct"
-MODEL_LLAMA = "llama-3.1-8b-instruct"
-MODEL_DEPRECATED = "lmstudio-community/qwen2.5-coder-14b-instruct"
+from runtime.models.model_registry import (
+    DEPRECATED_QWEN_14B_ALIAS as MODEL_DEPRECATED,
+    MODEL_LLAMA_8B as MODEL_LLAMA,
+    MODEL_QWEN_14B as MODEL_QWEN,
+)
 
 
 def _requests():

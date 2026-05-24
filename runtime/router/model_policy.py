@@ -13,12 +13,19 @@ RULE-MODEL-ROUTING-4: Operational prompts nunca deben fallbackear al modelo depr
 
 from typing import Any
 
-PRIMARY_OPERATIONAL_MODEL = "llama-3.1-8b-instruct"
-PRIMARY_CODING_MODEL = "qwen/qwen2.5-coder-14b-instruct"
+from runtime.models.model_registry import (
+    DEPRECATED_QWEN_14B_ALIAS,
+    MODEL_LLAMA_8B,
+    MODEL_QWEN_14B,
+    is_deprecated_model as _registry_is_deprecated_model,
+)
+
+PRIMARY_OPERATIONAL_MODEL = MODEL_LLAMA_8B
+PRIMARY_CODING_MODEL = MODEL_QWEN_14B
 DEPRECATED_MODEL_PREFIX = "lmstudio-community/qwen2.5-coder-14b-instruct"
 
 DEPRECATED_MODEL_IDS: frozenset[str] = frozenset({
-    "lmstudio-community/qwen2.5-coder-14b-instruct",
+    DEPRECATED_QWEN_14B_ALIAS,
 })
 
 OPERATIONAL_PROMPT_KEYWORDS: tuple[str, ...] = (
@@ -119,13 +126,8 @@ def is_runtime_grounded_prompt(text: str) -> bool:
 
 
 def is_deprecated_model(model_id: str | None) -> bool:
-    if not model_id:
-        return False
-    mid = model_id.strip().lower()
-    for deprecated in DEPRECATED_MODEL_IDS:
-        if mid == deprecated.lower():
-            return True
-    return False
+    # Single source of truth is runtime.models.model_registry.
+    return _registry_is_deprecated_model(model_id)
 
 
 def resolve_operational_model() -> str:

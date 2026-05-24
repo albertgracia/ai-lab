@@ -1257,6 +1257,13 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 self._send_json(500, {"error": "models_state_unavailable", "detail": str(exc)})
             return
 
+        # MODEL-REGISTRY-CANONICAL-01: canonical model registry (read-only) — always-on 200
+        if self.path == "/runtime/models/registry" or self.path.startswith("/runtime/models/registry/"):
+            from runtime.gateway.runtime_api_routes import handle_model_registry_routes
+
+            handle_model_registry_routes(self)
+            return
+
         if self.path == "/runtime/topology":
             self._send_json(
                 200,

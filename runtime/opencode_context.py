@@ -54,6 +54,12 @@ def anti_stale_guard() -> str | None:
 
 
 def build_runtime_truth_block() -> str:
+    from runtime.models.model_registry import (
+        DEPRECATED_QWEN_14B_ALIAS,
+        MODEL_LLAMA_8B,
+        MODEL_NOMIC_EMBED,
+        MODEL_QWEN_14B,
+    )
     tag = get_current_git_tag()
     lines = [
         "=== CURRENT AI-LAB RUNTIME TRUTH (HARD FACTS) ===",
@@ -65,10 +71,10 @@ def build_runtime_truth_block() -> str:
         f"Archives: /mnt/opencode/ai-lab-archives",
         "",
         "Operational model routing:",
-        "- llama-3.1-8b-instruct = PRIMARY_OPERATIONAL_MODEL",
-        "- qwen/qwen2.5-coder-14b-instruct = PRIMARY_CODING_MODEL",
-        "- nomic-embed-text-v1.5 = embedding model",
-        "- lmstudio-community/qwen2.5-coder-14b-instruct = DEPRECATED / NON_ROUTABLE",
+        f"- {MODEL_LLAMA_8B} = PRIMARY_OPERATIONAL_MODEL",
+        f"- {MODEL_QWEN_14B} = PRIMARY_CODING_MODEL",
+        f"- {MODEL_NOMIC_EMBED} = embedding model",
+        f"- {DEPRECATED_QWEN_14B_ALIAS} = DEPRECATED / NON_ROUTABLE",
         "- qwen3.6-27b = DESACTIVADO (tests manuales)",
         "- qwen2.5-coder-32b = DOWN (RX7900XT offline)",
         "",

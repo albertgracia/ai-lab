@@ -456,3 +456,35 @@ def handle_guard_routes(handler: Any) -> bool:
             "error": str(exc),
         })
         return True
+
+
+def handle_model_registry_routes(handler: Any) -> bool:
+    """Handle /runtime/models/registry endpoint (read-only, fail-safe)."""
+
+    path = getattr(handler, "path", "")
+    if not (path == "/runtime/models/registry" or path.startswith("/runtime/models/registry/")):
+        return False
+
+    try:
+        from runtime.models.model_registry import build_public_registry_snapshot
+
+        handler._send_json(200, {
+            "status": "ok",
+            "service": "ai-lab-openai-gateway",
+            "endpoint": "runtime/models/registry",
+            "timestamp": time.time(),
+            "contract_version": "MODEL-REGISTRY-CANONICAL-01",
+            "registry": build_public_registry_snapshot(),
+        })
+        return True
+
+    except Exception as exc:
+        handler._send_json(200, {
+            "status": "degraded",
+            "service": "ai-lab-openai-gateway",
+            "endpoint": "runtime/models/registry",
+            "timestamp": time.time(),
+            "contract_version": "MODEL-REGISTRY-CANONICAL-01",
+            "error": str(exc),
+        })
+        return True
