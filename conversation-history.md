@@ -356,23 +356,135 @@ Los gaps restantes son de normalización semántica y no bloquean el grounding o
 
 ---
 
+## FASES POSTERIORES A 36B (segunda sesión)
+
+### FASE 36C: Operator Intent Reasoning — COMPLETED
+**Commit:** `4ed024ee`
+
+**Objetivo:** Implementar razonamiento de intención del operador para que AI-LAB clasifique consultas operacionales por propósito.
+
+**Cambios clave:**
+- Clasificador de intención del operador con patrones de consulta operacional
+- Integración con fastpath routing para priorizar respuestas operacionales
+- Tests de validación de intención
+
+**Tags:** `—` (no tag independiente, integrado en commits posteriores)
+
+---
+
+### FASE FEDERATION (múltiples sub-fases): COMPLETED
+
+**Commits:** desde `95e84917` hasta `91265834` (17 commits)
+
+| Sub-fase | Commit | Descripción |
+|----------|--------|-------------|
+| Domain Registry + Skeleton | `95e84917` | Bootstrap del federation domain registry |
+| Contracts Governance | `dae3d152` | Contracts-first governance scaffolding |
+| Agent Isolation Guides | `8f2bbef6` | Docs: domain agent isolation |
+| Federation Doctrine | `50cbdebc` | Docs Astro: federation doctrine |
+| Agent Constitution | `07db64ab` | Docs: federated runtime agent constitution |
+| Role Delegation | `ddd51711` | Minimal federated role delegation |
+| Context Budgets | `484a7bd6` | Deterministic context budgets enforcement |
+| Observability | `ff94311e` | Deterministic federation observability |
+| Core Guards | `cb9f0d7c` | Deterministic core federation guards (fix) |
+| Trust Propagation | `85b82383` | Deterministic trust propagation |
+| Evidence Lineage | `5833378f` | Deterministic evidence lineage |
+| Evidence Introspection | `6f9b0bf1` | Evidence lineage introspection endpoints |
+| Cognitive Guards State Machine | `91265834` | Bounded cognitive guards state machine, caps, events, APIs |
+
+**Tags:** `—` (múltiples tags Federation pendientes de formalizar)
+
+---
+
+### MODEL-REGISTRY-CANONICAL-01: Canonical Model Registry — COMPLETED
+
+**Tags:** `CP-MODEL-REGISTRY-CANONICAL-01-STABLE`, `CP-COGNITIVE-RUNTIME-DASHBOARD-01-STABLE`
+
+**Cambios clave:**
+- Canonical model registry con roles, aliases y endpoint (`861c5544`)
+- Limpieza de alias qwen coder deprecated (`6440f0ec`)
+- Tests de contratos canónicos LM Studio (`f06c5af0`)
+- Métricas cognitive runtime para evidence, registry y LM Studio health (`e7420a03`)
+- Runtime resilience burn-in suite 15-60min, 3 workers, 5 checkpoints (`a9d1e707`)
+- Federation storm simulation burn-in (`0fb84f78`)
+
+**Tags:** 5 tags (MODEL-REGISTRY-CANONICAL-01, COGNITIVE-RUNTIME-DASHBOARD-01, RUNTIME-RESILIENCE-BURNIN-01, FEDERATION-STORM-SIMULATION-01, COGNITIVE-SLO-01)
+
+---
+
+### COGNITIVE-SLO-01: Bounded Cognitive Runtime SLO Framework — COMPLETED
+
+**HEAD:** `a1572e02` (tag: `CP-COGNITIVE-SLO-01-STABLE`)
+
+**Objetivo:** Framework SLO cognitivo que mide salud de registry, gateway, LM Studio y federation guards como métricas de nivel de servicio.
+
+**Cambios clave:**
+- `runtime/slo/cognitive_slo.py` — `build_slo_prometheus_metrics()` con 7+ métricas
+- Integración con federation guards, evidence lineage y model registry
+- Endpoint `/runtime/slo/health` y `/runtime/slo/summary`
+- Prometheus metrics: `ailab_slo_violations_total`, `ailab_slo_degraded_total`, `ailab_slo_safe_mode_total`, `ailab_slo_registry_consistency`, `ailab_slo_gateway_health`, `ailab_slo_lmstudio_health`
+
+---
+
+### GITNEXUS-ARCHITECTURE-GOVERNANCE-01: Architecture Governance Framework — COMPLETED
+
+**Objetivo:** Detectar architectural drift, identificar gravity centers, medir coupling y definir budgets estructurales para AI-LAB runtime.
+
+**Archivos:**
+- `runtime/governance/architecture_governance.py` (523 líneas) — análisis estático con AST import parsing, coupling scoring, governance policies
+- `runtime/gateway/runtime_api_routes.py` — `handle_architecture_routes()` para endpoints `/runtime/architecture*`
+- `runtime/gateway/openai_gateway.py` — cableado de rutas + métricas Prometheus
+- `tests/test_architecture_governance.py` — 40 tests, 0 failures
+
+**Endpoints (always-on 200):**
+- `GET /runtime/architecture` — snapshot completo
+- `GET /runtime/architecture/summary` — resumen
+- `GET /runtime/architecture/hotspots` — módulos hotspot
+- `GET /runtime/architecture/violations` — violaciones de políticas
+
+**Métricas Prometheus (5):**
+- `ailab_architecture_hotspots_total`
+- `ailab_architecture_critical_modules_total`
+- `ailab_architecture_high_risk_total`
+- `ailab_architecture_governance_violations_total`
+- `ailab_architecture_gravity_centers_total`
+
+**Políticas de governance (6):**
+- `GOV-ARCH-001`: Gateway no debe importar routing execution (critical)
+- `GOV-ARCH-002`: Registry no debe orquestar routing (error)
+- `GOV-ARCH-003`: Observabilidad debe ser read-only (error)
+- `GOV-ARCH-004`: Federation debe mantenerse acotada (error)
+- `GOV-ARCH-005`: Governance sin loops recursivos (warning)
+- `GOV-ARCH-006`: Guards no deben importar execution (error)
+
+**Features:**
+- Análisis estático con AST (bounded: 300 files, depth 8, 50 results)
+- Cache TTL 300s
+- Determinismo con `now` parameter
+- Fail-safe: módulos inexistentes retornan vacío
+- FIFO bounded violations store (128 máx)
+
+**Tests:** 40/40 PASS
+
+---
+
 ## CURRENT STATE
 
-**Checkpoint:** `CP-36B-RUNTIME-PRECISION-MODE-STABLE`
-**HEAD:** `ac322c3b`
+**Checkpoint:** `CP-COGNITIVE-SLO-01-STABLE`
+**HEAD:** `a1572e02`
 
-### Fases completadas (desde 30I-D hasta 36B): 25 fases
-- 30I-D, 30I-E, 30I-F, 30I-F0, 30I-G, OBS-31A, OBS-31A.1, OBS-31A.2, OBS-31A.3, OBS-31A.4, OBS-31A.5, 31B, 31C, 31E, 31D, 32A, 32B, 33A, 33B, 28.4, DOC-36X, DOC-36X-Spanish, 35D-HF1, 36B
-- Storage hardening archive policy (CP-STORAGE-HARDENING-ARCHIVE-POLICY-STABLE)
+### Tags git: 63 tags (desde CP-21B-STABLE hasta CP-COGNITIVE-SLO-01-STABLE)
 
-### Tags git: 58 tags (desde CP-21B-STABLE hasta CP-36B-RUNTIME-PRECISION-MODE-STABLE)
+Tags nuevos desde CP-36B:
+- `CP-COGNITIVE-SLO-01-STABLE`
+- `CP-FEDERATION-STORM-SIMULATION-01-STABLE`
+- `CP-RUNTIME-RESILIENCE-BURNIN-01-STABLE`
+- `CP-COGNITIVE-RUNTIME-DASHBOARD-01-STABLE`
+- `CP-MODEL-REGISTRY-CANONICAL-01-STABLE`
 
-### Próxima fase planificada
-**FASE 36C — Operator Intent Reasoning**
-
-### Roadmap
-- 36C — Operator Intent Reasoning
+### Próximas fases planificadas
 - 36D — Autonomous Observability Triage
+- Federation governance formal tagging
 
 ### Nota
 Este archivo se actualiza con resumen ejecutivo. Para detalle completo de cada fase, consultar commits y tags git.

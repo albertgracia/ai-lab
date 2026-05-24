@@ -233,6 +233,20 @@ def _build_slo_cognitive_metrics() -> str:
         )
 
 
+def _build_architecture_governance_metrics() -> str:
+    try:
+        from runtime.governance.architecture_governance import build_architecture_prometheus_metrics
+        return build_architecture_prometheus_metrics()
+    except Exception:
+        return (
+            "ailab_architecture_hotspots_total 0\n"
+            "ailab_architecture_critical_modules_total 0\n"
+            "ailab_architecture_high_risk_total 0\n"
+            "ailab_architecture_governance_violations_total 0\n"
+            "ailab_architecture_gravity_centers_total 0\n"
+        )
+
+
 # ── FASE 29.4: SLO Enforcement & Adaptive Runtime Protection ──
 try:
     from runtime.slo import (
@@ -1243,6 +1257,17 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 + "# HELP ailab_slo_lmstudio_health LM Studio health SLO (1=healthy)\n"
                 + "# TYPE ailab_slo_lmstudio_health gauge\n"
                 + _build_slo_cognitive_metrics()
+                + "# HELP ailab_architecture_hotspots_total Architecture hotspot modules\n"
+                + "# TYPE ailab_architecture_hotspots_total gauge\n"
+                + "# HELP ailab_architecture_critical_modules_total Critical coupling modules\n"
+                + "# TYPE ailab_architecture_critical_modules_total gauge\n"
+                + "# HELP ailab_architecture_high_risk_total High risk modules\n"
+                + "# TYPE ailab_architecture_high_risk_total gauge\n"
+                + "# HELP ailab_architecture_governance_violations_total Architecture governance violations\n"
+                + "# TYPE ailab_architecture_governance_violations_total gauge\n"
+                + "# HELP ailab_architecture_gravity_centers_total Gravity center modules\n"
+                + "# TYPE ailab_architecture_gravity_centers_total gauge\n"
+                + _build_architecture_governance_metrics()
                 + "\n# ── prometheus_client managed metrics ──\n"
                 + prom_generate_latest(prom_REGISTRY).decode("utf-8")
             )
@@ -3262,6 +3287,13 @@ class GatewayHandler(BaseHTTPRequestHandler):
             from runtime.gateway.runtime_api_routes import handle_slo_routes
 
             handle_slo_routes(self)
+            return
+
+        # GITNEXUS-ARCHITECTURE-GOVERNANCE-01: Architecture governance — always-on 200
+        if self.path == "/runtime/architecture" or self.path.startswith("/runtime/architecture/"):
+            from runtime.gateway.runtime_api_routes import handle_architecture_routes
+
+            handle_architecture_routes(self)
             return
 
         # ── DEV-36X: Codebase memory — always-on 200 ──

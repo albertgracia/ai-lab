@@ -1015,7 +1015,7 @@ El objetivo **no** es maximizar flexibilidad a costa de estabilidad. AI-LAB prio
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **ai-lab** (12728 symbols, 19599 relationships, 258 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **ai-lab** (13944 symbols, 21581 relationships, 289 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 

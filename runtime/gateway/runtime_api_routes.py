@@ -565,3 +565,84 @@ def handle_slo_routes(handler: Any) -> bool:
             "error": str(exc),
         })
         return True
+
+
+def handle_architecture_routes(handler: Any) -> bool:
+    """Handle /runtime/architecture* endpoints (read-only, fail-safe)."""
+
+    path = getattr(handler, "path", "")
+    if not (path == "/runtime/architecture" or path.startswith("/runtime/architecture/")):
+        return False
+
+    import urllib.parse
+
+    try:
+        parsed = urllib.parse.urlparse(path)
+        clean_path = parsed.path
+        qs = urllib.parse.parse_qs(parsed.query or "")
+        limit = 20
+        try:
+            if "limit" in qs and qs["limit"]:
+                limit = int(qs["limit"][0])
+        except Exception:
+            limit = 20
+
+        from runtime.governance.architecture_governance import (
+            get_architecture_summary,
+            get_architecture_hotspots,
+            get_architecture_violations,
+        )
+
+        if clean_path == "/runtime/architecture" or clean_path == "/runtime/architecture/summary":
+            handler._send_json(200, {
+                "status": "ok",
+                "service": "ai-lab-openai-gateway",
+                "endpoint": clean_path.lstrip("/"),
+                "timestamp": time.time(),
+                "contract_version": "ARCH-01",
+                "architecture": get_architecture_summary(),
+            })
+            return True
+
+        if clean_path == "/runtime/architecture/hotspots":
+            handler._send_json(200, {
+                "status": "ok",
+                "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/architecture/hotspots",
+                "timestamp": time.time(),
+                "contract_version": "ARCH-01",
+                "hotspots": get_architecture_hotspots(limit=limit),
+            })
+            return True
+
+        if clean_path == "/runtime/architecture/violations":
+            handler._send_json(200, {
+                "status": "ok",
+                "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/architecture/violations",
+                "timestamp": time.time(),
+                "contract_version": "ARCH-01",
+                "violations": get_architecture_violations(limit=limit),
+            })
+            return True
+
+        handler._send_json(200, {
+            "status": "degraded",
+            "service": "ai-lab-openai-gateway",
+            "endpoint": clean_path.lstrip("/"),
+            "timestamp": time.time(),
+            "contract_version": "ARCH-01",
+            "error": "unknown_architecture_endpoint",
+        })
+        return True
+
+    except Exception as exc:
+        handler._send_json(200, {
+            "status": "degraded",
+            "service": "ai-lab-openai-gateway",
+            "endpoint": "runtime/architecture",
+            "timestamp": time.time(),
+            "contract_version": "ARCH-01",
+            "error": str(exc),
+        })
+        return True
