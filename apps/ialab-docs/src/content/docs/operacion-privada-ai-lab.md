@@ -126,13 +126,13 @@ http://IP:1234
 ## Ver modelos
 
 ```bash
-curl http://192.168.1.200:1234/v1/models
+curl http://192.168.1.50:1234/v1/models
 ```
 
 ## Test chat directo
 
 ```bash
-curl -s http://192.168.1.200:1234/v1/chat/completions \
+curl -s http://192.168.1.50:1234/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
     "model": "google/gemma-4-e4b",

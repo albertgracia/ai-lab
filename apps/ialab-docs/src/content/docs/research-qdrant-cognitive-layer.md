@@ -112,7 +112,7 @@ datos precisos con delimitadores explícitos, no texto abierto a interpretación
   "docker": {
     "total": 16,
     "main": [
-      "traefik", "open-webui", "ollama", "qdrant",
+      "traefik", "open-webui", "qdrant",  # LEGACY: ollama removed
       "cadvisor", "node-exporter", "promtail", "portainer"
     ],
     "nginx_sites": [

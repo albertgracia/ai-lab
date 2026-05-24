@@ -16,6 +16,13 @@ Gestiona:
 - observabilidad (métricas + sensor fusion)
 - truth layers (Prometheus / OperationalTruth / GitNexus)
 
+Arquitectura clave (separación explícita):
+
+- **LM Studio**: backend de inferencia (sirve `/v1/*` y gestiona modelos en VRAM). No aplica governance.
+- **AI-LAB Gateway**: control plane cognitivo y plano de gobernanza (routing, perfiles, evidence/precision, federation guards, métricas, APIs runtime).
+- **GitNexus**: inteligencia topológica del codebase (estructura, hotspots, blast radius, gravity centers) usada como señal de razonamiento bounded.
+- **Prometheus/Grafana**: autoridad observacional (métricas, alertas, dashboards). No “razonan”; miden.
+
 ---
 
 # Componentes principales

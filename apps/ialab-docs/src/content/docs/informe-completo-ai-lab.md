@@ -13,7 +13,7 @@ AI-LAB vive en una VM Hyper-V con Ubuntu Server 26.04 LTS y combina:
 - portal Astro para documentacion viva
 - dashboard Next.js para metricas SSR
 - runtime cognitivo en Python
-- stacks Docker para proxy, observabilidad, Qdrant, Ollama y webs
+- stacks Docker para proxy, observabilidad, Qdrant y webs  <!-- LEGACY: ollama removed -->
 - nodos GPU remotos con LM Studio
 
 ## Base del sistema
@@ -62,7 +62,7 @@ Capas pesadas dentro de `/opt/ai-lab`:
 | `8084` | Live API |
 | `9000` | Portainer |
 | `9100` | node-exporter |
-| `11434` | Ollama |
+| ~~`11434`~~ | ~~Ollama~~ (LEGACY — removed) |
 | `6333/6334` | Qdrant |
 
 ## Servicios systemd
@@ -200,7 +200,7 @@ El runtime es el nucleo operativo cognitivo.
 
 ### AI core
 
-- `ollama`
+- ~~`ollama`~~ (LEGACY — removed)
 - `open-webui`
 
 ### Observability

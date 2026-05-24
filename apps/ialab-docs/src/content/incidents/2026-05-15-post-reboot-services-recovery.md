@@ -69,7 +69,7 @@ docker-compose.yml.
 | ailab-live-api.service | 1.30 | ✅ Activo |
 | ailab-docs.service | 1.30 | ✅ Activo |
 | Open WebUI | 1.30 | ✅ Up (healthy) |
-| Ollama | 1.30 | ✅ Up |
+| Ollama | 1.30 | ❌ Removed (LEGACY) |
 | Qdrant | 1.30 | ✅ Up |
 | Grafana | 1.40 | ✅ Up |
 | Loki | 1.40 | ✅ Up |

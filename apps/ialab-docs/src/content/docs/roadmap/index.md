@@ -56,6 +56,20 @@ AI-LAB está en modo **stabilization-first** y **governance-first** tras:
 - Pilot operador
 - Multi-GPU federation (futuro)
 
+## Roadmap futuro oficial (37A+)
+
+- `37A` — GRAPH-RUNTIME-CORRELATION-01
+- `37B` — CRITICAL-PATH-ANALYSIS-01
+- `37C` — GRAPH-HOTSPOT-HISTORY-01
+- `37D` — GOVERNANCE-DRIFT-DETECTION-01
+- `37E` — GRAPH-AWARE-INCIDENT-REASONING-01
+- `38A` — NEXUS-AI-RUNTIME-OPERATOR-01
+- `38B` — COGNITIVE-MEMORY-LAYER-01
+- `38C` — TOPOLOGY-AWARE-PROMPTING-01
+- `39A` — FEDERATION-INTELLIGENCE-01
+- `39B` — RUNTIME-DIGITAL-TWIN-01
+- `40` — AI-LAB COGNITIVE CONTROL PLANE
+
 ### Multi-GPU
 No documentado como funcionalidad operativa cerrada. Pendiente de:
 - Runtime maturity estable

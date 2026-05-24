@@ -24,9 +24,11 @@ flowchart LR
   SF --> G
 
   subgraph SC[Structural Cognition]
-    GN[GitNexus :4747]\n(codebase truth)
+    GN[GitNexus :4747]\n(codebase topology)
+    GR[Graph reasoning\n(hotspots/blast radius\n/gravity centers)]
   end
-  GN --> G
+  GN --> GR
+  GR --> G
 
   Q[Qdrant :6333]\n(memory layer) --> G
   INV[RX7900XT :1234]\nexpected_offline (inventory):::inv
