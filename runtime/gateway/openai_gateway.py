@@ -199,6 +199,40 @@ def _build_lmstudio_cognitive_metrics() -> str:
     )
 
 
+def _build_slo_cognitive_metrics() -> str:
+    """Render cognitive SLO metrics as Prometheus text.
+
+    Fail-safe: returns fallback zeros on any error.
+    """
+    try:
+        from runtime.slo.cognitive_slo import build_slo_prometheus_metrics
+        from runtime.federation.federation_guards import get_federation_guard_summary
+        from runtime.federation.federation_observability import get_evidence_summary
+        from runtime.models.model_registry import build_public_registry_snapshot
+
+        guard = get_federation_guard_summary()
+        evidence = get_evidence_summary()
+        registry = build_public_registry_snapshot()
+        lmstudio = float(_lmstudio_cache.get("up", 0) or 0)
+        gateway_up = 1.0
+        return build_slo_prometheus_metrics(
+            guard_summary=guard,
+            evidence_summary=evidence,
+            registry_snapshot=registry,
+            lmstudio_up=lmstudio,
+            gateway_up=gateway_up,
+        )
+    except Exception:
+        return (
+            "ailab_slo_violations_total 0\n"
+            "ailab_slo_degraded_total 0\n"
+            "ailab_slo_safe_mode_total 0\n"
+            "ailab_slo_registry_consistency 1\n"
+            "ailab_slo_gateway_health 1\n"
+            "ailab_slo_lmstudio_health 1\n"
+        )
+
+
 # ── FASE 29.4: SLO Enforcement & Adaptive Runtime Protection ──
 try:
     from runtime.slo import (
@@ -1196,6 +1230,19 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 + "# HELP ailab_lmstudio_models_count LM Studio loaded models count\n"
                 + "# TYPE ailab_lmstudio_models_count gauge\n"
                 + _build_lmstudio_cognitive_metrics()
+                + "# HELP ailab_slo_violations_total Total SLO violations\n"
+                + "# TYPE ailab_slo_violations_total counter\n"
+                + "# HELP ailab_slo_degraded_total Current SLO degraded count\n"
+                + "# TYPE ailab_slo_degraded_total gauge\n"
+                + "# HELP ailab_slo_safe_mode_total Current SLO critical count\n"
+                + "# TYPE ailab_slo_safe_mode_total gauge\n"
+                + "# HELP ailab_slo_registry_consistency Registry consistency SLO (1=healthy)\n"
+                + "# TYPE ailab_slo_registry_consistency gauge\n"
+                + "# HELP ailab_slo_gateway_health Gateway health SLO (1=healthy)\n"
+                + "# TYPE ailab_slo_gateway_health gauge\n"
+                + "# HELP ailab_slo_lmstudio_health LM Studio health SLO (1=healthy)\n"
+                + "# TYPE ailab_slo_lmstudio_health gauge\n"
+                + _build_slo_cognitive_metrics()
                 + "\n# ── prometheus_client managed metrics ──\n"
                 + prom_generate_latest(prom_REGISTRY).decode("utf-8")
             )
@@ -3208,6 +3255,13 @@ class GatewayHandler(BaseHTTPRequestHandler):
             from runtime.gateway.runtime_api_routes import handle_guard_routes
 
             handle_guard_routes(self)
+            return
+
+        # COGNITIVE-SLO-01: SLO endpoints — always-on 200
+        if self.path == "/runtime/slo" or self.path.startswith("/runtime/slo/"):
+            from runtime.gateway.runtime_api_routes import handle_slo_routes
+
+            handle_slo_routes(self)
             return
 
         # ── DEV-36X: Codebase memory — always-on 200 ──

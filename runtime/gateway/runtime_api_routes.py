@@ -488,3 +488,80 @@ def handle_model_registry_routes(handler: Any) -> bool:
             "error": str(exc),
         })
         return True
+
+
+def handle_slo_routes(handler: Any) -> bool:
+    """Handle /runtime/slo* endpoints (read-only, fail-safe)."""
+
+    path = getattr(handler, "path", "")
+    if not (path == "/runtime/slo" or path.startswith("/runtime/slo/")):
+        return False
+
+    import urllib.parse
+
+    try:
+        parsed = urllib.parse.urlparse(path)
+        clean_path = parsed.path
+        qs = urllib.parse.parse_qs(parsed.query or "")
+        limit = 50
+        try:
+            if "limit" in qs and qs["limit"]:
+                limit = int(qs["limit"][0])
+        except Exception:
+            limit = 50
+
+        from runtime.slo.cognitive_slo import get_slo_summary, get_slo_status, get_slo_violations
+
+        if clean_path == "/runtime/slo" or clean_path == "/runtime/slo/summary":
+            handler._send_json(200, {
+                "status": "ok",
+                "service": "ai-lab-openai-gateway",
+                "endpoint": clean_path.lstrip("/"),
+                "timestamp": time.time(),
+                "contract_version": "SLO-01",
+                "slo_summary": get_slo_summary(),
+            })
+            return True
+
+        if clean_path == "/runtime/slo/status":
+            handler._send_json(200, {
+                "status": "ok",
+                "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/slo/status",
+                "timestamp": time.time(),
+                "contract_version": "SLO-01",
+                "slo_status": get_slo_status(),
+            })
+            return True
+
+        if clean_path == "/runtime/slo/violations":
+            handler._send_json(200, {
+                "status": "ok",
+                "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/slo/violations",
+                "timestamp": time.time(),
+                "contract_version": "SLO-01",
+                "slo_violations": get_slo_violations(limit=limit),
+            })
+            return True
+
+        handler._send_json(200, {
+            "status": "degraded",
+            "service": "ai-lab-openai-gateway",
+            "endpoint": clean_path.lstrip("/"),
+            "timestamp": time.time(),
+            "contract_version": "SLO-01",
+            "error": "unknown_slo_endpoint",
+        })
+        return True
+
+    except Exception as exc:
+        handler._send_json(200, {
+            "status": "degraded",
+            "service": "ai-lab-openai-gateway",
+            "endpoint": "runtime/slo",
+            "timestamp": time.time(),
+            "contract_version": "SLO-01",
+            "error": str(exc),
+        })
+        return True
