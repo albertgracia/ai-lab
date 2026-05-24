@@ -113,6 +113,92 @@ def _build_federation_cognitive_guard_metrics() -> str:
             "ailab_federation_guard_authority_escalations_total 0\n"
         )
 
+
+def _build_evidence_cognitive_metrics() -> str:
+    """Render evidence lineage metrics as Prometheus text.
+
+    Fail-safe: returns zeros on any error.
+    """
+    try:
+        from runtime.federation.federation_observability import get_evidence_summary
+
+        summary = get_evidence_summary() or {}
+        return (
+            f"ailab_evidence_propagations_total {float(summary.get('evidence_propagations_total', 0) or 0)}\n"
+            f"ailab_evidence_stale_total {float(summary.get('stale_evidence_total', 0) or 0)}\n"
+            f"ailab_evidence_replay_risk_total {float(summary.get('replay_risk_total', 0) or 0)}\n"
+            f"ailab_evidence_lineage_depth_max {float(summary.get('lineage_depth_max', 0) or 0)}\n"
+            f"ailab_evidence_reuse_total {float(summary.get('evidence_reuse_total', 0) or 0)}\n"
+            f"ailab_evidence_stored_total {float(summary.get('stored_evidences', 0) or 0)}\n"
+            f"ailab_evidence_invalid_lineage_total {float(summary.get('invalid_lineage_total', 0) or 0)}\n"
+        )
+    except Exception:
+        return (
+            "ailab_evidence_propagations_total 0\n"
+            "ailab_evidence_stale_total 0\n"
+            "ailab_evidence_replay_risk_total 0\n"
+            "ailab_evidence_lineage_depth_max 0\n"
+            "ailab_evidence_reuse_total 0\n"
+            "ailab_evidence_stored_total 0\n"
+            "ailab_evidence_invalid_lineage_total 0\n"
+        )
+
+
+def _build_registry_cognitive_metrics() -> str:
+    """Render canonical model registry metrics as Prometheus text.
+
+    Fail-safe: returns zeros on any error.
+    """
+    try:
+        from runtime.models.model_registry import build_public_registry_snapshot
+
+        reg = build_public_registry_snapshot() or {}
+        return (
+            f"ailab_registry_models_total {float(reg.get('total', 0) or 0)}\n"
+            f"ailab_registry_routable_models_total {float(reg.get('routable_total', 0) or 0)}\n"
+            f"ailab_registry_deprecated_aliases_total {float(reg.get('deprecated_total', 0) or 0)}\n"
+            f"ailab_registry_tolerated_aliases_total {float(len(reg.get('aliases_tolerated', []) or []))}\n"
+        )
+    except Exception:
+        return (
+            "ailab_registry_models_total 0\n"
+            "ailab_registry_routable_models_total 0\n"
+            "ailab_registry_deprecated_aliases_total 0\n"
+            "ailab_registry_tolerated_aliases_total 0\n"
+        )
+
+
+# LM Studio health cache (bounded, in-memory, fail-safe)
+_lmstudio_cache: dict[str, float | int] = {"up": 0, "models_count": 0, "timestamp": 0.0}
+_LMSTUDIO_CACHE_TTL = 30.0
+
+
+def _build_lmstudio_cognitive_metrics() -> str:
+    """Render LM Studio health metrics as Prometheus text.
+
+    Lightweight, cached, fail-safe. Cache TTL 30s.
+    """
+    global _lmstudio_cache
+    try:
+        now = time.time()
+        if now - float(_lmstudio_cache["timestamp"]) > _LMSTUDIO_CACHE_TTL:
+            resp = requests.get("http://192.168.1.50:1234/v1/models", timeout=5)
+            if resp.status_code == 200:
+                data = resp.json()
+                models = data.get("data", [])
+                _lmstudio_cache["up"] = 1
+                _lmstudio_cache["models_count"] = len(models)
+            else:
+                _lmstudio_cache["up"] = 0
+            _lmstudio_cache["timestamp"] = now
+    except Exception:
+        pass
+    return (
+        f"ailab_lmstudio_up {float(_lmstudio_cache['up'])}\n"
+        f"ailab_lmstudio_models_count {float(_lmstudio_cache['models_count'])}\n"
+    )
+
+
 # ── FASE 29.4: SLO Enforcement & Adaptive Runtime Protection ──
 try:
     from runtime.slo import (
@@ -1081,6 +1167,35 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 + "# HELP ailab_federation_guard_authority_escalations_total Federation cognitive guards authority escalation detections\n"
                 + "# TYPE ailab_federation_guard_authority_escalations_total counter\n"
                 + _build_federation_cognitive_guard_metrics()
+                + "# HELP ailab_evidence_propagations_total Evidence lineage propagations\n"
+                + "# TYPE ailab_evidence_propagations_total counter\n"
+                + "# HELP ailab_evidence_stale_total Stale evidence detections\n"
+                + "# TYPE ailab_evidence_stale_total counter\n"
+                + "# HELP ailab_evidence_replay_risk_total Replay risk detections\n"
+                + "# TYPE ailab_evidence_replay_risk_total counter\n"
+                + "# HELP ailab_evidence_lineage_depth_max Max lineage depth observed\n"
+                + "# TYPE ailab_evidence_lineage_depth_max gauge\n"
+                + "# HELP ailab_evidence_reuse_total Evidence reuse events\n"
+                + "# TYPE ailab_evidence_reuse_total counter\n"
+                + "# HELP ailab_evidence_stored_total Stored evidences in buffer\n"
+                + "# TYPE ailab_evidence_stored_total gauge\n"
+                + "# HELP ailab_evidence_invalid_lineage_total Invalid lineage events\n"
+                + "# TYPE ailab_evidence_invalid_lineage_total counter\n"
+                + _build_evidence_cognitive_metrics()
+                + "# HELP ailab_registry_models_total Total canonical models in registry\n"
+                + "# TYPE ailab_registry_models_total gauge\n"
+                + "# HELP ailab_registry_routable_models_total Routable model count\n"
+                + "# TYPE ailab_registry_routable_models_total gauge\n"
+                + "# HELP ailab_registry_deprecated_aliases_total Deprecated alias count\n"
+                + "# TYPE ailab_registry_deprecated_aliases_total gauge\n"
+                + "# HELP ailab_registry_tolerated_aliases_total Tolerated alias count\n"
+                + "# TYPE ailab_registry_tolerated_aliases_total gauge\n"
+                + _build_registry_cognitive_metrics()
+                + "# HELP ailab_lmstudio_up LM Studio reachability (1=up, 0=down)\n"
+                + "# TYPE ailab_lmstudio_up gauge\n"
+                + "# HELP ailab_lmstudio_models_count LM Studio loaded models count\n"
+                + "# TYPE ailab_lmstudio_models_count gauge\n"
+                + _build_lmstudio_cognitive_metrics()
                 + "\n# ── prometheus_client managed metrics ──\n"
                 + prom_generate_latest(prom_REGISTRY).decode("utf-8")
             )
