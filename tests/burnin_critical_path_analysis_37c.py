@@ -96,6 +96,8 @@ def main() -> int:
         "/runtime/critical-path/summary",
         "/runtime/critical-path/modules?top_n=10",
         "/runtime/critical-path/routes",
+        "/runtime/critical-path/chokepoints",
+        "/runtime/critical-path/blast-radius",
         "/runtime/critical-path/dependencies?file=runtime/gateway/openai_gateway.py",
         "/runtime/critical-path/recommendations",
         "/runtime/health/summary",
@@ -122,6 +124,10 @@ def main() -> int:
         if r.get("path", "").startswith("/runtime/critical-path"):
             d = r.get("data") if isinstance(r.get("data"), dict) else {}
             if d.get("contract_version") != expected_contract:
+                payload_ok = False
+                break
+            # Fail if handler fell back to the unknown endpoint guard.
+            if d.get("error") == "unknown_critical_path_endpoint":
                 payload_ok = False
                 break
 

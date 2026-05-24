@@ -22,6 +22,8 @@ order: 60
 - `GET /runtime/critical-path/summary`
 - `GET /runtime/critical-path/modules?top_n=10`
 - `GET /runtime/critical-path/routes`
+- `GET /runtime/critical-path/chokepoints`
+- `GET /runtime/critical-path/blast-radius`
 - `GET /runtime/critical-path/dependencies?file=runtime/gateway/openai_gateway.py`
 - `GET /runtime/critical-path/recommendations`
 - `GET /runtime/critical-path/reset`

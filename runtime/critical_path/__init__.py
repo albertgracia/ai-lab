@@ -4,6 +4,8 @@ from runtime.critical_path.critical_path_analysis import (
     get_critical_path_summary,
     get_critical_path_modules,
     get_critical_path_routes,
+    get_critical_path_chokepoints,
+    get_critical_path_blast_radius,
     get_critical_path_dependencies,
     get_critical_path_recommendations,
     build_critical_path_prometheus_metrics,

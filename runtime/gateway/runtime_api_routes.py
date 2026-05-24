@@ -461,6 +461,8 @@ def handle_critical_path_routes(handler: Any) -> bool:
             get_critical_path_summary,
             get_critical_path_modules,
             get_critical_path_routes,
+            get_critical_path_chokepoints,
+            get_critical_path_blast_radius,
             get_critical_path_dependencies,
             get_critical_path_recommendations,
             reset_critical_path_state,
@@ -495,6 +497,16 @@ def handle_critical_path_routes(handler: Any) -> bool:
 
         if path == "/runtime/critical-path/recommendations":
             handler._send_json(200, get_critical_path_recommendations())
+            return True
+
+        if path == "/runtime/critical-path/chokepoints":
+            top_n = int((qs.get("top_n") or [10])[0])
+            handler._send_json(200, get_critical_path_chokepoints(top_n=top_n))
+            return True
+
+        if path == "/runtime/critical-path/blast-radius":
+            top_n = int((qs.get("top_n") or [10])[0])
+            handler._send_json(200, get_critical_path_blast_radius(top_n=top_n))
             return True
 
         if path == "/runtime/critical-path/reset":

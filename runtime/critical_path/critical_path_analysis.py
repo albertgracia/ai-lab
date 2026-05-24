@@ -959,6 +959,193 @@ def get_critical_path_routes() -> dict[str, Any]:
     }
 
 
+def get_critical_path_chokepoints(*, top_n: int = 10) -> dict[str, Any]:
+    """Return bounded chokepoints view.
+
+    Chokepoint = file with high fan-in/out and/or centrality and high blast-radius,
+    optionally amplified by dangerous deps + governance risk.
+    """
+
+    snap = _get_cached_snapshot(top_n=top_n)
+    files = (snap.get("top_files", []) or []) + (snap.get("high_critical_outside_top", []) or [])
+
+    chokepoints: list[dict[str, Any]] = []
+    hard_facts: set[str] = set()
+    inferred: set[str] = set()
+    unknowns: set[str] = set()
+
+    for f in files:
+        if not isinstance(f, dict):
+            continue
+
+        fan_in = _safe_int(f.get("fan_in"), 0)
+        fan_out = _safe_int(f.get("fan_out"), 0)
+        centrality = _safe_float(f.get("centrality"), 0.0)
+        blast_radius = str(f.get("blast_radius") or "low").lower()
+        governance_risk = str(f.get("governance_risk") or "low").lower()
+
+        deps = f.get("dangerous_dependencies") or []
+        deps_total = len(deps) if isinstance(deps, list) else 0
+        dep_cross_domain = 0
+        if isinstance(deps, list):
+            for d in deps[:25]:
+                if isinstance(d, dict):
+                    if "cross_domain" in str(d.get("reason") or ""):
+                        dep_cross_domain += 1
+
+        # bounded/deterministic risk proxy
+        choke_score = _clamp01(
+            0.35 * _clamp01(centrality)
+            + 0.15 * _clamp01((fan_in + fan_out) / 40.0)
+            + 0.20 * _br_weight(blast_radius)
+            + 0.20 * _gov_weight(governance_risk)
+            + 0.10 * _clamp01(deps_total / 10.0)
+        )
+
+        reasons: list[str] = []
+        if fan_in >= 10:
+            reasons.append("high_fan_in")
+        if fan_out >= 10:
+            reasons.append("high_fan_out")
+        if centrality >= 0.10:
+            reasons.append("high_centrality")
+        if blast_radius in {"high", "critical"}:
+            reasons.append("wide_blast_radius")
+        if governance_risk in {"high", "critical"}:
+            reasons.append("elevated_governance_risk")
+        if deps_total > 0:
+            reasons.append("dangerous_dependencies")
+        if dep_cross_domain > 0:
+            reasons.append("cross_domain_dependencies")
+
+        # If it doesn't have any chokepoint features, skip.
+        if not reasons:
+            continue
+
+        hard_facts.update([str(x) for x in (f.get("hard_facts") or []) if isinstance(x, str)])
+        inferred.update([str(x) for x in (f.get("inferred") or []) if isinstance(x, str)])
+        unknowns.update([str(x) for x in (f.get("unknowns") or []) if isinstance(x, str)])
+
+        chokepoints.append({
+            "file_path": f.get("file_path"),
+            "domain": f.get("domain"),
+            "fan_in": fan_in,
+            "fan_out": fan_out,
+            "centrality": round(float(centrality), 4),
+            "blast_radius": blast_radius,
+            "governance_risk": governance_risk,
+            "dangerous_dependencies_total": int(deps_total),
+            "dangerous_cross_domain_total": int(dep_cross_domain),
+            "score": round(float(choke_score), 3),
+            "severity": _severity_from_score(choke_score),
+            "reasons": sorted(set(reasons)),
+            "runtime_signals": f.get("runtime_signals") if isinstance(f.get("runtime_signals"), dict) else {},
+        })
+
+    # deterministic + bounded
+    chokepoints.sort(key=lambda x: (-float(x.get("score", 0.0)), str(x.get("file_path") or "")))
+    chokepoints = chokepoints[: max(1, min(25, int(top_n) if int(top_n) > 0 else 10))]
+
+    severity = snap.get("severity", "INFO")
+    return {
+        "status": snap.get("status", "ok"),
+        "service": "ai-lab-openai-gateway",
+        "endpoint": "runtime/critical-path/chokepoints",
+        "timestamp": _now(),
+        "contract_version": CRITICAL_PATH_CONTRACT_VERSION,
+        "severity": severity,
+        "chokepoints": chokepoints,
+        "total": len(chokepoints),
+        "hard_facts": sorted(hard_facts),
+        "inferred": sorted(inferred),
+        "unknowns": sorted(unknowns),
+    }
+
+
+def get_critical_path_blast_radius(*, top_n: int = 10) -> dict[str, Any]:
+    """Return bounded blast-radius grouping for the current critical-path set."""
+
+    snap = _get_cached_snapshot(top_n=top_n)
+    files = (snap.get("top_files", []) or []) + (snap.get("high_critical_outside_top", []) or [])
+
+    def _file_min_view(d: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "file_path": d.get("file_path"),
+            "domain": d.get("domain"),
+            "blast_radius": str(d.get("blast_radius") or "low").lower(),
+            "fan_in": _safe_int(d.get("fan_in"), 0),
+            "fan_out": _safe_int(d.get("fan_out"), 0),
+            "centrality": round(_safe_float(d.get("centrality"), 0.0), 4),
+            "score": round(_safe_float(d.get("score"), 0.0), 3),
+            "severity": str(d.get("severity") or "INFO"),
+        }
+
+    by_br: dict[str, list[dict[str, Any]]] = {"low": [], "medium": [], "high": [], "critical": []}
+    all_views: list[dict[str, Any]] = []
+    for f in files:
+        if not isinstance(f, dict):
+            continue
+        v = _file_min_view(f)
+        all_views.append(v)
+        br = v.get("blast_radius")
+        if br not in by_br:
+            br = "low"
+        by_br[br].append(v)
+
+    for k in by_br.keys():
+        by_br[k].sort(key=lambda x: (-float(x.get("score", 0.0)), str(x.get("file_path") or "")))
+        by_br[k] = by_br[k][:25]
+
+    # severity buckets (bounded)
+    low: list[dict[str, Any]] = []
+    medium: list[dict[str, Any]] = []
+    high: list[dict[str, Any]] = []
+    critical: list[dict[str, Any]] = []
+    for v in sorted(all_views, key=lambda x: (-float(x.get("score", 0.0)), str(x.get("file_path") or ""))):
+        sev = str(v.get("severity") or "INFO")
+        if sev == "CRITICAL":
+            critical.append(v)
+        elif sev == "HIGH":
+            high.append(v)
+        elif sev == "MEDIUM":
+            medium.append(v)
+        else:
+            low.append(v)
+    critical = critical[:25]
+    high = high[:25]
+    medium = medium[:25]
+    low = low[:25]
+
+    summary = {
+        "total": len(all_views),
+        "by_blast_radius": {k: len(v) for k, v in by_br.items()},
+        "by_severity": {
+            "critical": len([x for x in all_views if x.get("severity") == "CRITICAL"]),
+            "high": len([x for x in all_views if x.get("severity") == "HIGH"]),
+            "medium": len([x for x in all_views if x.get("severity") == "MEDIUM"]),
+            "low": len([x for x in all_views if x.get("severity") not in {"CRITICAL", "HIGH", "MEDIUM"}]),
+        },
+        "max_score": max([float(x.get("score", 0.0) or 0.0) for x in all_views], default=0.0),
+    }
+
+    unknowns = list(snap.get("unknowns", []) or []) + list(snap.get("unavailable_fields", []) or [])
+    return {
+        "status": snap.get("status", "ok"),
+        "service": "ai-lab-openai-gateway",
+        "endpoint": "runtime/critical-path/blast-radius",
+        "timestamp": _now(),
+        "contract_version": CRITICAL_PATH_CONTRACT_VERSION,
+        "blast_radius_summary": summary,
+        "critical": critical,
+        "high": high,
+        "medium": medium,
+        "low": low,
+        "modules_by_blast_radius": by_br,
+        "total": len(all_views),
+        "unknowns": sorted(set([str(u) for u in unknowns if u])),
+    }
+
+
 def get_critical_path_dependencies(*, file_path: str) -> dict[str, Any]:
     # bounded lookup: build graph and return edges touching file
     graph = _build_file_import_graph(runtime_only=True)
