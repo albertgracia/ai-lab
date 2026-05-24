@@ -648,6 +648,138 @@ def handle_architecture_routes(handler: Any) -> bool:
         return True
 
 
+def handle_graph_routes(handler: Any) -> bool:
+    """Handle /runtime/graph* endpoints (read-only, fail-safe)."""
+
+    path = getattr(handler, "path", "")
+    if not (path == "/runtime/graph" or path.startswith("/runtime/graph/")):
+        return False
+
+    import urllib.parse
+
+    try:
+        parsed = urllib.parse.urlparse(path)
+        clean_path = parsed.path
+        qs = urllib.parse.parse_qs(parsed.query or "")
+        limit = 20
+        try:
+            if "limit" in qs and qs["limit"]:
+                limit = int(qs["limit"][0])
+        except Exception:
+            limit = 20
+
+        from runtime.graph_reasoning.gitnexus_graph_reasoning import (
+            get_graph_reasoning_summary,
+            get_graph_hotspots,
+            get_graph_blast_radius,
+            get_graph_governance_findings,
+            get_graph_correlations,
+            get_graph_metrics,
+            record_graph_metrics,
+            reset_graph_reasoning_state,
+            GRAPH_CONTRACT_VERSION,
+        )
+
+        if clean_path == "/runtime/graph" or clean_path == "/runtime/graph/summary":
+            handler._send_json(200, {
+                "status": "ok",
+                "service": "ai-lab-openai-gateway",
+                "endpoint": clean_path.lstrip("/"),
+                "timestamp": time.time(),
+                "contract_version": GRAPH_CONTRACT_VERSION,
+                "graph_summary": get_graph_reasoning_summary(),
+            })
+            return True
+
+        if clean_path == "/runtime/graph/hotspots":
+            handler._send_json(200, {
+                "status": "ok",
+                "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/graph/hotspots",
+                "timestamp": time.time(),
+                "contract_version": GRAPH_CONTRACT_VERSION,
+                "hotspots": get_graph_hotspots(),
+            })
+            record_graph_metrics()
+            return True
+
+        if clean_path == "/runtime/graph/blast-radius":
+            handler._send_json(200, {
+                "status": "ok",
+                "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/graph/blast-radius",
+                "timestamp": time.time(),
+                "contract_version": GRAPH_CONTRACT_VERSION,
+                "blast_radius": get_graph_blast_radius(),
+            })
+            return True
+
+        if clean_path == "/runtime/graph/governance":
+            handler._send_json(200, {
+                "status": "ok",
+                "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/graph/governance",
+                "timestamp": time.time(),
+                "contract_version": GRAPH_CONTRACT_VERSION,
+                "governance_findings": get_graph_governance_findings(),
+            })
+            return True
+
+        if clean_path == "/runtime/graph/correlations":
+            handler._send_json(200, {
+                "status": "ok",
+                "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/graph/correlations",
+                "timestamp": time.time(),
+                "contract_version": GRAPH_CONTRACT_VERSION,
+                "correlations": get_graph_correlations(),
+            })
+            return True
+
+        if clean_path == "/runtime/graph/metrics":
+            handler._send_json(200, {
+                "status": "ok",
+                "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/graph/metrics",
+                "timestamp": time.time(),
+                "contract_version": GRAPH_CONTRACT_VERSION,
+                "graph_metrics": get_graph_metrics(),
+            })
+            return True
+
+        if clean_path == "/runtime/graph/reset":
+            handler._send_json(200, {
+                "status": "ok",
+                "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/graph/reset",
+                "timestamp": time.time(),
+                "contract_version": GRAPH_CONTRACT_VERSION,
+                "reset": reset_graph_reasoning_state(),
+            })
+            return True
+
+        handler._send_json(200, {
+            "status": "degraded",
+            "service": "ai-lab-openai-gateway",
+            "endpoint": clean_path.lstrip("/"),
+            "timestamp": time.time(),
+            "contract_version": GRAPH_CONTRACT_VERSION,
+            "error": "unknown_graph_endpoint",
+        })
+        return True
+
+    except Exception as exc:
+        handler._send_json(200, {
+            "status": "degraded",
+            "service": "ai-lab-openai-gateway",
+            "endpoint": "runtime/graph",
+            "timestamp": time.time(),
+            "contract_version": GRAPH_CONTRACT_VERSION,
+            "error": str(exc),
+        })
+        return True
+
+
 def handle_triage_routes(handler: Any) -> bool:
     """Handle /runtime/triage* endpoints (read-only, fail-safe, always-on 200)."""
 

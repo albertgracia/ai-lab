@@ -3670,6 +3670,140 @@
           "legendFormat": "Federation"
         }
       ]
+    },
+    {
+      "type": "row",
+      "title": "Graph Reasoning",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 92
+      },
+      "collapsed": false
+    },
+    {
+      "type": "stat",
+      "title": "Graph Hotspots (Total)",
+      "datasource": "Prometheus",
+      "description": "GITNEXUS-GRAPH-AWARE-REASONING-01: hotspots detected",
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 0,
+        "y": 93
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "orange", "value": 5 },
+              { "color": "red", "value": 10 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        { "expr": "ailab_graph_hotspots_total{job=\"ai-lab-gateway\"}", "refId": "A" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Graph Governance Findings",
+      "datasource": "Prometheus",
+      "description": "GITNEXUS-GRAPH-AWARE-REASONING-01: governance findings total",
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 93
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "orange", "value": 10 },
+              { "color": "red", "value": 25 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        { "expr": "ailab_graph_governance_findings_total{job=\"ai-lab-gateway\"}", "refId": "A" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Graph Gravity Centers",
+      "datasource": "Prometheus",
+      "description": "GITNEXUS-GRAPH-AWARE-REASONING-01: gravity centers (high centrality)",
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 93
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "orange", "value": 5 },
+              { "color": "red", "value": 10 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        { "expr": "ailab_graph_gravity_centers_total{job=\"ai-lab-gateway\"}", "refId": "A" }
+      ]
     }
   ]
 }

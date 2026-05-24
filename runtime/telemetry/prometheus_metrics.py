@@ -2572,3 +2572,42 @@ def record_triage_prometheus_metrics(metrics: dict[str, Any]) -> None:
         TRIAGE_REGISTRY_RELATED_TOTAL.set(float(metrics.get("ailab_triage_registry_related_total", 0)))
     except Exception:
         pass
+
+
+# ── FASE GITNEXUS-GRAPH-AWARE-REASONING-01: Graph Reasoning Metrics ──
+GRAPH_HOTSPOTS_TOTAL = Gauge(
+    "ailab_graph_hotspots_total",
+    "Total graph-reasoning hotspots detected (high fan-in/fan-out modules)",
+)
+GRAPH_CRITICAL_MODULES_TOTAL = Gauge(
+    "ailab_graph_critical_modules_total",
+    "Total critical blast radius modules in graph analysis",
+)
+GRAPH_HIGH_BLAST_RADIUS_TOTAL = Gauge(
+    "ailab_graph_high_blast_radius_total",
+    "Total high-severity blast radius modules in graph analysis",
+)
+GRAPH_GOVERNANCE_FINDINGS_TOTAL = Gauge(
+    "ailab_graph_governance_findings_total",
+    "Total governance findings from graph analysis",
+)
+GRAPH_FEDERATION_COUPLING_TOTAL = Gauge(
+    "ailab_graph_federation_coupling_total",
+    "Total federation-coupled modules detected in graph analysis",
+)
+GRAPH_GRAVITY_CENTERS_TOTAL = Gauge(
+    "ailab_graph_gravity_centers_total",
+    "Total gravity centers (high centrality) in graph analysis",
+)
+
+
+def record_graph_prometheus_metrics(metrics: dict[str, Any]) -> None:
+    try:
+        GRAPH_HOTSPOTS_TOTAL.set(float(metrics.get("ailab_graph_hotspots_total", 0)))
+        GRAPH_CRITICAL_MODULES_TOTAL.set(float(metrics.get("ailab_graph_critical_modules_total", 0)))
+        GRAPH_HIGH_BLAST_RADIUS_TOTAL.set(float(metrics.get("ailab_graph_high_blast_radius_total", 0)))
+        GRAPH_GOVERNANCE_FINDINGS_TOTAL.set(float(metrics.get("ailab_graph_governance_findings_total", 0)))
+        GRAPH_FEDERATION_COUPLING_TOTAL.set(float(metrics.get("ailab_graph_federation_coupling_total", 0)))
+        GRAPH_GRAVITY_CENTERS_TOTAL.set(float(metrics.get("ailab_graph_gravity_centers_total", 0)))
+    except Exception:
+        pass

@@ -3254,6 +3254,13 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 })
                 return
 
+        # ── GITNEXUS-GRAPH-AWARE-REASONING-01: Graph reasoning — always-on 200 ──
+        if self.path == "/runtime/graph" or self.path.startswith("/runtime/graph/"):
+            from runtime.gateway.runtime_api_routes import handle_graph_routes
+
+            handle_graph_routes(self)
+            return
+
         # ── FASE 35D: Operational fast-path — always-on 200 ──
         if self.path == "/runtime/fastpath" or self.path.startswith("/runtime/fastpath/"):
             from runtime.gateway.runtime_api_routes import handle_fastpath_routes
