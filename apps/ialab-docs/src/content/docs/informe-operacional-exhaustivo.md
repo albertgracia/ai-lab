@@ -180,7 +180,7 @@ Model Routing Layer
 | Modelo | Estado | Clasificacion |
 |--------|--------|---------------|
 | qwen/qwen3.6-27b | ⚠ DISABLED | Inventory only |
-| lmstudio-community/qwen2.5-coder-14b-instruct | ⚠ DISCOVERED | Alternate alias |
+| lmstudio-community/qwen2.5-coder-14b-instruct | ❌ DEPRECATED | NON_ROUTABLE (alias → qwen/qwen2.5-coder-14b-instruct) |
 
 :::caution
 qwen3.6 NO participa en routing activo. Solo existe como modelo descubierto/inventario.

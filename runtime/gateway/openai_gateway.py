@@ -716,7 +716,7 @@ def inject_agent_context(payload):
     elif route.family == "report":
         payload.pop("tools", None)
         payload.pop("tool_choice", None)
-        payload["model"] = "qwen2.5-coder-14b-instruct"
+        payload["model"] = "qwen/qwen2.5-coder-14b-instruct"
         payload["messages"] = build_minimal_report_messages(user_text, observed_runtime=_report_runtime, response_profile=_operational_response_profile)
         payload["max_tokens"] = min(int(payload.get("max_tokens", 1024) or 1024), 1024)
         payload["temperature"] = min(float(payload.get("temperature", 0.3) or 0.3), 0.3)
@@ -4331,7 +4331,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 # FASE 29.3.1: but if message demands qwen14b (deep reasoning), escalate
                 escalation = get_qwen_escalation_reason(observe_user_text)
                 if escalation and route_family == "observe":
-                    selected_model = "qwen2.5-coder-14b-instruct"
+                    selected_model = "qwen/qwen2.5-coder-14b-instruct"
                     try:
                         from runtime.telemetry.prometheus_metrics import record_qwen_escalation
                         record_qwen_escalation(f"observe_override:{escalation}")
@@ -4361,7 +4361,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
             elif task_type in ("fast", "general", "coding"):
                 escalation_reason = get_qwen_escalation_reason(observe_user_text)
                 if escalation_reason:
-                    selected_model = "qwen2.5-coder-14b-instruct"
+                    selected_model = "qwen/qwen2.5-coder-14b-instruct"
                     try:
                         from runtime.telemetry.prometheus_metrics import record_qwen_escalation
                         record_qwen_escalation(escalation_reason)
@@ -4375,7 +4375,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
             DISABLED_MODELS = {"qwen3.6-27b", "qwen/qwen3.6-27b", "lmstudio-community/qwen3.6-27b"}
             if selected_model in DISABLED_MODELS or "qwen3.6" in (selected_model or "").lower():
                 original = selected_model
-                selected_model = "qwen2.5-coder-14b-instruct"
+                selected_model = "qwen/qwen2.5-coder-14b-instruct"
                 try:
                     from runtime.telemetry.prometheus_metrics import record_disabled_model_selection
                     record_disabled_model_selection(original, "disabled_model_redirect")
@@ -4391,7 +4391,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 ))
             elif is_deprecated_model(selected_model):
                 original = selected_model
-                selected_model = "qwen2.5-coder-14b-instruct"
+                selected_model = "qwen/qwen2.5-coder-14b-instruct"
                 try:
                     from runtime.telemetry.prometheus_metrics import (
                         record_deprecated_model_routing,
