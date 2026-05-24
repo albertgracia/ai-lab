@@ -16,6 +16,7 @@ order: 2
 - **Precision Semantics (36B)**: partial evidence, conflicts y degradación segura.
 - **Operator Intent Reasoning (36C)**: metadata determinista para intención operativa.
 - **Cognitive Health Layer (37A)**: score bounded, confianza de routing y watchdog metadata-only.
+- **Graph-Runtime Correlation (37B)**: correlación explicable entre hotspots topológicos y degradación runtime real.
 
 ## Fases cubiertas
 
@@ -24,6 +25,7 @@ order: 2
 - `30I-C`
 - `30I-D`
 - `37A`
+- `37B`
 
 ## Alineación reciente
 

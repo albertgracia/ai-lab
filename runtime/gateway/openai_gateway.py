@@ -1281,6 +1281,23 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 + "# HELP ailab_gateway_latency_p95_ms Gateway bounded latency p95 (ms)\n"
                 + "# TYPE ailab_gateway_latency_p95_ms gauge\n"
                 + (lambda: __import__("runtime.health.cognitive_health_layer", fromlist=["build_cognitive_health_prometheus_metrics"]).build_cognitive_health_prometheus_metrics())()
+                + "# HELP ailab_correlation_score Graph-runtime correlation score (0-1, metadata-only)\n"
+                + "# TYPE ailab_correlation_score gauge\n"
+                + "# HELP ailab_correlation_hotspots_total Total hotspots seen by graph layer\n"
+                + "# TYPE ailab_correlation_hotspots_total gauge\n"
+                + "# HELP ailab_correlation_high_risk_total Correlated hotspots with HIGH/CRITICAL severity\n"
+                + "# TYPE ailab_correlation_high_risk_total gauge\n"
+                + "# HELP ailab_correlation_critical_total Correlated hotspots with CRITICAL severity\n"
+                + "# TYPE ailab_correlation_critical_total gauge\n"
+                + "# HELP ailab_correlation_unknowns_total Unknowns/unavailable sources count\n"
+                + "# TYPE ailab_correlation_unknowns_total gauge\n"
+                + "# HELP ailab_correlation_recommendations_total Correlation recommendations count\n"
+                + "# TYPE ailab_correlation_recommendations_total gauge\n"
+                + "# HELP ailab_correlation_runtime_health_linked_total Correlations linked to runtime health degradation\n"
+                + "# TYPE ailab_correlation_runtime_health_linked_total gauge\n"
+                + "# HELP ailab_correlation_graph_health_linked_total Correlations linked to graph hotspot signals\n"
+                + "# TYPE ailab_correlation_graph_health_linked_total gauge\n"
+                + (lambda: __import__("runtime.correlation.graph_runtime_correlation", fromlist=["build_graph_runtime_correlation_prometheus_metrics"]).build_graph_runtime_correlation_prometheus_metrics())()
                 + "\n# ── prometheus_client managed metrics ──\n"
                 + prom_generate_latest(prom_REGISTRY).decode("utf-8")
             )
@@ -3300,6 +3317,13 @@ class GatewayHandler(BaseHTTPRequestHandler):
             from runtime.gateway.runtime_api_routes import handle_health_routes
 
             handle_health_routes(self)
+            return
+
+        # ── FASE 37B: Graph-Runtime Correlation — always-on 200 ──
+        if self.path == "/runtime/correlation" or self.path.startswith("/runtime/correlation/"):
+            from runtime.gateway.runtime_api_routes import handle_correlation_routes
+
+            handle_correlation_routes(self)
             return
 
         # ── FEDERATION-EVIDENCE-LINEAGE-02: Evidence introspection — always-on 200 ──

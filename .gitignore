@@ -84,12 +84,15 @@ runtime/*
 !apps/metrics-dashboard/src/app/runtime/page.tsx
 !runtime/control/
 !runtime/health/
+!runtime/correlation/
 !runtime/tools/tool_metrics.py
 !runtime/tools/
 !runtime/tools/__init__.py
 !runtime/tools/contracts.py
 !runtime/tools/tool_registry.py
 !runtime/telemetry/prometheus_metrics.py
+!runtime/correlation/__init__.py
+!runtime/correlation/graph_runtime_correlation.py
 !runtime/performance/
 !runtime/performance/__init__.py
 !runtime/performance/contracts.py

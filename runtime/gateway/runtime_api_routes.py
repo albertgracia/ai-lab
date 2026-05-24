@@ -367,6 +367,82 @@ def handle_health_routes(handler: Any) -> bool:
         return True
 
 
+def handle_correlation_routes(handler: Any) -> bool:
+    """Handle /runtime/correlation* endpoints (FASE 37B).
+
+    Always responds 200; bounded + deterministic; fail-safe.
+    """
+    raw = getattr(handler, "path", "")
+    path = (raw or "").split("?", 1)[0]
+    if not (path == "/runtime/correlation" or path.startswith("/runtime/correlation/")):
+        return False
+
+    try:
+        from runtime.correlation.graph_runtime_correlation import (
+            build_graph_runtime_correlation_snapshot,
+            get_graph_runtime_correlation_summary,
+            get_correlated_hotspots,
+            get_correlated_blast_radius,
+            get_runtime_topology_findings,
+            get_correlation_recommendations,
+            reset_graph_runtime_correlation_state,
+            GRAPH_RUNTIME_CORRELATION_CONTRACT_VERSION,
+        )
+
+        if path == "/runtime/correlation" or path == "/runtime/correlation/summary":
+            payload = build_graph_runtime_correlation_snapshot() if path == "/runtime/correlation" else get_graph_runtime_correlation_summary()
+            handler._send_json(200, payload)
+            return True
+
+        if path == "/runtime/correlation/hotspots":
+            handler._send_json(200, get_correlated_hotspots())
+            return True
+
+        if path == "/runtime/correlation/blast-radius":
+            handler._send_json(200, get_correlated_blast_radius())
+            return True
+
+        if path == "/runtime/correlation/findings":
+            handler._send_json(200, get_runtime_topology_findings())
+            return True
+
+        if path == "/runtime/correlation/recommendations":
+            handler._send_json(200, get_correlation_recommendations())
+            return True
+
+        if path == "/runtime/correlation/reset":
+            handler._send_json(200, {
+                "status": "ok",
+                "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/correlation/reset",
+                "timestamp": time.time(),
+                "contract_version": GRAPH_RUNTIME_CORRELATION_CONTRACT_VERSION,
+                "reset": reset_graph_runtime_correlation_state(),
+            })
+            return True
+
+        handler._send_json(200, {
+            "status": "degraded",
+            "service": "ai-lab-openai-gateway",
+            "endpoint": path.lstrip("/"),
+            "timestamp": time.time(),
+            "contract_version": GRAPH_RUNTIME_CORRELATION_CONTRACT_VERSION,
+            "error": "unknown_correlation_endpoint",
+        })
+        return True
+
+    except Exception as exc:
+        handler._send_json(200, {
+            "status": "degraded",
+            "service": "ai-lab-openai-gateway",
+            "endpoint": path.lstrip("/"),
+            "timestamp": time.time(),
+            "contract_version": "37B-GRAPH-RUNTIME-CORRELATION-01",
+            "error": str(exc),
+        })
+        return True
+
+
 def handle_evidence_routes(handler: Any) -> bool:
     """Handle /runtime/evidence* endpoints (read-only, fail-safe)."""
 
