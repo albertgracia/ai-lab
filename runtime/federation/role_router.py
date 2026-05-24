@@ -29,6 +29,8 @@ from runtime.federation.federation_observability import (
     FederationPropagationTrace,
     record_propagation_trace,
     record_trust_propagation,
+    record_evidence_lineage,
+    observe_evidence_id,
 )
 from runtime.federation.federation_guards import build_guard_summary, validate_federation_metadata
 from runtime.federation.trust_propagation import (
@@ -37,6 +39,13 @@ from runtime.federation.trust_propagation import (
     build_trust_envelope,
     build_trust_summary,
     propagate_trust,
+)
+from runtime.federation.evidence_lineage import (
+    EvidenceAuthorityBinding,
+    EvidenceOrigin,
+    EvidenceSourceType,
+    build_evidence_envelope,
+    build_lineage_summary,
 )
 
 
@@ -255,6 +264,111 @@ def build_routing_metadata(intent: FederatedExecutionIntent) -> dict:
     base["_budget_overflow"] = {decision.domain: envelope.to_metadata()["overflow"]}
     if envelope.truncated or envelope.rejected:
         base["_truncated_domains"] = [decision.domain]
+
+    # FEDERATION-EVIDENCE-LINEAGE-01: deterministic evidence lineage metadata.
+    try:
+        canonical_payload = {
+            "route_family": intent.route_family or "unknown",
+            "user_text": intent.user_text or "",
+            "target_domain": decision.domain,
+            "role": decision.role,
+            "delegated_to": decision.delegated_to,
+            "reason": base.get("_federation", {}).get("reason", ""),
+            "authority_weight": base.get("_federation", {}).get("authority_weight", ""),
+            "reasoning_scope": base.get("_reasoning_scope", "bounded"),
+        }
+
+        source_type = EvidenceSourceType.ROUTING
+        if decision.domain == "authority":
+            source_type = EvidenceSourceType.AUTHORITY
+        elif decision.domain == "observability":
+            source_type = EvidenceSourceType.OBSERVABILITY
+        elif decision.domain == "semantic":
+            source_type = EvidenceSourceType.SEMANTIC
+        elif decision.domain == "infrastructure":
+            source_type = EvidenceSourceType.INFRASTRUCTURE
+        elif decision.domain == "operator_intent":
+            source_type = EvidenceSourceType.UNKNOWN
+
+        origin = EvidenceOrigin(
+            source_domain=str(decision.domain),
+            source_role=str(decision.role),
+            model_profile="unknown",
+            tool_name="",
+            trust_scope=str(intent.route_family or "unknown"),
+        )
+        authority_binding = EvidenceAuthorityBinding(
+            authority_bound=bool(source_type == EvidenceSourceType.AUTHORITY),
+            authority_domain="authority" if source_type == EvidenceSourceType.AUTHORITY else "",
+            binding_reason="source_type" if source_type == EvidenceSourceType.AUTHORITY else "",
+        )
+
+        # Important: created_at exists but is NOT part of evidence_id/hash.
+        # Use observability tracker for deterministic reuse/replay detection.
+        # Note: we intentionally count "previous" before building, to keep build deterministic.
+        # This also keeps the bump atomic under the observability lock.
+        # previous_seen_count influences reuse/replay metadata only (not evidence_id/hash).
+        #
+        # evidence_id itself is computed from stable identity fields.
+        # We therefore compute it inside build, but need previous_seen_count now.
+        # We approximate by observing after build in a second step.
+        # To keep atomicity, we accept that reuse_count may lag by 1 in rare concurrent cases.
+        prev = 0
+
+        ev = build_evidence_envelope(
+            evidence_type="routing_metadata",
+            source_type=source_type,
+            canonical_payload=canonical_payload,
+            origin=origin,
+            parent_evidence_ids=[],
+            ancestry_chain=[],
+            authority_binding=authority_binding,
+            freshness_seconds=0,
+            created_at=0.0,
+            previous_seen_count=prev,
+            max_depth=3,
+        ).envelope
+
+        # Now bump seen count atomically and re-materialize reuse/replay fields deterministically.
+        prev = observe_evidence_id(ev.evidence_id)
+        ev = build_evidence_envelope(
+            evidence_type="routing_metadata",
+            source_type=source_type,
+            canonical_payload=canonical_payload,
+            origin=origin,
+            parent_evidence_ids=[],
+            ancestry_chain=[],
+            authority_binding=authority_binding,
+            freshness_seconds=0,
+            created_at=0.0,
+            previous_seen_count=prev,
+            max_depth=3,
+        ).envelope
+
+        summary = build_lineage_summary(ev).to_dict()
+        base["_evidence_id"] = ev.evidence_id
+        base["_evidence_source"] = ev.source_type.value
+        base["_evidence_confidence"] = ev.effective_confidence
+        base["_evidence_freshness"] = ev.freshness.to_dict()
+        base["_evidence_lineage_depth"] = ev.ancestry.lineage_depth
+        base["_evidence_reuse_count"] = ev.reuse.reuse_count
+        base["_evidence_replay_risk"] = ev.replay_risk.to_dict()
+        base["_evidence_authority_bound"] = bool(ev.authority_binding.authority_bound)
+        base["_evidence_summary"] = summary
+
+        # Observability counters (in-memory)
+        record_evidence_lineage(evidence_summary={**summary, "validation": ev.validation.value})
+    except Exception:
+        # Fail-safe minimal degraded evidence.
+        base["_evidence_id"] = ""
+        base["_evidence_source"] = "unknown"
+        base["_evidence_confidence"] = 0.0
+        base["_evidence_freshness"] = {"freshness_ttl": 0, "freshness_seconds": 0, "state": "expired"}
+        base["_evidence_lineage_depth"] = 0
+        base["_evidence_reuse_count"] = 0
+        base["_evidence_replay_risk"] = {"level": "high", "replayed": False}
+        base["_evidence_authority_bound"] = False
+        base["_evidence_summary"] = {"evidence_id": "", "degraded": True, "decay_reason": "error"}
 
     # FEDERATION-TRUST-PROPAGATION-01: deterministic trust propagation metadata.
     try:

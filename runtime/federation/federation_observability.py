@@ -166,6 +166,25 @@ _trust_sum_by_domain: Counter[str] = Counter()
 _trust_count_by_domain: Counter[str] = Counter()
 _attenuation_sum_by_domain: Counter[str] = Counter()
 
+# Evidence lineage tracking (FEDERATION-EVIDENCE-LINEAGE-01)
+_evidence_propagations_total = 0
+_stale_evidence_total = 0
+_replay_risk_total = 0
+_invalid_lineage_total = 0
+_evidence_reuse_total = 0
+_lineage_depth_max = 0
+
+_evidence_seen_counts: dict[str, int] = {}
+
+
+def observe_evidence_id(evidence_id: str) -> int:
+    """Atomically increments and returns previous seen count for evidence_id."""
+
+    with _lock:
+        prev = int(_evidence_seen_counts.get(evidence_id) or 0)
+        _evidence_seen_counts[evidence_id] = prev + 1
+        return prev
+
 _overflow_by_domain: Counter[str] = Counter()
 _cross_domain_paths: Counter[str] = Counter()
 
@@ -185,6 +204,7 @@ def reset_federation_observability_state() -> None:
     global _domain_calls_total, _delegated_requests_total, _budget_overflows_total
     global _truncations_total, _degraded_propagations_total, _rejected_domains_total, _depth_max
     global _trust_degradations_total, _recursive_risk_total, _stale_propagations_total, _ttl_expirations_total
+    global _evidence_propagations_total, _stale_evidence_total, _replay_risk_total, _invalid_lineage_total, _evidence_reuse_total, _lineage_depth_max
     with _lock:
         _traces.clear()
         _domain_calls_total = 0
@@ -198,6 +218,12 @@ def reset_federation_observability_state() -> None:
         _recursive_risk_total = 0
         _stale_propagations_total = 0
         _ttl_expirations_total = 0
+        _evidence_propagations_total = 0
+        _stale_evidence_total = 0
+        _replay_risk_total = 0
+        _invalid_lineage_total = 0
+        _evidence_reuse_total = 0
+        _lineage_depth_max = 0
         _overflow_by_domain.clear()
         _cross_domain_paths.clear()
         _consumed_chars_sum.clear()
@@ -209,6 +235,73 @@ def reset_federation_observability_state() -> None:
         _trust_sum_by_domain.clear()
         _trust_count_by_domain.clear()
         _attenuation_sum_by_domain.clear()
+        _evidence_seen_counts.clear()
+
+
+def record_evidence_lineage(*, evidence_summary: dict[str, Any]) -> None:
+    """Record evidence lineage propagation (metadata-only, in-memory)."""
+
+    global _evidence_propagations_total, _stale_evidence_total, _replay_risk_total, _invalid_lineage_total
+    global _evidence_reuse_total, _lineage_depth_max
+    with _lock:
+        _evidence_propagations_total += 1
+
+        reuse_count = int(evidence_summary.get("reuse_count") or 0)
+        if reuse_count > 0:
+            _evidence_reuse_total += 1
+
+        freshness = evidence_summary.get("freshness")
+        freshness_state = ""
+        if isinstance(freshness, dict):
+            freshness_state = str(freshness.get("state") or "")
+        if freshness_state in {"stale", "expired"}:
+            _stale_evidence_total += 1
+
+        replay = evidence_summary.get("replay_risk")
+        replay_level = ""
+        if isinstance(replay, dict):
+            replay_level = str(replay.get("level") or "")
+        if replay_level in {"low", "medium", "high"}:
+            _replay_risk_total += 1
+
+        validation = str(evidence_summary.get("validation") or "")
+        if validation and validation != "ok":
+            _invalid_lineage_total += 1
+
+        depth = int(evidence_summary.get("lineage_depth") or 0)
+        _lineage_depth_max = max(_lineage_depth_max, depth)
+
+
+def get_evidence_summary() -> dict[str, Any]:
+    with _lock:
+        return {
+            "contract_version": FEDERATION_OBSERVABILITY_CONTRACT_VERSION,
+            "evidence_propagations_total": int(_evidence_propagations_total),
+            "stale_evidence_total": int(_stale_evidence_total),
+            "replay_risk_total": int(_replay_risk_total),
+            "invalid_lineage_total": int(_invalid_lineage_total),
+            "lineage_depth_max": int(_lineage_depth_max),
+            "evidence_reuse_total": int(_evidence_reuse_total),
+        }
+
+
+def get_lineage_hotspots(*, min_events: int = 3) -> list[dict[str, Any]]:
+    """Deterministic hotspots (coarse) from evidence counters."""
+
+    with _lock:
+        events = int(_evidence_propagations_total)
+        if events < int(min_events):
+            return []
+        hotspots: list[dict[str, Any]] = []
+        if _invalid_lineage_total > 0:
+            hotspots.append({"hotspot_type": "invalid_lineage", "severity": "critical", "events": events, "total": int(_invalid_lineage_total)})
+        if _replay_risk_total > 0 and (_replay_risk_total / max(1, events)) >= 0.5:
+            hotspots.append({"hotspot_type": "frequent_replay_risk", "severity": "high", "events": events, "total": int(_replay_risk_total)})
+        if _stale_evidence_total > 0 and (_stale_evidence_total / max(1, events)) >= 0.5:
+            hotspots.append({"hotspot_type": "frequent_stale_evidence", "severity": "high", "events": events, "total": int(_stale_evidence_total)})
+        # Deterministic ordering
+        hotspots.sort(key=lambda h: (h["severity"], h["hotspot_type"]))
+        return hotspots
 
 
 def record_trust_propagation(
