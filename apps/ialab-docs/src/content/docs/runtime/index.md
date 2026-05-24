@@ -15,6 +15,7 @@ order: 2
 - **Authority-Backed Cognition (35C)**: separación autoridad/cognición, freshness/gaps.
 - **Precision Semantics (36B)**: partial evidence, conflicts y degradación segura.
 - **Operator Intent Reasoning (36C)**: metadata determinista para intención operativa.
+- **Cognitive Health Layer (37A)**: score bounded, confianza de routing y watchdog metadata-only.
 
 ## Fases cubiertas
 
@@ -22,6 +23,7 @@ order: 2
 - `30I-B`
 - `30I-C`
 - `30I-D`
+- `37A`
 
 ## Alineación reciente
 

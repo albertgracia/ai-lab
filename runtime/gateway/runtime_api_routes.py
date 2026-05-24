@@ -265,6 +265,108 @@ def handle_incidents_routes(handler: Any) -> bool:
         return True
 
 
+def handle_health_routes(handler: Any) -> bool:
+    """Handle /runtime/health* endpoints (FASE 37A).
+
+    Always responds 200; fail-safe.
+    """
+    raw = getattr(handler, "path", "")
+    path = (raw or "").split("?", 1)[0]
+    if not (path == "/runtime/health" or path.startswith("/runtime/health/")):
+        return False
+
+    try:
+        from runtime.health.cognitive_health_layer import build_cognitive_health_snapshot, build_degradations_snapshot
+
+        if path in ("/runtime/health", "/runtime/health/score", "/runtime/health/summary"):
+            handler._send_json(200, build_cognitive_health_snapshot(window_minutes=60))
+            return True
+
+        if path == "/runtime/health/nodes":
+            snap = build_cognitive_health_snapshot(window_minutes=60)
+            handler._send_json(200, {
+                "status": snap.get("status", "ok"),
+                "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/health/nodes",
+                "timestamp": time.time(),
+                "contract_version": snap.get("contract_version"),
+                "nodes": snap.get("nodes", []),
+                "nodes_total": snap.get("nodes_total", 0),
+                "nodes_online": snap.get("nodes_online", 0),
+            })
+            return True
+
+        if path == "/runtime/health/routing-confidence":
+            snap = build_cognitive_health_snapshot(window_minutes=60)
+            handler._send_json(200, {
+                "status": snap.get("status", "ok"),
+                "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/health/routing-confidence",
+                "timestamp": time.time(),
+                "contract_version": snap.get("contract_version"),
+                "routing_confidence": snap.get("routing_confidence", {}),
+            })
+            return True
+
+        if path == "/runtime/health/watchdog":
+            snap = build_cognitive_health_snapshot(window_minutes=60)
+            handler._send_json(200, {
+                "status": snap.get("status", "ok"),
+                "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/health/watchdog",
+                "timestamp": time.time(),
+                "contract_version": snap.get("contract_version"),
+                "watchdog": snap.get("watchdog", {}),
+            })
+            return True
+
+        if path == "/runtime/health/latency":
+            try:
+                from runtime.telemetry.gateway_metrics import get_latency_stats
+                total = get_latency_stats(kind="request_total")
+                ttfb = get_latency_stats(kind="ttfb")
+            except Exception:
+                total = {"count": 0, "p50_ms": 0.0, "p95_ms": 0.0, "max_ms": 0.0, "last_ms": 0.0}
+                ttfb = {"count": 0, "p50_ms": 0.0, "p95_ms": 0.0, "max_ms": 0.0, "last_ms": 0.0}
+            handler._send_json(200, {
+                "status": "ok",
+                "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/health/latency",
+                "timestamp": time.time(),
+                "contract_version": "37A-COGNITIVE-HEALTH-LAYER-01",
+                "latency": {
+                    "request_total": total,
+                    "ttfb": ttfb,
+                },
+            })
+            return True
+
+        if path == "/runtime/health/degradations":
+            handler._send_json(200, build_degradations_snapshot(window_minutes=60))
+            return True
+
+        handler._send_json(200, {
+            "status": "degraded",
+            "service": "ai-lab-openai-gateway",
+            "endpoint": path.lstrip("/"),
+            "timestamp": time.time(),
+            "contract_version": "37A-COGNITIVE-HEALTH-LAYER-01",
+            "error": "unknown_health_endpoint",
+        })
+        return True
+
+    except Exception as exc:
+        handler._send_json(200, {
+            "status": "degraded",
+            "service": "ai-lab-openai-gateway",
+            "endpoint": path.lstrip("/"),
+            "timestamp": time.time(),
+            "contract_version": "37A-COGNITIVE-HEALTH-LAYER-01",
+            "error": str(exc),
+        })
+        return True
+
+
 def handle_evidence_routes(handler: Any) -> bool:
     """Handle /runtime/evidence* endpoints (read-only, fail-safe)."""
 

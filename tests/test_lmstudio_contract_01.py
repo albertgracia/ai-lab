@@ -10,11 +10,17 @@ Hard rules:
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
 import os
 import time
 from typing import Any
 
 import pytest
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 
 LMSTUDIO_BASE_URL = os.getenv("AI_LAB_LMSTUDIO_URL", "http://192.168.1.50:1234/v1").rstrip("/")

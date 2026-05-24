@@ -3804,6 +3804,128 @@
       "targets": [
         { "expr": "ailab_graph_gravity_centers_total{job=\"ai-lab-gateway\"}", "refId": "A" }
       ]
+    },
+    {
+      "type": "stat",
+      "title": "Cognitive Health Score",
+      "datasource": "Prometheus",
+      "description": "FASE 37A: metadata-only cognitive health score (0-100)",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 97 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": 0 },
+              { "color": "orange", "value": 40 },
+              { "color": "yellow", "value": 60 },
+              { "color": "green", "value": 80 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        { "expr": "ailab_cognitive_health_score{job=\"ai-lab-gateway\"}", "refId": "A" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Routing Confidence",
+      "datasource": "Prometheus",
+      "description": "FASE 37A: metadata-only routing confidence (0-1)",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 97 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": 0 },
+              { "color": "orange", "value": 0.4 },
+              { "color": "yellow", "value": 0.6 },
+              { "color": "green", "value": 0.8 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        { "expr": "ailab_cognitive_health_routing_confidence{job=\"ai-lab-gateway\"}", "refId": "A" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Nodes Online",
+      "datasource": "Prometheus",
+      "description": "FASE 37A: nodes online (metadata-only)",
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 97 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": 0 },
+              { "color": "yellow", "value": 1 },
+              { "color": "green", "value": 2 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        { "expr": "ailab_cognitive_health_nodes_online{job=\"ai-lab-gateway\"}", "refId": "A" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Watchdog Triggers",
+      "datasource": "Prometheus",
+      "description": "FASE 37A: watchdog triggers total (metadata-only)",
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 97 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "orange", "value": 1 },
+              { "color": "red", "value": 10 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        { "expr": "ailab_cognitive_health_watchdog_triggers_total{job=\"ai-lab-gateway\"}", "refId": "A" }
+      ]
     }
   ]
 }

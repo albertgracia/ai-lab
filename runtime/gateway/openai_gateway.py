@@ -1268,6 +1268,19 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 + "# HELP ailab_architecture_gravity_centers_total Gravity center modules\n"
                 + "# TYPE ailab_architecture_gravity_centers_total gauge\n"
                 + _build_architecture_governance_metrics()
+                + "# HELP ailab_cognitive_health_score Cognitive health score (0-100, metadata-only)\n"
+                + "# TYPE ailab_cognitive_health_score gauge\n"
+                + "# HELP ailab_cognitive_health_routing_confidence Routing confidence (0-1, metadata-only)\n"
+                + "# TYPE ailab_cognitive_health_routing_confidence gauge\n"
+                + "# HELP ailab_cognitive_health_nodes_online Online node count (metadata-only)\n"
+                + "# TYPE ailab_cognitive_health_nodes_online gauge\n"
+                + "# HELP ailab_cognitive_health_watchdog_triggers_total Watchdog triggers total (metadata-only)\n"
+                + "# TYPE ailab_cognitive_health_watchdog_triggers_total counter\n"
+                + "# HELP ailab_gateway_latency_p50_ms Gateway bounded latency p50 (ms)\n"
+                + "# TYPE ailab_gateway_latency_p50_ms gauge\n"
+                + "# HELP ailab_gateway_latency_p95_ms Gateway bounded latency p95 (ms)\n"
+                + "# TYPE ailab_gateway_latency_p95_ms gauge\n"
+                + (lambda: __import__("runtime.health.cognitive_health_layer", fromlist=["build_cognitive_health_prometheus_metrics"]).build_cognitive_health_prometheus_metrics())()
                 + "\n# ── prometheus_client managed metrics ──\n"
                 + prom_generate_latest(prom_REGISTRY).decode("utf-8")
             )
@@ -3282,6 +3295,13 @@ class GatewayHandler(BaseHTTPRequestHandler):
             handle_incidents_routes(self)
             return
 
+        # ── FASE 37A: Cognitive Health Layer — always-on 200 ──
+        if self.path == "/runtime/health" or self.path.startswith("/runtime/health/"):
+            from runtime.gateway.runtime_api_routes import handle_health_routes
+
+            handle_health_routes(self)
+            return
+
         # ── FEDERATION-EVIDENCE-LINEAGE-02: Evidence introspection — always-on 200 ──
         if self.path == "/runtime/evidence" or self.path.startswith("/runtime/evidence/"):
             from runtime.gateway.runtime_api_routes import handle_evidence_routes
@@ -3533,7 +3553,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
 
                 record_routing_decision()
                 register_request(self.path, model=None)
-                register_latency(latency_ms)
+                register_latency(latency_ms, model=None, route_family="gateway_models", kind="request_total")
 
                 self._send_json(
                     response.status_code,
@@ -4733,6 +4753,12 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 FIRST_TOKEN_LATENCY.labels(model=selected_model).observe(float(ttfb_ms))
             except ImportError:
                 pass
+
+            # FASE 37A: bounded latency store (in-memory, metadata-only)
+            try:
+                register_latency(ttfb_ms, model=selected_model, route_family=route_family, kind="ttfb")
+            except Exception:
+                pass
             try:
                 from runtime.telemetry.prometheus_metrics import GPU_ACTIVE_REQUESTS, GPU_ESTIMATED_UTILIZATION
                 GPU_ACTIVE_REQUESTS.inc()
@@ -4804,7 +4830,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
 
             record_routing_decision()
             register_request(self.path, model=payload.get("model"))
-            register_latency(latency_ms)
+            register_latency(latency_ms, model=selected_model, route_family=route_family, kind="request_total")
             if stream_enabled:
                 register_stream()
             record_model_selection(task_type, selected_model, get_active_backend()["name"], latency_ms)
