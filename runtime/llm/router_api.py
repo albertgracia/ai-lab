@@ -13,6 +13,8 @@ from typing import Any, Dict
 
 import requests
 
+from runtime.llm.openai_response_utils import msg_has_usable_output
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse, StreamingResponse
@@ -1217,30 +1219,48 @@ async def chat_completions(request: Request):
                 except ImportError:
                     pass
 
-            try:
-                from runtime.routing.routing_history import record_route_result as _rrr
-                _latency_ms = int((time.time() - _req_start) * 1000)
-                _rrr(task_type=node["capability"], model=node["model"],
-                     node=node["name"], host=node["host"],
-                     latency_ms=_latency_ms, success=True, stream=False, failover=False)
-            except ImportError:
-                pass
-
-            usage = content.get("usage", {}) if isinstance(content, dict) else {}
-            record_route_family_metrics(
-                route.family,
-                count=False,
-                latency_ms=_latency_ms,
-                prompt_tokens=int(usage.get("prompt_tokens", 0) or 0),
-                completion_tokens=int(usage.get("completion_tokens", 0) or 0),
-                blocked=blocked_any,
-            )
-
+        # Accept content-only responses as usable (bugfix: previously required tool_calls)
+        if not any(msg_has_usable_output((c or {}).get("message") if isinstance(c, dict) else None) for c in choices):
+            latency_ms = int((time.time() - request_start) * 1000)
+            record_route_family_metrics(route.family, count=False, latency_ms=latency_ms, error=True)
             return JSONResponse(
-                status_code=upstream.status_code,
-                content=content,
+                status_code=502,
+                content={
+                    "error": {
+                        "message": "upstream choices contained no usable content/tool_calls",
+                        "type": "ai_lab_router_upstream_error",
+                        "selected_node": node,
+                        "upstream_status": upstream.status_code,
+                    }
+                },
                 headers=headers,
             )
+
+        try:
+            from runtime.routing.routing_history import record_route_result as _rrr
+            _latency_ms = int((time.time() - _req_start) * 1000)
+            _rrr(task_type=node["capability"], model=node["model"],
+                 node=node["name"], host=node["host"],
+                 latency_ms=_latency_ms, success=True, stream=False, failover=False)
+        except ImportError:
+            _latency_ms = int((time.time() - _req_start) * 1000)
+
+        usage = content.get("usage", {}) if isinstance(content, dict) else {}
+        record_route_family_metrics(
+            route.family,
+            count=False,
+            latency_ms=_latency_ms,
+            prompt_tokens=int(usage.get("prompt_tokens", 0) or 0),
+            completion_tokens=int(usage.get("completion_tokens", 0) or 0),
+            blocked=blocked_any,
+            error=upstream.status_code >= 400,
+        )
+
+        return JSONResponse(
+            status_code=upstream.status_code,
+            content=content,
+            headers=headers,
+        )
 
         latency_ms = int((time.time() - request_start) * 1000)
         record_route_family_metrics(route.family, count=False, latency_ms=latency_ms, error=True)
