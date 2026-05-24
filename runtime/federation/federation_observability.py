@@ -176,6 +176,18 @@ _lineage_depth_max = 0
 
 _evidence_seen_counts: dict[str, int] = {}
 
+# Evidence introspection store (bounded)
+_EVIDENCE_STORE_MAX = 1024
+_evidence_by_id: dict[str, dict[str, Any]] = {}
+_evidence_insert_order: deque[str] = deque(maxlen=_EVIDENCE_STORE_MAX)
+
+# Evidence distributions (bounded via Counter)
+_evidence_source_counter: Counter[str] = Counter()
+_evidence_decay_counter: Counter[str] = Counter()
+_evidence_replay_counter: Counter[str] = Counter()
+_evidence_authority_bound_counter: Counter[str] = Counter()
+_evidence_freshness_counter: Counter[str] = Counter()
+
 
 def observe_evidence_id(evidence_id: str) -> int:
     """Atomically increments and returns previous seen count for evidence_id."""
@@ -236,6 +248,13 @@ def reset_federation_observability_state() -> None:
         _trust_count_by_domain.clear()
         _attenuation_sum_by_domain.clear()
         _evidence_seen_counts.clear()
+        _evidence_by_id.clear()
+        _evidence_insert_order.clear()
+        _evidence_source_counter.clear()
+        _evidence_decay_counter.clear()
+        _evidence_replay_counter.clear()
+        _evidence_authority_bound_counter.clear()
+        _evidence_freshness_counter.clear()
 
 
 def record_evidence_lineage(*, evidence_summary: dict[str, Any]) -> None:
@@ -245,6 +264,17 @@ def record_evidence_lineage(*, evidence_summary: dict[str, Any]) -> None:
     global _evidence_reuse_total, _lineage_depth_max
     with _lock:
         _evidence_propagations_total += 1
+
+        # Bounded store for explainability endpoints.
+        eid = str(evidence_summary.get("evidence_id") or "")
+        if eid:
+            if eid not in _evidence_by_id:
+                _evidence_insert_order.append(eid)
+                # Evict if needed.
+                while len(_evidence_insert_order) > _EVIDENCE_STORE_MAX:
+                    old = _evidence_insert_order.popleft()
+                    _evidence_by_id.pop(old, None)
+            _evidence_by_id[eid] = dict(evidence_summary)
 
         reuse_count = int(evidence_summary.get("reuse_count") or 0)
         if reuse_count > 0:
@@ -256,6 +286,7 @@ def record_evidence_lineage(*, evidence_summary: dict[str, Any]) -> None:
             freshness_state = str(freshness.get("state") or "")
         if freshness_state in {"stale", "expired"}:
             _stale_evidence_total += 1
+        _evidence_freshness_counter[freshness_state or "unknown"] += 1
 
         replay = evidence_summary.get("replay_risk")
         replay_level = ""
@@ -263,6 +294,7 @@ def record_evidence_lineage(*, evidence_summary: dict[str, Any]) -> None:
             replay_level = str(replay.get("level") or "")
         if replay_level in {"low", "medium", "high"}:
             _replay_risk_total += 1
+        _evidence_replay_counter[replay_level or "none"] += 1
 
         validation = str(evidence_summary.get("validation") or "")
         if validation and validation != "ok":
@@ -271,9 +303,18 @@ def record_evidence_lineage(*, evidence_summary: dict[str, Any]) -> None:
         depth = int(evidence_summary.get("lineage_depth") or 0)
         _lineage_depth_max = max(_lineage_depth_max, depth)
 
+        # Distributions
+        _evidence_source_counter[str(evidence_summary.get("source_type") or "unknown")] += 1
+        _evidence_decay_counter[str(evidence_summary.get("decay_reason") or "unknown")] += 1
+        _evidence_authority_bound_counter["true" if bool(evidence_summary.get("authority_bound")) else "false"] += 1
+
 
 def get_evidence_summary() -> dict[str, Any]:
     with _lock:
+        top_sources = sorted(_evidence_source_counter.items(), key=lambda kv: (-int(kv[1]), kv[0]))[:10]
+        decay = sorted(_evidence_decay_counter.items(), key=lambda kv: (-int(kv[1]), kv[0]))[:10]
+        replay = sorted(_evidence_replay_counter.items(), key=lambda kv: (-int(kv[1]), kv[0]))[:10]
+        freshness = sorted(_evidence_freshness_counter.items(), key=lambda kv: (-int(kv[1]), kv[0]))[:10]
         return {
             "contract_version": FEDERATION_OBSERVABILITY_CONTRACT_VERSION,
             "evidence_propagations_total": int(_evidence_propagations_total),
@@ -282,6 +323,72 @@ def get_evidence_summary() -> dict[str, Any]:
             "invalid_lineage_total": int(_invalid_lineage_total),
             "lineage_depth_max": int(_lineage_depth_max),
             "evidence_reuse_total": int(_evidence_reuse_total),
+            "authority_bound": {
+                "true": int(_evidence_authority_bound_counter.get("true") or 0),
+                "false": int(_evidence_authority_bound_counter.get("false") or 0),
+            },
+            "top_evidence_sources": [{"source": k, "count": int(v)} for k, v in top_sources],
+            "degradation_counters": [{"reason": k, "count": int(v)} for k, v in decay],
+            "replay_counters": [{"level": k, "count": int(v)} for k, v in replay],
+            "freshness_counters": [{"state": k, "count": int(v)} for k, v in freshness],
+            "stored_evidences": int(len(_evidence_by_id)),
+        }
+
+
+def get_evidence_lineage(evidence_id: str) -> dict[str, Any] | None:
+    """Lookup last stored evidence by id (bounded, in-memory)."""
+
+    with _lock:
+        eid = str(evidence_id or "")
+        if not eid:
+            return None
+        hit = _evidence_by_id.get(eid)
+        return dict(hit) if isinstance(hit, dict) else None
+
+
+def get_evidence_hotspots(*, limit: int = 10) -> dict[str, Any]:
+    """Bounded hotspots: top reused ids, deepest lineage, replay hotspots."""
+
+    with _lock:
+        lim = max(1, min(50, int(limit)))
+        items = list(_evidence_by_id.items())
+
+        def _reuse_key(kv):
+            eid, s = kv
+            return (-int(s.get("reuse_count") or 0), eid)
+
+        def _depth_key(kv):
+            eid, s = kv
+            return (-int(s.get("lineage_depth") or 0), eid)
+
+        top_reused = [kv for kv in sorted(items, key=_reuse_key) if int(kv[1].get("reuse_count") or 0) > 0][:lim]
+        deepest = [kv for kv in sorted(items, key=_depth_key) if int(kv[1].get("lineage_depth") or 0) > 0][:lim]
+        replay_hot = [
+            kv
+            for kv in sorted(items, key=_reuse_key)
+            if isinstance(kv[1].get("replay_risk"), dict) and (kv[1]["replay_risk"].get("level") in {"low", "medium", "high"})
+        ][:lim]
+
+        return {
+            "contract_version": FEDERATION_OBSERVABILITY_CONTRACT_VERSION,
+            "limit": lim,
+            "top_reused": [
+                {
+                    "evidence_id": eid,
+                    "reuse_count": int(s.get("reuse_count") or 0),
+                    "source_domain": s.get("source_domain", ""),
+                    "replay_risk": s.get("replay_risk", {}),
+                }
+                for eid, s in top_reused
+            ],
+            "deepest_lineage": [
+                {"evidence_id": eid, "lineage_depth": int(s.get("lineage_depth") or 0), "source_domain": s.get("source_domain", "")}
+                for eid, s in deepest
+            ],
+            "replay_risk_hotspots": [
+                {"evidence_id": eid, "replay_risk": s.get("replay_risk", {}), "reuse_count": int(s.get("reuse_count") or 0)}
+                for eid, s in replay_hot
+            ],
         }
 
 

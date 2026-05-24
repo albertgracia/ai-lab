@@ -345,6 +345,8 @@ def build_routing_metadata(intent: FederatedExecutionIntent) -> dict:
             max_depth=3,
         ).envelope
 
+        # Store full summary for explainability (includes ancestry_chain, payload hash, etc.)
+        full = ev.to_summary()
         summary = build_lineage_summary(ev).to_dict()
         base["_evidence_id"] = ev.evidence_id
         base["_evidence_source"] = ev.source_type.value
@@ -354,10 +356,12 @@ def build_routing_metadata(intent: FederatedExecutionIntent) -> dict:
         base["_evidence_reuse_count"] = ev.reuse.reuse_count
         base["_evidence_replay_risk"] = ev.replay_risk.to_dict()
         base["_evidence_authority_bound"] = bool(ev.authority_binding.authority_bound)
-        base["_evidence_summary"] = summary
+        # Compact summary is useful for quick views; full summary for lineage endpoint.
+        base["_evidence_summary"] = full
+        base["_evidence_summary_compact"] = summary
 
         # Observability counters (in-memory)
-        record_evidence_lineage(evidence_summary={**summary, "validation": ev.validation.value})
+        record_evidence_lineage(evidence_summary=full)
     except Exception:
         # Fail-safe minimal degraded evidence.
         base["_evidence_id"] = ""

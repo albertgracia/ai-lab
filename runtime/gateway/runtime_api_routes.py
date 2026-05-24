@@ -263,3 +263,115 @@ def handle_incidents_routes(handler: Any) -> bool:
             "error": str(exc),
         })
         return True
+
+
+def handle_evidence_routes(handler: Any) -> bool:
+    """Handle /runtime/evidence* endpoints (read-only, fail-safe)."""
+
+    path = getattr(handler, "path", "")
+    if not (path == "/runtime/evidence" or path.startswith("/runtime/evidence/")):
+        return False
+
+    import urllib.parse
+
+    try:
+        parsed = urllib.parse.urlparse(path)
+        clean_path = parsed.path
+        qs = urllib.parse.parse_qs(parsed.query or "")
+        limit = 10
+        try:
+            if "limit" in qs and qs["limit"]:
+                limit = int(qs["limit"][0])
+        except Exception:
+            limit = 10
+
+        from runtime.federation.federation_observability import (
+            get_evidence_hotspots,
+            get_evidence_lineage,
+            get_evidence_summary,
+            get_lineage_hotspots,
+        )
+
+        if clean_path == "/runtime/evidence" or clean_path == "/runtime/evidence/summary":
+            handler._send_json(200, {
+                "status": "ok",
+                "service": "ai-lab-openai-gateway",
+                "endpoint": clean_path.lstrip("/"),
+                "timestamp": time.time(),
+                "contract_version": "EVID-01",
+                "summary": get_evidence_summary(),
+            })
+            return True
+
+        if clean_path == "/runtime/evidence/hotspots":
+            handler._send_json(200, {
+                "status": "ok",
+                "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/evidence/hotspots",
+                "timestamp": time.time(),
+                "contract_version": "EVID-01",
+                "hotspots": get_evidence_hotspots(limit=limit),
+                "lineage_hotspots": get_lineage_hotspots(min_events=3),
+            })
+            return True
+
+        if clean_path.startswith("/runtime/evidence/lineage/"):
+            evidence_id = clean_path.split("/runtime/evidence/lineage/", 1)[1]
+            # Basic validation: bounded length and hex-ish.
+            evidence_id = (evidence_id or "").strip()
+            if not evidence_id or len(evidence_id) > 64:
+                handler._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/evidence/lineage",
+                    "timestamp": time.time(),
+                    "contract_version": "EVID-01",
+                    "error": "invalid_evidence_id",
+                })
+                return True
+
+            hit = get_evidence_lineage(evidence_id)
+            if not hit:
+                handler._send_json(200, {
+                    "status": "degraded",
+                    "service": "ai-lab-openai-gateway",
+                    "endpoint": "runtime/evidence/lineage",
+                    "timestamp": time.time(),
+                    "contract_version": "EVID-01",
+                    "evidence_id": evidence_id,
+                    "found": False,
+                })
+                return True
+
+            handler._send_json(200, {
+                "status": "ok",
+                "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/evidence/lineage",
+                "timestamp": time.time(),
+                "contract_version": "EVID-01",
+                "evidence_id": evidence_id,
+                "found": True,
+                "lineage": hit,
+            })
+            return True
+
+        handler._send_json(200, {
+            "status": "degraded",
+            "service": "ai-lab-openai-gateway",
+            "endpoint": clean_path.lstrip("/"),
+            "timestamp": time.time(),
+            "contract_version": "EVID-01",
+            "error": "unknown_evidence_endpoint",
+        })
+        return True
+
+    except Exception as exc:
+        handler._send_json(200, {
+            "status": "degraded",
+            "service": "ai-lab-openai-gateway",
+            "endpoint": "runtime/evidence",
+            "timestamp": time.time(),
+            "contract_version": "EVID-01",
+            "error": str(exc),
+        })
+        return True

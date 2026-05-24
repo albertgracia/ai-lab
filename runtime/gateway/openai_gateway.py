@@ -3028,6 +3028,13 @@ class GatewayHandler(BaseHTTPRequestHandler):
             handle_incidents_routes(self)
             return
 
+        # ── FEDERATION-EVIDENCE-LINEAGE-02: Evidence introspection — always-on 200 ──
+        if self.path == "/runtime/evidence" or self.path.startswith("/runtime/evidence/"):
+            from runtime.gateway.runtime_api_routes import handle_evidence_routes
+
+            handle_evidence_routes(self)
+            return
+
         # ── DEV-36X: Codebase memory — always-on 200 ──
         if self.path == "/runtime/codebase" or self.path.startswith("/runtime/codebase/"):
             try:
