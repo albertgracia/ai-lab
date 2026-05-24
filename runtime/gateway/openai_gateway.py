@@ -1298,6 +1298,21 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 + "# HELP ailab_correlation_graph_health_linked_total Correlations linked to graph hotspot signals\n"
                 + "# TYPE ailab_correlation_graph_health_linked_total gauge\n"
                 + (lambda: __import__("runtime.correlation.graph_runtime_correlation", fromlist=["build_graph_runtime_correlation_prometheus_metrics"]).build_graph_runtime_correlation_prometheus_metrics())()
+                + "# HELP ailab_critical_path_score Critical path risk score (0-1, metadata-only)\n"
+                + "# TYPE ailab_critical_path_score gauge\n"
+                + "# HELP ailab_critical_path_top_modules_total Top critical-path files returned (bounded)\n"
+                + "# TYPE ailab_critical_path_top_modules_total gauge\n"
+                + "# HELP ailab_critical_path_high_total High or critical files (top + outside top)\n"
+                + "# TYPE ailab_critical_path_high_total gauge\n"
+                + "# HELP ailab_critical_path_critical_total Critical files (top + outside top)\n"
+                + "# TYPE ailab_critical_path_critical_total gauge\n"
+                + "# HELP ailab_critical_path_unknowns_total Unknown/unavailable signals count\n"
+                + "# TYPE ailab_critical_path_unknowns_total gauge\n"
+                + "# HELP ailab_critical_path_routes_critical_total Routes mapped to HIGH/CRITICAL domains\n"
+                + "# TYPE ailab_critical_path_routes_critical_total gauge\n"
+                + "# HELP ailab_critical_path_recommendations_total Critical path recommendations count\n"
+                + "# TYPE ailab_critical_path_recommendations_total gauge\n"
+                + (lambda: __import__("runtime.critical_path.critical_path_analysis", fromlist=["build_critical_path_prometheus_metrics"]).build_critical_path_prometheus_metrics())()
                 + "\n# ── prometheus_client managed metrics ──\n"
                 + prom_generate_latest(prom_REGISTRY).decode("utf-8")
             )
@@ -3324,6 +3339,13 @@ class GatewayHandler(BaseHTTPRequestHandler):
             from runtime.gateway.runtime_api_routes import handle_correlation_routes
 
             handle_correlation_routes(self)
+            return
+
+        # ── FASE 37C: Critical Path Analysis — always-on 200 ──
+        if self.path == "/runtime/critical-path" or self.path.startswith("/runtime/critical-path/"):
+            from runtime.gateway.runtime_api_routes import handle_critical_path_routes
+
+            handle_critical_path_routes(self)
             return
 
         # ── FEDERATION-EVIDENCE-LINEAGE-02: Evidence introspection — always-on 200 ──

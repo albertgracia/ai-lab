@@ -443,6 +443,93 @@ def handle_correlation_routes(handler: Any) -> bool:
         return True
 
 
+def handle_critical_path_routes(handler: Any) -> bool:
+    """Handle /runtime/critical-path* endpoints (FASE 37C).
+
+    Always responds 200; bounded + deterministic; fail-safe.
+    """
+    raw = getattr(handler, "path", "")
+    path = (raw or "").split("?", 1)[0]
+    if not (path == "/runtime/critical-path" or path.startswith("/runtime/critical-path/")):
+        return False
+
+    import urllib.parse
+
+    try:
+        from runtime.critical_path.critical_path_analysis import (
+            build_critical_path_snapshot,
+            get_critical_path_summary,
+            get_critical_path_modules,
+            get_critical_path_routes,
+            get_critical_path_dependencies,
+            get_critical_path_recommendations,
+            reset_critical_path_state,
+            CRITICAL_PATH_CONTRACT_VERSION,
+        )
+
+        parsed = urllib.parse.urlparse(raw)
+        qs = urllib.parse.parse_qs(parsed.query or "")
+
+        if path == "/runtime/critical-path":
+            top_n = int((qs.get("top_n") or [10])[0])
+            handler._send_json(200, build_critical_path_snapshot(top_n=top_n))
+            return True
+
+        if path == "/runtime/critical-path/summary":
+            handler._send_json(200, get_critical_path_summary())
+            return True
+
+        if path == "/runtime/critical-path/modules":
+            top_n = int((qs.get("top_n") or [10])[0])
+            handler._send_json(200, get_critical_path_modules(top_n=top_n))
+            return True
+
+        if path == "/runtime/critical-path/routes":
+            handler._send_json(200, get_critical_path_routes())
+            return True
+
+        if path == "/runtime/critical-path/dependencies":
+            file_path = str((qs.get("file") or qs.get("file_path") or [""])[0])
+            handler._send_json(200, get_critical_path_dependencies(file_path=file_path))
+            return True
+
+        if path == "/runtime/critical-path/recommendations":
+            handler._send_json(200, get_critical_path_recommendations())
+            return True
+
+        if path == "/runtime/critical-path/reset":
+            handler._send_json(200, {
+                "status": "ok",
+                "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/critical-path/reset",
+                "timestamp": time.time(),
+                "contract_version": CRITICAL_PATH_CONTRACT_VERSION,
+                "reset": reset_critical_path_state(),
+            })
+            return True
+
+        handler._send_json(200, {
+            "status": "degraded",
+            "service": "ai-lab-openai-gateway",
+            "endpoint": path.lstrip("/"),
+            "timestamp": time.time(),
+            "contract_version": CRITICAL_PATH_CONTRACT_VERSION,
+            "error": "unknown_critical_path_endpoint",
+        })
+        return True
+
+    except Exception as exc:
+        handler._send_json(200, {
+            "status": "degraded",
+            "service": "ai-lab-openai-gateway",
+            "endpoint": path.lstrip("/"),
+            "timestamp": time.time(),
+            "contract_version": "37C-CRITICAL-PATH-ANALYSIS-01",
+            "error": str(exc),
+        })
+        return True
+
+
 def handle_evidence_routes(handler: Any) -> bool:
     """Handle /runtime/evidence* endpoints (read-only, fail-safe)."""
 

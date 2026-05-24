@@ -85,6 +85,7 @@ runtime/*
 !runtime/control/
 !runtime/health/
 !runtime/correlation/
+!runtime/critical_path/
 !runtime/tools/tool_metrics.py
 !runtime/tools/
 !runtime/tools/__init__.py
@@ -93,6 +94,8 @@ runtime/*
 !runtime/telemetry/prometheus_metrics.py
 !runtime/correlation/__init__.py
 !runtime/correlation/graph_runtime_correlation.py
+!runtime/critical_path/__init__.py
+!runtime/critical_path/critical_path_analysis.py
 !runtime/performance/
 !runtime/performance/__init__.py
 !runtime/performance/contracts.py
@@ -148,6 +151,9 @@ runtime/reporting/**/*.pyc
 runtime/gateway/gateway_metrics.py
 runtime/gateway/__pycache__/
 runtime/gateway/**/*.pyc
+
+!runtime/llm/
+!runtime/llm/openai_response_utils.py
 
 runtime/context/prometheus_client.py
 !runtime/context/sensor_fusion.py

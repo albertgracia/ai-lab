@@ -17,6 +17,7 @@ order: 2
 - **Operator Intent Reasoning (36C)**: metadata determinista para intención operativa.
 - **Cognitive Health Layer (37A)**: score bounded, confianza de routing y watchdog metadata-only.
 - **Graph-Runtime Correlation (37B)**: correlación explicable entre hotspots topológicos y degradación runtime real.
+- **Critical Path Analysis (37C)**: análisis híbrido file-level + domain aggregation para identificar caminos críticos y dependencias peligrosas.
 
 ## Fases cubiertas
 
@@ -26,6 +27,7 @@ order: 2
 - `30I-D`
 - `37A`
 - `37B`
+- `37C`
 
 ## Alineación reciente
 
