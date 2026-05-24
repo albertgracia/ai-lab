@@ -5,6 +5,8 @@ HOST="${GITNEXUS_HOST:-127.0.0.1}"
 PORT="${GITNEXUS_PORT:-4747}"
 BASE="http://${HOST}:${PORT}"
 
+HOSTNAME_DNS="${GITNEXUS_HOSTNAME:-gitnexus.ai-lab.local}"
+
 fail() {
   printf 'gitnexus-health: FAIL: %s\n' "$1" >&2
   exit 1
@@ -14,6 +16,16 @@ json_get() {
   # curl only; keep deps minimal.
   curl -sS -m 3 "$1" || return 1
 }
+
+# 0) systemd service
+if command -v systemctl >/dev/null 2>&1; then
+  systemctl is-active --quiet gitnexus || fail "systemd service gitnexus is not active"
+fi
+
+# 0.1) DNS/hosts resolution (best-effort if getent exists)
+if command -v getent >/dev/null 2>&1; then
+  getent hosts "$HOSTNAME_DNS" >/dev/null 2>&1 || fail "cannot resolve ${HOSTNAME_DNS}"
+fi
 
 # 1) Health endpoint
 health="$(json_get "${BASE}/api/health")" || fail "cannot reach ${BASE}/api/health"
