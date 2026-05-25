@@ -160,7 +160,7 @@ class DegradationManager:
     # ── Protection action helpers ─────────────────────────────
 
     def should_force_llama(self, level: int | None = None) -> bool:
-        """If level >= 1, greetings/lightweight should never escalate to qwen."""
+        """DEPRECATED (ROUTER-HF-MODEL-POLICY-01): no longer forces model selection."""
         lvl = level if level is not None else self.get_current_level()
         if lvl >= 3:
             return True

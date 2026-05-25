@@ -326,7 +326,7 @@ class RuntimeAlignmentValidator:
                 elif isinstance(item, str):
                     lmstudio_models.add(item)
 
-        expected_active = {"qwen2.5-coder-14b-instruct", "llama-3.1-8b-instruct", "nomic-embed-text-v1.5"}
+        expected_active = {"qwen3-vl-8b-instruct", "qwen/qwen2.5-coder-14b-instruct", "nomic-embed-text-v1.5"}
         for model in expected_active:
             present_in_runtime = any(model in m for m in active_frontier)
             present_in_lmstudio = any(model in m for m in lmstudio_models)

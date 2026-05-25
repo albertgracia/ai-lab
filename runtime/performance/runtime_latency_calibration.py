@@ -401,7 +401,7 @@ def build_fast_operational_summary(intent: str, *, extra_ctx: dict[str, Any] | N
         "fastpath": {
             "active": True,
             "intent": intent,
-            "model": "llama-3.1-8b-instruct",
+            "model": "qwen3-vl-8b-instruct",
             "used_cache": used_cache,
         },
         "authority_first": True,

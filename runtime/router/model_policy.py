@@ -1,28 +1,36 @@
 """
-FASE 30I-F0: Runtime Model Routing Policy
+ROUTER-HF-MODEL-POLICY-01: Compat adapter for runtime/models/model_policy.py.
 
-RULE-MODEL-ROUTING-1: lmstudio-community/qwen2.5-coder-14b-instruct queda deprecado
-para runtime operacional. No se selecciona ni aparece en inventory operacional.
+This module is preserved for backward compatibility.
+All routing decisions should use runtime.models.model_policy directly.
 
-RULE-MODEL-ROUTING-2: llama-3.1-8b-instruct es PRIMARY_OPERATIONAL_MODEL.
-
-RULE-MODEL-ROUTING-3: qwen/qwen2.5-coder-14b-instruct es PRIMARY_CODING_MODEL.
-
-RULE-MODEL-ROUTING-4: Operational prompts nunca deben fallbackear al modelo deprecated.
+DEPRECATED: Use runtime.models.model_policy instead.
 """
 
-from typing import Any
+from runtime.models.model_policy import (
+    CANONICAL_MODELS,
+    PROHIBITED_MODELS,
+    FAST_MODEL,
+    STRONG_MODEL,
+    get_model_for_route,
+    get_fast_model,
+    get_fallback_model,
+    get_degraded_model,
+    get_coding_model,
+    get_reasoning_model,
+    get_tool_use_model,
+    is_prohibited_model,
+    validate_route_model_selection,
+)
+
+# Backward compatibility aliases
+PRIMARY_OPERATIONAL_MODEL = FAST_MODEL
+PRIMARY_CODING_MODEL = STRONG_MODEL
+DEPRECATED_MODEL_PREFIX = "lmstudio-community/qwen2.5-coder-14b-instruct"
 
 from runtime.models.model_registry import (
     DEPRECATED_QWEN_14B_ALIAS,
-    MODEL_LLAMA_8B,
-    MODEL_QWEN_14B,
-    is_deprecated_model as _registry_is_deprecated_model,
 )
-
-PRIMARY_OPERATIONAL_MODEL = MODEL_LLAMA_8B
-PRIMARY_CODING_MODEL = MODEL_QWEN_14B
-DEPRECATED_MODEL_PREFIX = "lmstudio-community/qwen2.5-coder-14b-instruct"
 
 DEPRECATED_MODEL_IDS: frozenset[str] = frozenset({
     DEPRECATED_QWEN_14B_ALIAS,
@@ -126,8 +134,8 @@ def is_runtime_grounded_prompt(text: str) -> bool:
 
 
 def is_deprecated_model(model_id: str | None) -> bool:
-    # Single source of truth is runtime.models.model_registry.
-    return _registry_is_deprecated_model(model_id)
+    from runtime.models.model_registry import is_deprecated_model as _reg
+    return _reg(model_id)
 
 
 def resolve_operational_model() -> str:
@@ -146,15 +154,11 @@ def validate_model_selection(
 ) -> str:
     """Validate and override model selection based on routing policy.
 
-    Priority order:
-    1. Deprecated model → block
-    2. Coding prompt → PRIMARY_CODING_MODEL (higher priority than operational)
-    3. Operational prompt → PRIMARY_OPERATIONAL_MODEL
-    4. Route family (minimal/observe/greeting) → PRIMARY_OPERATIONAL_MODEL
+    Delegates to runtime.models.model_policy for prohibited model checks.
 
     Returns the validated model_id, possibly overridden.
     """
-    if is_deprecated_model(model_id):
+    if is_prohibited_model(model_id):
         if is_coding_prompt(user_text):
             return PRIMARY_CODING_MODEL
         return PRIMARY_OPERATIONAL_MODEL

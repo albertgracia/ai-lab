@@ -15,6 +15,7 @@ from runtime.models.model_registry import (
     MODEL_LLAMA_8B,
     MODEL_NOMIC_EMBED,
     MODEL_QWEN_14B,
+    MODEL_QWEN3_VL_8B,
     build_public_registry_snapshot,
     get_model_role,
     get_preferred_model_for_role,
@@ -48,14 +49,14 @@ def test_role_lookup_and_preferred_model_for_role():
     assert get_model_role(MODEL_QWEN_14B) == "CODER"
     assert get_model_role(MODEL_NOMIC_EMBED) == "EMBEDDING"
     assert get_preferred_model_for_role("CODER") == MODEL_QWEN_14B
-    assert get_preferred_model_for_role("FASTPATH") == MODEL_LLAMA_8B
+    assert get_preferred_model_for_role("FASTPATH") == MODEL_QWEN3_VL_8B
 
 
 def test_routable_filter_is_deterministic_and_excludes_embeddings():
     routable = get_routable_models()
     assert routable == sorted(routable)
     assert MODEL_NOMIC_EMBED not in routable
-    assert MODEL_LLAMA_8B in routable
+    assert MODEL_LLAMA_8B not in routable
     assert MODEL_QWEN_14B in routable
 
 

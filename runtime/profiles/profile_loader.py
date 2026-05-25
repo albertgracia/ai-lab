@@ -76,7 +76,7 @@ def get_profile_for_route(route_family: str) -> dict:
         profile = {
             "profile": "fallback",
             "version": "0",
-            "model": {"default": "llama-3.1-8b-instruct", "fallback": "llama-3.1-8b-instruct"},
+            "model": {"default": "qwen3-vl-8b-instruct", "fallback": "qwen3-vl-8b-instruct"},
             "inference": {"max_tokens": 256, "temperature": 0.2, "top_p": 0.95},
             "tools": {"allowed": False},
             "memory": {"policy": "minimal"},

@@ -4,8 +4,8 @@
 
 # ---- original static capabilities (preserved as fallback) ---------------
 MODEL_CAPABILITIES = {
-    "llama-3.1-8b-instruct": {
-        "reasoning": 5, "coding": 7, "speed": 10, "memory": 8, "node": "rx9070",
+    "qwen3-vl-8b-instruct": {
+        "reasoning": 6, "coding": 6, "speed": 10, "memory": 8, "node": "rx9070",
     },
     "qwen2.5-coder-14b-instruct": {
         "reasoning": 8, "coding": 10, "speed": 8, "memory": 9, "node": "rx9070",
@@ -151,9 +151,9 @@ def choose_model(task_type="general"):
 
     # ── fallback (original behaviour) ─────────────────────────────────
     if task_type == "coding":
-        return "qwen2.5-coder-14b-instruct"
+        return "qwen/qwen2.5-coder-14b-instruct"
     if task_type == "reasoning":
-        return "qwen2.5-coder-32b-instruct"
+        return "qwen/qwen2.5-coder-14b-instruct"
     if task_type == "fast":
-        return "qwen2.5-coder-14b-instruct"
-    return "qwen2.5-coder-14b-instruct"
+        return "qwen3-vl-8b-instruct"
+    return "qwen3-vl-8b-instruct"

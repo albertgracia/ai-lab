@@ -2911,7 +2911,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                             "enabled": True,
                             "authority_first": True,
                             "intents": ["runtime", "gpu", "observability", "governance", "validation", "watchdogs"],
-                            "model": "llama-3.1-8b-instruct",
+                            "model": "qwen3-vl-8b-instruct",
                         },
                     })
                     return
@@ -4598,7 +4598,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     "id": f"chatcmpl-capability-{_request_id}",
                     "object": "chat.completion",
                     "created": int(time.time()),
-                    "model": "llama-3.1-8b-instruct",
+                    "model": "qwen3-vl-8b-instruct",
                     "choices": [{"index": 0, "message": {"role": "assistant", "content": capability_answer}, "finish_reason": "stop"}],
                     "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
                 })
@@ -4663,8 +4663,15 @@ class GatewayHandler(BaseHTTPRequestHandler):
             selected_model = choose_model(task_type)
             if route_variant == "creative" or route_family == "report":
                 selected_model = "qwen/qwen2.5-coder-14b-instruct"
+            # ROUTER-HF-MODEL-POLICY-01: tool-use -> always qwen3-vl-8b-instruct
+            elif should_use_tool_fastpath(payload):
+                selected_model = "qwen3-vl-8b-instruct"
+                try:
+                    from runtime.telemetry.prometheus_metrics import record_greeting_fastpath
+                    record_greeting_fastpath()
+                except ImportError:
+                    pass
             elif route_family in {"minimal", "observe"}:
-                # FASE 29.3.1: but if message demands qwen14b (deep reasoning), escalate
                 escalation = get_qwen_escalation_reason(observe_user_text)
                 if escalation and route_family == "observe":
                     selected_model = "qwen/qwen2.5-coder-14b-instruct"
@@ -4674,27 +4681,43 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     except ImportError:
                         pass
                 else:
-                    selected_model = "llama-3.1-8b-instruct"
+                    selected_model = "qwen3-vl-8b-instruct"
             # FASE 29.3.1: don't override qwen escalation with observe fastpath
             _already_qwen = "qwen" in (selected_model or "").lower()
             if (current_mode() == "observe" or observe_fastpath) and not should_use_tool_fastpath(payload) and not _already_qwen:
-                selected_model = "llama-3.1-8b-instruct"
+                selected_model = "qwen3-vl-8b-instruct"
             elif should_use_greeting_fastpath(payload):
-                selected_model = "llama-3.1-8b-instruct"
+                selected_model = "qwen3-vl-8b-instruct"
                 try:
                     from runtime.telemetry.prometheus_metrics import record_greeting_fastpath
                     record_greeting_fastpath()
                 except ImportError:
                     pass
-            # FASE 29.3.1: Lightweight prompt heuristic — short/simple → llama
-            elif is_lightweight_prompt(observe_user_text):
-                selected_model = "llama-3.1-8b-instruct"
+            # ROUTER-HF-MODEL-POLICY-01: coding/reasoning before lightweight heuristic
+            elif task_type in ("coding", "reasoning"):
+                selected_model = "qwen/qwen2.5-coder-14b-instruct"
                 try:
-                    from runtime.telemetry.prometheus_metrics import record_llama_fastpath
-                    record_llama_fastpath()
+                    from runtime.telemetry.prometheus_metrics import record_coding_model_selected
+                    record_coding_model_selected()
                 except ImportError:
                     pass
-            elif task_type in ("fast", "general", "coding"):
+            # ROUTER-HF-MODEL-POLICY-01: tool_use task_type before lightweight
+            elif task_type == "tool_use":
+                selected_model = "qwen3-vl-8b-instruct"
+                try:
+                    from runtime.telemetry.prometheus_metrics import record_greeting_fastpath
+                    record_greeting_fastpath()
+                except ImportError:
+                    pass
+            # FASE 29.3.1: Lightweight prompt heuristic — short/simple -> fast model
+            elif is_lightweight_prompt(observe_user_text):
+                selected_model = "qwen3-vl-8b-instruct"
+                try:
+                    from runtime.telemetry.prometheus_metrics import record_greeting_fastpath
+                    record_greeting_fastpath()
+                except ImportError:
+                    pass
+            elif task_type in ("fast", "general"):
                 escalation_reason = get_qwen_escalation_reason(observe_user_text)
                 if escalation_reason:
                     selected_model = "qwen/qwen2.5-coder-14b-instruct"
@@ -4704,54 +4727,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     except ImportError:
                         pass
                 else:
-                    selected_model = "llama-3.1-8b-instruct"
-
-            # FASE 29.3: Hard guard — qwen3.6-27b disabled, redirect to qwen2.5-14b
-            # FASE 30I-F0: Also block deprecated lmstudio-community/qwen2.5-coder-14b-instruct
-            DISABLED_MODELS = {"qwen3.6-27b", "qwen/qwen3.6-27b", "lmstudio-community/qwen3.6-27b"}
-            if selected_model in DISABLED_MODELS or "qwen3.6" in (selected_model or "").lower():
-                original = selected_model
-                selected_model = "qwen/qwen2.5-coder-14b-instruct"
-                try:
-                    from runtime.telemetry.prometheus_metrics import record_disabled_model_selection
-                    record_disabled_model_selection(original, "disabled_model_redirect")
-                except ImportError:
-                    pass
-                emit_error(build_error_event(
-                    RuntimeError(f"disabled model {original} redirected to {selected_model}"),
-                    category=RuntimeErrorCategory.MODEL_DISABLED,
-                    origin_stage="routing", component="gateway",
-                    source_file=__file__,
-                    model=selected_model, route_type=route_family,
-                    slo_impact=False,
-                ))
-            elif is_deprecated_model(selected_model):
-                original = selected_model
-                selected_model = "qwen/qwen2.5-coder-14b-instruct"
-                try:
-                    from runtime.telemetry.prometheus_metrics import (
-                        record_deprecated_model_routing,
-                        record_disabled_model_selection,
-                    )
-                    record_deprecated_model_routing("blocked_to_qwen_fallback")
-                    record_disabled_model_selection(original, "deprecated_model_redirect")
-                except ImportError:
-                    pass
-
-            # FASE 29.4: Degradation-based model override
-            if _HAVE_SLO:
-                _degradation_level = _degradation.get_current_level()
-                if _degradation.should_force_llama(_degradation_level):
-                    selected_model = "llama-3.1-8b-instruct"
-                    _degradation.record_llama_forced("degradation_force_llama", is_slo_dry_run())
-                elif _degradation.should_pause_qwen_routing(_degradation_level):
-                    if "qwen" in (selected_model or "").lower():
-                        selected_model = "llama-3.1-8b-instruct"
-                        _degradation.record_llama_forced("degradation_pause_qwen", is_slo_dry_run())
-                elif _degradation.should_block_qwen_escalation(_degradation_level):
-                    if route_family in {"minimal", "observe"} and "qwen" in (selected_model or "").lower():
-                        selected_model = "llama-3.1-8b-instruct"
-                        _degradation.record_qwen_protection("degradation_block_escalation", is_slo_dry_run())
+                    selected_model = "qwen3-vl-8b-instruct"
 
             # FASE 30I-F0: Model routing policy — validate operational/coding/deprecated
             _validated = validate_model_selection(
@@ -4797,8 +4773,8 @@ class GatewayHandler(BaseHTTPRequestHandler):
             if _rm_lower and _rm_lower != _sm_lower:
                 if _rm_lower in ("qwen/qwen2.5-coder-14b-instruct", "qwen2.5-coder-14b-instruct"):
                     selected_model = "qwen/qwen2.5-coder-14b-instruct"
-                elif _rm_lower == "llama-3.1-8b-instruct":
-                    selected_model = "llama-3.1-8b-instruct"
+                elif _rm_lower == "qwen3-vl-8b-instruct":
+                    selected_model = "qwen3-vl-8b-instruct"
 
             if selected_model not in _warmed_models:
                 _warmed_models.add(selected_model)

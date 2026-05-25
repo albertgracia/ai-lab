@@ -102,7 +102,7 @@ def get_all_confidences(window_minutes: int = 1440) -> dict:
     """Return per-model confidence dict with samples and detailed stats.
 
     Returns:
-        {"llama-3.1-8b-instruct": {"confidence": 0.91, "samples": 22,
+        {"qwen3-vl-8b-instruct": {"confidence": 0.91, "samples": 22,
                                      "success_rate": 0.98, "avg_latency_ms": 1200}, ...}
     """
     result = {}

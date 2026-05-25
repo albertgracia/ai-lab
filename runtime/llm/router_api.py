@@ -752,7 +752,7 @@ async def chat_completions(request: Request):
     )
     if greeting_fastpath:
         node = dict(node)
-        node["model"] = "llama-3.1-8b-instruct"
+        node["model"] = "qwen3-vl-8b-instruct"
         node["capability"] = "fast"
     selected_model = node.get("model")
     selected_node = node.get("name")
@@ -789,7 +789,7 @@ async def chat_completions(request: Request):
             headers={
                 "X-AI-LAB-Selected-Node": "gateway-proxy",
                 "X-AI-LAB-Selected-Host": "127.0.0.1",
-                "X-AI-LAB-Selected-Model": "llama-3.1-8b-instruct",
+                "X-AI-LAB-Selected-Model": "qwen3-vl-8b-instruct",
                 "X-AI-LAB-Capability": "fast",
             },
         )
@@ -817,7 +817,7 @@ async def chat_completions(request: Request):
             headers={
                 "X-AI-LAB-Selected-Node": "gateway-proxy",
                 "X-AI-LAB-Selected-Host": "127.0.0.1",
-                "X-AI-LAB-Selected-Model": "llama-3.1-8b-instruct",
+                "X-AI-LAB-Selected-Model": "qwen3-vl-8b-instruct",
                 "X-AI-LAB-Capability": "fast",
             },
         )

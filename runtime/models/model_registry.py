@@ -72,6 +72,7 @@ class ModelDescriptor:
 
 # Canonical models (must remain stable identifiers)
 MODEL_QWEN_14B = "qwen/qwen2.5-coder-14b-instruct"
+MODEL_QWEN3_VL_8B = "qwen3-vl-8b-instruct"
 MODEL_LLAMA_8B = "llama-3.1-8b-instruct"
 MODEL_NOMIC_EMBED = "text-embedding-nomic-embed-text-v1.5"
 
@@ -95,18 +96,32 @@ _CANONICAL_MODELS: tuple[ModelDescriptor, ...] = (
         status="active",
     ),
     ModelDescriptor(
+        canonical_id=MODEL_QWEN3_VL_8B,
+        role=ModelRole.FASTPATH,
+        provider="qwen",
+        aliases=(),
+        deprecated_aliases=(),
+        routable=True,
+        supports_streaming=True,
+        supports_tools=True,
+        supports_embeddings=False,
+        preferred_runtime="lmstudio",
+        cognitive_domain="fastpath",
+        status="active",
+    ),
+    ModelDescriptor(
         canonical_id=MODEL_LLAMA_8B,
         role=ModelRole.FASTPATH,
         provider="meta",
         aliases=(),
         deprecated_aliases=(),
-        routable=True,
+        routable=False,
         supports_streaming=True,
         supports_tools=False,
         supports_embeddings=False,
         preferred_runtime="lmstudio",
         cognitive_domain="fastpath",
-        status="active",
+        status="quarantined",
     ),
     ModelDescriptor(
         canonical_id=MODEL_NOMIC_EMBED,
@@ -223,6 +238,8 @@ LEGACY_MODEL_REGISTRY = {
         "gpu_ip": "192.168.1.50",
         "node": "rx9070-node",
         "priority": 10,
+        "enabled": False,
+        "disabled_reason": "ROUTER-HF-MODEL-POLICY-01: quarantined (broken Jinja template)",
     },
     "qwen2.5-coder-14b-instruct": {
         "display_name": "Qwen 2.5 Coder 14B",
@@ -234,6 +251,17 @@ LEGACY_MODEL_REGISTRY = {
         "gpu_ip": "192.168.1.50",
         "node": "rx9070-node",
         "priority": 20,
+    },
+    "qwen3-vl-8b-instruct": {
+        "display_name": "Qwen3 VL 8B",
+        "skills": ["fast", "chat", "general", "observe", "vision"],
+        "scores": {"reasoning": 6, "coding": 6, "speed": 10, "memory": 8},
+        "context_window": 32_768,
+        "latency_profile": "fast",
+        "gpu": "RX9070",
+        "gpu_ip": "192.168.1.50",
+        "node": "rx9070-node",
+        "priority": 15,
     },
     "qwen3.6-27b": {
         "display_name": "Qwen 3.6 27B",
@@ -366,6 +394,7 @@ MODEL_ALIASES = {
     "qwen/qwen2.5-coder-14b-instruct": "qwen2.5-coder-14b-instruct",
     "qwen/qwen2.5-coder-32b-instruct": "qwen2.5-coder-32b-instruct",
     "qwen/qwen3.6-27b": "qwen3.6-27b",
+    "qwen3-vl-8b-instruct": "qwen3-vl-8b-instruct",
 }
 
 

@@ -1,12 +1,12 @@
 from runtime.tools.shell_tool import execute
 
 
+# LEGACY: ollama removed — LM Studio is sole inference backend
 CORE_CONTAINERS = [
     "traefik",
     "open-webui",
     "qdrant",
     "portainer",
-    "ollama",
 ]
 
 
@@ -39,9 +39,7 @@ def plan_tools(user_request: str):
         commands.append("docker logs portainer --tail 80")
         commands.append("docker inspect portainer")
 
-    if "ollama" in text:
-        commands.append("docker logs ollama --tail 80")
-        commands.append("docker inspect ollama")
+    # LEGACY: ollama removed — LM Studio is sole inference backend
 
     if any(word in text for word in ["disk", "disco", "storage", "almacenamiento"]):
         commands.append("df -h")

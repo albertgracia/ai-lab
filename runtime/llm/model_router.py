@@ -128,6 +128,8 @@ def infer_task(request_text=None, capability=None):
             "refactor",
             "debug",
             "fix",
+            "codigo",
+            "código",
             "execute_v1_policy",
             "whitelist",
         ]
@@ -403,7 +405,7 @@ def select_node(request_text, capability=None):
 
     if not route.get("available") or not route.get("models"):
         host = "192.168.1.50"
-        real_models = _get_real_models("", host) or ["llama-3.1-8b-instruct", "qwen2.5-coder-14b-instruct"]
+        real_models = _get_real_models("", host) or ["qwen3-vl-8b-instruct", "qwen/qwen2.5-coder-14b-instruct"]
         selected = DEFAULT_MODELS.get(task, real_models[0])
         try:
             if _USE_REGISTRY:
