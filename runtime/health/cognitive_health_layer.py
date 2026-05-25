@@ -14,6 +14,7 @@ import time
 from dataclasses import dataclass
 from threading import Lock
 from typing import Any
+from urllib.parse import urlparse
 
 
 COGNITIVE_HEALTH_CONTRACT_VERSION = "37A-COGNITIVE-HEALTH-LAYER-01"
@@ -42,6 +43,34 @@ def _score_latency(avg_latency_ms: float) -> tuple[float, str]:
     if avg_latency_ms <= 30000:
         return 0.00, "latency_high"
     return -0.20, "latency_very_high"
+
+
+def _normalize_node_key(value: Any) -> str:
+    return str(value or "").strip().lower()
+
+
+def _build_backend_host_aliases() -> dict[str, set[str]]:
+    aliases: dict[str, set[str]] = {}
+    try:
+        from runtime.gateway.openai_gateway import BACKENDS
+    except Exception:
+        return aliases
+
+    if not isinstance(BACKENDS, list):
+        return aliases
+
+    for backend in BACKENDS:
+        if not isinstance(backend, dict):
+            continue
+        name = _normalize_node_key(backend.get("name"))
+        url = str(backend.get("url") or "")
+        host = _normalize_node_key(urlparse(url).hostname)
+        if not host:
+            continue
+        aliases.setdefault(host, set())
+        if name:
+            aliases[host].add(name)
+    return aliases
 
 
 @dataclass
@@ -82,11 +111,30 @@ def build_node_scores(*, window_minutes: int = 60) -> list[NodeHealth]:
     except Exception:
         hist = {}
 
+    hist_normalized = {_normalize_node_key(k): (v or {}) for k, v in hist.items()}
+    backend_aliases = _build_backend_host_aliases()
+
     results: list[NodeHealth] = []
+    consumed_hist_keys: set[str] = set()
     for node_name in sorted(nodes.keys()):
         n = nodes.get(node_name) or {}
         online = bool(n.get("online"))
         reasons: list[str] = []
+
+        aliases = {
+            _normalize_node_key(node_name),
+            _normalize_node_key(n.get("host")),
+        }
+        host_aliases = backend_aliases.get(_normalize_node_key(n.get("host"))) or set()
+        aliases.update(host_aliases)
+        aliases.discard("")
+
+        h = {}
+        for alias in aliases:
+            if alias in hist_normalized:
+                h = hist_normalized[alias] or {}
+                consumed_hist_keys.add(alias)
+                break
 
         score = 0.50
         if online:
@@ -97,7 +145,6 @@ def build_node_scores(*, window_minutes: int = 60) -> list[NodeHealth]:
             reasons.append("node_offline")
 
         # Prefer routing_history latency if available.
-        h = hist.get(node_name) or {}
         succ = h.get("success_rate")
         if isinstance(succ, (int, float)):
             # centered around 0.5 to be neutral when unknown.
@@ -126,8 +173,8 @@ def build_node_scores(*, window_minutes: int = 60) -> list[NodeHealth]:
         results.append(NodeHealth(node=node_name, online=online, score=score, reasons=reasons, stats=stats))
 
     # Include nodes that only appear in routing history.
-    for node_name in sorted(set(hist.keys()) - set(nodes.keys())):
-        h = hist.get(node_name) or {}
+    for node_name in sorted(set(hist_normalized.keys()) - consumed_hist_keys):
+        h = hist_normalized.get(node_name) or {}
         succ = h.get("success_rate", None)
         avg_lat = h.get("avg_latency_ms", 0)
         score = 0.50

@@ -63,3 +63,73 @@ def test_degradations_snapshot_is_bounded_and_deterministic() -> None:
     assert isinstance(snap.get("degraded_nodes"), list)
     assert len(snap.get("offline_nodes")) <= 20
     assert len(snap.get("degraded_nodes")) <= 20
+
+
+def test_build_node_scores_reconciles_history_with_control_plane_aliases(monkeypatch) -> None:
+    import runtime.health.cognitive_health_layer as ch
+
+    def _fake_control_nodes() -> dict:
+        return {
+            "nodes": {
+                "192.168.1.50": {
+                    "online": True,
+                    "host": "rx9070",
+                    "models": 3,
+                    "avg_latency_ms": 10,
+                }
+            }
+        }
+
+    def _fake_stats_by_node(*, window_minutes: int = 60) -> dict:
+        return {
+            "rx9070": {
+                "total_requests": 12,
+                "success_rate": 1.0,
+                "avg_latency_ms": 1200,
+                "last_updated": 123,
+            }
+        }
+
+    monkeypatch.setattr("runtime.control.control_plane.get_control_nodes", _fake_control_nodes)
+    monkeypatch.setattr("runtime.routing.routing_history.stats_by_node", _fake_stats_by_node)
+
+    nodes = ch.build_node_scores(window_minutes=60)
+    assert len(nodes) == 1
+    assert nodes[0].node == "192.168.1.50"
+    assert nodes[0].online is True
+    assert nodes[0].stats.get("success_rate") == 1.0
+
+
+def test_build_node_scores_reconciles_history_with_backend_aliases(monkeypatch) -> None:
+    import runtime.health.cognitive_health_layer as ch
+
+    def _fake_control_nodes() -> dict:
+        return {
+            "nodes": {
+                "192.168.1.50": {
+                    "online": True,
+                    "host": "192.168.1.50",
+                    "models": 3,
+                    "avg_latency_ms": 10,
+                }
+            }
+        }
+
+    def _fake_stats_by_node(*, window_minutes: int = 60) -> dict:
+        return {
+            "rx9070": {
+                "total_requests": 6,
+                "success_rate": 1.0,
+                "avg_latency_ms": 900,
+                "last_updated": 321,
+            }
+        }
+
+    monkeypatch.setattr("runtime.control.control_plane.get_control_nodes", _fake_control_nodes)
+    monkeypatch.setattr("runtime.routing.routing_history.stats_by_node", _fake_stats_by_node)
+    monkeypatch.setattr(ch, "_build_backend_host_aliases", lambda: {"192.168.1.50": {"rx9070"}})
+
+    nodes = ch.build_node_scores(window_minutes=60)
+    assert len(nodes) == 1
+    assert nodes[0].node == "192.168.1.50"
+    assert nodes[0].stats.get("success_rate") == 1.0
