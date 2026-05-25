@@ -1313,6 +1313,23 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 + "# HELP ailab_critical_path_recommendations_total Critical path recommendations count\n"
                 + "# TYPE ailab_critical_path_recommendations_total gauge\n"
                 + (lambda: __import__("runtime.critical_path.critical_path_analysis", fromlist=["build_critical_path_prometheus_metrics"]).build_critical_path_prometheus_metrics())()
+                + "# HELP ailab_hotspot_history_snapshots_total Hotspot history snapshots stored (bounded)\n"
+                + "# TYPE ailab_hotspot_history_snapshots_total gauge\n"
+                + "# HELP ailab_hotspot_history_recurring_total Recurring hotspots count (bounded)\n"
+                + "# TYPE ailab_hotspot_history_recurring_total gauge\n"
+                + "# HELP ailab_hotspot_history_drift_score Hotspot history drift score (0-1, deterministic)\n"
+                + "# TYPE ailab_hotspot_history_drift_score gauge\n"
+                + "# HELP ailab_hotspot_history_increasing_total Increasing hotspots in latest window\n"
+                + "# TYPE ailab_hotspot_history_increasing_total gauge\n"
+                + "# HELP ailab_hotspot_history_decreasing_total Decreasing hotspots in latest window\n"
+                + "# TYPE ailab_hotspot_history_decreasing_total gauge\n"
+                + "# HELP ailab_hotspot_history_unknowns_total Unknowns/unavailable count in latest snapshot\n"
+                + "# TYPE ailab_hotspot_history_unknowns_total gauge\n"
+                + "# HELP ailab_hotspot_history_recommendations_total Hotspot history recommendations count\n"
+                + "# TYPE ailab_hotspot_history_recommendations_total gauge\n"
+                + "# HELP ailab_hotspot_history_persistence_enabled 1 if persistence enabled, else 0\n"
+                + "# TYPE ailab_hotspot_history_persistence_enabled gauge\n"
+                + (lambda: __import__("runtime.hotspot_history.hotspot_history", fromlist=["build_hotspot_history_prometheus_metrics"]).build_hotspot_history_prometheus_metrics())()
                 + "\n# ── prometheus_client managed metrics ──\n"
                 + prom_generate_latest(prom_REGISTRY).decode("utf-8")
             )
@@ -3346,6 +3363,13 @@ class GatewayHandler(BaseHTTPRequestHandler):
             from runtime.gateway.runtime_api_routes import handle_critical_path_routes
 
             handle_critical_path_routes(self)
+            return
+
+        # ── FASE 37D: Graph Hotspot History — always-on 200 ──
+        if self.path == "/runtime/hotspot-history" or self.path.startswith("/runtime/hotspot-history/"):
+            from runtime.gateway.runtime_api_routes import handle_hotspot_history_routes
+
+            handle_hotspot_history_routes(self)
             return
 
         # ── FEDERATION-EVIDENCE-LINEAGE-02: Evidence introspection — always-on 200 ──

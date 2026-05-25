@@ -542,6 +542,105 @@ def handle_critical_path_routes(handler: Any) -> bool:
         return True
 
 
+def handle_hotspot_history_routes(handler: Any) -> bool:
+    """Handle /runtime/hotspot-history* endpoints (FASE 37D).
+
+    Always responds 200; bounded + deterministic; fail-safe.
+    """
+
+    raw = getattr(handler, "path", "")
+    path = (raw or "").split("?", 1)[0]
+    if not (path == "/runtime/hotspot-history" or path.startswith("/runtime/hotspot-history/")):
+        return False
+
+    import urllib.parse
+
+    try:
+        from runtime.hotspot_history.hotspot_history import (
+            GRAPH_HOTSPOT_HISTORY_CONTRACT_VERSION,
+            get_hotspot_history_window,
+            get_hotspot_history_summary,
+            get_hotspot_history_latest,
+            get_hotspot_trends,
+            get_recurring_hotspots,
+            get_hotspot_drift,
+            get_blast_radius_history,
+            get_hotspot_recommendations,
+            reset_hotspot_history_runtime_state,
+        )
+
+        parsed = urllib.parse.urlparse(raw)
+        qs = urllib.parse.parse_qs(parsed.query or "")
+        limit = int((qs.get("limit") or [10])[0])
+        top_n = int((qs.get("top_n") or [10])[0])
+        window = int((qs.get("window") or [10])[0])
+
+        if path == "/runtime/hotspot-history":
+            handler._send_json(200, get_hotspot_history_window(limit=limit, top_n=top_n))
+            return True
+
+        if path == "/runtime/hotspot-history/summary":
+            handler._send_json(200, get_hotspot_history_summary(limit=limit))
+            return True
+
+        if path == "/runtime/hotspot-history/latest":
+            handler._send_json(200, get_hotspot_history_latest(top_n=top_n, scope="runtime_only", record=True))
+            return True
+
+        if path == "/runtime/hotspot-history/trends":
+            handler._send_json(200, get_hotspot_trends(limit=limit, top_n=top_n))
+            return True
+
+        if path == "/runtime/hotspot-history/recurring":
+            min_rec = int((qs.get("min_recurrence") or [3])[0])
+            handler._send_json(200, get_recurring_hotspots(limit=limit, min_recurrence=min_rec))
+            return True
+
+        if path == "/runtime/hotspot-history/drift":
+            handler._send_json(200, get_hotspot_drift(window=window))
+            return True
+
+        if path == "/runtime/hotspot-history/blast-radius":
+            handler._send_json(200, get_blast_radius_history(limit=limit))
+            return True
+
+        if path == "/runtime/hotspot-history/recommendations":
+            handler._send_json(200, get_hotspot_recommendations())
+            return True
+
+        if path == "/runtime/hotspot-history/reset":
+            handler._send_json(200, {
+                "status": "ok",
+                "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/hotspot-history/reset",
+                "timestamp": time.time(),
+                "contract_version": GRAPH_HOTSPOT_HISTORY_CONTRACT_VERSION,
+                "reset": reset_hotspot_history_runtime_state(),
+            })
+            return True
+
+        handler._send_json(200, {
+            "status": "degraded",
+            "service": "ai-lab-openai-gateway",
+            "endpoint": path.lstrip("/"),
+            "timestamp": time.time(),
+            "contract_version": GRAPH_HOTSPOT_HISTORY_CONTRACT_VERSION,
+            "error": "unknown_hotspot_history_endpoint",
+        })
+        return True
+
+    except Exception as exc:
+        handler._send_json(200, {
+            "status": "degraded",
+            "service": "ai-lab-openai-gateway",
+            "endpoint": path.lstrip("/"),
+            "timestamp": time.time(),
+            "contract_version": GRAPH_HOTSPOT_HISTORY_CONTRACT_VERSION,
+            "error": str(exc),
+        })
+        return True
+
+
 def handle_evidence_routes(handler: Any) -> bool:
     """Handle /runtime/evidence* endpoints (read-only, fail-safe)."""
 

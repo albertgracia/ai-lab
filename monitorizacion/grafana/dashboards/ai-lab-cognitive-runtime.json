@@ -4113,6 +4113,102 @@
       "targets": [
         { "expr": "ailab_critical_path_score{job=\"ai-lab-gateway\"}", "refId": "A" }
       ]
+    },
+    {
+      "type": "stat",
+      "title": "Hotspot Drift Score",
+      "datasource": "Prometheus",
+      "description": "FASE 37D: deterministic drift score (0-1)",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 121 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "yellow", "value": 0.5 },
+              { "color": "orange", "value": 0.7 },
+              { "color": "red", "value": 0.85 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
+      "targets": [
+        { "expr": "ailab_hotspot_history_drift_score{job=\"ai-lab-gateway\"}", "refId": "A" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Hotspot Snapshots Total",
+      "datasource": "Prometheus",
+      "description": "FASE 37D: snapshots stored in-memory (bounded)",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 121 },
+      "targets": [
+        { "expr": "ailab_hotspot_history_snapshots_total{job=\"ai-lab-gateway\"}", "refId": "A" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Recurring Hotspots",
+      "datasource": "Prometheus",
+      "description": "FASE 37D: recurring hotspots count (bounded)",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 121 },
+      "targets": [
+        { "expr": "ailab_hotspot_history_recurring_total{job=\"ai-lab-gateway\"}", "refId": "A" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Hotspot Unknowns",
+      "datasource": "Prometheus",
+      "description": "FASE 37D: unknown/unavailable count in latest snapshot",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 121 },
+      "targets": [
+        { "expr": "ailab_hotspot_history_unknowns_total{job=\"ai-lab-gateway\"}", "refId": "A" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Hotspot Drift Timeline",
+      "datasource": "Prometheus",
+      "description": "FASE 37D: drift score over time",
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 125 },
+      "targets": [
+        { "expr": "ailab_hotspot_history_drift_score{job=\"ai-lab-gateway\"}", "refId": "A" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Increasing Hotspots",
+      "datasource": "Prometheus",
+      "description": "FASE 37D: increasing hotspots in latest window",
+      "gridPos": { "h": 6, "w": 4, "x": 12, "y": 125 },
+      "targets": [
+        { "expr": "ailab_hotspot_history_increasing_total{job=\"ai-lab-gateway\"}", "refId": "A" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Persistence Enabled",
+      "datasource": "Prometheus",
+      "description": "FASE 37D: 1 if persistence enabled, else 0",
+      "gridPos": { "h": 6, "w": 4, "x": 16, "y": 125 },
+      "targets": [
+        { "expr": "ailab_hotspot_history_persistence_enabled{job=\"ai-lab-gateway\"}", "refId": "A" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Hotspot Recommendations",
+      "datasource": "Prometheus",
+      "description": "FASE 37D: recommendations count",
+      "gridPos": { "h": 6, "w": 4, "x": 20, "y": 125 },
+      "targets": [
+        { "expr": "ailab_hotspot_history_recommendations_total{job=\"ai-lab-gateway\"}", "refId": "A" }
+      ]
     }
   ]
 }

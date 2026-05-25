@@ -86,6 +86,7 @@ runtime/*
 !runtime/health/
 !runtime/correlation/
 !runtime/critical_path/
+!runtime/hotspot_history/
 !runtime/tools/tool_metrics.py
 !runtime/tools/
 !runtime/tools/__init__.py
@@ -96,6 +97,8 @@ runtime/*
 !runtime/correlation/graph_runtime_correlation.py
 !runtime/critical_path/__init__.py
 !runtime/critical_path/critical_path_analysis.py
+!runtime/hotspot_history/__init__.py
+!runtime/hotspot_history/hotspot_history.py
 !runtime/performance/
 !runtime/performance/__init__.py
 !runtime/performance/contracts.py

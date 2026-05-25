@@ -18,6 +18,7 @@ order: 2
 - **Cognitive Health Layer (37A)**: score bounded, confianza de routing y watchdog metadata-only.
 - **Graph-Runtime Correlation (37B)**: correlación explicable entre hotspots topológicos y degradación runtime real.
 - **Critical Path Analysis (37C)**: análisis híbrido file-level + domain aggregation para identificar caminos críticos y dependencias peligrosas.
+- **Graph Hotspot History (37D)**: histórico bounded de hotspots/chokepoints con drift_score determinista.
 
 ## Fases cubiertas
 
@@ -28,6 +29,7 @@ order: 2
 - `37A`
 - `37B`
 - `37C`
+- `37D`
 
 ## Alineación reciente
 
