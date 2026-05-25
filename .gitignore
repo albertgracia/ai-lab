@@ -99,6 +99,9 @@ runtime/*
 !runtime/critical_path/critical_path_analysis.py
 !runtime/hotspot_history/__init__.py
 !runtime/hotspot_history/hotspot_history.py
+!runtime/governance_drift/
+!runtime/governance_drift/__init__.py
+!runtime/governance_drift/governance_drift.py
 !runtime/performance/
 !runtime/performance/__init__.py
 !runtime/performance/contracts.py

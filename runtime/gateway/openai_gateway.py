@@ -1330,6 +1330,23 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 + "# HELP ailab_hotspot_history_persistence_enabled 1 if persistence enabled, else 0\n"
                 + "# TYPE ailab_hotspot_history_persistence_enabled gauge\n"
                 + (lambda: __import__("runtime.hotspot_history.hotspot_history", fromlist=["build_hotspot_history_prometheus_metrics"]).build_hotspot_history_prometheus_metrics())()
+                + "# HELP ailab_governance_drift_score Governance drift overall score (0-1, metadata-only)\n"
+                + "# TYPE ailab_governance_drift_score gauge\n"
+                + "# HELP ailab_governance_drift_governance_confidence Governance confidence score (0-1)\n"
+                + "# TYPE ailab_governance_drift_governance_confidence gauge\n"
+                + "# HELP ailab_governance_drift_events_total Governance drift events recorded (bounded)\n"
+                + "# TYPE ailab_governance_drift_events_total gauge\n"
+                + "# HELP ailab_governance_drift_domains_total Domains with governance drift\n"
+                + "# TYPE ailab_governance_drift_domains_total gauge\n"
+                + "# HELP ailab_governance_drift_critical_domains_total Domains with HIGH/CRITICAL drift\n"
+                + "# TYPE ailab_governance_drift_critical_domains_total gauge\n"
+                + "# HELP ailab_governance_drift_unknowns_total Unknown/unavailable signals count\n"
+                + "# TYPE ailab_governance_drift_unknowns_total gauge\n"
+                + "# HELP ailab_governance_drift_recommendations_total Governance drift recommendations count\n"
+                + "# TYPE ailab_governance_drift_recommendations_total gauge\n"
+                + "# HELP ailab_governance_drift_health_delta_avg Average health delta across domains\n"
+                + "# TYPE ailab_governance_drift_health_delta_avg gauge\n"
+                + (lambda: __import__("runtime.governance_drift.governance_drift", fromlist=["build_governance_drift_prometheus_metrics"]).build_governance_drift_prometheus_metrics())()
                 + "\n# ── prometheus_client managed metrics ──\n"
                 + prom_generate_latest(prom_REGISTRY).decode("utf-8")
             )
@@ -3370,6 +3387,13 @@ class GatewayHandler(BaseHTTPRequestHandler):
             from runtime.gateway.runtime_api_routes import handle_hotspot_history_routes
 
             handle_hotspot_history_routes(self)
+            return
+
+        # ── FASE 37E: Governance Drift Detection — always-on 200 ──
+        if self.path == "/runtime/governance-drift" or self.path.startswith("/runtime/governance-drift/"):
+            from runtime.gateway.runtime_api_routes import handle_governance_drift_routes
+
+            handle_governance_drift_routes(self)
             return
 
         # ── FEDERATION-EVIDENCE-LINEAGE-02: Evidence introspection — always-on 200 ──

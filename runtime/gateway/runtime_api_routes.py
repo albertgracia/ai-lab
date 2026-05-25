@@ -641,6 +641,184 @@ def handle_hotspot_history_routes(handler: Any) -> bool:
         return True
 
 
+def handle_governance_drift_routes(handler: Any) -> bool:
+    """Handle /runtime/governance-drift* endpoints (FASE 37E).
+
+    Always responds 200; bounded + deterministic; fail-safe.
+    """
+    raw = getattr(handler, "path", "")
+    path = (raw or "").split("?", 1)[0]
+    if not (path == "/runtime/governance-drift" or path.startswith("/runtime/governance-drift/")):
+        return False
+
+    import urllib.parse
+
+    try:
+        from runtime.governance_drift.governance_drift import (
+            GOVERNANCE_DRIFT_CONTRACT_VERSION,
+            build_governance_drift_snapshot,
+            get_governance_drift_summary,
+            get_governance_drift_events,
+            get_governance_drift_domains,
+            get_governance_drift_recommendations,
+            reset_governance_drift_state,
+        )
+
+        parsed = urllib.parse.urlparse(raw)
+        qs = urllib.parse.parse_qs(parsed.query or "")
+        limit = int((qs.get("limit") or [10])[0])
+
+        if path == "/runtime/governance-drift":
+            handler._send_json(200, build_governance_drift_snapshot())
+            return True
+
+        if path == "/runtime/governance-drift/summary":
+            handler._send_json(200, get_governance_drift_summary())
+            return True
+
+        if path == "/runtime/governance-drift/events":
+            handler._send_json(200, get_governance_drift_events(limit=limit))
+            return True
+
+        if path == "/runtime/governance-drift/domains":
+            handler._send_json(200, get_governance_drift_domains())
+            return True
+
+        if path == "/runtime/governance-drift/recommendations":
+            handler._send_json(200, get_governance_drift_recommendations())
+            return True
+
+        if path == "/runtime/governance-drift/reset":
+            handler._send_json(200, {
+                "status": "ok",
+                "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/governance-drift/reset",
+                "timestamp": time.time(),
+                "contract_version": GOVERNANCE_DRIFT_CONTRACT_VERSION,
+                "reset": reset_governance_drift_state(),
+            })
+            return True
+
+        if path == "/runtime/governance-drift/findings":
+            snap = build_governance_drift_snapshot()
+            domains = snap.get("domains") or []
+            findings = [
+                {"domain": d["domain"], "drift_score": d["drift_score"], "severity": d["severity"],
+                 "governance_risk": d["governance_risk"], "correlation_hotspot": d["correlation_hotspot"],
+                 "inferred": d.get("inferred", [])}
+                for d in domains if d.get("severity") in {"MEDIUM", "HIGH", "CRITICAL"}
+            ]
+            handler._send_json(200, {
+                "status": "ok", "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/governance-drift/findings",
+                "timestamp": time.time(),
+                "contract_version": GOVERNANCE_DRIFT_CONTRACT_VERSION,
+                "overall_drift": snap.get("overall_drift"),
+                "severity": snap.get("severity"),
+                "findings": findings,
+                "total": len(findings),
+                "unknowns": snap.get("unknowns", []),
+            })
+            return True
+
+        if path == "/runtime/governance-drift/layer-leakage":
+            snap = build_governance_drift_snapshot()
+            domains = snap.get("domains") or []
+            leakage = [
+                {"domain": d["domain"], "drift_score": d["drift_score"], "blast_radius": d.get("blast_radius", "low"),
+                 "health_delta": d.get("health_delta", 0.0), "signal_sources": d.get("signal_sources", [])}
+                for d in domains if d.get("blast_radius") in {"high", "critical"} or d.get("health_delta", 0.0) > 0.2
+            ]
+            handler._send_json(200, {
+                "status": "ok", "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/governance-drift/layer-leakage",
+                "timestamp": time.time(),
+                "contract_version": GOVERNANCE_DRIFT_CONTRACT_VERSION,
+                "layer_leakage": leakage,
+                "total": len(leakage),
+                "unknowns": snap.get("unknowns", []),
+            })
+            return True
+
+        if path == "/runtime/governance-drift/god-object-risks":
+            snap = build_governance_drift_snapshot()
+            domains = snap.get("domains") or []
+            risks = [
+                {"domain": d["domain"], "drift_score": d["drift_score"], "chokepoint_count": d.get("chokepoint_count", 0),
+                 "governance_risk": d.get("governance_risk", "low"), "severity": d.get("severity", "INFO")}
+                for d in domains if d.get("chokepoint_count", 0) >= 2 or d.get("governance_risk") in {"high", "critical"}
+            ]
+            handler._send_json(200, {
+                "status": "ok", "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/governance-drift/god-object-risks",
+                "timestamp": time.time(),
+                "contract_version": GOVERNANCE_DRIFT_CONTRACT_VERSION,
+                "god_object_risks": risks,
+                "total": len(risks),
+                "unknowns": snap.get("unknowns", []),
+            })
+            return True
+
+        if path == "/runtime/governance-drift/bypass-risks":
+            snap = build_governance_drift_snapshot()
+            domains = snap.get("domains") or []
+            bypass = [
+                {"domain": d["domain"], "drift_score": d["drift_score"],
+                 "correlation_hotspot": d.get("correlation_hotspot", False),
+                 "governance_risk": d.get("governance_risk", "low"), "inferred": d.get("inferred", [])}
+                for d in domains if d.get("governance_risk") in {"high", "critical"} or d.get("correlation_hotspot")
+            ]
+            handler._send_json(200, {
+                "status": "ok", "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/governance-drift/bypass-risks",
+                "timestamp": time.time(),
+                "contract_version": GOVERNANCE_DRIFT_CONTRACT_VERSION,
+                "bypass_risks": bypass,
+                "total": len(bypass),
+                "unknowns": snap.get("unknowns", []),
+            })
+            return True
+
+        if path == "/runtime/governance-drift/predictive-warnings":
+            snap = build_governance_drift_snapshot()
+            recommended = snap.get("recommendations") or []
+            warnings = [r for r in recommended if r.get("severity") in {"HIGH", "CRITICAL"}]
+            handler._send_json(200, {
+                "status": "ok", "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/governance-drift/predictive-warnings",
+                "timestamp": time.time(),
+                "contract_version": GOVERNANCE_DRIFT_CONTRACT_VERSION,
+                "overall_drift": snap.get("overall_drift"),
+                "severity": snap.get("severity"),
+                "governance_confidence": snap.get("governance_confidence"),
+                "warnings": warnings,
+                "total": len(warnings),
+                "unknowns": snap.get("unknowns", []),
+            })
+            return True
+
+        handler._send_json(200, {
+            "status": "degraded",
+            "service": "ai-lab-openai-gateway",
+            "endpoint": path.lstrip("/"),
+            "timestamp": time.time(),
+            "contract_version": GOVERNANCE_DRIFT_CONTRACT_VERSION,
+            "error": "unknown_governance_drift_endpoint",
+        })
+        return True
+
+    except Exception as exc:
+        handler._send_json(200, {
+            "status": "degraded",
+            "service": "ai-lab-openai-gateway",
+            "endpoint": "runtime/governance-drift",
+            "timestamp": time.time(),
+            "contract_version": "37E-GOVERNANCE-DRIFT-DETECTION-01",
+            "error": str(exc),
+        })
+        return True
+
+
 def handle_evidence_routes(handler: Any) -> bool:
     """Handle /runtime/evidence* endpoints (read-only, fail-safe)."""
 
