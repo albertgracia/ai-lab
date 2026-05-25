@@ -364,6 +364,10 @@ GATEWAY_PORT_CONFLICT = Counter(
     "ailab_port_conflict_total",
     "Port ownership conflicts detected",
 )
+GATEWAY_SHUTDOWN_REJECTIONS = Counter(
+    "ailab_gateway_shutdown_rejections_total",
+    "Requests rejected during graceful shutdown window",
+)
 GATEWAY_THREADS = Gauge(
     "ailab_gateway_threads",
     "Active thread count in gateway",
@@ -832,6 +836,10 @@ def record_gateway_singleton_violation() -> None:
 
 def record_port_conflict() -> None:
     GATEWAY_PORT_CONFLICT.inc()
+
+
+def record_shutdown_rejection() -> None:
+    GATEWAY_SHUTDOWN_REJECTIONS.inc()
 
 
 def record_residency_hit(model: str) -> None:

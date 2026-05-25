@@ -1103,7 +1103,23 @@ class GatewayHandler(BaseHTTPRequestHandler):
         )
         self.end_headers()
 
+    def _reject_if_shutting_down(self) -> bool:
+        if _shutting_down:
+            try:
+                from runtime.telemetry.prometheus_metrics import record_shutdown_rejection
+                record_shutdown_rejection()
+            except ImportError:
+                pass
+            self._send_json(503, {
+                "error": "shutting_down",
+                "message": "Server is shutting down. Retry later.",
+            })
+            return True
+        return False
+
     def do_OPTIONS(self):
+        if self._reject_if_shutting_down():
+            return
         self.send_response(200)
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
@@ -1111,21 +1127,28 @@ class GatewayHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
+        if _shutting_down and self.path != "/health":
+            self._send_json(503, {
+                "error": "shutting_down",
+                "message": "Server is shutting down. Retry later.",
+            })
+            return
         client_ip = self.client_address[0]
         if not check_rate_limit(client_ip):
             self._send_json(429, {"error": "rate_limit_exceeded", "message": "Too many requests. Try again later."})
             return
         if self.path == "/health":
-            self._send_json(
-                200,
-                {
-                    "status": "ok",
-                    "service": "ai-lab-openai-gateway",
-                    "backend": get_active_backend()["url"],
-                    "mode": "stream-aware sanitized",
-                    "time": int(time.time()),
-                },
-            )
+            payload = {
+                "status": "ok",
+                "service": "ai-lab-openai-gateway",
+                "backend": get_active_backend()["url"],
+                "mode": "stream-aware sanitized",
+                "time": int(time.time()),
+            }
+            if _shutting_down:
+                payload["status"] = "shutting_down"
+                payload["shutting_down"] = True
+            self._send_json(200, payload)
             return
 
         # FASE 29.4.4-C: SLO health endpoint — always responds 200
@@ -4545,6 +4568,8 @@ class GatewayHandler(BaseHTTPRequestHandler):
         )
 
     def do_POST(self):
+        if self._reject_if_shutting_down():
+            return
         import uuid as _uuid
         _request_id = str(_uuid.uuid4())[:8]
         client_ip = self.client_address[0]
