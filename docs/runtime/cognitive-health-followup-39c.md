@@ -56,3 +56,17 @@ Cobertura nueva: reconciliacion de aliases entre control plane, routing history 
 - Sin cambios de routing ni decisiones de inferencia.
 - Solo mejora de coherencia observacional en endpoints `/runtime/health*`.
 - Contrato `37A-COGNITIVE-HEALTH-LAYER-01` preservado.
+
+## FIX01 (runtime vivo)
+
+Se detecto un gap adicional en proceso vivo: `routing_history.host` llega frecuentemente como URL completa (por ejemplo `http://192.168.1.50:1234/v1`), no solo IP/host plano.
+
+Para cubrir ese caso real:
+
+- Se agrego extraccion robusta de host (`_extract_host_key`) para normalizar URL -> hostname.
+- Se agrego reconciliacion por aliases derivados de historial reciente (`_build_routing_host_aliases`), enlazando `node=rx9070` con `host=192.168.1.50`.
+
+Efecto esperado en runtime:
+
+- `rx9070` deja de aparecer como nodo independiente `unknown/offline`.
+- Sus stats se absorben en `192.168.1.50`.

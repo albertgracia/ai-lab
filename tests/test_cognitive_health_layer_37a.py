@@ -133,3 +133,56 @@ def test_build_node_scores_reconciles_history_with_backend_aliases(monkeypatch) 
     assert len(nodes) == 1
     assert nodes[0].node == "192.168.1.50"
     assert nodes[0].stats.get("success_rate") == 1.0
+
+
+def test_runtime_style_alias_is_not_emitted_as_unknown_node(monkeypatch) -> None:
+    import runtime.health.cognitive_health_layer as ch
+
+    def _fake_control_nodes() -> dict:
+        return {
+            "nodes": {
+                "192.168.1.50": {
+                    "online": True,
+                    "host": "192.168.1.50",
+                    "models": 5,
+                    "avg_latency_ms": 3.0,
+                },
+                "192.168.1.60": {"online": False, "host": "192.168.1.60", "models": 0, "avg_latency_ms": 0},
+                "192.168.1.250": {"online": False, "host": "192.168.1.250", "models": 0, "avg_latency_ms": 0},
+            }
+        }
+
+    def _fake_stats_by_node(*, window_minutes: int = 60) -> dict:
+        return {
+            "rx9070": {
+                "total_requests": 11,
+                "success_rate": 1.0,
+                "avg_latency_ms": 3112.7,
+                "last_updated": 1234,
+            }
+        }
+
+    def _fake_read_route_history(limit: int = 500, from_disk: bool = False) -> list[dict]:
+        return [{
+            "timestamp": 9999999999,
+            "node": "rx9070",
+            "host": "http://192.168.1.50:1234/v1",
+            "success": True,
+            "latency_ms": 1000,
+        }]
+
+    monkeypatch.setattr("runtime.control.control_plane.get_control_nodes", _fake_control_nodes)
+    monkeypatch.setattr("runtime.routing.routing_history.stats_by_node", _fake_stats_by_node)
+    monkeypatch.setattr("runtime.routing.routing_history.read_route_history", _fake_read_route_history)
+
+    snap = ch.build_cognitive_health_snapshot(window_minutes=60)
+    assert snap.get("nodes_total") == 3
+    nodes = snap.get("nodes", [])
+    assert all(n.get("node") != "rx9070" for n in nodes)
+    node_50 = next(n for n in nodes if n.get("node") == "192.168.1.50")
+    assert node_50.get("online") is True
+    assert node_50.get("stats", {}).get("success_rate") == 1.0
+
+    deg = ch.build_degradations_snapshot(window_minutes=60)
+    offline = deg.get("offline_nodes", [])
+    assert all(n.get("node") != "rx9070" for n in offline)

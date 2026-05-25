@@ -49,6 +49,41 @@ def _normalize_node_key(value: Any) -> str:
     return str(value or "").strip().lower()
 
 
+def _extract_host_key(value: Any) -> str:
+    raw = str(value or "").strip()
+    if not raw:
+        return ""
+    parsed = urlparse(raw)
+    if parsed.scheme and parsed.hostname:
+        return _normalize_node_key(parsed.hostname)
+    return _normalize_node_key(raw)
+
+
+def _build_routing_host_aliases(*, window_minutes: int = 60, limit: int = 500) -> dict[str, set[str]]:
+    aliases: dict[str, set[str]] = {}
+    try:
+        from runtime.routing.routing_history import read_route_history
+        records = read_route_history(limit)
+    except Exception:
+        return aliases
+
+    if not records:
+        return aliases
+
+    cutoff = int(time.time()) - window_minutes * 60
+    for rec in records:
+        if not isinstance(rec, dict):
+            continue
+        if int(rec.get("timestamp", 0) or 0) < cutoff:
+            continue
+        alias = _normalize_node_key(rec.get("node"))
+        host = _extract_host_key(rec.get("host"))
+        if not alias or not host:
+            continue
+        aliases.setdefault(host, set()).add(alias)
+    return aliases
+
+
 def _build_backend_host_aliases() -> dict[str, set[str]]:
     aliases: dict[str, set[str]] = {}
     try:
@@ -113,6 +148,7 @@ def build_node_scores(*, window_minutes: int = 60) -> list[NodeHealth]:
 
     hist_normalized = {_normalize_node_key(k): (v or {}) for k, v in hist.items()}
     backend_aliases = _build_backend_host_aliases()
+    routing_aliases = _build_routing_host_aliases(window_minutes=window_minutes)
 
     results: list[NodeHealth] = []
     consumed_hist_keys: set[str] = set()
@@ -127,6 +163,8 @@ def build_node_scores(*, window_minutes: int = 60) -> list[NodeHealth]:
         }
         host_aliases = backend_aliases.get(_normalize_node_key(n.get("host"))) or set()
         aliases.update(host_aliases)
+        history_host_aliases = routing_aliases.get(_extract_host_key(n.get("host"))) or set()
+        aliases.update(history_host_aliases)
         aliases.discard("")
 
         h = {}
