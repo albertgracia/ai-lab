@@ -159,6 +159,48 @@ groups:
           summary: "LM Studio unavailable"
           description: "LM Studio health check failed. Inference backend may be down or unreachable."
 
+      # ── Gateway Contract & Shutdown ────────────────────────────────────
+
+      - alert: AILABGatewayDown
+        expr: ailab_slo_gateway_health < 1
+        labels:
+          severity: critical
+          team: ai-lab
+          category: gateway_runtime
+        annotations:
+          summary: "Gateway down/unhealthy"
+          description: "Gateway health SLO reports unhealthy state. Check /health and gateway service status."
+
+      - alert: AILABGatewayShutdownRejections
+        expr: increase(ailab_gateway_shutdown_rejections_total[5m]) > 0
+        labels:
+          severity: warning
+          team: ai-lab
+          category: gateway_shutdown
+        annotations:
+          summary: "Gateway rejected requests during shutdown ({{ $value }} in 5m)"
+          description: "Requests were rejected with 503 during graceful shutdown window. Validate restart behavior and client retry strategy."
+
+      - alert: AILABGatewaySLOViolation
+        expr: increase(ailab_slo_violations_total[10m]) > 0
+        labels:
+          severity: warning
+          team: ai-lab
+          category: gateway_slo
+        annotations:
+          summary: "Gateway SLO violations detected ({{ $value }} in 10m)"
+          description: "Gateway SLO violations occurred. Inspect latency/error trends and runtime protection state."
+
+      - alert: AILABGatewayHighErrorRate
+        expr: rate(ailab_errors_total[5m]) > 0.2
+        labels:
+          severity: warning
+          team: ai-lab
+          category: gateway_errors
+        annotations:
+          summary: "Gateway high error rate ({{ $value }} errors/s over 5m)"
+          description: "Gateway local error counter rate exceeded threshold. Review recent requests and upstream connectivity."
+
       # ── Model Registry ─────────────────────────────────────────────────
 
       - alert: AI-LABDeprecatedAliasReappeared
