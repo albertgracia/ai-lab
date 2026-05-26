@@ -1128,6 +1128,11 @@ class GatewayHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if _shutting_down and self.path != "/health":
+            try:
+                from runtime.telemetry.prometheus_metrics import record_shutdown_rejection
+                record_shutdown_rejection()
+            except ImportError:
+                pass
             self._send_json(503, {
                 "error": "shutting_down",
                 "message": "Server is shutting down. Retry later.",
@@ -5477,12 +5482,34 @@ class GatewayHandler(BaseHTTPRequestHandler):
 
 _shutting_down = False
 _server_ref = None
+_shutdown_thread_started = False
+_shutdown_lock = threading.Lock()
+
+
+class GracefulThreadingHTTPServer(ThreadingHTTPServer):
+    daemon_threads = True
+    block_on_close = False
+
+
+def _request_server_shutdown() -> None:
+    global _server_ref
+    if not _server_ref:
+        return
+    try:
+        print("Gateway shutdown initiated", flush=True)
+        _server_ref.shutdown()
+    except Exception as exc:
+        print(f"Gateway shutdown error: {exc}", flush=True)
 
 
 def _handle_sigterm(signum, frame):
-    global _shutting_down, _server_ref
-    _shutting_down = True
+    global _shutting_down, _shutdown_thread_started
+    with _shutdown_lock:
+        if _shutting_down:
+            return
+        _shutting_down = True
     print("Received signal, shutting down gracefully...", flush=True)
+    print("Gateway shutting_down flag set", flush=True)
     try:
         from runtime.gateway.process_guard import release_lock
         release_lock()
@@ -5493,9 +5520,11 @@ def _handle_sigterm(signum, frame):
         record_gateway_clean_shutdown()
     except ImportError:
         pass
-    if _server_ref:
-        _server_ref.shutdown()
-    sys.exit(0)
+    with _shutdown_lock:
+        if _server_ref and not _shutdown_thread_started:
+            _shutdown_thread_started = True
+            t = threading.Thread(target=_request_server_shutdown, name="gateway-shutdown", daemon=True)
+            t.start()
 
 
 signal.signal(signal.SIGTERM, _handle_sigterm)
@@ -5503,7 +5532,9 @@ signal.signal(signal.SIGINT, _handle_sigterm)
 
 
 def run():
-    global _server_ref
+    global _server_ref, _shutting_down, _shutdown_thread_started
+    _shutting_down = False
+    _shutdown_thread_started = False
 
     # FASE 29.0: Pre-bind cleanup — kill rogue uvicorn on port 8008
     try:
@@ -5533,7 +5564,7 @@ def run():
     except ImportError:
         pass
 
-    server = ThreadingHTTPServer(
+    server = GracefulThreadingHTTPServer(
         (HOST, PORT),
         GatewayHandler,
     )
@@ -5553,7 +5584,21 @@ def run():
     except ImportError:
         pass
 
-    server.serve_forever()
+    try:
+        server.serve_forever(poll_interval=0.5)
+    finally:
+        print("Gateway server closing...", flush=True)
+        try:
+            server.server_close()
+        except Exception as exc:
+            print(f"Gateway server_close error: {exc}", flush=True)
+        _server_ref = None
+        try:
+            from runtime.gateway.process_guard import release_lock
+            release_lock()
+        except ImportError:
+            pass
+        print("Gateway server closed", flush=True)
 
 
 if __name__ == "__main__":
