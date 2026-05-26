@@ -368,6 +368,10 @@ GATEWAY_SHUTDOWN_REJECTIONS = Counter(
     "ailab_gateway_shutdown_rejections_total",
     "Requests rejected during graceful shutdown window",
 )
+GATEWAY_SHUTDOWN_FALLBACK = Counter(
+    "ailab_gateway_shutdown_fallback_total",
+    "Forced fallback exits when graceful shutdown stalls",
+)
 GATEWAY_THREADS = Gauge(
     "ailab_gateway_threads",
     "Active thread count in gateway",
@@ -840,6 +844,10 @@ def record_port_conflict() -> None:
 
 def record_shutdown_rejection() -> None:
     GATEWAY_SHUTDOWN_REJECTIONS.inc()
+
+
+def record_gateway_shutdown_fallback() -> None:
+    GATEWAY_SHUTDOWN_FALLBACK.inc()
 
 
 def record_residency_hit(model: str) -> None:

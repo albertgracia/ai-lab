@@ -30,21 +30,24 @@ Durante shutdown:
 3. Nuevas solicitudes (excepto `/health`) reciben `503` controlado.
 4. `/health` mantiene `200` para probes, con `status=shutting_down` y `shutting_down=true`.
 5. El shutdown del servidor se inicia en hilo daemon separado.
-6. Al salir de `serve_forever`, se ejecuta `server_close()` y liberacion de PID lock.
+6. Se arma watchdog bounded (20s) para forzar salida limpia solo si `serve_forever()` no retorna.
+7. Al salir de `serve_forever`, se ejecuta `server_close()` y liberacion de PID lock.
 
 ## Logs esperados
 
-- `Received signal, shutting down gracefully...`
-- `Gateway shutting_down flag set`
-- `Gateway shutdown initiated`
+- `shutdown requested`
+- `server shutdown initiated`
+- `shutdown fallback armed`
 - `Gateway server closing...`
-- `Gateway PID lock released: <pid>`
-- `Gateway server closed`
+- `PID lock released`
+- `server closed`
+- `clean exit`
 
 ## Metricas
 
 - `ailab_gateway_shutdown_rejections_total`: requests rechazadas durante ventana de shutdown.
 - `ailab_gateway_clean_shutdown_total`: contador de apagados limpios.
+- `ailab_gateway_shutdown_fallback_total`: salidas forzadas por watchdog cuando el cierre graceful se estanca.
 
 ## Validacion operativa
 

@@ -28,11 +28,13 @@ def test_handle_sigterm_sets_flag_and_requests_shutdown(monkeypatch) -> None:
     gw._server_ref = dummy_server
     gw._shutting_down = False
     gw._shutdown_thread_started = False
+    gw._shutdown_watchdog_started = False
 
-    calls = {"released": 0, "clean": 0}
+    calls = {"released": 0, "clean": 0, "watchdog": 0}
 
     monkeypatch.setattr("runtime.gateway.process_guard.release_lock", lambda: calls.__setitem__("released", calls["released"] + 1))
     monkeypatch.setattr("runtime.telemetry.prometheus_metrics.record_gateway_clean_shutdown", lambda: calls.__setitem__("clean", calls["clean"] + 1))
+    monkeypatch.setattr(gw, "_arm_shutdown_watchdog", lambda timeout_seconds=20.0: calls.__setitem__("watchdog", calls["watchdog"] + 1))
 
     gw._handle_sigterm(15, None)
     for _ in range(50):
@@ -43,7 +45,25 @@ def test_handle_sigterm_sets_flag_and_requests_shutdown(monkeypatch) -> None:
     assert gw._shutting_down is True
     assert calls["released"] == 1
     assert calls["clean"] == 1
+    assert calls["watchdog"] == 1
     assert dummy_server.shutdown_calls == 1
+
+
+def test_shutdown_watchdog_records_fallback(monkeypatch) -> None:
+    import runtime.gateway.openai_gateway as gw
+
+    calls = {"fallback": 0, "released": 0, "exit": 0}
+    gw._shutdown_complete.clear()
+
+    monkeypatch.setattr("runtime.telemetry.prometheus_metrics.record_gateway_shutdown_fallback", lambda: calls.__setitem__("fallback", calls["fallback"] + 1))
+    monkeypatch.setattr("runtime.gateway.process_guard.release_lock", lambda: calls.__setitem__("released", calls["released"] + 1))
+    monkeypatch.setattr(gw.os, "_exit", lambda code: calls.__setitem__("exit", code))
+
+    gw._shutdown_watchdog(0.0)
+
+    assert calls["fallback"] == 1
+    assert calls["released"] == 1
+    assert calls["exit"] == 0
 
 
 def test_health_reports_shutting_down(monkeypatch) -> None:

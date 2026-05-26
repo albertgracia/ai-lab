@@ -5484,6 +5484,9 @@ _shutting_down = False
 _server_ref = None
 _shutdown_thread_started = False
 _shutdown_lock = threading.Lock()
+_shutdown_complete = threading.Event()
+_shutdown_watchdog_started = False
+_SHUTDOWN_WATCHDOG_SECONDS = 20.0
 
 
 class GracefulThreadingHTTPServer(ThreadingHTTPServer):
@@ -5496,23 +5499,52 @@ def _request_server_shutdown() -> None:
     if not _server_ref:
         return
     try:
-        print("Gateway shutdown initiated", flush=True)
+        print("server shutdown initiated", flush=True)
         _server_ref.shutdown()
     except Exception as exc:
         print(f"Gateway shutdown error: {exc}", flush=True)
 
 
+def _shutdown_watchdog(timeout_seconds: float) -> None:
+    if _shutdown_complete.wait(timeout_seconds):
+        return
+    print("shutdown fallback deadline reached; forcing clean exit", flush=True)
+    try:
+        from runtime.telemetry.prometheus_metrics import record_gateway_shutdown_fallback
+        record_gateway_shutdown_fallback()
+    except ImportError:
+        pass
+    try:
+        from runtime.gateway.process_guard import release_lock
+        release_lock()
+        print("PID lock released", flush=True)
+    except ImportError:
+        pass
+    os._exit(0)
+
+
+def _arm_shutdown_watchdog(timeout_seconds: float = _SHUTDOWN_WATCHDOG_SECONDS) -> None:
+    t = threading.Thread(
+        target=_shutdown_watchdog,
+        args=(timeout_seconds,),
+        name="gateway-shutdown-watchdog",
+        daemon=True,
+    )
+    t.start()
+    print(f"shutdown fallback armed timeout={timeout_seconds:.1f}s", flush=True)
+
+
 def _handle_sigterm(signum, frame):
-    global _shutting_down, _shutdown_thread_started
+    global _shutting_down, _shutdown_thread_started, _shutdown_watchdog_started
     with _shutdown_lock:
         if _shutting_down:
             return
         _shutting_down = True
-    print("Received signal, shutting down gracefully...", flush=True)
-    print("Gateway shutting_down flag set", flush=True)
+    print(f"shutdown requested signal={signum}", flush=True)
     try:
         from runtime.gateway.process_guard import release_lock
         release_lock()
+        print("PID lock released", flush=True)
     except ImportError:
         pass
     try:
@@ -5525,6 +5557,9 @@ def _handle_sigterm(signum, frame):
             _shutdown_thread_started = True
             t = threading.Thread(target=_request_server_shutdown, name="gateway-shutdown", daemon=True)
             t.start()
+        if not _shutdown_watchdog_started:
+            _shutdown_watchdog_started = True
+            _arm_shutdown_watchdog()
 
 
 signal.signal(signal.SIGTERM, _handle_sigterm)
@@ -5532,9 +5567,11 @@ signal.signal(signal.SIGINT, _handle_sigterm)
 
 
 def run():
-    global _server_ref, _shutting_down, _shutdown_thread_started
+    global _server_ref, _shutting_down, _shutdown_thread_started, _shutdown_watchdog_started
     _shutting_down = False
     _shutdown_thread_started = False
+    _shutdown_watchdog_started = False
+    _shutdown_complete.clear()
 
     # FASE 29.0: Pre-bind cleanup — kill rogue uvicorn on port 8008
     try:
@@ -5593,12 +5630,15 @@ def run():
         except Exception as exc:
             print(f"Gateway server_close error: {exc}", flush=True)
         _server_ref = None
+        _shutdown_complete.set()
         try:
             from runtime.gateway.process_guard import release_lock
             release_lock()
+            print("PID lock released", flush=True)
         except ImportError:
             pass
-        print("Gateway server closed", flush=True)
+        print("server closed", flush=True)
+        print("clean exit", flush=True)
 
 
 if __name__ == "__main__":
