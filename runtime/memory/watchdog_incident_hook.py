@@ -19,6 +19,18 @@ INCIDENT_SCHEMA_VERSION = "1.0"
 _previous_checks: dict[str, bool] = {}
 
 
+def _build(payload_kwargs: dict) -> dict | None:
+    """Build a governed incident payload using schema builder.
+
+    Fallback: returns None if schema builder is unavailable.
+    """
+    try:
+        from runtime.incidents.incident_schema import build_incident
+        return build_incident(**payload_kwargs)
+    except Exception:
+        return None
+
+
 def _try_store(payload: dict) -> bool:
     try:
         from runtime.memory.qdrant_store import store_embedding
@@ -27,6 +39,22 @@ def _try_store(payload: dict) -> bool:
         return False
     except Exception:
         return False
+
+
+def _record_metrics_skipped(event_type: str) -> None:
+    try:
+        from runtime.telemetry.prometheus_metrics import INCIDENT_DEDUP_SKIPPED_TOTAL
+        INCIDENT_DEDUP_SKIPPED_TOTAL.labels(event_type=event_type).inc()
+    except Exception:
+        pass
+
+
+def _record_metrics_new(event_type: str) -> None:
+    try:
+        from runtime.telemetry.prometheus_metrics import INCIDENT_DEDUP_NEW_TOTAL
+        INCIDENT_DEDUP_NEW_TOTAL.labels(event_type=event_type).inc()
+    except Exception:
+        pass
 
 
 def record_watchdog_incident(watchdog_result: dict) -> list[dict]:
@@ -49,47 +77,45 @@ def record_watchdog_incident(watchdog_result: dict) -> list[dict]:
         prev_ok = _previous_checks.get(service, True)
 
         if not is_ok:
-            severity = "critical" if status == "critical" else "warning"
-            incident = {
-                "event_type": "service_down",
-                "severity": severity,
-                "service": service,
-                "status": "down",
-                "message": f"Service '{service}' is unreachable",
-                "timestamp": timestamp,
-                "schema_version": INCIDENT_SCHEMA_VERSION,
-                "source": "watchdog",
-                "resolved": False,
+            sev = "critical" if status == "critical" else "warning"
+            base = dict(event_type="service_down", severity=sev, source="watchdog",
+                        timestamp=timestamp, message=f"Service '{service}' is unreachable",
+                        service=service, status="down", resolved=False)
+            governed = _build(base)
+            incident = governed if governed else {
+                "event_type": "service_down", "severity": sev, "service": service,
+                "status": "down", "message": f"Service '{service}' is unreachable",
+                "timestamp": timestamp, "schema_version": INCIDENT_SCHEMA_VERSION,
+                "source": "watchdog", "resolved": False,
             }
             if _try_store(incident):
                 stored.append(incident)
 
         if prev_ok and not is_ok:
-            incident = {
-                "event_type": "service_degraded",
-                "severity": "warning",
-                "service": service,
-                "status": "degraded",
-                "message": f"Service '{service}' just went down (status={status})",
-                "timestamp": timestamp,
-                "schema_version": INCIDENT_SCHEMA_VERSION,
-                "source": "watchdog",
-                "resolved": False,
+            base = dict(event_type="service_degraded", severity="warning", source="watchdog",
+                        timestamp=timestamp,
+                        message=f"Service '{service}' just went down (status={status})",
+                        service=service, status="degraded", resolved=False)
+            governed = _build(base)
+            incident = governed if governed else {
+                "event_type": "service_degraded", "severity": "warning", "service": service,
+                "status": "degraded", "message": f"Service '{service}' just went down (status={status})",
+                "timestamp": timestamp, "schema_version": INCIDENT_SCHEMA_VERSION,
+                "source": "watchdog", "resolved": False,
             }
             if _try_store(incident):
                 stored.append(incident)
 
         if not prev_ok and is_ok:
-            incident = {
-                "event_type": "service_recovered",
-                "severity": "info",
-                "service": service,
-                "status": "recovered",
-                "message": f"Service '{service}' recovered",
-                "timestamp": timestamp,
-                "schema_version": INCIDENT_SCHEMA_VERSION,
-                "source": "watchdog",
-                "resolved": True,
+            base = dict(event_type="service_recovered", severity="info", source="watchdog",
+                        timestamp=timestamp, message=f"Service '{service}' recovered",
+                        service=service, status="recovered", resolved=True)
+            governed = _build(base)
+            incident = governed if governed else {
+                "event_type": "service_recovered", "severity": "info", "service": service,
+                "status": "recovered", "message": f"Service '{service}' recovered",
+                "timestamp": timestamp, "schema_version": INCIDENT_SCHEMA_VERSION,
+                "source": "watchdog", "resolved": True,
             }
             if _try_store(incident):
                 stored.append(incident)
@@ -109,45 +135,32 @@ def record_watchdog_incident(watchdog_result: dict) -> list[dict]:
                 message=msg,
             )
             if dedup_result.get("deduped"):
-                try:
-                    from runtime.telemetry.prometheus_metrics import INCIDENT_DEDUP_SKIPPED_TOTAL
-                    INCIDENT_DEDUP_SKIPPED_TOTAL.labels(event_type="cluster_degraded").inc()
-                except Exception:
-                    pass
+                _record_metrics_skipped("cluster_degraded")
                 stored.append({"deduped": True, "dedup_key": dedup_result.get("dedup_key", "")})
             else:
                 dedup_key = dedup_result.get("dedup_key", "")
-                incident = {
-                    "event_type": "cluster_degraded",
-                    "severity": sev,
-                    "status": status,
-                    "message": msg,
-                    "timestamp": timestamp,
-                    "schema_version": INCIDENT_SCHEMA_VERSION,
-                    "source": "watchdog",
-                    "resolved": False,
-                    "dedup_key": dedup_key,
-                    "first_seen_at": timestamp,
-                    "last_seen_at": timestamp,
-                    "duplicate_count": 0,
+                base = dict(event_type="cluster_degraded", severity=sev, source="watchdog",
+                            timestamp=timestamp, message=msg, status=status,
+                            resolved=False, dedup_key=dedup_key)
+                governed = _build(base)
+                incident = governed if governed else {
+                    "event_type": "cluster_degraded", "severity": sev, "status": status,
+                    "message": msg, "timestamp": timestamp,
+                    "schema_version": INCIDENT_SCHEMA_VERSION, "source": "watchdog",
+                    "resolved": False, "dedup_key": dedup_key,
+                    "first_seen_at": timestamp, "last_seen_at": timestamp, "duplicate_count": 0,
                 }
                 if _try_store(incident):
-                    try:
-                        from runtime.telemetry.prometheus_metrics import INCIDENT_DEDUP_NEW_TOTAL
-                        INCIDENT_DEDUP_NEW_TOTAL.labels(event_type="cluster_degraded").inc()
-                    except Exception:
-                        pass
+                    _record_metrics_new("cluster_degraded")
                     stored.append(incident)
         except Exception:
-            incident = {
-                "event_type": "cluster_degraded",
-                "severity": sev,
-                "status": status,
-                "message": msg,
-                "timestamp": timestamp,
-                "schema_version": INCIDENT_SCHEMA_VERSION,
-                "source": "watchdog",
-                "resolved": False,
+            base = dict(event_type="cluster_degraded", severity=sev, source="watchdog",
+                        timestamp=timestamp, message=msg, status=status, resolved=False)
+            governed = _build(base)
+            incident = governed if governed else {
+                "event_type": "cluster_degraded", "severity": sev, "status": status,
+                "message": msg, "timestamp": timestamp,
+                "schema_version": INCIDENT_SCHEMA_VERSION, "source": "watchdog", "resolved": False,
             }
             if _try_store(incident):
                 stored.append(incident)
@@ -157,24 +170,16 @@ def record_watchdog_incident(watchdog_result: dict) -> list[dict]:
 
 def record_node_incident(node: str, host: str, event: str, message: str,
                          severity: str = "warning") -> bool:
-    """Record a node-level incident manually.
-
-    Args:
-        node: node name
-        host: node host/IP
-        event: event_type (node_offline, node_recovered, etc.)
-        message: human-readable description
-        severity: critical/warning/info
-    """
-    payload = {
-        "event_type": event,
-        "severity": severity,
-        "node": node,
-        "host": host,
-        "message": message,
-        "timestamp": int(time.time()),
-        "schema_version": INCIDENT_SCHEMA_VERSION,
-        "source": "manual",
-        "resolved": event in ("node_recovered", "service_recovered"),
+    """Record a node-level incident manually."""
+    is_resolved = event in ("node_recovered", "service_recovered")
+    base = dict(event_type=event, severity=severity, source="manual",
+                timestamp=int(time.time()), message=message,
+                node=node, host=host, resolved=is_resolved)
+    governed = _build(base)
+    payload = governed if governed else {
+        "event_type": event, "severity": severity, "node": node, "host": host,
+        "message": message, "timestamp": int(time.time()),
+        "schema_version": INCIDENT_SCHEMA_VERSION, "source": "manual",
+        "resolved": is_resolved,
     }
     return _try_store(payload)
