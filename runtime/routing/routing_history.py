@@ -34,6 +34,12 @@ def record_route_result(
     tokens_estimated: int = 0,
     gpu_load: int = 0,
     session_id: str = "",
+    route_family: str = "",
+    prompt_tokens: int = 0,
+    completion_tokens: int = 0,
+    memory_injected: bool = False,
+    chars_injected: int = 0,
+    ttfb_ms: float = 0.0,
 ):
     """Append one route record to the JSONL file."""
     record = {
@@ -52,6 +58,12 @@ def record_route_result(
         "tokens_estimated": tokens_estimated,
         "gpu_load": gpu_load,
         "session_id": session_id or "default",
+        "route_family": route_family,
+        "prompt_tokens": prompt_tokens,
+        "completion_tokens": completion_tokens,
+        "memory_injected": memory_injected,
+        "chars_injected": chars_injected,
+        "ttfb_ms": round(ttfb_ms, 1) if ttfb_ms else 0.0,
         "confidence": 0.0,
         "confidence_reasons": [],
     }

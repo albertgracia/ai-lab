@@ -2617,6 +2617,68 @@ GRAPH_GRAVITY_CENTERS_TOTAL = Gauge(
 )
 
 
+# ── MEMORY INJECTION TELEMETRY (MEMORY-INJECTION-TELEMETRY-01) ─────
+MEMORY_INJECTION_EVENTS_TOTAL = Counter(
+    "ailab_memory_injection_events_total",
+    "Total memory injection telemetry events recorded",
+)
+MEMORY_INJECTION_CHARS_TOTAL = Counter(
+    "ailab_memory_injection_chars_total",
+    "Total chars injected by memory recall across all events",
+)
+MEMORY_INJECTION_TOKENS_TOTAL = Counter(
+    "ailab_memory_injection_estimated_tokens_total",
+    "Total estimated tokens injected by memory recall across all events",
+)
+MEMORY_INJECTION_MATCHES_TOTAL = Counter(
+    "ailab_memory_injection_matches_total",
+    "Total Qdrant matches across all memory injection events",
+)
+MEMORY_INJECTION_TRUNCATED_TOTAL = Counter(
+    "ailab_memory_injection_context_truncated_total",
+    "Total requests where memory context was truncated",
+)
+MEMORY_INJECTION_LAST_CHARS = Gauge(
+    "ailab_memory_injection_last_chars",
+    "Chars injected in the last memory injection event",
+)
+MEMORY_INJECTION_LAST_TOKENS = Gauge(
+    "ailab_memory_injection_last_estimated_tokens",
+    "Estimated tokens injected in the last memory injection event",
+)
+MEMORY_INJECTION_LATENCY_CORRELATION_TOTAL = Counter(
+    "ailab_memory_injection_latency_correlation_events_total",
+    "Total memory injection events with correlated latency data",
+    ["route_family", "injected"],
+)
+
+
+def record_memory_injection_metrics(telemetry: dict) -> None:
+    """Record memory injection telemetry to Prometheus."""
+    try:
+        MEMORY_INJECTION_EVENTS_TOTAL.inc()
+        chars = telemetry.get("chars_injected", 0) or 0
+        tokens = telemetry.get("estimated_tokens_injected", 0) or 0
+        matches = telemetry.get("matches_total", 0) or 0
+        if chars:
+            MEMORY_INJECTION_CHARS_TOTAL.inc(chars)
+            MEMORY_INJECTION_LAST_CHARS.set(chars)
+        if tokens:
+            MEMORY_INJECTION_TOKENS_TOTAL.inc(tokens)
+            MEMORY_INJECTION_LAST_TOKENS.set(tokens)
+        if matches:
+            MEMORY_INJECTION_MATCHES_TOTAL.inc(matches)
+        if telemetry.get("context_truncated"):
+            MEMORY_INJECTION_TRUNCATED_TOTAL.inc()
+        rfam = telemetry.get("route_family", "unknown")
+        injected = "true" if telemetry.get("memory_injected") else "false"
+        MEMORY_INJECTION_LATENCY_CORRELATION_TOTAL.labels(
+            route_family=rfam, injected=injected
+        ).inc()
+    except Exception:
+        pass
+
+
 def record_graph_prometheus_metrics(metrics: dict[str, Any]) -> None:
     try:
         GRAPH_HOTSPOTS_TOTAL.set(float(metrics.get("ailab_graph_hotspots_total", 0)))

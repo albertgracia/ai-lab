@@ -1448,3 +1448,47 @@ def handle_triage_routes(handler: Any) -> bool:
             "error": str(exc),
         })
         return True
+
+
+# ── MEMORY-INJECTION-TELEMETRY-01 ─────────────────────────────────────
+
+MEMORY_INJECTION_CONTRACT_VERSION = "MEMORY-INJECTION-TELEMETRY-01"
+
+
+def handle_memory_injection_routes(handler: Any) -> None:
+    """Handle /runtime/memory-injection* endpoints.
+
+    Always-on 200. Returns bounded summary without sensitive data.
+    """
+    path = getattr(handler, "path", "")
+    try:
+        from runtime.memory.memory_injection_telemetry import get_telemetry_summary
+
+        summary = get_telemetry_summary()
+        if path == "/runtime/memory-injection" or path == "/runtime/memory-injection/summary":
+            handler._send_json(200, {
+                "status": "ok",
+                "service": "ai-lab-openai-gateway",
+                "endpoint": "runtime/memory-injection/summary",
+                "timestamp": time.time(),
+                "contract_version": MEMORY_INJECTION_CONTRACT_VERSION,
+                "summary": summary,
+            })
+            return
+
+        handler._send_json(200, {
+            "status": "ok",
+            "service": "ai-lab-openai-gateway",
+            "endpoint": path.lstrip("/"),
+            "timestamp": time.time(),
+            "contract_version": MEMORY_INJECTION_CONTRACT_VERSION,
+        })
+    except Exception as exc:
+        handler._send_json(200, {
+            "status": "degraded",
+            "service": "ai-lab-openai-gateway",
+            "endpoint": path.lstrip("/") if path else "runtime/memory-injection",
+            "timestamp": time.time(),
+            "contract_version": MEMORY_INJECTION_CONTRACT_VERSION,
+            "error": str(exc),
+        })

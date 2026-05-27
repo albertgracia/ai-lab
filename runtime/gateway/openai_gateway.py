@@ -3396,6 +3396,12 @@ class GatewayHandler(BaseHTTPRequestHandler):
             handle_health_routes(self)
             return
 
+        # ── MEMORY-INJECTION-TELEMETRY-01: Memory injection telemetry summary ──
+        if self.path == "/runtime/memory-injection" or self.path.startswith("/runtime/memory-injection/"):
+            from runtime.gateway.runtime_api_routes import handle_memory_injection_routes
+            handle_memory_injection_routes(self)
+            return
+
         # ── FASE 37B: Graph-Runtime Correlation — always-on 200 ──
         if self.path == "/runtime/correlation" or self.path.startswith("/runtime/correlation/"):
             from runtime.gateway.runtime_api_routes import handle_correlation_routes
@@ -4621,6 +4627,46 @@ class GatewayHandler(BaseHTTPRequestHandler):
             payload["_request_id"] = _request_id
             payload = inject_agent_context(payload)
 
+            # MEMORY-INJECTION-TELEMETRY-01: capture context telemetry after injection
+            try:
+                from runtime.memory.memory_injection_telemetry import (
+                    estimate_messages_tokens, messages_chars,
+                    build_telemetry, record_telemetry_event,
+                )
+                from runtime.memory.qdrant_routing_hook import on_cognitive_event as _oce
+                from runtime.telemetry.prometheus_metrics import record_memory_injection_metrics as _rim
+                msgs = payload.get("messages", [])
+                ctx_chars = messages_chars(msgs)
+                ctx_tokens = estimate_messages_tokens(msgs)
+                telemetry = build_telemetry(
+                    route_family=payload.get("_ai_lab_route_family", "unknown"),
+                    model=payload.get("model", "unknown"),
+                    request_id=payload.get("_request_id"),
+                    prompt_tokens_after=ctx_tokens,
+                )
+                _rim(telemetry)
+                record_telemetry_event(telemetry)
+                _oce({
+                    "timestamp": telemetry["timestamp"],
+                    "task_type": payload.get("_ai_lab_route_variant", payload.get("_ai_lab_route_family", "unknown")),
+                    "model": telemetry["model"],
+                    "context_size": ctx_chars,
+                    "shaping_latency_ms": 0.0,
+                    "memory_injected": telemetry.get("memory_injected", False),
+                    "chars_injected": telemetry.get("chars_injected", 0),
+                    "estimated_tokens_injected": telemetry.get("estimated_tokens_injected", 0),
+                    "collections_used": [],
+                    "matches_total": 0,
+                    "avg_score": None,
+                    "max_score": None,
+                    "min_score": None,
+                    "context_truncated": False,
+                    "prompt_tokens_delta": 0,
+                    "route_family": telemetry["route_family"],
+                })
+            except Exception:
+                pass
+
             # FASE 26.2.3: capability answers — early return, no LM Studio
             capability_answer = payload.pop("_capability_answer", None)
             if capability_answer:
@@ -5371,19 +5417,13 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 data,
             )
 
-            try:
-                from runtime.routing.routing_history import record_route_result as _rrr
-                _rrr(task_type=task_type, model=selected_model,
-                     node=get_active_backend()["name"], host=get_active_backend()["url"],
-                     latency_ms=latency_ms, success=True, stream=False, failover=False)
-            except ImportError:
-                pass
-
             # FASE 29.4: Record circuit breaker success
             if _HAVE_SLO:
                 _circuit_breakers.record_success(selected_model)
 
             usage = data.get("usage", {}) if isinstance(data, dict) else {}
+            ptokens = int(usage.get("prompt_tokens", 0) or 0)
+            ctokens = int(usage.get("completion_tokens", 0) or 0)
             blocked = False
             for choice in data.get("choices", []):
                 msg = choice.get("message", {}) if isinstance(choice, dict) else {}
@@ -5394,10 +5434,44 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 route_family,
                 count=False,
                 latency_ms=latency_ms,
-                prompt_tokens=int(usage.get("prompt_tokens", 0) or 0),
-                completion_tokens=int(usage.get("completion_tokens", 0) or 0),
+                prompt_tokens=ptokens,
+                completion_tokens=ctokens,
                 blocked=blocked,
             )
+
+            # MEMORY-INJECTION-TELEMETRY-01: record inference telemetry + routing result with usage data
+            try:
+                from runtime.routing.routing_history import record_route_result as _rrr2
+                node_info = get_active_backend()
+                _rrr2(
+                    task_type=task_type, model=selected_model,
+                    node=node_info["name"], host=node_info["url"],
+                    latency_ms=latency_ms, success=True, stream=False, failover=False,
+                    route_family=route_family,
+                    prompt_tokens=ptokens,
+                    completion_tokens=ctokens,
+                    memory_injected=False,
+                    chars_injected=0,
+                    ttfb_ms=ttfb_ms,
+                )
+                from runtime.memory.memory_injection_telemetry import (
+                    build_telemetry, record_telemetry_event,
+                )
+                from runtime.telemetry.prometheus_metrics import record_memory_injection_metrics as _rim2
+                itelemetry = build_telemetry(
+                    route_family=route_family,
+                    model=selected_model,
+                    latency_ms=latency_ms,
+                    ttfb_ms=ttfb_ms,
+                    success=True,
+                    timeout=False,
+                    request_id=payload.get("_request_id"),
+                    prompt_tokens_after=ptokens,
+                )
+                _rim2(itelemetry)
+                record_telemetry_event(itelemetry)
+            except Exception:
+                pass
 
             # FASE 27.1-B: quality + hallucination risk scoring (lightweight heuristics)
             try:

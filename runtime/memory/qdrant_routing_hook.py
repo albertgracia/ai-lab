@@ -49,6 +49,7 @@ def on_cognitive_event(event_data: dict) -> None:
     """Hook: called after each cognitive snapshot.
 
     Stores embedding in Qdrant cognitive_history collection.
+    Includes memory injection telemetry fields when available.
     """
     if not _HAVE_QDRANT:
         return
@@ -65,6 +66,20 @@ def on_cognitive_event(event_data: dict) -> None:
             "files_used": event_data.get("files_used", 0),
             "files_used_names": event_data.get("files_used_names", []),
             "working_memory_used": event_data.get("working_memory_used", False),
+            "memory_injected": event_data.get("memory_injected", False),
+            "chars_injected": event_data.get("chars_injected", 0),
+            "estimated_tokens_injected": event_data.get("estimated_tokens_injected", 0),
+            "collections_used": event_data.get("collections_used", []),
+            "matches_total": event_data.get("matches_total", 0),
+            "avg_score": event_data.get("avg_score"),
+            "max_score": event_data.get("max_score"),
+            "min_score": event_data.get("min_score"),
+            "recall_source": event_data.get("recall_source"),
+            "context_budget_chars": event_data.get("context_budget_chars"),
+            "context_budget_used_chars": event_data.get("context_budget_used_chars"),
+            "context_truncated": event_data.get("context_truncated", False),
+            "prompt_tokens_delta": event_data.get("prompt_tokens_delta"),
+            "route_family": event_data.get("route_family", "unknown"),
         }
         store_operational_embedding("cognitive_history", payload)
     except Exception:

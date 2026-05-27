@@ -31,6 +31,11 @@ COLLECTION_SCHEMAS = {
         "optional_fields": [
             "shaping_latency_ms", "files_used", "files_used_names",
             "working_memory_used",
+            "memory_injected", "chars_injected", "estimated_tokens_injected",
+            "collections_used", "matches_total", "avg_score", "max_score",
+            "min_score", "recall_source", "context_budget_chars",
+            "context_budget_used_chars", "context_truncated",
+            "prompt_tokens_delta", "route_family",
         ],
     },
     "optimizer_history": {
