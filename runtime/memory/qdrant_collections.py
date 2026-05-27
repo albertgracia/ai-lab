@@ -19,7 +19,12 @@ COLLECTION_SCHEMAS = {
             "schema_version", "event_type", "timestamp", "task_type",
             "model", "node", "host", "latency_ms", "success",
         ],
-        "optional_fields": ["stream", "failover", "error", "session_id"],
+        "optional_fields": [
+            "stream", "failover", "error", "session_id",
+            "route_family", "prompt_tokens", "completion_tokens",
+            "memory_injected", "chars_injected", "estimated_tokens_injected",
+            "collections_used", "matches_total", "ttfb_ms",
+        ],
     },
     "cognitive_history": {
         "description": "Context shaping snapshots for cognitive recall",

@@ -39,6 +39,15 @@ def on_routing_event(event_data: dict) -> None:
             "stream": event_data.get("stream", False),
             "failover": event_data.get("failover", False),
             "error": event_data.get("error"),
+            "route_family": event_data.get("route_family", ""),
+            "prompt_tokens": event_data.get("prompt_tokens", 0),
+            "completion_tokens": event_data.get("completion_tokens", 0),
+            "memory_injected": event_data.get("memory_injected", False),
+            "chars_injected": event_data.get("chars_injected", 0),
+            "estimated_tokens_injected": event_data.get("estimated_tokens_injected", 0),
+            "collections_used": event_data.get("collections_used", []),
+            "matches_total": event_data.get("matches_total", 0),
+            "ttfb_ms": event_data.get("ttfb_ms", 0.0),
         }
         store_operational_embedding("routing_history", payload)
     except Exception:
