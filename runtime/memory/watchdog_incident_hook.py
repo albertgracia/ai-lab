@@ -97,18 +97,60 @@ def record_watchdog_incident(watchdog_result: dict) -> list[dict]:
         _previous_checks[service] = is_ok
 
     if status in ("degraded", "critical"):
-        incident = {
-            "event_type": "cluster_degraded",
-            "severity": "critical" if status == "critical" else "warning",
-            "status": status,
-            "message": f"Cluster status is {status}",
-            "timestamp": timestamp,
-            "schema_version": INCIDENT_SCHEMA_VERSION,
-            "source": "watchdog",
-            "resolved": False,
-        }
-        if _try_store(incident):
-            stored.append(incident)
+        sev = "critical" if status == "critical" else "warning"
+        msg = f"Cluster status is {status}"
+        dedup_key = ""
+        try:
+            from runtime.incidents.incident_dedup import check_and_tag
+            dedup_result = check_and_tag(
+                event_type="cluster_degraded",
+                source="watchdog",
+                severity=sev,
+                message=msg,
+            )
+            if dedup_result.get("deduped"):
+                try:
+                    from runtime.telemetry.prometheus_metrics import INCIDENT_DEDUP_SKIPPED_TOTAL
+                    INCIDENT_DEDUP_SKIPPED_TOTAL.labels(event_type="cluster_degraded").inc()
+                except Exception:
+                    pass
+                stored.append({"deduped": True, "dedup_key": dedup_result.get("dedup_key", "")})
+            else:
+                dedup_key = dedup_result.get("dedup_key", "")
+                incident = {
+                    "event_type": "cluster_degraded",
+                    "severity": sev,
+                    "status": status,
+                    "message": msg,
+                    "timestamp": timestamp,
+                    "schema_version": INCIDENT_SCHEMA_VERSION,
+                    "source": "watchdog",
+                    "resolved": False,
+                    "dedup_key": dedup_key,
+                    "first_seen_at": timestamp,
+                    "last_seen_at": timestamp,
+                    "duplicate_count": 0,
+                }
+                if _try_store(incident):
+                    try:
+                        from runtime.telemetry.prometheus_metrics import INCIDENT_DEDUP_NEW_TOTAL
+                        INCIDENT_DEDUP_NEW_TOTAL.labels(event_type="cluster_degraded").inc()
+                    except Exception:
+                        pass
+                    stored.append(incident)
+        except Exception:
+            incident = {
+                "event_type": "cluster_degraded",
+                "severity": sev,
+                "status": status,
+                "message": msg,
+                "timestamp": timestamp,
+                "schema_version": INCIDENT_SCHEMA_VERSION,
+                "source": "watchdog",
+                "resolved": False,
+            }
+            if _try_store(incident):
+                stored.append(incident)
 
     return stored
 

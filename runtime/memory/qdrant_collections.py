@@ -64,7 +64,10 @@ COLLECTION_SCHEMAS = {
         "required_fields": [
             "schema_version", "event_type", "timestamp", "severity", "message",
         ],
-        "optional_fields": ["node", "resolved", "resolution_timestamp", "error_code"],
+        "optional_fields": ["node", "resolved", "resolution_timestamp", "error_code",
+                              "dedup_key", "first_seen_at", "last_seen_at",
+                              "duplicate_count", "archived", "archived_at",
+                              "cleanup_phase", "retention_class"],
     },
     "runtime_snapshots": {
         "description": "Periodic full-state captures for temporal recall",

@@ -2679,6 +2679,23 @@ def record_memory_injection_metrics(telemetry: dict) -> None:
         pass
 
 
+# ── INCIDENTS-WATCHDOG-DEDUP-01 ───────────────────────────────────
+INCIDENT_DEDUP_SKIPPED_TOTAL = Counter(
+    "ailab_incident_dedup_skipped_total",
+    "Incidentes duplicados omitidos por dedup",
+    ["event_type"],
+)
+INCIDENT_DEDUP_NEW_TOTAL = Counter(
+    "ailab_incident_dedup_new_total",
+    "Incidentes nuevos creados (no duplicados)",
+    ["event_type"],
+)
+INCIDENT_DEDUP_ERRORS_TOTAL = Counter(
+    "ailab_incident_dedup_errors_total",
+    "Errores en el modulo de dedup de incidentes",
+)
+
+
 def record_graph_prometheus_metrics(metrics: dict[str, Any]) -> None:
     try:
         GRAPH_HOTSPOTS_TOTAL.set(float(metrics.get("ailab_graph_hotspots_total", 0)))
