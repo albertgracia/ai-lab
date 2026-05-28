@@ -7,45 +7,191 @@ import Layout from "../../layouts/Layout.astro";
     <header class="rounded-3xl border border-cyan-500/30 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black p-10">
       <h1 class="text-5xl font-black text-white">AI-LAB Infrastructure</h1>
       <p class="mt-4 max-w-4xl text-xl leading-9 text-zinc-300">
-        Arquitectura tecnica completa del AI-LAB: runtime cognitivo distribuido, observabilidad en tiempo real y automatic CI/CD.
+        Arquitectura técnica completa del AI-LAB: runtime cognitivo distribuido, observabilidad en tiempo real,
+        MCP Semantic Gateway, memoria gobernada y publicación segura.
       </p>
     </header>
 
-    <section class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
-        <p class="text-xs uppercase tracking-wider text-cyan-400">Distributed Inference</p>
-        <p class="mt-3 text-zinc-400">3 nodos GPU con LM Studio. Routing capability-aware via Gateway + Router API. Failover automatico entre nodos.</p>
-      </div>
-      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
-        <p class="text-xs uppercase tracking-wider text-emerald-400">Realtime Cognitive Mesh</p>
-        <p class="mt-3 text-zinc-400">SSE Event Bus con 9 tipos de eventos. Stream en vivo cada 3s. Topologia interactiva del cluster.</p>
-      </div>
-      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
-        <p class="text-xs uppercase tracking-wider text-purple-400">Observability Stack</p>
-        <p class="mt-3 text-zinc-400">Prometheus + Loki + Grafana en VM dedicada. 8 dashboards. 14+ metricas personalizadas.</p>
-      </div>
-      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
-        <p class="text-xs uppercase tracking-wider text-yellow-400">GPU Telemetry Pipeline</p>
-        <p class="mt-3 text-zinc-400">Windows Exporter + PowerShell API. VRAM, temperatura, load, power en tiempo real via Prometheus.</p>
-      </div>
-      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
-        <p class="text-xs uppercase tracking-wider text-red-400">CI/CD & Automation</p>
-        <p class="mt-3 text-zinc-400">Self-hosted GitHub Actions runner. Build automatico en push. Despliegue a blog publico + privado.</p>
-      </div>
-      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
-        <p class="text-xs uppercase tracking-wider text-cyan-400">Event-Driven Runtime</p>
-        <p class="mt-3 text-zinc-400">Gateway con rate limiting, failover, sanitizacion. Router API con routing capability-aware. Session tracking.</p>
+    <!-- Capas de infraestructura -->
+    <section class="rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
+      <h2 class="text-2xl font-black text-cyan-400 mb-6">Capas de Infraestructura</h2>
+      <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+
+        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6">
+          <p class="text-xs uppercase tracking-wider text-cyan-400">1. Access Layer</p>
+          <p class="mt-2 text-zinc-400">Cloudflare Tunnel + Zero Trust + Traefik reverse proxy. Sin puertos entrantes abiertos. Acceso público y privado segmentado.</p>
+        </div>
+
+        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6">
+          <p class="text-xs uppercase tracking-wider text-emerald-400">2. Agent Layer</p>
+          <p class="mt-2 text-zinc-400">OpenCode como agente externo consumiendo MCP tools vía SSH tunnel. Futura expansión a LAN controlada con token.</p>
+        </div>
+
+        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6">
+          <p class="text-xs uppercase tracking-wider text-purple-400">3. MCP Semantic Gateway</p>
+          <p class="mt-2 text-zinc-400">Servidor read-only en 127.0.0.1:8091. 3 tools expuestas: ailab_status, ailab_runtime_health, ailab_route_preview. Streamable HTTP transport. 13/13 tests.</p>
+        </div>
+
+        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6">
+          <p class="text-xs uppercase tracking-wider text-yellow-400">4. Gateway / Router</p>
+          <p class="mt-2 text-zinc-400">OpenAI-compatible Gateway (:8008) + Router capability-aware (:8083). Failover automático entre nodos. Rate limiting, sanitización, session tracking.</p>
+        </div>
+
+        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6">
+          <p class="text-xs uppercase tracking-wider text-red-400">5. Model Nodes</p>
+          <p class="mt-2 text-zinc-400">3 nodos LM Studio (2 online, 1 offline esperado). RX9070 (.50) con 4 modelos, .250 con 6 modelos. Gateway backend en 192.168.1.50:1234/v1.</p>
+        </div>
+
+        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6">
+          <p class="text-xs uppercase tracking-wider text-cyan-400">6. Memory / Qdrant</p>
+          <p class="mt-2 text-zinc-400">8 colecciones Qdrant con políticas de retención. Cognitive history, routing history, incidents, agent knowledge. Memory governance policy implementada.</p>
+        </div>
+
+        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6">
+          <p class="text-xs uppercase tracking-wider text-emerald-400">7. GitNexus / Code Intelligence</p>
+          <p class="mt-2 text-zinc-400">Análisis estructural del código gobernado. Blast-radius, dependencias, change policy para runtime crítico. openai_gateway.py: risk HIGH.</p>
+        </div>
+
+        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6">
+          <p class="text-xs uppercase tracking-wider text-purple-400">8. Observability</p>
+          <p class="mt-2 text-zinc-400">Prometheus + Grafana + Loki. 8 dashboards, 14+ métricas personalizadas. Cognitive health, shutdown metrics, memory injection telemetry.</p>
+        </div>
+
+        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6">
+          <p class="text-xs uppercase tracking-wider text-yellow-400">9. Governance / Policies</p>
+          <p class="mt-2 text-zinc-400">Incident governance schema, memory governance policy, GitNexus runtime change policy, cognitive health layer, SLO enforcement.</p>
+        </div>
+
+        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6">
+          <p class="text-xs uppercase tracking-wider text-red-400">10. Documentation / Blog</p>
+          <p class="mt-2 text-zinc-400">Astro 6 + Starlight + Tailwind 4. Blog técnico, docs vivo, runbooks, ADRs, incidentes. Publicación dual público/privado.</p>
+        </div>
+
       </div>
     </section>
 
+    <!-- Stack Tecnológico -->
     <section class="rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
-      <h2 class="text-2xl font-black text-cyan-400 mb-6">Stack Tecnologico</h2>
-      <div class="grid gap-4 md:grid-cols-4">
-        <div><p class="text-sm text-zinc-500">Runtime</p><p class="text-white">Python 3.14 · FastAPI · ThreadingHTTP</p></div>
-        <div><p class="text-sm text-zinc-500">Frontend</p><p class="text-white">Astro 6 · Starlight · React 19 · Tailwind 4</p></div>
-        <div><p class="text-sm text-zinc-500">Infra</p><p class="text-white">Docker · Traefik · Cloudflare · systemd</p></div>
-        <div><p class="text-sm text-zinc-500">Observabilidad</p><p class="text-white">Prometheus · Grafana · Loki · Grafana Alloy</p></div>
+      <h2 class="text-2xl font-black text-cyan-400 mb-6">Stack Tecnológico 2026</h2>
+
+      <div class="grid gap-6 md:grid-cols-2">
+
+        <div>
+          <p class="text-xs uppercase tracking-wider text-cyan-400 mb-3">Runtime / Backend</p>
+          <ul class="space-y-2 text-zinc-400 text-sm">
+            <li>• Python 3.14.x en /opt/ai-lab/.venv</li>
+            <li>• OpenAI-compatible Gateway :8008 (FastAPI)</li>
+            <li>• AI-LAB Router :8083 (FastAPI)</li>
+            <li>• systemd services: ailab-gateway, ailab-router, ailab-mcp-semantic-gateway</li>
+            <li>• LM Studio nodes (192.168.1.50 RX9070, 192.168.1.250)</li>
+          </ul>
+        </div>
+
+        <div>
+          <p class="text-xs uppercase tracking-wider text-emerald-400 mb-3">MCP / Agent Layer</p>
+          <ul class="space-y-2 text-zinc-400 text-sm">
+            <li>• MCP Python SDK / Streamable HTTP</li>
+            <li>• ailab-mcp-semantic-gateway :8091 (3 tools read-only)</li>
+            <li>• OpenCode Windows integration vía SSH tunnel</li>
+            <li>• Futuro: AILAB_MCP_TOKEN + LAN controlled mode</li>
+          </ul>
+        </div>
+
+        <div>
+          <p class="text-xs uppercase tracking-wider text-purple-400 mb-3">Memory / Vector</p>
+          <ul class="space-y-2 text-zinc-400 text-sm">
+            <li>• Qdrant (8 colecciones auditadas y gobernadas)</li>
+            <li>• cognitive_history, routing_history, incidents</li>
+            <li>• ai_lab_memory, agent_knowledge</li>
+            <li>• Memory governance policy implementada</li>
+          </ul>
+        </div>
+
+        <div>
+          <p class="text-xs uppercase tracking-wider text-yellow-400 mb-3">Governance</p>
+          <ul class="space-y-2 text-zinc-400 text-sm">
+            <li>• GitNexus: análisis estructural de código</li>
+            <li>• GitNexus governed runtime change policy</li>
+            <li>• Incident governance schema</li>
+            <li>• Memory governance policy</li>
+            <li>• Runtime stability checkpoints y tags</li>
+          </ul>
+        </div>
+
+        <div>
+          <p class="text-xs uppercase tracking-wider text-red-400 mb-3">Observability</p>
+          <ul class="space-y-2 text-zinc-400 text-sm">
+            <li>• Prometheus + Grafana + Loki</li>
+            <li>• Cognitive health metrics</li>
+            <li>• Shutdown metrics (503 durante graceful stop)</li>
+            <li>• Memory injection telemetry</li>
+            <li>• Gateway latency p50/p95</li>
+          </ul>
+        </div>
+
+        <div>
+          <p class="text-xs uppercase tracking-wider text-cyan-400 mb-3">Docs / Frontend</p>
+          <ul class="space-y-2 text-zinc-400 text-sm">
+            <li>• Astro 6 + Starlight + React 19 + Tailwind 4</li>
+            <li>• Blog técnico y documentación viva</li>
+            <li>• Cloudflare Pages + Tunnel</li>
+            <li>• Split público/privado vía Zero Trust</li>
+          </ul>
+        </div>
+
       </div>
     </section>
+
+    <!-- Seguridad -->
+    <section class="rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
+      <h2 class="text-2xl font-black text-cyan-400 mb-6">Seguridad</h2>
+      <div class="grid gap-4 md:grid-cols-3">
+        <div class="rounded-xl bg-black/30 p-5">
+          <p class="text-sm text-zinc-500 font-bold">MCP Binding</p>
+          <p class="mt-2 text-zinc-400">127.0.0.1 exclusivo. Sin exposición LAN. Acceso OpenCode por SSH tunnel.</p>
+        </div>
+        <div class="rounded-xl bg-black/30 p-5">
+          <p class="text-sm text-zinc-500 font-bold">No Secrets in Logs</p>
+          <p class="mt-2 text-zinc-400">Tokens, prompts completos y datos sensibles no se almacenan en logs del MCP gateway.</p>
+        </div>
+        <div class="rounded-xl bg-black/30 p-5">
+          <p class="text-sm text-zinc-500 font-bold">Zero Trust</p>
+          <p class="mt-2 text-zinc-400">Cloudflare Access + Tunnel. Sin puertos SSH/RDP abiertos a Internet.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Estado actual vs Roadmap -->
+    <section class="rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
+      <h2 class="text-2xl font-black text-cyan-400 mb-6">Estado actual vs Roadmap</h2>
+      <div class="grid gap-6 md:grid-cols-2">
+        <div class="rounded-xl border border-emerald-500/30 bg-emerald-950/10 p-6">
+          <p class="text-sm uppercase tracking-wider text-emerald-400 mb-3">✓ Implementado</p>
+          <ul class="space-y-2 text-zinc-400 text-sm">
+            <li>• MCP Semantic Gateway (3 tools, 13/13 tests)</li>
+            <li>• OpenCode Windows MCP integration (SSH tunnel)</li>
+            <li>• Qdrant memory governance policy</li>
+            <li>• Memory injection telemetry</li>
+            <li>• Incident governance schema</li>
+            <li>• Cognitive health layer</li>
+            <li>• GitNexus governed runtime change policy</li>
+            <li>• Gateway graceful shutdown</li>
+            <li>• OpenCode skills sync (44 skills)</li>
+          </ul>
+        </div>
+        <div class="rounded-xl border border-yellow-500/30 bg-yellow-950/10 p-6">
+          <p class="text-sm uppercase tracking-wider text-yellow-400 mb-3">◇ Roadmap / Pendiente</p>
+          <ul class="space-y-2 text-zinc-400 text-sm">
+            <li>• AILAB_MCP_TOKEN + LAN controlled mode</li>
+            <li>• Tools semánticas reales (sommelier, analyze_label, price_estimate)</li>
+            <li>• Diagnóstico ailab-router/auto</li>
+            <li>• Rioja Marketplace integration</li>
+            <li>• Multi-GPU runtime scheduler</li>
+            <li>• Hyper-V checkpoint (operator action)</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
   </section>
 </Layout>
