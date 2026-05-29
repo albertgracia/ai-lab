@@ -31,7 +31,7 @@ ssh albert@192.168.1.40 "docker start prometheus"
 
 ```bash
 # 1. Services
-echo '19682507' | sudo -S systemctl is-active ailab-gateway ailab-router ailab-live-state ailab-heartbeat ailab-live-api ailab-docs
+sudo systemctl is-active ailab-gateway ailab-router ailab-live-state ailab-heartbeat ailab-live-api ailab-docs
 
 # 2. APIs
 curl -s http://localhost:8008/health

@@ -97,7 +97,7 @@ git push origin main
 ### Para forzar el blog privado manualmente, si hace falta:
 ```bash
 cd /opt/ai-lab/apps/ialab-docs && npm run build
-echo 19682507 | sudo -S systemctl restart ailab-docs.service
+sudo systemctl restart ailab-docs.service
 ```
 
 ## Configuracion Clave
@@ -159,7 +159,7 @@ cd /opt/ai-lab/apps/ialab-docs && npm run build 2>&1 | tail -5
 # Debe mostrar: "64 page(s) built" sin errores
 
 # Verificar servicio
-echo 19682507 | sudo -S systemctl is-active ailab-docs.service
+sudo systemctl is-active ailab-docs.service
 
 # Verificar sitio privado
 curl -s http://localhost:4322/ | head -1

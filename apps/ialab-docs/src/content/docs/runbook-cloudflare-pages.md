@@ -143,7 +143,7 @@ git push origin main
 cd /opt/ai-lab/apps/ialab-docs && npm run build
 
 # 2. Reiniciar servicio
-echo 19682507 | sudo -S systemctl restart ailab-docs.service
+sudo systemctl restart ailab-docs.service
 
 # 3. Forzar recarga del navegador: Ctrl+F5
 ```
@@ -170,7 +170,7 @@ intervencion manual.
 
 # 3. Si el blog privado tambien da 404, rebuild local:
 cd /opt/ai-lab/apps/ialab-docs && npm run build
-echo 19682507 | sudo -S systemctl restart ailab-docs.service
+sudo systemctl restart ailab-docs.service
 
 # 4. Forzar recarga del navegador
 ```
@@ -182,7 +182,7 @@ echo 19682507 | sudo -S systemctl restart ailab-docs.service
 ```bash
 # Build + deploy completo (ambos blogs)
 cd /opt/ai-lab/apps/ialab-docs && npm run build && \
-  echo 19682507 | sudo -S systemctl restart ailab-docs.service && \
+  sudo systemctl restart ailab-docs.service && \
   cd /opt/ai-lab && git add -A && git commit -m "docs: actualizacion" && \
   git push origin main
 
