@@ -66,8 +66,8 @@ if __name__ == "__main__":
     tests = [
         ("readonly", "ls -la"),
         ("build", "python3 -m py_compile runtime/llm/router_api.py"),
-        ("build", "systemctl restart ialab-router-api"),
-        ("execute", "systemctl restart ialab-router-api"),
+        ("build", "systemctl restart ailab-router.service"),
+        ("execute", "systemctl restart ailab-router.service"),
         ("execute", "rm -rf /opt/ai-lab"),
     ]
 
