@@ -4,6 +4,19 @@ summary: "Roadmap realista stabilization-first: authority + precision + governan
 order: 8
 ---
 
+
+
+## Known issues operativos
+
+| Issue | Estado |
+|-------|--------|
+| Live API bind en 0.0.0.0 | Pendiente de refactor Traefik (LIVE-API-BIND-LOCALHOST-HARDENING-02) |
+| /api/history endpoint 404 | No implementado en live_api.py |
+| openai_gateway.py monolito | ~5700 lineas, risk HIGH, pendiente de auditoria |
+| LM Studio apagado | Voluntario; 502 en chat es esperado |
+| Router/LM Studio diagnosis | Pendiente cuando LM Studio este online |
+| Stash antiguo pre-sync-mcp | Pendiente de revision/limpieza |
+
 ## Estado actual (real)
 
 AI-LAB está en modo **stabilization-first** y **governance-first** tras:
