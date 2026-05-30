@@ -252,26 +252,20 @@ groups:
 
       - record: ai_lab:federation_guard_events_rate5m
         expr: |
-          rate((
-            ailab_federation_guard_replay_detections_total
-            + ailab_federation_guard_storm_detections_total
-            + ailab_federation_guard_authority_escalations_total
-            + ailab_federation_guard_caps_applied_total
-          )[5m])
+          rate(ailab_federation_guard_replay_detections_total[5m])
+            + rate(ailab_federation_guard_storm_detections_total[5m])
+            + rate(ailab_federation_guard_authority_escalations_total[5m])
+            + rate(ailab_federation_guard_caps_applied_total[5m])
 
       - record: ai_lab:evidence_replay_rate5m
         expr: |
-          rate((
-            ailab_evidence_replay_risk_total
-            + ailab_evidence_invalid_lineage_total
-          )[5m])
+          rate(ailab_evidence_replay_risk_total[5m])
+            + rate(ailab_evidence_invalid_lineage_total[5m])
 
       - record: ai_lab:slo_violations_rate5m
         expr: |
-          rate((
-            ailab_slo_violations_total
-            + ailab_slo_safe_mode_total
-          )[5m])
+          rate(ailab_slo_violations_total[5m])
+            + rate(ailab_slo_safe_mode_total[5m])
 
       - record: ai_lab:architecture_risk_score
         expr: |
