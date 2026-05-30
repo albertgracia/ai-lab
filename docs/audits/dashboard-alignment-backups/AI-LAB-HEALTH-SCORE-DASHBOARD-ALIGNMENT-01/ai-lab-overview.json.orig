@@ -1,0 +1,122 @@
+{
+  "uid": "ai-lab-overview",
+  "title": "AI-LAB Overview",
+  "tags": ["ai-lab", "overview", "runtime"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "15s",
+  "editable": true,
+  "graphTooltip": 1,
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": { "list": [] },
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "grafana" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "links": [
+    { "title": "Runtime", "type": "link", "url": "https://metricas.labrazahome.com/runtime", "icon": "external link", "targetBlank": true },
+    { "title": "GPUs", "type": "link", "url": "https://metricas.labrazahome.com/gpus", "icon": "external link", "targetBlank": true },
+    { "title": "Ops", "type": "link", "url": "https://metricas.labrazahome.com/ops", "icon": "external link", "targetBlank": true }
+  ],
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Targets up",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 4, "w": 3, "x": 0, "y": 0 },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": 0 }, { "color": "yellow", "value": 1 }, { "color": "green", "value": 10 }] }, "unit": "none" }, "overrides": [] },
+      "options": { "colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto", "wideLayout": true },
+      "targets": [{ "expr": "sum(up)", "refId": "A" }]
+    },
+    {
+      "type": "stat",
+      "title": "Health rate",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 4, "w": 3, "x": 3, "y": 0 },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": 0 }, { "color": "yellow", "value": 80 }, { "color": "green", "value": 95 }] }, "unit": "percent" }, "overrides": [] },
+      "options": { "colorMode": "background", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto", "wideLayout": true },
+      "targets": [{ "expr": "sum(up) / count(up) * 100", "refId": "A" }]
+    },
+    {
+      "type": "stat",
+      "title": "Requests total",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 4, "w": 3, "x": 6, "y": 0 },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }] }, "unit": "short" }, "overrides": [] },
+      "options": { "colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto", "wideLayout": true },
+      "targets": [{ "expr": "ailab_requests_total{job=\"ai-lab-gateway\"}", "refId": "A" }]
+    },
+    {
+      "type": "stat",
+      "title": "Latency ms",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 4, "w": 3, "x": 9, "y": 0 },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }, { "color": "yellow", "value": 200 }, { "color": "red", "value": 1000 }] }, "unit": "ms" }, "overrides": [] },
+      "options": { "colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto", "wideLayout": true },
+      "targets": [{ "expr": "ailab_last_latency_ms{job=\"ai-lab-gateway\"}", "refId": "A" }]
+    },
+    {
+      "type": "stat",
+      "title": "Errors / min",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 4, "w": 3, "x": 12, "y": 0 },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }, { "color": "yellow", "value": 0.1 }, { "color": "red", "value": 1 }] }, "unit": "short" }, "overrides": [] },
+      "options": { "colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto", "wideLayout": true },
+      "targets": [{ "expr": "rate(ailab_errors_total{job=\"ai-lab-gateway\"}[5m]) * 60", "refId": "A" }]
+    },
+    {
+      "type": "stat",
+      "title": "Active streams",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 4, "w": 3, "x": 15, "y": 0 },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": 0 }, { "color": "yellow", "value": 1 }, { "color": "green", "value": 2 }] }, "unit": "short" }, "overrides": [] },
+      "options": { "colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto", "wideLayout": true },
+      "targets": [{ "expr": "ailab_active_streams{job=\"ai-lab-gateway\"}", "refId": "A" }]
+    },
+    {
+      "type": "stat",
+      "title": "GPU nodes",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 4, "w": 3, "x": 18, "y": 0 },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": 0 }, { "color": "yellow", "value": 1 }, { "color": "green", "value": 2 }] }, "unit": "short" }, "overrides": [] },
+      "options": { "colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto", "wideLayout": true },
+      "targets": [{ "expr": "count(up{job=\"ai-lab-gpu-metrics\"})", "refId": "A" }]
+    },
+    {
+      "type": "stat",
+      "title": "Containers",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 4, "w": 3, "x": 21, "y": 0 },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }] }, "unit": "short" }, "overrides": [] },
+      "options": { "colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto", "wideLayout": true },
+      "targets": [{ "expr": "count(container_cpu_usage_seconds_total{instance=\"cadvisor:8080\",name!=\"\"})", "refId": "A" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Runtime trend",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 4 },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2, "fillOpacity": 10 }, "unit": "short" }, "overrides": [] },
+      "options": { "legend": { "showLegend": true, "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "single", "sort": "none" } },
+      "targets": [
+        { "expr": "rate(ailab_requests_total{job=\"ai-lab-gateway\"}[5m]) * 60", "legendFormat": "requests/min", "refId": "A" },
+        { "expr": "rate(ailab_routing_decisions_total{job=\"ai-lab-gateway\"}[5m]) * 60", "legendFormat": "routing/min", "refId": "B" },
+        { "expr": "rate(ailab_errors_total{job=\"ai-lab-gateway\"}[5m]) * 60", "legendFormat": "errors/min", "refId": "C" },
+        { "expr": "ailab_last_latency_ms{job=\"ai-lab-gateway\"}", "legendFormat": "latency ms", "refId": "D" }
+      ]
+    }
+  ]
+}
