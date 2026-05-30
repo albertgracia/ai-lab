@@ -10,11 +10,11 @@
   "metrics": {
     "requests_total": 0,
     "streams_total": 0,
-    "errors_total": 0,
+    "errors_total": 1,
     "routing_decisions_total": 0,
     "sessions_total": 0,
     "active_sessions": 0,
-    "last_latency_ms": 0,
+    "last_latency_ms": 0.0,
     "active_streams": 0,
     "online_nodes": 0,
     "total_nodes": 3,
@@ -46,5 +46,5 @@
       "gpu_overheat": 0
     }
   },
-  "timestamp": 1780179097.300618
+  "timestamp": 1780182898.0637321
 }
