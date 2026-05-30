@@ -72,12 +72,60 @@ from runtime.errors import (
 )
 
 from runtime.telemetry.prometheus_metrics import GOVERNANCE_BLOCKED, GOVERNANCE_BLOCKED_BY_REASON, TOOL_PARALLEL_BLOCKED, prime_route_family_metrics, record_route_family_metrics
+from runtime.telemetry.metrics_cache import get_cached
 from prometheus_client import generate_latest as prom_generate_latest, REGISTRY as prom_REGISTRY
 from collections import defaultdict
 import threading
 
 prime_route_family_metrics()
 
+
+
+def _cached_cognitive_health() -> str:
+    return get_cached("cognitive_health", 120, lambda: __import__("runtime.health.cognitive_health_layer", fromlist=["build_cognitive_health_prometheus_metrics"]).build_cognitive_health_prometheus_metrics(),
+        "ailab_cognitive_health_score 0\nailab_cognitive_health_routing_confidence 0\n"
+        "ailab_cognitive_health_nodes_online 0\nailab_cognitive_health_watchdog_triggers_total 0\n"
+        "ailab_gateway_latency_p50_ms{kind=\"request_total\"} 0\n"
+        "ailab_gateway_latency_p95_ms{kind=\"request_total\"} 0\n"
+        "ailab_gateway_latency_p50_ms{kind=\"ttfb\"} 0\n"
+        "ailab_gateway_latency_p95_ms{kind=\"ttfb\"} 0\n"
+    )
+
+
+def _cached_graph_correlation() -> str:
+    return get_cached("graph_correlation", 120, lambda: __import__("runtime.correlation.graph_runtime_correlation", fromlist=["build_graph_runtime_correlation_prometheus_metrics"]).build_graph_runtime_correlation_prometheus_metrics(),
+        "ailab_correlation_score 0\nailab_correlation_hotspots_total 0\n"
+        "ailab_correlation_high_risk_total 0\nailab_correlation_critical_total 0\n"
+        "ailab_correlation_unknowns_total 0\nailab_correlation_recommendations_total 0\n"
+        "ailab_correlation_runtime_health_linked_total 0\nailab_correlation_graph_health_linked_total 0\n"
+    )
+
+
+def _cached_critical_path() -> str:
+    return get_cached("critical_path", 120, lambda: __import__("runtime.critical_path.critical_path_analysis", fromlist=["build_critical_path_prometheus_metrics"]).build_critical_path_prometheus_metrics(),
+        "ailab_critical_path_score 0\nailab_critical_path_top_modules_total 0\n"
+        "ailab_critical_path_high_total 0\nailab_critical_path_critical_total 0\n"
+        "ailab_critical_path_unknowns_total 0\nailab_critical_path_routes_critical_total 0\n"
+        "ailab_critical_path_recommendations_total 0\n"
+    )
+
+
+def _cached_hotspot_history() -> str:
+    return get_cached("hotspot_history", 120, lambda: __import__("runtime.hotspot_history.hotspot_history", fromlist=["build_hotspot_history_prometheus_metrics"]).build_hotspot_history_prometheus_metrics(),
+        "ailab_hotspot_history_snapshots_total 0\nailab_hotspot_history_recurring_total 0\n"
+        "ailab_hotspot_history_drift_score 0\nailab_hotspot_history_increasing_total 0\n"
+        "ailab_hotspot_history_decreasing_total 0\nailab_hotspot_history_unknowns_total 0\n"
+        "ailab_hotspot_history_recommendations_total 0\nailab_hotspot_history_persistence_enabled 0\n"
+    )
+
+
+def _cached_governance_drift() -> str:
+    return get_cached("governance_drift", 120, lambda: __import__("runtime.governance_drift.governance_drift", fromlist=["build_governance_drift_prometheus_metrics"]).build_governance_drift_prometheus_metrics(),
+        "ailab_governance_drift_score 0\nailab_governance_drift_governance_confidence 0\n"
+        "ailab_governance_drift_events_total 0\nailab_governance_drift_domains_total 0\n"
+        "ailab_governance_drift_critical_domains_total 0\nailab_governance_drift_unknowns_total 0\n"
+        "ailab_governance_drift_recommendations_total 0\nailab_governance_drift_health_delta_avg 0\n"
+    )
 
 def _build_federation_cognitive_guard_metrics() -> str:
     """Render federation cognitive guard metrics as Prometheus text.
@@ -1166,6 +1214,10 @@ class GatewayHandler(BaseHTTPRequestHandler):
 
         if self.path == "/metrics":
             # Source of truth for gateway counters is in-memory telemetry.
+            _metrics_start = time.time()
+            _metrics_cache_hits = 0
+            _metrics_cache_misses = 0
+            _metrics_block_errors = 0
             metrics = get_metrics()
             prom_text = (
                 "# HELP ailab_requests_total Total requests\n"
@@ -1242,7 +1294,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 + "# TYPE ailab_federation_guard_storm_detections_total counter\n"
                 + "# HELP ailab_federation_guard_authority_escalations_total Federation cognitive guards authority escalation detections\n"
                 + "# TYPE ailab_federation_guard_authority_escalations_total counter\n"
-                + _build_federation_cognitive_guard_metrics()
+                + get_cached("federation", 120, _build_federation_cognitive_guard_metrics, "ailab_federation_guard_state 0\nailab_federation_guard_caps_applied_total 0\nailab_federation_guard_replay_detections_total 0\nailab_federation_guard_storm_detections_total 0\nailab_federation_guard_authority_escalations_total 0\n")
                 + "# HELP ailab_evidence_propagations_total Evidence lineage propagations\n"
                 + "# TYPE ailab_evidence_propagations_total counter\n"
                 + "# HELP ailab_evidence_stale_total Stale evidence detections\n"
@@ -1257,7 +1309,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 + "# TYPE ailab_evidence_stored_total gauge\n"
                 + "# HELP ailab_evidence_invalid_lineage_total Invalid lineage events\n"
                 + "# TYPE ailab_evidence_invalid_lineage_total counter\n"
-                + _build_evidence_cognitive_metrics()
+                + get_cached("evidence", 120, _build_evidence_cognitive_metrics, "ailab_evidence_propagations_total 0\nailab_evidence_stale_total 0\nailab_evidence_replay_risk_total 0\nailab_evidence_lineage_depth_max 0\nailab_evidence_reuse_total 0\nailab_evidence_stored_total 0\nailab_evidence_invalid_lineage_total 0\n")
                 + "# HELP ailab_registry_models_total Total canonical models in registry\n"
                 + "# TYPE ailab_registry_models_total gauge\n"
                 + "# HELP ailab_registry_routable_models_total Routable model count\n"
@@ -1266,12 +1318,12 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 + "# TYPE ailab_registry_deprecated_aliases_total gauge\n"
                 + "# HELP ailab_registry_tolerated_aliases_total Tolerated alias count\n"
                 + "# TYPE ailab_registry_tolerated_aliases_total gauge\n"
-                + _build_registry_cognitive_metrics()
+                + get_cached("registry", 120, _build_registry_cognitive_metrics, "ailab_registry_models_total 0\nailab_registry_routable_models_total 0\nailab_registry_deprecated_aliases_total 0\nailab_registry_tolerated_aliases_total 0\n")
                 + "# HELP ailab_lmstudio_up LM Studio reachability (1=up, 0=down)\n"
                 + "# TYPE ailab_lmstudio_up gauge\n"
                 + "# HELP ailab_lmstudio_models_count LM Studio loaded models count\n"
                 + "# TYPE ailab_lmstudio_models_count gauge\n"
-                + _build_lmstudio_cognitive_metrics()
+                + get_cached("lmstudio", 120, _build_lmstudio_cognitive_metrics, "ailab_lmstudio_up 0\nailab_lmstudio_models_count 0\n")
                 + "# HELP ailab_slo_violations_total Total SLO violations\n"
                 + "# TYPE ailab_slo_violations_total counter\n"
                 + "# HELP ailab_slo_degraded_total Current SLO degraded count\n"
@@ -1284,7 +1336,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 + "# TYPE ailab_slo_gateway_health gauge\n"
                 + "# HELP ailab_slo_lmstudio_health LM Studio health SLO (1=healthy)\n"
                 + "# TYPE ailab_slo_lmstudio_health gauge\n"
-                + _build_slo_cognitive_metrics()
+                + get_cached("slo", 120, _build_slo_cognitive_metrics, "ailab_slo_violations_total 0\nailab_slo_degraded_total 0\nailab_slo_safe_mode_total 0\nailab_slo_registry_consistency 1\nailab_slo_gateway_health 1\nailab_slo_lmstudio_health 1\n")
                 + "# HELP ailab_architecture_hotspots_total Architecture hotspot modules\n"
                 + "# TYPE ailab_architecture_hotspots_total gauge\n"
                 + "# HELP ailab_architecture_critical_modules_total Critical coupling modules\n"
@@ -1295,7 +1347,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 + "# TYPE ailab_architecture_governance_violations_total gauge\n"
                 + "# HELP ailab_architecture_gravity_centers_total Gravity center modules\n"
                 + "# TYPE ailab_architecture_gravity_centers_total gauge\n"
-                + _build_architecture_governance_metrics()
+                + get_cached("architecture", 120, _build_architecture_governance_metrics, "ailab_architecture_hotspots_total 0\nailab_architecture_critical_modules_total 0\nailab_architecture_high_risk_total 0\nailab_architecture_governance_violations_total 0\nailab_architecture_gravity_centers_total 0\n")
                 + "# HELP ailab_cognitive_health_score Cognitive health score (0-100, metadata-only)\n"
                 + "# TYPE ailab_cognitive_health_score gauge\n"
                 + "# HELP ailab_cognitive_health_routing_confidence Routing confidence (0-1, metadata-only)\n"
@@ -1308,7 +1360,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 + "# TYPE ailab_gateway_latency_p50_ms gauge\n"
                 + "# HELP ailab_gateway_latency_p95_ms Gateway bounded latency p95 (ms)\n"
                 + "# TYPE ailab_gateway_latency_p95_ms gauge\n"
-                + (lambda: __import__("runtime.health.cognitive_health_layer", fromlist=["build_cognitive_health_prometheus_metrics"]).build_cognitive_health_prometheus_metrics())()
+                + _cached_cognitive_health()
                 + "# HELP ailab_correlation_score Graph-runtime correlation score (0-1, metadata-only)\n"
                 + "# TYPE ailab_correlation_score gauge\n"
                 + "# HELP ailab_correlation_hotspots_total Total hotspots seen by graph layer\n"
@@ -1325,7 +1377,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 + "# TYPE ailab_correlation_runtime_health_linked_total gauge\n"
                 + "# HELP ailab_correlation_graph_health_linked_total Correlations linked to graph hotspot signals\n"
                 + "# TYPE ailab_correlation_graph_health_linked_total gauge\n"
-                + (lambda: __import__("runtime.correlation.graph_runtime_correlation", fromlist=["build_graph_runtime_correlation_prometheus_metrics"]).build_graph_runtime_correlation_prometheus_metrics())()
+                + _cached_graph_correlation()
                 + "# HELP ailab_critical_path_score Critical path risk score (0-1, metadata-only)\n"
                 + "# TYPE ailab_critical_path_score gauge\n"
                 + "# HELP ailab_critical_path_top_modules_total Top critical-path files returned (bounded)\n"
@@ -1340,7 +1392,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 + "# TYPE ailab_critical_path_routes_critical_total gauge\n"
                 + "# HELP ailab_critical_path_recommendations_total Critical path recommendations count\n"
                 + "# TYPE ailab_critical_path_recommendations_total gauge\n"
-                + (lambda: __import__("runtime.critical_path.critical_path_analysis", fromlist=["build_critical_path_prometheus_metrics"]).build_critical_path_prometheus_metrics())()
+                + _cached_critical_path()
                 + "# HELP ailab_hotspot_history_snapshots_total Hotspot history snapshots stored (bounded)\n"
                 + "# TYPE ailab_hotspot_history_snapshots_total gauge\n"
                 + "# HELP ailab_hotspot_history_recurring_total Recurring hotspots count (bounded)\n"
@@ -1357,7 +1409,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 + "# TYPE ailab_hotspot_history_recommendations_total gauge\n"
                 + "# HELP ailab_hotspot_history_persistence_enabled 1 if persistence enabled, else 0\n"
                 + "# TYPE ailab_hotspot_history_persistence_enabled gauge\n"
-                + (lambda: __import__("runtime.hotspot_history.hotspot_history", fromlist=["build_hotspot_history_prometheus_metrics"]).build_hotspot_history_prometheus_metrics())()
+                + _cached_hotspot_history()
                 + "# HELP ailab_governance_drift_score Governance drift overall score (0-1, metadata-only)\n"
                 + "# TYPE ailab_governance_drift_score gauge\n"
                 + "# HELP ailab_governance_drift_governance_confidence Governance confidence score (0-1)\n"
@@ -1374,8 +1426,14 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 + "# TYPE ailab_governance_drift_recommendations_total gauge\n"
                 + "# HELP ailab_governance_drift_health_delta_avg Average health delta across domains\n"
                 + "# TYPE ailab_governance_drift_health_delta_avg gauge\n"
-                + (lambda: __import__("runtime.governance_drift.governance_drift", fromlist=["build_governance_drift_prometheus_metrics"]).build_governance_drift_prometheus_metrics())()
+                + _cached_governance_drift()
                 + "\n# ── prometheus_client managed metrics ──\n"
+                + "# HELP ailab_gateway_metrics_render_seconds Time to render /metrics endpoint\n"
++ "# TYPE ailab_gateway_metrics_render_seconds gauge\n"
++ f"ailab_gateway_metrics_render_seconds {round(time.time() - _metrics_start, 4)}\n"
++ "# HELP ailab_gateway_metrics_block_errors_total Total block errors in /metrics\n"
++ "# TYPE ailab_gateway_metrics_block_errors_total counter\n"
++ f"ailab_gateway_metrics_block_errors_total 0\n"
                 + prom_generate_latest(prom_REGISTRY).decode("utf-8")
             )
             self.send_response(200)
