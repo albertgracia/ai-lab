@@ -245,6 +245,32 @@ groups:
           summary: "High risk architecture modules ({{ $value }})"
           description: "Excessive high-risk architecture modules detected. Consider refactoring."
 
+
+      # ── RHS Drift Detection ──────────────────────────────────────────
+
+      - alert: AI-LABRuntimeHealthScoreDrift
+        expr: |
+          abs(
+            ailab_cognitive_health_score{job="ai-lab-gateway"}
+            - (ai_lab:runtime_health_score * 100)
+          ) > 20
+        for: 10m
+        labels:
+          severity: warning
+          service: ai-lab
+          component: runtime-health
+          type: drift
+        annotations:
+          summary: "Runtime Health Score drift >20% ({{ $value | humanize }} puntos)"
+          description: |
+            Drift de {{ $value | humanize }} puntos entre cognitive health score
+            (ailab_cognitive_health_score={{ $value | humanize }}) y
+            runtime health score cross-check (ai_lab:runtime_health_score*100).
+            Umbral superado: >20 puntos durante 10 minutos.
+            Causas posibles: cognitive layer frío, Qdrant sin datos,
+            desincronización entre capas de salud.
+          runbook: "https://github.com/albertgracia/ai-lab/wiki/Runbook-AI-LABRuntimeHealthScoreDrift"
+
   - name: ai_lab_cognitive_recording_rules
     interval: 60s
     limit: 10
