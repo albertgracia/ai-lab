@@ -1,19 +1,22 @@
 {
   "health": {
-    "score": 70,
-    "reasons": [],
-    "level": "good"
+    "score": 0,
+    "reasons": [
+      "2 GPU(s) offline",
+      "Gateway down"
+    ],
+    "level": "critical"
   },
   "metrics": {
-    "requests_total": 1,
+    "requests_total": 0,
     "streams_total": 0,
     "errors_total": 0,
-    "routing_decisions_total": 1,
-    "sessions_total": 1,
-    "active_sessions": 1,
-    "last_latency_ms": 1178.0,
+    "routing_decisions_total": 0,
+    "sessions_total": 0,
+    "active_sessions": 0,
+    "last_latency_ms": 0,
     "active_streams": 0,
-    "online_nodes": 2,
+    "online_nodes": 0,
     "total_nodes": 3,
     "events_per_minute": 0
   },
@@ -43,5 +46,5 @@
       "gpu_overheat": 0
     }
   },
-  "timestamp": 1780099330.287855
+  "timestamp": 1780132185.2970076
 }
