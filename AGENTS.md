@@ -87,6 +87,22 @@ Cuando se modifique `apps/ialab-docs/` en `/opt/ai-lab`:
 
 **10. Regla de sincronización Astro → Metrics:** Cuando se actualice documentación en Astro que afecte a fases, modelos, arquitectura o estado del runtime, verificar que `https://metricas.labrazahome.com` refleje los datos correctos. Si la métrica live depende de los cambios (nuevos modelos, nuevas fases, nuevos servicios), actualizar también `/opt/ai-lab/apps/metrics-dashboard/` siguiendo la Regla de Métricas Live.
 
+## Astro Governance
+
+Antes de modificar cualquiera de los siguientes elementos:
+
+- `apps/ialab-docs` (Astro)
+- Cloudflare Pages (`ai-lab.labrazahome.com`)
+- `blog-ai-lab.labrazahome.com`
+- `ai-lab.labrazahome.com`
+- `metricas.labrazahome.com`
+
+leer obligatoriamente:
+
+`docs/architecture/ASTRO-DEPLOYMENT-GOVERNANCE.md`
+
+Ese documento es la ***source of truth*** canónica sobre superficies web, flujos de despliegue, restricciones de publicación y el incidente histórico `snapshot_unavailable`. Ningún agente debe modificar Astro, Cloudflare Pages o Metrics Dashboard sin haberlo leído primero.
+
 ## Regla De Métricas Live
 
 - `metricas.labrazahome.com` usa Next.js SSR local, no Cloudflare Pages ni Astro SSG.
@@ -1015,7 +1031,7 @@ El objetivo **no** es maximizar flexibilidad a costa de estabilidad. AI-LAB prio
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **ai-lab** (13944 symbols, 21581 relationships, 289 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **ai-lab** (17617 symbols, 27727 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
