@@ -1,104 +1,131 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import MetricBadge from '../../components/visual/MetricBadge.astro';
+import RoadmapBlock from '../../components/visual/RoadmapBlock.astro';
+import VisualCard from '../../components/visual/VisualCard.astro';
+import VisualSection from '../../components/visual/VisualSection.astro';
 
-const pillClass = (tone) => {
-  if (tone === 'emerald') return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300';
-  if (tone === 'cyan') return 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300';
-  if (tone === 'amber') return 'border-amber-500/30 bg-amber-500/10 text-amber-300';
-  return 'border-rose-500/30 bg-rose-500/10 text-rose-300';
-};
-
-const badgeClass = {
-  confirmed: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300',
-  active: 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300',
-  standby: 'border-zinc-700 bg-zinc-900 text-zinc-300',
-  pending: 'border-yellow-500/30 bg-yellow-500/10 text-yellow-300',
-  reserved: 'border-rose-500/30 bg-rose-500/10 text-rose-300',
-  readonly: 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300',
-  operator: 'border-amber-500/30 bg-amber-500/10 text-amber-300',
-};
-
-const riskBadgeClass = {
-  low: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300',
-  medium: 'border-yellow-500/30 bg-yellow-500/10 text-yellow-300',
-  high: 'border-rose-500/30 bg-rose-500/10 text-rose-300',
-};
-
-const mcpTools = [
-  { name: 'ailab_status', status: 'confirmed', use: 'active', risk: 'low', note: 'Estado resumido de gateway y router. Solo lectura.' },
-  { name: 'ailab_runtime_health', status: 'confirmed', use: 'active', risk: 'low', note: 'Salud cognitiva y runtime detallada. Solo lectura.' },
-  { name: 'ailab_route_preview', status: 'confirmed', use: 'active', risk: 'low', note: 'Clasificacion heuristica de rutas sin inferencia real.' },
+const healthMetrics = [
+  { label: 'Salud del runtime', value: 'ailab_cognitive_health_score' },
+  { label: 'Cross-check de infraestructura', value: 'ai_lab:runtime_health_score' },
+  { label: 'Deriva de salud', value: 'Grafana' },
+  { label: 'Nodos de inferencia', value: 'no_nodes_online' },
 ];
 
-const kpis = [
-  { label: 'Runtime / Cognitive Health', value: 'ailab_cognitive_health_score', tone: 'emerald', note: 'Health canonico del runtime y plano cognitivo.' },
-  { label: 'Infra / SLO Cross-check', value: 'ai_lab:runtime_health_score', tone: 'cyan', note: 'Cross-check operativo de SLO e infraestructura.' },
-  { label: 'Health Drift', value: 'Grafana label estable', tone: 'amber', note: 'El drift queda visible como divergencia entre capas.' },
-  { label: 'Inference Nodes Online', value: 'no_nodes_online = watchdog trigger', tone: 'rose', note: 'Es disparador del watchdog, no estado actual.' },
-];
-
-const benchmarks = [
-  { label: 'Gateway baseline', value: '10.40 tps', note: 'Rango 10.03 / 10.78 tps en la baseline LM Studio.' },
-  { label: 'Streaming benchmark', value: '6.19 tps', note: 'Media non-streaming. Streaming estimado: 4.20 tps.' },
-  { label: 'Streaming TTFB', value: '28.401s', note: 'TTFB alto en la muestra streaming del benchmark.' },
-  { label: 'Router Gemma non-streaming', value: '11.17 tps', note: 'Muestra Router con google/gemma-4-e4b explícito.' },
-  { label: 'Router sample', value: '2.79 tps', note: 'Muestra base del Router en la baseline LM Studio.' },
-  { label: 'LM Studio UI note', value: 'No comparable', note: 'Los tps internos de la UI no equivalen al end-to-end API.' },
-];
-
-const nodeProfiles = [
+const benchmarkCards = [
   {
-    name: 'nas-local',
-    role: 'Fast / fallback',
-    summary: 'RX780M low-VRAM node for lightweight routes and memory-aware fallback.',
-    gpu: 'RX780M',
+    title: 'Baseline Gateway',
+    kicker: 'Benchmark LM Studio',
+    note: '10.40 tps con rango 10.03 / 10.78 tps en la l?nea base.',
+    bullets: ['Referencia end-to-end estable.', 'La UI interna de LM Studio no es comparable con el API.'],
+  },
+  {
+    title: 'Streaming vs non-streaming',
+    kicker: 'Benchmark LM Studio',
+    note: '6.19 tps en la muestra no stream y 4.20 tps estimados en streaming.',
+    bullets: ['TTFB medio de 28.401s en la muestra streaming.', 'Se conserva como referencia operativa.'],
+  },
+  {
+    title: 'Router Gemma',
+    kicker: 'Benchmark LM Studio',
+    note: '11.17 tps en la muestra con ruta expl?cita.',
+    codes: ['google/gemma-4-e4b'],
+    bullets: ['La ruta expl?cita se preserva en Router.', 'El Gateway puede no preservar siempre el modelo pedido.'],
+  },
+  {
+    title: 'Router sample',
+    kicker: 'Benchmark LM Studio',
+    note: '2.79 tps como muestra base del Router.',
+    bullets: ['Sirve como referencia de policy.', 'No mezclar con valores de la UI de LM Studio.'],
+  },
+];
+
+const routerCards = [
+  {
+    title: 'Ruta can?nica',
+    kicker: 'Router Auto',
+    note: 'La policy de `ailab-router/auto` resuelve por defecto a la ruta codificadora can?nica.',
+    codes: ['qwen/qwen2.5-coder-14b-instruct'],
+  },
+  {
+    title: 'Ranking real',
+    kicker: 'Router Auto',
+    note: 'La selecci?n prioriza capability, performance y health antes de elegir nodo.',
+  },
+  {
+    title: 'Preservaci?n Gemma',
+    kicker: 'Router Auto',
+    note: 'Si se solicita expl?citamente, la ruta conserva el modelo solicitado.',
+    codes: ['google/gemma-4-e4b'],
+  },
+  {
+    title: 'Selector de capability',
+    kicker: 'Router Auto',
+    note: '`router_api` usa `capability_from_model()` solo para rutas fast, reasoning y coding.',
+  },
+  {
+    title: 'Streaming y non-streaming',
+    kicker: 'Router Auto',
+    note: 'Comparten la selecci?n inicial; cambia el transporte y la respuesta upstream.',
+  },
+];
+
+const nodeCards = [
+  {
+    title: 'nas-local',
+    kicker: 'Fast / fallback',
+    note: 'RX780M para rutas ligeras y fallback consciente de memoria.',
     host: '192.168.1.250:1234',
-    priority: '1',
-    capabilities: ['fast', 'lightweight', 'fallback', 'router', 'memory'],
     models: ['google/gemma-4-e4b', 'llama-3.2-1b-instruct'],
   },
   {
-    name: 'rx7900xt-node',
-    role: 'Coding / reasoning',
-    summary: 'High-VRAM node for coding, reasoning and orchestration workloads.',
-    gpu: 'RX7900XT',
+    title: 'rx7900xt-node',
+    kicker: 'Coding / reasoning',
+    note: 'Nodo de alta VRAM para coding, reasoning y orchestration.',
     host: '192.168.1.60:1234',
-    priority: '10',
-    capabilities: ['reasoning', 'coding', 'large-context', 'multi-agent', 'orchestration', 'backend'],
     models: ['qwen2.5-coder-32b', 'qwen2.5-coder-14b-instruct', 'google/gemma-4-26b-a4b'],
   },
   {
-    name: 'rx9070-node',
-    role: 'Vision / embeddings',
-    summary: 'Multimodal node for vision, embeddings and frontend-adjacent tasks.',
-    gpu: 'RX9070',
+    title: 'rx9070-node',
+    kicker: 'Vision / embeddings',
+    note: 'Nodo multimodal para vision, embeddings y tareas creativas.',
     host: '192.168.1.50:1234',
-    priority: '8',
-    capabilities: ['vision', 'image', 'multimodal', 'embeddings', 'creative', 'frontend'],
     models: ['flux.2-klein-9b', 'moondream2-20250414', 'text-embedding-nomic-embed-text-v1.5'],
   },
 ];
 
-const profileBundles = [
-  { family: 'observe / minimal / greeting', profile: 'observe_profile.json', note: 'Brief answers, minimal memory, fast fallback.' },
-  { family: 'chat / general / tool_use', profile: 'chat_profile.json', note: 'Conversational default with light memory.' },
-  { family: 'coding / opencode_coding', profile: 'coding_profile.json', note: 'Coding profile, higher token budget.' },
-  { family: 'reasoning / opencode_reasoning', profile: 'analysis_profile.json', note: 'Deep reasoning, full memory, reasoning enabled.' },
+const mcpCards = [
+  {
+    title: 'ailab_status',
+    kicker: 'Herramientas MCP',
+    note: 'Estado resumido de gateway y router. Solo lectura.',
+  },
+  {
+    title: 'ailab_runtime_health',
+    kicker: 'Herramientas MCP',
+    note: 'Salud cognitiva y runtime detallada. Solo lectura.',
+  },
+  {
+    title: 'ailab_route_preview',
+    kicker: 'Herramientas MCP',
+    note: 'Clasificaci?n heur?stica de rutas sin inferencia real.',
+  },
 ];
 
-const routerFacts = [
-  { title: 'Ruta canonica', text: 'ailab-router/auto mapea por defecto a qwen/qwen2.5-coder-14b-instruct en la policy.' },
-  { title: 'Ranking real', text: 'choose_model() rankea por capability, performance y health antes de elegir nodo/modelo.' },
-  { title: 'Preservacion Gemma', text: 'Router preserva google/gemma-4-e4b cuando se pide de forma explicita.' },
-  { title: 'Auto sin override especial', text: 'ailab-router/auto no tiene override especial para Gemma.' },
-  { title: 'Selector de capability', text: 'router_api usa capability_from_model() solo para /fast, /reasoning y /coding.' },
-  { title: 'Streaming y non-streaming', text: 'Comparten la seleccion inicial; la diferencia viene de la respuesta upstream y el transporte.' },
+const roadmapCurrent = [
+  'AI-LAB-LMSTUDIO-NODE-PROFILES-01',
+  'AI-LAB-ROUTER-AUTO-POLICY-TRACEABILITY-01',
+  'AI-LAB-MCP-TOOLS-CATALOG-VALIDATION-01',
+  'AI-LAB-GATEWAY-MODEL-PRESERVATION-POLICY-01',
+  'AI-LAB-ASTRO-ROADMAP-REFRESH-NEXT-01',
 ];
 
-const roadmap = [
-  { title: 'Próximo bloque recomendado', tone: 'emerald', items: ['AI-LAB-LMSTUDIO-NODE-PROFILES-01'] },
-  { title: 'Fases para mañana', tone: 'amber', items: ['AI-LAB-LMSTUDIO-NODE-PROFILES-01', 'AI-LAB-ROUTER-AUTO-POLICY-TRACEABILITY-01', 'AI-LAB-MCP-TOOLS-CATALOG-VALIDATION-01', 'AI-LAB-GATEWAY-MODEL-PRESERVATION-POLICY-01', 'AI-LAB-ASTRO-ROADMAP-REFRESH-NEXT-01'] },
-  { title: 'Pendientes en reserva', tone: 'rose', items: ['AILAB_MCP_TOKEN + LAN controlled mode', 'Tools semanticas reales: sommelier, analyze_label, price_estimate', 'Rioja Marketplace integration', 'Multi-GPU runtime scheduler', 'Hyper-V checkpoint'] },
+const roadmapReserve = [
+  'AILAB_MCP_TOKEN + LAN controlled mode',
+  'Tools sem?nticas reales: sommelier, analyze_label, price_estimate',
+  'Rioja Marketplace integration',
+  'Multi-GPU runtime scheduler',
+  'Hyper-V checkpoint',
 ];
 
 const completed = [
@@ -109,239 +136,163 @@ const completed = [
   'AI-LAB-LMSTUDIO-STREAMING-VS-NONSTREAMING-BENCHMARK-PUSH-01',
   'AI-LAB-ROUTER-AUTO-DIAGNOSTIC-SOURCE-INSPECTION-PUSH',
 ];
-
-const securityNotes = [
-  'AILAB_MCP_TOKEN es solo nombre de variable, no valor real expuesto.',
-  'route preview es MCP local heuristico, no endpoint HTTP del router.',
-  'No se exponen secretos, credenciales ni tokens reales en esta pagina.',
-];
 ---
 
-<Layout title='AI Infrastructure · AI-LAB'>
+<Layout title='AI Infrastructure ? AI-LAB'>
   <section class='mx-auto max-w-7xl px-6 py-16 space-y-10'>
-    <header class='rounded-3xl border border-cyan-500/30 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black p-10'>
+    <header class='ai-visual-section rounded-3xl border border-cyan-500/30 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black p-10'>
       <div class='flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.28em] text-cyan-300'>
         <span class='rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1'>AI-LAB PLATFORM VIEW</span>
         <span class='rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1 text-zinc-300'>read-only</span>
         <span class='rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-emerald-300'>visual standard applied</span>
       </div>
-      <h1 class='mt-4 text-5xl font-black text-white'>AI Infrastructure</h1>
+      <h1 class='mt-4 text-5xl font-black text-white'>Infraestructura AI-LAB</h1>
       <p class='mt-4 max-w-4xl text-xl leading-9 text-zinc-300'>
-        Estado operativo de la plataforma AI-LAB con foco en salud cognitiva, benchmarks de LM Studio, router auto, MCP tools y roadmap ejecutivo.
-        El inventario fisico vive en <a class='text-cyan-300 underline' href='/infra'>/infra</a>.
+        Estado operativo con foco en salud del runtime, Benchmark LM Studio, Router Auto, MCP Tools y roadmap ejecutivo.
+        El inventario f?sico vive en <a class='text-cyan-300 underline' href='/infra'>/infra</a>.
       </p>
 
       <div class='mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
-        {kpis.map((item) => (
-          <div class='rounded-2xl border border-zinc-800 bg-black/30 p-5'>
-            <p class='text-xs uppercase tracking-wider text-cyan-400'>{item.label}</p>
-            <p class='mt-3 text-2xl font-black text-white'>{item.value}</p>
-            <p class='mt-3 text-zinc-300'>{item.note}</p>
-            <span class={'mt-4 inline-flex rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.2em] ' + pillClass(item.tone)}>{item.tone}</span>
-          </div>
+        {healthMetrics.map((item) => (
+          <MetricBadge label={item.label} value={item.value} />
         ))}
       </div>
     </header>
 
-    <section class='rounded-2xl border border-zinc-800 bg-zinc-950 p-8'>
-      <div class='flex flex-wrap items-end justify-between gap-4'>
-        <div>
-          <h2 class='text-2xl font-black text-cyan-400'>Estado consolidado</h2>
-          <p class='mt-2 max-w-3xl text-zinc-400'>
-            Las capas de salud ya estan separadas: el score canónico del runtime no es el cross-check de infraestructura, y el watchdog usa no_nodes_online como trigger, no como estado actual.
-          </p>
-        </div>
+    <VisualSection title='Estado consolidado' kicker='Se?ales operativas'>
+      <div class='ai-visual-grid xl:grid-cols-4'>
+        <VisualCard title='Runtime Health' kicker='Salud del runtime'>
+          <p class='ai-visual-safe-text text-zinc-300'>La referencia can?nica es <code>ailab_cognitive_health_score</code>.</p>
+        </VisualCard>
+        <VisualCard title='Infra Cross-check' kicker='Cross-check de infraestructura'>
+          <p class='ai-visual-safe-text text-zinc-300'>El control SLO usa <code>ai_lab:runtime_health_score</code> como validaci?n de infraestructura.</p>
+        </VisualCard>
+        <VisualCard title='Health Drift' kicker='Deriva de salud'>
+          <p class='ai-visual-safe-text text-zinc-300'>La etiqueta de Grafana mantiene visible la deriva entre capas sin mezclar sem?nticas.</p>
+        </VisualCard>
+        <VisualCard title='Watchdog' kicker='Nodos de inferencia'>
+          <p class='ai-visual-safe-text text-zinc-300'><code>no_nodes_online</code> es un disparador del watchdog, no una fotograf?a del estado actual.</p>
+        </VisualCard>
       </div>
+    </VisualSection>
 
-      <div class='mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
-        <div class='rounded-2xl border border-zinc-800 bg-black/30 p-5'>
-          <p class='text-xs uppercase tracking-wider text-emerald-400'>Runtime health</p>
-          <p class='mt-2 text-zinc-300'>ailab_cognitive_health_score es la referencia canónica del runtime y del plano cognitivo.</p>
-        </div>
-        <div class='rounded-2xl border border-zinc-800 bg-black/30 p-5'>
-          <p class='text-xs uppercase tracking-wider text-cyan-400'>Infra cross-check</p>
-          <p class='mt-2 text-zinc-300'>ai_lab:runtime_health_score sigue siendo un cross-check SLO e infraestructura, no el canonical runtime score.</p>
-        </div>
-        <div class='rounded-2xl border border-zinc-800 bg-black/30 p-5'>
-          <p class='text-xs uppercase tracking-wider text-amber-400'>Grafana labeling</p>
-          <p class='mt-2 text-zinc-300'>Runtime/Cognitive Health Score, Infra/SLO Cross-check, Health Drift e Inference Nodes Online ya estan etiquetados correctamente.</p>
-        </div>
-        <div class='rounded-2xl border border-zinc-800 bg-black/30 p-5'>
-          <p class='text-xs uppercase tracking-wider text-rose-400'>Watchdog</p>
-          <p class='mt-2 text-zinc-300'>no_nodes_online es un disparador del watchdog, no una fotografia del estado actual.</p>
-        </div>
-      </div>
-    </section>
-
-    <section class='rounded-2xl border border-zinc-800 bg-zinc-950 p-8'>
-      <h2 class='text-2xl font-black text-cyan-400 mb-6'>Runtime Performance / LM Studio</h2>
-      <div class='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
-        {benchmarks.map((item) => (
-          <div class='rounded-2xl border border-zinc-800 bg-black/30 p-5'>
-            <p class='text-xs uppercase tracking-wider text-cyan-400'>{item.label}</p>
-            <p class='mt-3 text-3xl font-black text-white'>{item.value}</p>
-            <p class='mt-3 text-zinc-300'>{item.note}</p>
-          </div>
-        ))}
-      </div>
-      <div class='mt-6 rounded-2xl border border-cyan-500/20 bg-cyan-950/10 p-5'>
-        <p class='text-sm uppercase tracking-[0.25em] text-cyan-300'>Interpretacion operativa</p>
-        <p class='mt-2 text-zinc-300'>La UI de LM Studio puede mostrar tps internos que no son comparables con los tiempos end-to-end del API. Para seguimiento serio, usar la baseline y el benchmark streaming/non-streaming publicados.</p>
-      </div>
-    </section>
-
-    <section class='rounded-2xl border border-zinc-800 bg-zinc-950 p-8'>
-      <h2 class='text-2xl font-black text-cyan-400 mb-6'>LM Studio Node Profiles</h2>
-      <p class='max-w-4xl text-zinc-400'>
-        Node registry and profile bundles are intentionally separate: nodes define hardware and capabilities, while profiles define response policy and routing behavior.
-      </p>
-      <div class='mt-6 grid gap-4 xl:grid-cols-3'>
-        {nodeProfiles.map((node) => (
-          <div class='rounded-2xl border border-zinc-800 bg-black/30 p-5'>
-            <div class='flex items-start justify-between gap-4'>
-              <div>
-                <p class='text-sm font-semibold text-white'>{node.name}</p>
-                <p class='mt-1 text-sm text-cyan-300'>{node.role}</p>
-              </div>
-              <span class='rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-cyan-300'>priority {node.priority}</span>
-            </div>
-            <p class='mt-3 text-zinc-300'>{node.summary}</p>
-            <div class='mt-4 space-y-2 text-sm text-zinc-400'>
-              <p><span class='text-zinc-200'>Host:</span> {node.host}</p>
-              <p><span class='text-zinc-200'>GPU:</span> {node.gpu}</p>
-              <p><span class='text-zinc-200'>Capabilities:</span> {node.capabilities.join(', ')}</p>
-              <p><span class='text-zinc-200'>Models:</span> {node.models.join(', ')}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-      <div class='mt-6 grid gap-4 md:grid-cols-2'>
-        {profileBundles.map((bundle) => (
-          <div class='rounded-2xl border border-zinc-800 bg-black/30 p-5'>
-            <p class='text-sm font-semibold text-white'>{bundle.family}</p>
-            <p class='mt-2 text-cyan-300'>{bundle.profile}</p>
-            <p class='mt-2 text-zinc-300'>{bundle.note}</p>
-          </div>
-        ))}
-      </div>
-      <div class='mt-6 rounded-2xl border border-emerald-500/20 bg-emerald-950/10 p-5'>
-        <p class='text-sm uppercase tracking-[0.25em] text-emerald-300'>Manifest</p>
-        <p class='mt-2 text-zinc-300'>manifest_profiles.json v21.1 ties route families to these bundles; the node registry provides the hardware pool underneath.</p>
-      </div>
-    </section>
-
-    <section class='rounded-2xl border border-zinc-800 bg-zinc-950 p-8'>
-      <h2 class='text-2xl font-black text-cyan-400 mb-6'>Router Auto</h2>
-      <div class='grid gap-4 lg:grid-cols-2 xl:grid-cols-3'>
-        {routerFacts.map((item) => (
-          <div class='rounded-2xl border border-zinc-800 bg-black/30 p-5'>
-            <p class='text-sm font-semibold text-white'>{item.title}</p>
-            <p class='mt-2 text-zinc-300'>{item.text}</p>
-          </div>
-        ))}
-      </div>
-      <div class='mt-6 grid gap-4 md:grid-cols-2'>
-        <div class='rounded-2xl border border-emerald-500/20 bg-emerald-950/10 p-5'>
-          <p class='text-xs uppercase tracking-[0.25em] text-emerald-300'>Gemma smoke</p>
-          <p class='mt-2 text-zinc-300'>Router preserva google/gemma-4-e4b cuando se solicita de forma explicita. Eso si, el Gateway no siempre preserva el modelo solicitado.</p>
-        </div>
-        <div class='rounded-2xl border border-yellow-500/20 bg-yellow-950/10 p-5'>
-          <p class='text-xs uppercase tracking-[0.25em] text-yellow-300'>Estado no urgente</p>
-          <p class='mt-2 text-zinc-300'>La preservacion de modelo en Gateway queda como seguimiento no urgente; la trazabilidad de auto ya quedo documentada a nivel de source.</p>
-        </div>
-      </div>
-    </section>
-
-    <section class='rounded-2xl border border-zinc-800 bg-zinc-950 p-8'>
-      <h2 class='text-2xl font-black text-cyan-400 mb-6'>MCP Tools</h2>
-      <div class='grid gap-6 lg:grid-cols-3'>
-        {mcpTools.map((tool) => (
-          <div class='rounded-2xl border border-zinc-800 bg-black/30 p-5'>
-            <p class='text-sm font-semibold text-white'>{tool.name}</p>
-            <p class='mt-2 text-zinc-300'>{tool.note}</p>
-            <div class='mt-4 flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.2em]'>
-              <span class={'rounded-full border px-3 py-1 ' + badgeClass[tool.status]}>{tool.status}</span>
-              <span class={'rounded-full border px-3 py-1 ' + badgeClass[tool.use]}>{tool.use}</span>
-              <span class={'rounded-full border px-3 py-1 ' + riskBadgeClass[tool.risk]}>{tool.risk} risk</span>
-            </div>
-          </div>
-        ))}
-      </div>
-      <div class='mt-6 grid gap-4 md:grid-cols-3'>
-        <div class='rounded-xl bg-black/30 p-5'>
-          <p class='text-sm text-zinc-500 font-bold'>Uso activo</p>
-          <ul class='mt-2 space-y-2 text-zinc-300 text-sm'>
-            <li>• ailab_status</li>
-            <li>• ailab_runtime_health</li>
-            <li>• ailab_route_preview</li>
-          </ul>
-        </div>
-        <div class='rounded-xl bg-black/30 p-5'>
-          <p class='text-sm text-zinc-500 font-bold'>Condicion de la tool de preview</p>
-          <p class='mt-2 text-zinc-300 text-sm'>ailab_route_preview es local y heuristica, no un endpoint HTTP del router.</p>
-        </div>
-        <div class='rounded-xl bg-black/30 p-5'>
-          <p class='text-sm text-zinc-500 font-bold'>En preparación</p>
-          <ul class='mt-2 space-y-2 text-zinc-300 text-sm'>
-            <li>• sommelier</li>
-            <li>• analyze_label</li>
-            <li>• price_estimate</li>
-          </ul>
-        </div>
-      </div>
-    </section>
-
-    <section class='rounded-2xl border border-zinc-800 bg-zinc-950 p-8'>
-      <h2 class='text-2xl font-black text-cyan-400 mb-6'>Roadmap / Pendiente</h2>
-      <div class='grid gap-6 xl:grid-cols-3'>
-        {roadmap.map((block) => (
-          <div class={'rounded-xl border p-6 ' + (block.tone === 'emerald' ? 'border-emerald-500/30 bg-emerald-950/10' : block.tone === 'amber' ? 'border-yellow-500/30 bg-yellow-950/10' : 'border-rose-500/30 bg-rose-950/10')}>
-            <p class={'mb-3 text-sm uppercase tracking-wider ' + (block.tone === 'emerald' ? 'text-emerald-400' : block.tone === 'amber' ? 'text-yellow-400' : 'text-rose-400')}>{block.title}</p>
-            <ul class='space-y-2 text-zinc-400 text-sm'>
-              {block.items.map((item) => <li>• {item}</li>)}
+    <VisualSection title='Benchmark LM Studio' kicker='Tiempos y throughput'>
+      <div class='ai-visual-grid xl:grid-cols-4'>
+        {benchmarkCards.map((card) => (
+          <VisualCard title={card.title} kicker={card.kicker}>
+            <p class='ai-visual-safe-text text-zinc-300'>{card.note}</p>
+            {card.codes && (
+              <p class='mt-3 ai-visual-safe-text text-sm text-zinc-300'>Modelo: {card.codes.map((code, index) => (<><code>{code}</code>{index < card.codes.length - 1 ? ', ' : ''}</>))}</p>
+            )}
+            <ul class='mt-4 space-y-2 ai-visual-safe-text text-sm text-zinc-300'>
+              {card.bullets.map((item) => <li>- {item}</li>)}
             </ul>
-          </div>
+          </VisualCard>
         ))}
       </div>
+    </VisualSection>
 
-      <div class='mt-6 grid gap-4 md:grid-cols-2'>
-        <div class='rounded-2xl border border-emerald-500/20 bg-emerald-950/10 p-6'>
-          <p class='text-xs uppercase tracking-[0.25em] text-emerald-300'>Cerrado recientemente</p>
-          <ul class='mt-3 space-y-2 text-zinc-300 text-sm'>
-            {completed.map((item) => <li>• {item}</li>)}
-          </ul>
-        </div>
-        <div class='rounded-2xl border border-amber-500/20 bg-amber-950/10 p-6'>
-          <p class='text-xs uppercase tracking-[0.25em] text-amber-300'>Siguiente fase recomendada</p>
-          <p class='mt-3 text-zinc-300'>AI-LAB-LMSTUDIO-NODE-PROFILES-01 como bloque siguiente para aterrizar perfiles por nodo y modelo.</p>
-        </div>
-      </div>
-    </section>
-
-    <section class='rounded-2xl border border-zinc-800 bg-zinc-950 p-8'>
-      <h2 class='text-2xl font-black text-cyan-400 mb-6'>Seguridad y notas</h2>
-      <div class='grid gap-4 md:grid-cols-3'>
-        {securityNotes.map((note) => (
-          <div class='rounded-xl bg-black/30 p-5'>
-            <p class='text-zinc-300'>{note}</p>
-          </div>
+    <VisualSection title='LM Studio Node Profiles' kicker='Topolog?a y policy'>
+      <p class='max-w-4xl text-zinc-400 ai-visual-safe-text'>
+        El nodo hardware y la policy viven separados: el registry define capacidades, el manifest define el perfil y el sistema visual no debe mezclar ambos planos.
+      </p>
+      <div class='mt-6 ai-visual-grid xl:grid-cols-3'>
+        {nodeCards.map((node) => (
+          <VisualCard title={node.title} kicker={node.kicker}>
+            <p class='ai-visual-safe-text text-zinc-300'>{node.note}</p>
+            <ul class='mt-4 space-y-2 ai-visual-safe-text text-sm text-zinc-300'>
+              <li>- Host: <code>{node.host}</code></li>
+              <li>- Modelos: {node.models.map((model, index) => (<><code>{model}</code>{index < node.models.length - 1 ? ', ' : ''}</>))}</li>
+            </ul>
+          </VisualCard>
         ))}
       </div>
-      <div class='mt-6 grid gap-4 lg:grid-cols-2'>
-        <div class='rounded-2xl border border-cyan-500/20 bg-cyan-950/10 p-6'>
-          <p class='text-xs uppercase tracking-[0.25em] text-cyan-300'>Checklist visual</p>
-          <ul class='mt-3 space-y-2 text-sm text-zinc-300'>
-            <li>• Hero premium con contexto operativo.</li>
-            <li>• Cards ejecutivas para el resumen.</li>
-            <li>• Roadmap claro y corto, no changelog largo.</li>
-            <li>• Matriz visual para MCP Tools.</li>
+      <div class='mt-6 ai-visual-grid md:grid-cols-2'>
+        <VisualCard title='Perfiles declarativos' kicker='Manifest v21.1'>
+          <ul class='space-y-2 ai-visual-safe-text text-sm text-zinc-300'>
+            <li>- observe / minimal / greeting -> <code>observe_profile.json</code></li>
+            <li>- chat / general / tool_use -> <code>chat_profile.json</code></li>
+            <li>- coding / opencode_coding -> <code>coding_profile.json</code></li>
+            <li>- reasoning / opencode_reasoning -> <code>analysis_profile.json</code></li>
           </ul>
-        </div>
-        <div class='rounded-2xl border border-amber-500/20 bg-amber-950/10 p-6'>
-          <p class='text-xs uppercase tracking-[0.25em] text-amber-300'>Proxima limpieza</p>
-          <p class='mt-3 text-zinc-300'>La siguiente fase de refresco documental debe concentrarse en nodos LM Studio y el refinamiento de perfiles antes de abrir superficies mutables.</p>
-        </div>
+        </VisualCard>
+        <VisualCard title='Separaci?n de capas' kicker='Regla operativa'>
+          <p class='ai-visual-safe-text text-zinc-300'>Las etiquetas deben quedar legibles sin convertir nombres t?cnicos largos en t?tulos de jerarqu?a alta.</p>
+          <p class='mt-3 ai-visual-safe-text text-zinc-300'>La fase siguiente sigue siendo <code>AI-LAB-LMSTUDIO-NODE-PROFILES-01</code>.</p>
+        </VisualCard>
       </div>
-    </section>
+    </VisualSection>
+
+    <VisualSection title='Router Auto' kicker='Selecci?n y trazabilidad'>
+      <div class='ai-visual-grid lg:grid-cols-2 xl:grid-cols-3'>
+        {routerCards.map((item) => (
+          <VisualCard title={item.title} kicker={item.kicker}>
+            <p class='ai-visual-safe-text text-zinc-300'>{item.note}</p>
+            {item.codes && (
+              <p class='mt-3 ai-visual-safe-text text-sm text-zinc-300'>C?digo: {item.codes.map((code, index) => (<><code>{code}</code>{index < item.codes.length - 1 ? ', ' : ''}</>))}</p>
+            )}
+          </VisualCard>
+        ))}
+      </div>
+      <div class='mt-6 ai-visual-grid md:grid-cols-2'>
+        <VisualCard title='Gemma' kicker='Smoke validado'>
+          <p class='ai-visual-safe-text text-zinc-300'>La ruta expl?cita se conserva con <code>google/gemma-4-e4b</code> y el Gateway queda como seguimiento no urgente.</p>
+        </VisualCard>
+        <VisualCard title='Qwen Coder' kicker='Selecci?n can?nica'>
+          <p class='ai-visual-safe-text text-zinc-300'>La policy can?nica de <code>ailab-router/auto</code> resuelve a <code>qwen/qwen2.5-coder-14b-instruct</code> para la ruta autom?tica.</p>
+        </VisualCard>
+      </div>
+    </VisualSection>
+
+    <VisualSection title='Herramientas MCP' kicker='Solo lectura'>
+      <div class='ai-visual-grid lg:grid-cols-3'>
+        {mcpCards.map((tool) => (
+          <VisualCard title={tool.title} kicker={tool.kicker}>
+            <p class='ai-visual-safe-text text-zinc-300'>{tool.note}</p>
+          </VisualCard>
+        ))}
+      </div>
+      <div class='mt-6 ai-visual-grid md:grid-cols-3'>
+        <VisualCard title='Uso activo' kicker='Herramientas confirmadas'>
+          <ul class='space-y-2 ai-visual-safe-text text-sm text-zinc-300'>
+            <li>- <code>ailab_status</code></li>
+            <li>- <code>ailab_runtime_health</code></li>
+            <li>- <code>ailab_route_preview</code></li>
+          </ul>
+        </VisualCard>
+        <VisualCard title='Condici?n de preview' kicker='Local y heur?stica'>
+          <p class='ai-visual-safe-text text-zinc-300'>La herramienta de preview es local y heur?stica, no un endpoint HTTP del router.</p>
+        </VisualCard>
+        <VisualCard title='En preparaci?n' kicker='Sem?nticas futuras'>
+          <ul class='space-y-2 ai-visual-safe-text text-sm text-zinc-300'>
+            <li>- sommelier</li>
+            <li>- analyze_label</li>
+            <li>- price_estimate</li>
+          </ul>
+        </VisualCard>
+      </div>
+    </VisualSection>
+
+    <VisualSection title='Hoja de ruta' kicker='Pendiente'>
+      <div class='ai-visual-grid xl:grid-cols-3'>
+        <RoadmapBlock title='Pr?xima fase' tone='emerald' items={roadmapCurrent} />
+        <RoadmapBlock title='En reserva' tone='amber' items={roadmapReserve} />
+        <RoadmapBlock title='Cerrado recientemente' tone='rose' items={completed} />
+      </div>
+    </VisualSection>
+
+    <VisualSection title='Seguridad y notas' kicker='Publicaci?n'>
+      <div class='ai-visual-grid md:grid-cols-3'>
+        <VisualCard title='Idiomas' kicker='Operaci?n en espa?ol'>
+          <p class='ai-visual-safe-text text-zinc-300'>El resumen operativo, los estados y la navegaci?n visible se mantienen en espa?ol.</p>
+        </VisualCard>
+        <VisualCard title='Secretos' kicker='Validaci?n'>
+          <p class='ai-visual-safe-text text-zinc-300'>No se exponen secretos reales. <code>AILAB_MCP_TOKEN</code> solo aparece como nombre de variable.</p>
+        </VisualCard>
+        <VisualCard title='Publicaci?n' kicker='Visual gate'>
+          <p class='ai-visual-safe-text text-zinc-300'>La aceptaci?n exige revisi?n visual; compilar no basta.</p>
+        </VisualCard>
+      </div>
+    </VisualSection>
   </section>
 </Layout>
