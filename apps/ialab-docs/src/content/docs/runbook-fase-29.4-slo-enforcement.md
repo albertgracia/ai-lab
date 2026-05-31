@@ -295,6 +295,6 @@ Severidad: warning. Muchas violaciones de SLO en ventana de 10 min.
 
 - Codigo: `/opt/ai-lab/runtime/slo/`
 - Dashboard: `/opt/ai-lab/dashboards/ailab-runtime-protection.json`
-- Documentacion: `fase-29.4-slo-enforcement.md`
+- Documentacion: `historical/phases/fase-29.4-slo-enforcement.md`
 - Gateway: `/opt/ai-lab/runtime/gateway/openai_gateway.py` (buscar `_HAVE_SLO` y `FASE 29.4`)
 - Stream sanitizer: `/opt/ai-lab/runtime/gateway/stream_sanitizer.py` (buscar `set_max_streams`)

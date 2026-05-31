@@ -18,7 +18,7 @@ AI-LAB debe convertirse en un **runtime cognitivo local-first estable**: OpenCod
 
 Migración del modelo por defecto del router a `qwen/qwen2.5-coder-14b-instruct` para las rutas `fast`, `general` y `coding`. Las rutas ligeras (`minimal`, `casual`, `greeting`, `observe`) mantienen `llama-3.1-8b-instruct`.
 
-Ver: `/docs/fase-20a-migracion-qwen2.5-14b`
+Ver: `/docs/historical/phases/fase-20a-migracion-qwen2.5-14b`
 
 ---
 

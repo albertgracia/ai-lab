@@ -82,5 +82,5 @@ sudo systemctl restart ailab-router ailab-gateway
 
 ## Documentacion relacionada
 
-- `/docs/fase-20a-migracion-qwen2.5-14b`
+- `/docs/historical/phases/fase-20a-migracion-qwen2.5-14b`
 - `/docs/fase-20b-limpieza-wrappers-legacy`
