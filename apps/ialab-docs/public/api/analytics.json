@@ -1,19 +1,19 @@
 {
   "health": {
-    "score": 100,
+    "score": 70,
     "reasons": [],
-    "level": "perfect"
+    "level": "good"
   },
   "metrics": {
-    "requests_total": 22,
-    "streams_total": 0,
+    "requests_total": 27,
+    "streams_total": 4,
     "errors_total": 2,
-    "routing_decisions_total": 22,
-    "sessions_total": 20,
-    "active_sessions": 20,
-    "last_latency_ms": 9021.0,
+    "routing_decisions_total": 27,
+    "sessions_total": 24,
+    "active_sessions": 24,
+    "last_latency_ms": 3347.0,
     "active_streams": 0,
-    "online_nodes": 3,
+    "online_nodes": 2,
     "total_nodes": 3,
     "events_per_minute": 0
   },
@@ -43,5 +43,5 @@
       "gpu_overheat": 0
     }
   },
-  "timestamp": 1780265046.7160764
+  "timestamp": 1780269259.6245701
 }
