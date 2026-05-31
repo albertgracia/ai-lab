@@ -1,0 +1,15 @@
+---
+const {
+  title,
+  kicker,
+  className = '',
+} = Astro.props;
+---
+
+<div class={`ai-visual-card ${className}`.trim()}>
+  {kicker ? <p class="ai-visual-card-kicker">{kicker}</p> : null}
+  {title ? <h3 class="ai-visual-card-title mt-2 text-white">{title}</h3> : null}
+  <div class="mt-4 min-w-0 ai-visual-safe-text">
+    <slot />
+  </div>
+</div>

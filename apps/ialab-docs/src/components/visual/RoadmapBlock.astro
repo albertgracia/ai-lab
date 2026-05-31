@@ -1,0 +1,20 @@
+---
+const {
+  title,
+  tone = 'emerald',
+  items = [],
+} = Astro.props;
+
+const toneClass = {
+  emerald: 'border-emerald-500/30 bg-emerald-950/10 text-emerald-300',
+  amber: 'border-amber-500/30 bg-amber-950/10 text-amber-300',
+  rose: 'border-rose-500/30 bg-rose-950/10 text-rose-300',
+}[tone] ?? 'border-zinc-800 bg-black/30 text-zinc-300';
+---
+
+<section class={`ai-visual-roadmap ${toneClass}`}>
+  <p class="ai-visual-card-kicker">{title}</p>
+  <ul class="mt-4 space-y-2 ai-visual-safe-text text-sm text-zinc-300">
+    {items.map((item) => <li>- {item}</li>)}
+  </ul>
+</section>

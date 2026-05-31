@@ -444,3 +444,107 @@ pre.mermaid,
   white-space: nowrap;
   border-width: 0;
 }
+
+/* =========================================================
+   AI-LAB Astro Visual Guardrails
+   ========================================================= */
+
+.ai-visual-section,
+.ai-visual-card,
+.ai-visual-callout,
+.ai-visual-roadmap,
+.ai-visual-grid,
+.ai-visual-code-badge {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.ai-visual-section {
+  overflow-x: hidden;
+}
+
+.ai-visual-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+}
+
+.ai-visual-card,
+.ai-visual-callout,
+.ai-visual-roadmap {
+  overflow: hidden;
+  border: 1px solid rgb(39 39 42);
+  border-radius: 1.25rem;
+  background: rgba(9, 9, 11, 0.72);
+  box-shadow: 0 0 30px rgba(34, 211, 238, 0.05);
+}
+
+.ai-visual-card {
+  padding: 1.25rem;
+}
+
+.ai-visual-callout,
+.ai-visual-roadmap {
+  padding: 1.25rem;
+}
+
+.ai-visual-card-title,
+.ai-visual-card-kicker,
+.ai-visual-metric,
+.ai-visual-safe-text,
+.ai-visual-code-badge {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.ai-visual-card-title {
+  font-size: clamp(1.1rem, 1.8vw, 1.55rem);
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+.ai-visual-card-kicker {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgb(103 232 249);
+}
+
+.ai-visual-metric {
+  font-size: clamp(1.6rem, 3vw, 2.6rem);
+  line-height: 1.05;
+  font-weight: 900;
+}
+
+.ai-visual-code-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  border-radius: 999px;
+  border: 1px solid rgba(34, 211, 238, 0.24);
+  background: rgba(9, 9, 11, 0.92);
+  padding: 0.5rem 0.75rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+  font-size: 0.9rem;
+}
+
+.ai-visual-safe-text {
+  line-height: 1.7;
+}
+
+.ai-visual-safe-text :is(code, kbd, pre) {
+  word-break: break-word;
+}
+
+.ai-visual-roadmap ul,
+.ai-visual-roadmap ol,
+.ai-visual-card ul,
+.ai-visual-card ol,
+.ai-visual-callout ul,
+.ai-visual-callout ol {
+  min-width: 0;
+}
+

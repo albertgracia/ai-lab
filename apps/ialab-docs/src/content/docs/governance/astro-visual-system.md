@@ -130,3 +130,51 @@ Futuras fases Astro deben:
 
 - Próxima fase recomendada: AI-LAB-ASTRO-ROADMAP-MCP-TOOLS-VISUAL-APPLY-01
 - Objetivo: aplicar este estándar a /ai-infrastructure.
+
+## Publishing Guardrails
+
+### Regla principal
+
+`npm run build` no equivale a aceptaci?n visual.
+
+Una publicaci?n Astro solo puede pasar si:
+
+1. `npm run build` PASS.
+2. `npm run validate:visual` PASS.
+3. Ruta objetivo validada en `dist`.
+4. Revisi?n visual o screenshot sin overflow.
+5. Resumen final al operador en espa?ol.
+6. Sin m?tricas largas como t?tulos principales.
+7. Sin cards ad hoc fuera del sistema visual.
+8. Sin push si hay regresi?n visual.
+
+### T?tulos seguros
+
+Usar t?tulos cortos:
+- Runtime Health
+- Infra Cross-check
+- Health Drift
+- Watchdog
+- Router Auto
+- LM Studio Benchmark
+
+Mover nombres largos a badges/code:
+- `ailab_cognitive_health_score`
+- `ai_lab:runtime_health_score`
+- `no_nodes_online`
+- `google/gemma-4-e4b`
+
+### Idioma
+
+El resumen operativo debe estar en espa?ol.
+El ingl?s solo se permite para literales t?cnicos.
+
+### Visual Gate
+
+Antes de push:
+- build,
+- validate:visual,
+- screenshot/revisi?n,
+- commit,
+- no push sin aprobaci?n si hay cambios visuales.
+

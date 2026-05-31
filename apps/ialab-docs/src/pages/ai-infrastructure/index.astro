@@ -46,6 +46,46 @@ const benchmarks = [
   { label: 'LM Studio UI note', value: 'No comparable', note: 'Los tps internos de la UI no equivalen al end-to-end API.' },
 ];
 
+const nodeProfiles = [
+  {
+    name: 'nas-local',
+    role: 'Fast / fallback',
+    summary: 'RX780M low-VRAM node for lightweight routes and memory-aware fallback.',
+    gpu: 'RX780M',
+    host: '192.168.1.250:1234',
+    priority: '1',
+    capabilities: ['fast', 'lightweight', 'fallback', 'router', 'memory'],
+    models: ['google/gemma-4-e4b', 'llama-3.2-1b-instruct'],
+  },
+  {
+    name: 'rx7900xt-node',
+    role: 'Coding / reasoning',
+    summary: 'High-VRAM node for coding, reasoning and orchestration workloads.',
+    gpu: 'RX7900XT',
+    host: '192.168.1.60:1234',
+    priority: '10',
+    capabilities: ['reasoning', 'coding', 'large-context', 'multi-agent', 'orchestration', 'backend'],
+    models: ['qwen2.5-coder-32b', 'qwen2.5-coder-14b-instruct', 'google/gemma-4-26b-a4b'],
+  },
+  {
+    name: 'rx9070-node',
+    role: 'Vision / embeddings',
+    summary: 'Multimodal node for vision, embeddings and frontend-adjacent tasks.',
+    gpu: 'RX9070',
+    host: '192.168.1.50:1234',
+    priority: '8',
+    capabilities: ['vision', 'image', 'multimodal', 'embeddings', 'creative', 'frontend'],
+    models: ['flux.2-klein-9b', 'moondream2-20250414', 'text-embedding-nomic-embed-text-v1.5'],
+  },
+];
+
+const profileBundles = [
+  { family: 'observe / minimal / greeting', profile: 'observe_profile.json', note: 'Brief answers, minimal memory, fast fallback.' },
+  { family: 'chat / general / tool_use', profile: 'chat_profile.json', note: 'Conversational default with light memory.' },
+  { family: 'coding / opencode_coding', profile: 'coding_profile.json', note: 'Coding profile, higher token budget.' },
+  { family: 'reasoning / opencode_reasoning', profile: 'analysis_profile.json', note: 'Deep reasoning, full memory, reasoning enabled.' },
+];
+
 const routerFacts = [
   { title: 'Ruta canonica', text: 'ailab-router/auto mapea por defecto a qwen/qwen2.5-coder-14b-instruct en la policy.' },
   { title: 'Ranking real', text: 'choose_model() rankea por capability, performance y health antes de elegir nodo/modelo.' },
@@ -147,6 +187,46 @@ const securityNotes = [
       <div class='mt-6 rounded-2xl border border-cyan-500/20 bg-cyan-950/10 p-5'>
         <p class='text-sm uppercase tracking-[0.25em] text-cyan-300'>Interpretacion operativa</p>
         <p class='mt-2 text-zinc-300'>La UI de LM Studio puede mostrar tps internos que no son comparables con los tiempos end-to-end del API. Para seguimiento serio, usar la baseline y el benchmark streaming/non-streaming publicados.</p>
+      </div>
+    </section>
+
+    <section class='rounded-2xl border border-zinc-800 bg-zinc-950 p-8'>
+      <h2 class='text-2xl font-black text-cyan-400 mb-6'>LM Studio Node Profiles</h2>
+      <p class='max-w-4xl text-zinc-400'>
+        Node registry and profile bundles are intentionally separate: nodes define hardware and capabilities, while profiles define response policy and routing behavior.
+      </p>
+      <div class='mt-6 grid gap-4 xl:grid-cols-3'>
+        {nodeProfiles.map((node) => (
+          <div class='rounded-2xl border border-zinc-800 bg-black/30 p-5'>
+            <div class='flex items-start justify-between gap-4'>
+              <div>
+                <p class='text-sm font-semibold text-white'>{node.name}</p>
+                <p class='mt-1 text-sm text-cyan-300'>{node.role}</p>
+              </div>
+              <span class='rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-cyan-300'>priority {node.priority}</span>
+            </div>
+            <p class='mt-3 text-zinc-300'>{node.summary}</p>
+            <div class='mt-4 space-y-2 text-sm text-zinc-400'>
+              <p><span class='text-zinc-200'>Host:</span> {node.host}</p>
+              <p><span class='text-zinc-200'>GPU:</span> {node.gpu}</p>
+              <p><span class='text-zinc-200'>Capabilities:</span> {node.capabilities.join(', ')}</p>
+              <p><span class='text-zinc-200'>Models:</span> {node.models.join(', ')}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div class='mt-6 grid gap-4 md:grid-cols-2'>
+        {profileBundles.map((bundle) => (
+          <div class='rounded-2xl border border-zinc-800 bg-black/30 p-5'>
+            <p class='text-sm font-semibold text-white'>{bundle.family}</p>
+            <p class='mt-2 text-cyan-300'>{bundle.profile}</p>
+            <p class='mt-2 text-zinc-300'>{bundle.note}</p>
+          </div>
+        ))}
+      </div>
+      <div class='mt-6 rounded-2xl border border-emerald-500/20 bg-emerald-950/10 p-5'>
+        <p class='text-sm uppercase tracking-[0.25em] text-emerald-300'>Manifest</p>
+        <p class='mt-2 text-zinc-300'>manifest_profiles.json v21.1 ties route families to these bundles; the node registry provides the hardware pool underneath.</p>
       </div>
     </section>
 

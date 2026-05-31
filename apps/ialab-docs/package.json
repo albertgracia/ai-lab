@@ -9,7 +9,8 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "validate:visual": "node scripts/validate-astro-visual.mjs"
   },
   "dependencies": {
     "@astrojs/react": "^5.0.4",
