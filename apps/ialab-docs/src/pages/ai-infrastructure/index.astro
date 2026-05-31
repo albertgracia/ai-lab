@@ -1,210 +1,121 @@
 ---
 import Layout from "../../layouts/Layout.astro";
+
+const mcpTools = [
+  { name: "ailab_status", status: "confirmed", use: "active", risk: "low", note: "Estado resumido de gateway y router; read-only." },
+  { name: "ailab_runtime_health", status: "confirmed", use: "active", risk: "low", note: "Salud cognitiva/runtime detallada; read-only." },
+  { name: "ailab_route_preview", status: "confirmed", use: "active", risk: "low", note: "Clasificación heurística de rutas sin inferencia real." },
+  { name: "runtime health tool", status: "pending to confirm", use: "standby", risk: "low", note: "Tool observacional referenciada en documentación; nombre exacto pendiente de confirmar." },
+];
+
+const roadmapItems = [
+  "AILAB_MCP_TOKEN + LAN controlled mode",
+  "Tools semánticas reales: sommelier, analyze_label, price_estimate",
+  "Diagnóstico ailab-router/auto",
+  "Rioja Marketplace integration",
+  "Multi-GPU runtime scheduler",
+  "Hyper-V checkpoint (operator action)",
+];
+
+const completedItems = [
+  "Astro docs consolidation",
+  "/infra Infrastructure Inventory refresh",
+  "Grounding UNKNOWN_STATE_TOKENS fix",
+  "Prometheus rules sync validation",
+  "Observability .40 disk cleanup",
+];
 ---
 
 <Layout title="AI Infrastructure · AI-LAB">
   <section class="mx-auto max-w-7xl px-6 py-16 space-y-10">
     <header class="rounded-3xl border border-cyan-500/30 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black p-10">
-      <h1 class="text-5xl font-black text-white">AI-LAB Infrastructure</h1>
+      <p class="text-sm uppercase tracking-[0.35em] text-cyan-400">AI-LAB PLATFORM VIEW</p>
+      <h1 class="mt-4 text-5xl font-black text-white">AI Infrastructure</h1>
       <p class="mt-4 max-w-4xl text-xl leading-9 text-zinc-300">
-        Arquitectura técnica completa del AI-LAB: runtime cognitivo distribuido, observabilidad en tiempo real,
-        MCP Semantic Gateway, memoria gobernada y publicación segura.
+        Estado operativo de la plataforma AI-LAB con foco en MCP, roadmap pendiente y condiciones de activación.
+        El inventario físico actualizado vive en <a class="text-cyan-300 underline" href="/infra">/infra</a>.
       </p>
+
+      <div class="mt-6 flex flex-wrap gap-2 text-xs uppercase tracking-[0.2em] text-zinc-300">
+        <span class="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-cyan-300">MCP read-only</span>
+        <span class="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-cyan-300">LAN controlled mode pendiente</span>
+        <span class="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-cyan-300">Roadmap stabilization-first</span>
+        <span class="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-cyan-300">Publicación sanitizada</span>
+      </div>
     </header>
 
-    <!-- Capas de infraestructura -->
+    <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-5"><p class="text-xs uppercase tracking-wider text-cyan-400">MCP Gateway</p><p class="mt-2 text-zinc-300">Read-only, Streamable HTTP, bind local.</p></div>
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-5"><p class="text-xs uppercase tracking-wider text-cyan-400">Active tools</p><p class="mt-2 text-zinc-300">3 tools confirmadas y de bajo riesgo.</p></div>
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-5"><p class="text-xs uppercase tracking-wider text-cyan-400">Roadmap</p><p class="mt-2 text-zinc-300">MCP governance + semántica real + multi-GPU.</p></div>
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-5"><p class="text-xs uppercase tracking-wider text-cyan-400">Security</p><p class="mt-2 text-zinc-300">Sin tokens ni endpoints sensibles expuestos.</p></div>
+    </section>
+
     <section class="rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
       <h2 class="text-2xl font-black text-cyan-400 mb-6">Capas de Infraestructura</h2>
       <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-
-        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6">
-          <p class="text-xs uppercase tracking-wider text-cyan-400">1. Access Layer</p>
-          <p class="mt-2 text-zinc-400">Cloudflare Tunnel + Zero Trust + Traefik reverse proxy. Sin puertos entrantes abiertos. Acceso público y privado segmentado.</p>
-        </div>
-
-        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6">
-          <p class="text-xs uppercase tracking-wider text-emerald-400">2. Agent Layer</p>
-          <p class="mt-2 text-zinc-400">OpenCode como agente externo consumiendo MCP tools vía SSH tunnel. Futura expansión a LAN controlada con token.</p>
-        </div>
-
-        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6">
-          <p class="text-xs uppercase tracking-wider text-purple-400">3. MCP Semantic Gateway</p>
-          <p class="mt-2 text-zinc-400">Servidor read-only en 127.0.0.1:8091. 3 tools expuestas: ailab_status, ailab_runtime_health, ailab_route_preview. Streamable HTTP transport. 13/13 tests.</p>
-        </div>
-
-        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6">
-          <p class="text-xs uppercase tracking-wider text-yellow-400">4. Runtime API Layer</p>
-          <p class="mt-2 text-zinc-400">Runtime API Layer: Gateway (:8008), Router (:8083), Live API (:8084), Docs (:4322), Metrics (:3010). 6 systemd services con auto-restart.</p>
-        </div>
-
-        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6">
-          <p class="text-xs uppercase tracking-wider text-red-400">5. Model Nodes</p>
-          <p class="mt-2 text-zinc-400">3 nodos LM Studio (2 online, 1 offline esperado). RX9070 (.50) con 4 modelos, .250 con 6 modelos. Gateway backend en 192.168.1.50:1234/v1.</p>
-        </div>
-
-        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6">
-          <p class="text-xs uppercase tracking-wider text-cyan-400">6. Memory / Qdrant</p>
-          <p class="mt-2 text-zinc-400">8 colecciones Qdrant con políticas de retención. Cognitive history, routing history, incidents, agent knowledge. Memory governance policy implementada.</p>
-        </div>
-
-        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6">
-          <p class="text-xs uppercase tracking-wider text-emerald-400">7. GitNexus / Code Intelligence</p>
-          <p class="mt-2 text-zinc-400">Análisis estructural del código gobernado. Blast-radius, dependencias, change policy para runtime crítico. openai_gateway.py: risk HIGH.</p>
-        </div>
-
-        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6">
-          <p class="text-xs uppercase tracking-wider text-purple-400">8. Observability</p>
-          <p class="mt-2 text-zinc-400">Prometheus + Grafana + Loki. 8 dashboards, 14+ métricas personalizadas. Cognitive health, shutdown metrics, memory injection telemetry.</p>
-        </div>
-
-        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6">
-          <p class="text-xs uppercase tracking-wider text-yellow-400">9. Governance / Policies</p>
-          <p class="mt-2 text-zinc-400">Incident governance schema, memory governance policy, GitNexus runtime change policy, cognitive health layer, SLO enforcement.</p>
-        </div>
-
-        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6">
-          <p class="text-xs uppercase tracking-wider text-red-400">10. Documentation / Blog</p>
-          <p class="mt-2 text-zinc-400">Astro 6 + Starlight + Tailwind 4. Blog técnico, docs vivo, runbooks, ADRs, incidentes. Publicación dual público/privado.</p>
-        </div>
-
-        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6">
-          <p class="text-xs uppercase tracking-wider text-cyan-400">11. Storage</p>
-          <p class="mt-2 text-zinc-400">/opt/ai-lab para codigo y repo versionado. /mnt/ai-models/ai-lab para logs, backups systemd, auditorias, snapshots y staging.</p>
-        </div>
-
+        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6"><p class="text-xs uppercase tracking-wider text-cyan-400">1. Access Layer</p><p class="mt-2 text-zinc-400">Cloudflare Tunnel + Zero Trust + Traefik reverse proxy. Sin puertos entrantes abiertos.</p></div>
+        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6"><p class="text-xs uppercase tracking-wider text-emerald-400">2. Agent Layer</p><p class="mt-2 text-zinc-400">OpenCode consume MCP via SSH tunnel mientras el gateway permanece en local-only.</p></div>
+        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6"><p class="text-xs uppercase tracking-wider text-purple-400">3. MCP Semantic Gateway</p><p class="mt-2 text-zinc-400">3 tools read-only confirmadas. Transporte Streamable HTTP. `AILAB_MCP_TOKEN` reservado para control LAN.</p></div>
+        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6"><p class="text-xs uppercase tracking-wider text-yellow-400">4. Runtime API Layer</p><p class="mt-2 text-zinc-400">Gateway (:8008), Router (:8083), Live API (:8084), Docs (:4322), Metrics (:3010).</p></div>
+        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6"><p class="text-xs uppercase tracking-wider text-red-400">5. Model Nodes</p><p class="mt-2 text-zinc-400">Nodos LM Studio y GPUs locales preparados para inferencia, pero no para Multi-GPU activo.</p></div>
+        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6"><p class="text-xs uppercase tracking-wider text-cyan-400">6. Memory / Qdrant</p><p class="mt-2 text-zinc-400">Qdrant con colecciones gobernadas para history, incidents y knowledge.</p></div>
+        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6"><p class="text-xs uppercase tracking-wider text-emerald-400">7. GitNexus / Code Intelligence</p><p class="mt-2 text-zinc-400">Change policy, blast-radius y análisis estructural del código.</p></div>
+        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6"><p class="text-xs uppercase tracking-wider text-purple-400">8. Observability</p><p class="mt-2 text-zinc-400">Prometheus + Grafana + Loki con métricas de salud cognitiva y shutdown.</p></div>
+        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6"><p class="text-xs uppercase tracking-wider text-yellow-400">9. Governance / Policies</p><p class="mt-2 text-zinc-400">Incident governance, memory governance, SLO enforcement y control de cambios.</p></div>
       </div>
     </section>
 
-    <!-- Stack Tecnológico -->
     <section class="rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
-      <h2 class="text-2xl font-black text-cyan-400 mb-6">Stack Tecnológico 2026</h2>
+      <h2 class="text-2xl font-black text-cyan-400 mb-6">MCP Tools</h2>
+      <div class="grid gap-6 lg:grid-cols-2">
+        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-5"><p class="text-xs uppercase tracking-[0.25em] text-zinc-500">Estado actual</p><p class="mt-3 text-zinc-300">MCP Semantic Gateway read-only. La superficie activa se usa para estado, salud y preview de rutas.</p></div>
+        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-5"><p class="text-xs uppercase tracking-[0.25em] text-zinc-500">Activación segura</p><p class="mt-3 text-zinc-300">`AILAB_MCP_TOKEN`, LAN controlled mode, allowlist de cliente, logging auditable y aprobación del operador para acciones sensibles.</p></div>
+      </div>
 
+      <div class="mt-6 overflow-x-auto rounded-2xl border border-zinc-800">
+        <table class="min-w-full divide-y divide-zinc-800 text-left text-sm">
+          <thead class="bg-black/40 text-xs uppercase tracking-[0.2em] text-zinc-500">
+            <tr>
+              <th class="px-4 py-3">Tool</th><th class="px-4 py-3">Estado</th><th class="px-4 py-3">Uso recomendado</th><th class="px-4 py-3">Riesgo</th><th class="px-4 py-3">Nota</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-zinc-800 bg-zinc-950 text-zinc-300">
+            {mcpTools.map((tool) => (
+              <tr class="align-top">
+                <td class="px-4 py-4 font-semibold text-white">{tool.name}</td>
+                <td class="px-4 py-4">{tool.status}</td>
+                <td class="px-4 py-4">{tool.use}</td>
+                <td class="px-4 py-4">{tool.risk}</td>
+                <td class="px-4 py-4">{tool.note}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="mt-6 grid gap-4 md:grid-cols-3">
+        <div class="rounded-xl bg-black/30 p-5"><p class="text-sm text-zinc-500 font-bold">Uso activo</p><ul class="mt-2 space-y-2 text-zinc-300 text-sm"><li>• `ailab_status`</li><li>• `ailab_runtime_health`</li><li>• `ailab_route_preview`</li></ul></div>
+        <div class="rounded-xl bg-black/30 p-5"><p class="text-sm text-zinc-500 font-bold">En preparación</p><ul class="mt-2 space-y-2 text-zinc-300 text-sm"><li>• `sommelier`</li><li>• `analyze_label`</li><li>• `price_estimate`</li><li>• Rioja Marketplace integration</li></ul></div>
+        <div class="rounded-xl bg-black/30 p-5"><p class="text-sm text-zinc-500 font-bold">En reserva / standby</p><ul class="mt-2 space-y-2 text-zinc-300 text-sm"><li>• Tools mutables o destructivas</li><li>• Acciones que escriben estado/runtime</li><li>• Flujos que requieren aprobación del operador</li></ul></div>
+      </div>
+    </section>
+
+    <section class="rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
+      <h2 class="text-2xl font-black text-cyan-400 mb-6">Roadmap / Pendiente</h2>
       <div class="grid gap-6 md:grid-cols-2">
-
-        <div>
-          <p class="text-xs uppercase tracking-wider text-cyan-400 mb-3">Runtime / Backend</p>
-          <ul class="space-y-2 text-zinc-400 text-sm">
-            <li>• Python 3.14.x en /opt/ai-lab/.venv</li>
-            <li>• OpenAI-compatible Gateway :8008 (FastAPI)</li>
-            <li>• AI-LAB Router :8083 (FastAPI)</li>
-            <li>• systemd services: ailab-gateway, ailab-router, ailab-mcp-semantic-gateway, ailab-live-api, ailab-docs, ailab-metrics</li>
-            <li>• Live API :8084 (estado/topologia Docker y GPU)</li>
-            <li>• Docs Astro :4322 (ailab-docs.service, 255 paginas, 11s build)</li>
-            <li>• Metrics dashboard :3010 (Next.js SSR)</li>
-            <li>• LM Studio nodes (192.168.1.50 RX9070, 192.168.1.250)</li>
-          </ul>
-        </div>
-
-        <div>
-          <p class="text-xs uppercase tracking-wider text-emerald-400 mb-3">MCP / Agent Layer</p>
-          <ul class="space-y-2 text-zinc-400 text-sm">
-            <li>• MCP Python SDK / Streamable HTTP</li>
-            <li>• ailab-mcp-semantic-gateway :8091 (3 tools read-only)</li>
-            <li>• OpenCode Windows integration vía SSH tunnel</li>
-            <li>• Futuro: AILAB_MCP_TOKEN + LAN controlled mode</li>
-          </ul>
-        </div>
-
-        <div>
-          <p class="text-xs uppercase tracking-wider text-purple-400 mb-3">Memory / Vector</p>
-          <ul class="space-y-2 text-zinc-400 text-sm">
-            <li>• Qdrant (8 colecciones auditadas y gobernadas)</li>
-            <li>• cognitive_history, routing_history, incidents</li>
-            <li>• ai_lab_memory, agent_knowledge</li>
-            <li>• Memory governance policy implementada</li>
-          </ul>
-        </div>
-
-        <div>
-          <p class="text-xs uppercase tracking-wider text-yellow-400 mb-3">Governance</p>
-          <ul class="space-y-2 text-zinc-400 text-sm">
-            <li>• GitNexus: análisis estructural de código</li>
-            <li>• GitNexus governed runtime change policy</li>
-            <li>• Incident governance schema</li>
-            <li>• Memory governance policy</li>
-            <li>• Runtime stability checkpoints y tags</li>
-          </ul>
-        </div>
-
-        <div>
-          <p class="text-xs uppercase tracking-wider text-red-400 mb-3">Observability</p>
-          <ul class="space-y-2 text-zinc-400 text-sm">
-            <li>• Prometheus + Grafana + Loki</li>
-            <li>• Cognitive health metrics</li>
-            <li>• Shutdown metrics (503 durante graceful stop)</li>
-            <li>• Memory injection telemetry</li>
-            <li>• Gateway latency p50/p95</li>
-          </ul>
-        </div>
-
-        <div>
-          <p class="text-xs uppercase tracking-wider text-cyan-400 mb-3">Docs / Frontend</p>
-          <ul class="space-y-2 text-zinc-400 text-sm">
-            <li>• Astro 6 + Starlight + React 19 + Tailwind 4</li>
-            <li>• Blog técnico y documentación viva</li>
-            <li>• Cloudflare Pages + Tunnel</li>
-            <li>• Split público/privado vía Zero Trust</li>
-          </ul>
-        </div>
-
+        <div class="rounded-xl border border-emerald-500/30 bg-emerald-950/10 p-6"><p class="text-sm uppercase tracking-wider text-emerald-400 mb-3">✓ Bloques recientes</p><ul class="space-y-2 text-zinc-400 text-sm">{completedItems.map((item) => <li>• {item}</li>)}</ul></div>
+        <div class="rounded-xl border border-yellow-500/30 bg-yellow-950/10 p-6"><p class="text-sm uppercase tracking-wider text-yellow-400 mb-3">◇ Pendiente</p><ul class="space-y-2 text-zinc-400 text-sm">{roadmapItems.map((item) => <li>• {item}</li>)}</ul></div>
       </div>
     </section>
 
-    <!-- Seguridad -->
     <section class="rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
-      <h2 class="text-2xl font-black text-cyan-400 mb-6">Seguridad</h2>
+      <h2 class="text-2xl font-black text-cyan-400 mb-6">Seguridad y notas</h2>
       <div class="grid gap-4 md:grid-cols-3">
-        <div class="rounded-xl bg-black/30 p-5">
-          <p class="text-sm text-zinc-500 font-bold">MCP Binding</p>
-          <p class="mt-2 text-zinc-400">127.0.0.1 exclusivo. Sin exposición LAN. Acceso OpenCode por SSH tunnel.</p>
-        </div>
-        <div class="rounded-xl bg-black/30 p-5">
-          <p class="text-sm text-zinc-500 font-bold">No Secrets in Logs</p>
-          <p class="mt-2 text-zinc-400">Tokens, prompts completos y datos sensibles no se almacenan en logs del MCP gateway.</p>
-        </div>
-        <div class="rounded-xl bg-black/30 p-5">
-          <p class="text-sm text-zinc-500 font-bold">Zero Trust</p>
-          <p class="mt-2 text-zinc-400">Cloudflare Access + Tunnel. Sin puertos SSH/RDP abiertos a Internet.</p>
-        </div>
+        <div class="rounded-xl bg-black/30 p-5"><p class="text-sm text-zinc-500 font-bold">Binding MCP</p><p class="mt-2 text-zinc-400">Local-only por defecto. Sin exposición de secretos ni tokens reales.</p></div>
+        <div class="rounded-xl bg-black/30 p-5"><p class="text-sm text-zinc-500 font-bold">Sugerencia operativa</p><p class="mt-2 text-zinc-400">`/infra` contiene el inventario físico; esta página concentra el roadmap y MCP.</p></div>
+        <div class="rounded-xl bg-black/30 p-5"><p class="text-sm text-zinc-500 font-bold">Pendiente de confirmar</p><p class="mt-2 text-zinc-400">Cualquier tool adicional no confirmada queda marcada como pendiente de confirmar.</p></div>
       </div>
     </section>
-
-    <!-- Estado actual vs Roadmap -->
-    <section class="rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
-      <h2 class="text-2xl font-black text-cyan-400 mb-6">Estado actual vs Roadmap</h2>
-      <div class="grid gap-6 md:grid-cols-2">
-        <div class="rounded-xl border border-emerald-500/30 bg-emerald-950/10 p-6">
-          <p class="text-sm uppercase tracking-wider text-emerald-400 mb-3">✓ Implementado</p>
-          <ul class="space-y-2 text-zinc-400 text-sm">
-            <li>• MCP Semantic Gateway (3 tools, 13/13 tests)</li>
-            <li>• OpenCode Windows MCP integration (SSH tunnel)</li>
-            <li>• Qdrant memory governance policy</li>
-            <li>• Memory injection telemetry</li>
-            <li>• Incident governance schema</li>
-            <li>• Cognitive health layer</li>
-            <li>• GitNexus governed runtime change policy</li>
-            <li>• Gateway graceful shutdown</li>
-            <li>• OpenCode skills sync (44 skills)</li>
-            <li>• Router/ialab docs duplicate unit cleanup</li>
-            <li>• Auxiliary storage (/mnt/ai-models/ai-lab)</li>
-            <li>• Live API systemd hardening and audit</li>
-            <li>• Sudo password sanitized from all runbooks</li>
-            <li>• Docs build (255 pages, 11s)</li>
-          </ul>
-        </div>
-        <div class="rounded-xl border border-yellow-500/30 bg-yellow-950/10 p-6">
-          <p class="text-sm uppercase tracking-wider text-yellow-400 mb-3">◇ Roadmap / Pendiente</p>
-          <ul class="space-y-2 text-zinc-400 text-sm">
-            <li>• AILAB_MCP_TOKEN + LAN controlled mode</li>
-            <li>• Tools semánticas reales (sommelier, analyze_label, price_estimate)</li>
-            <li>• Diagnóstico ailab-router/auto</li>
-            <li>• Rioja Marketplace integration</li>
-            <li>• Multi-GPU runtime scheduler</li>
-            <li>• Hyper-V checkpoint (operator action)</li>
-          </ul>
-        </div>
-      </div>
-    </section>
-
   </section>
 </Layout>
