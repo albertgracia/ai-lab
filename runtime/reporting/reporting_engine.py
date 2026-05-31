@@ -482,6 +482,7 @@ def build_operator_summary(
         active_gpus = [e for e in gpu_entities if e.get("operational_state") == "active"]
         expected_offline = [e.get("entity_id", "?") for e in gpu_entities if e.get("inventory_state") == "expected_offline"]
         unexpected_down = [e.get("entity_id", "?") for e in gpu_entities if e.get("inventory_state") not in ("expected_offline",) and e.get("operational_state") in ("down", "inactive") and e.get("observed_state") in ("unavailable", "down")]
+        offline_gpus = [e for e in gpu_entities if e.get("inventory_state") == "expected_offline"]
     except ImportError:
         gpu_summaries = []
         if sensor_snapshot:
