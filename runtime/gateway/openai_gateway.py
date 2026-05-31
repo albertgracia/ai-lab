@@ -65,6 +65,7 @@ from runtime.context.runtime_grounding import (
     is_runtime_grounded_prompt,
     validate_response_against_observed_runtime,
     build_grounding_envelope,
+    UNKNOWN_STATE_TOKENS,
 )
 from runtime.errors import (
     build_error_event, emit_error, classify_exception,

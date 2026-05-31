@@ -154,7 +154,7 @@ class TestBuildGroundingEnvelope:
             "estado GPU RX9070", runtime_context=SAMPLE_RUNTIME_CONTEXT,
             entity_registry=registry,
         )
-        assert envelope["contract_version"] == "30I-G"
+        assert envelope["contract_version"] == "31E"
         assert envelope["intent_detected"] is True
         assert envelope["grounded"] is True
         assert "observed_entities" in envelope
