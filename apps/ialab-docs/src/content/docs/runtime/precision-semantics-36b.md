@@ -4,7 +4,6 @@ summary: "Semántica de precisión operacional: partial evidence, conflicts, sta
 order: 21
 ---
 
-# Precision Semantics (36B)
 
 La precisión operacional no es “exactitud del texto”, sino **integridad de evidencia**.
 

@@ -10,7 +10,6 @@ tags:
   - architecture
 ---
 
-# GitNexus como observabilidad estructural
 
 Prometheus te dice qué está pasando ahora.
 

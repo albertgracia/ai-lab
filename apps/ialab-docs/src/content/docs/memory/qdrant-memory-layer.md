@@ -4,7 +4,6 @@ summary: "Colecciones reales en Qdrant y su rol en AI-LAB: operational recall, i
 order: 7
 ---
 
-# Qdrant Memory Layer
 
 Qdrant es la capa de memoria persistente del runtime. Se usa para retrieval semántico y para retener señales operacionales a través de reinicios.
 

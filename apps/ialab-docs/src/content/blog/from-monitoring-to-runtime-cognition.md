@@ -11,7 +11,6 @@ tags:
   - multigpu
 ---
 
-# De Monitoring a Runtime Cognition: el salto de AI-LAB antes de Multi-GPU
 
 La tentación habitual es pensar que el siguiente gran hito es más hardware. En AI-LAB no fue así.
 

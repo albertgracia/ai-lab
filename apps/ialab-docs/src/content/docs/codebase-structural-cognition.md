@@ -4,7 +4,6 @@ summary: "Documentación técnica de la integración GitNexus como memoria estru
 order: 35
 ---
 
-# Cognición Estructural de la Codebase
 
 ## Overview
 

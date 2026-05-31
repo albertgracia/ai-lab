@@ -4,7 +4,6 @@ summary: "Decidir que la gobernanza es parte del runtime: evidencia, límites de
 order: 41
 ---
 
-# ADR-001 — Runtime Governance
 
 ## Contexto
 

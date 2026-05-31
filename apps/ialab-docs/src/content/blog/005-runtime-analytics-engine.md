@@ -12,7 +12,6 @@ tags:
   - observability
 ---
 
-# Implementing a Real-Time Runtime Analytics Engine for Local AI Infrastructure
 
 ## El Problema
 

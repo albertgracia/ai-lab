@@ -12,7 +12,6 @@ tags:
   - distributed-ai
 ---
 
-# AI-LAB OpenAI Gateway Stable
 
 ## Objetivo
 

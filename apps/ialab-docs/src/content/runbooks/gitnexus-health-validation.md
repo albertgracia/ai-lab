@@ -3,7 +3,6 @@ title: "GitNexus Health Validation"
 summary: "Validación mínima de resiliencia GitNexus: proceso, puerto, /api/health, stats nodes/edges, y recuperación."
 ---
 
-# GitNexus Health Validation
 
 ## Validación mínima
 

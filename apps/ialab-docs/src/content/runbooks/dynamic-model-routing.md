@@ -13,7 +13,6 @@ tags:
 date: "2026-05-14"
 ---
 
-# Dynamic Capability-Aware Model Routing
 
 ## Objetivo
 

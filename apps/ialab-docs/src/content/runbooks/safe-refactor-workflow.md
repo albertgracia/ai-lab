@@ -4,7 +4,6 @@ summary: "Procedimiento para refactorizar código del runtime usando GitNexus bl
 severity: "high"
 ---
 
-# Safe Refactor Workflow
 
 ## Propósito
 

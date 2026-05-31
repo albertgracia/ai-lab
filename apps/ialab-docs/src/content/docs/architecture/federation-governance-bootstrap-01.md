@@ -4,7 +4,6 @@ summary: "Transición de runtime monolítico a federación cognitiva operacional
 order: 9
 ---
 
-# Federation Governance Bootstrap (01)
 
 Objetivo: preparar federación sin romper runtime actual.
 

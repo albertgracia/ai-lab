@@ -4,7 +4,6 @@ summary: "Clasificación determinista de intención operativa como metadata: evi
 order: 22
 ---
 
-# Operator Intent Reasoning (36C)
 
 36C introduce una capa ligera para identificar **qué tipo de respuesta operativa** es segura para una petición, sin ejecutar ni autorizar cambios.
 

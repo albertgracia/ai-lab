@@ -3,7 +3,6 @@ title: "Runbook — Model Unloaded en LM Studio"
 summary: "Procedimiento de diagnostico y recuperacion ante el error 'Model unloaded.' que afecta al router AI-LAB cuando LM Studio descarga el modelo por TTL."
 ---
 
-# Runbook — Model Unloaded en LM Studio
 
 ## Síntoma
 

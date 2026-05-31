@@ -4,7 +4,6 @@ summary: "Runbook para revisar metricas por route family, detectar regresiones d
 order: 37
 ---
 
-# Runbook — FASE 19.4 Route Family Observability
 
 ## Objetivo
 

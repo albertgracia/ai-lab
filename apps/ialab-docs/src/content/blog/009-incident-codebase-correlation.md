@@ -10,7 +10,6 @@ tags:
   - runtime
 ---
 
-# Cómo AI-LAB Correlaciona Incidentes del Runtime con el Código Fuente
 
 Cuando se dispara un incidente del runtime — por ejemplo, `INC-AUTHORITY-AUTHORITY-FRESHNESS-...` — el operador necesita saber dos cosas:
 

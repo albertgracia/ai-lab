@@ -5,7 +5,6 @@ description: Coordinador distribuido con routing cognitivo, failover automático
 pubDate: 2026-05-14
 ---
 
-# Distributed Execution Coordinator
 
 ## Objetivo
 

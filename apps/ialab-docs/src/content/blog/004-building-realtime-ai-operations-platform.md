@@ -12,7 +12,6 @@ tags:
   - realtime
 ---
 
-# Building a Realtime AI Operations Platform with Astro, Grafana and SSE
 
 ## El Problema
 

@@ -4,7 +4,6 @@ summary: "Procedimiento para revisar el blast radius de módulos del runtime ant
 severity: "medium"
 ---
 
-# Blast Radius Review
 
 ## Propósito
 

@@ -4,7 +4,6 @@ summary: "Cómo el runtime separa autoridad (Prometheus) de cognición: freshnes
 order: 20
 ---
 
-# Authority-Backed Cognition (35C)
 
 AI-LAB separa dos cosas:
 

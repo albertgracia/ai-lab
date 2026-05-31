@@ -4,7 +4,6 @@ summary: "Arquitectura de las tres capas de verdad del runtime AI-LAB: Prometheu
 order: 10
 ---
 
-# Capas de Verdad del Runtime
 
 AI-LAB opera sobre tres capas de verdad independientes, cada una con responsabilidades, fuentes y consumidores distintos.
 

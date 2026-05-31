@@ -3,7 +3,6 @@ title: "Runbook — FASE 17 Observabilidad y Gobernanza"
 summary: "Procedimientos operativos para el panel de gobernanza Prometheus/Grafana: verificacion de metricas, solucion de scrape, diagnostico de paneles sin datos."
 ---
 
-# Runbook — FASE 17 Observabilidad y Gobernanza
 
 ## Verificacion rapida
 

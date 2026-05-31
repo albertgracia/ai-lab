@@ -4,7 +4,6 @@ summary: "Experimento: integrar GitNexus como memoria estructural del codebase A
 order: 90
 ---
 
-# Integración de Memoria Estructural GitNexus
 
 ## Objetivos
 

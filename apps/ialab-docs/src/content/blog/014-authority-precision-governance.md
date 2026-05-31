@@ -9,7 +9,6 @@ tags:
   - governance
 ---
 
-# Authority + Precision + Governance: el triángulo operativo
 
 En AI-LAB estas tres piezas no son teoría; son límites prácticos.
 

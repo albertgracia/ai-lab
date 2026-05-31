@@ -12,7 +12,6 @@ tags:
   - governance
 ---
 
-# AI-LAB evoluciona: MCP Semantic Gateway, OpenCode y gobierno operacional del runtime
 
 ## Introducción
 

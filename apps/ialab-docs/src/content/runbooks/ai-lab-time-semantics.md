@@ -3,7 +3,6 @@ title: "AI-LAB Time Semantics"
 summary: "Doctrina temporal: UTC canónico interno + Europe/Madrid para presentación operativa. Riesgos del drift y validación NTP."
 ---
 
-# AI-LAB Time Semantics
 
 ## Doctrina
 

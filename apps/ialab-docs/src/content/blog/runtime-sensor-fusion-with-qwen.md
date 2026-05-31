@@ -12,7 +12,6 @@ tags:
   - prometheus
 ---
 
-# Sensor Fusion con Qwen: cuando el LLM ve su propia infraestructura
 
 ## La pregunta
 

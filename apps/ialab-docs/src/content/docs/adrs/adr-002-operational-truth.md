@@ -4,7 +4,6 @@ summary: "Separar discovery/inventory de operational: active/loaded/discoverable
 order: 42
 ---
 
-# ADR-002 — Operational Truth
 
 ## Contexto
 

@@ -3,7 +3,6 @@ title: "GitNexus Index Rebuild"
 summary: "Rebuild seguro del índice GitNexus: cuándo forzar, cómo validar, y qué NO indexar (runtime/state)."
 ---
 
-# GitNexus Index Rebuild
 
 ## Cuándo hacer rebuild
 

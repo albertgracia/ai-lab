@@ -3,7 +3,6 @@ title: "GitNexus Service Recovery"
 summary: "Recuperación del servicio GitNexus: health, restart seguro, conflictos de puerto y verificación de index cargado."
 ---
 
-# GitNexus Service Recovery
 
 ## Health rápido
 

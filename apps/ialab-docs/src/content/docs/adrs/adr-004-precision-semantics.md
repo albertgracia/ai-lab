@@ -4,7 +4,6 @@ summary: "Definir precisión como integridad de evidencia (partial/conflicts/sta
 order: 44
 ---
 
-# ADR-004 — Precision Semantics
 
 ## Contexto
 

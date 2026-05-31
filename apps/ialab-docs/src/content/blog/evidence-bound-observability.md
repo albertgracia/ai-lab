@@ -11,7 +11,6 @@ tags:
   - llm
 ---
 
-# Evidence-Bound Observability: cómo evitar que un LLM invente infraestructura
 
 Un LLM sin límites tiende a rellenar huecos. Un runtime serio no puede permitírselo.
 

@@ -4,7 +4,6 @@ summary: "Mapa de estabilización arquitectónica: desacoplos mínimos, consiste
 order: 5
 ---
 
-# Architecture Stabilization Map (ARCH-STABILIZATION-PASS-01)
 
 ARCH-STABILIZATION-PASS-01 fue un esfuerzo de estabilización: cambios pequeños, verificables y orientados a reducir fragilidad, no a añadir features.
 

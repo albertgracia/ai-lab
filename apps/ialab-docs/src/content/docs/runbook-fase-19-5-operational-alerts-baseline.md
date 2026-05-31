@@ -4,7 +4,6 @@ summary: "Runbook para validar las alertas basicas por route family y comprobar 
 order: 39
 ---
 
-# Runbook — FASE 19.5 Operational Alerts Baseline
 
 ## Objetivo
 

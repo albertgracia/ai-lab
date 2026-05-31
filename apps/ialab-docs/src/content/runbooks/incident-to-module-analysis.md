@@ -4,7 +4,6 @@ summary: "Procedimiento para correlacionar incidentes activos con módulos del c
 severity: "high"
 ---
 
-# Incident-to-Module Analysis
 
 ## Propósito
 

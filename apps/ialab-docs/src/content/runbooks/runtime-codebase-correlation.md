@@ -4,7 +4,6 @@ summary: "Procedimiento para correlacionar métricas de runtime con estructura d
 severity: "info"
 ---
 
-# Runtime-Codebase Correlation
 
 ## Propósito
 

@@ -9,7 +9,6 @@ tags:
   - stability
 ---
 
-# Por qué retrasamos Multi-GPU
 
 Multi-GPU añade scheduling, placement, colas y nuevos failure domains.
 

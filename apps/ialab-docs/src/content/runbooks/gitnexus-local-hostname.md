@@ -3,7 +3,6 @@ title: "GitNexus Local Hostname (LAN)"
 summary: "Acceso estable a GitNexus en LAN vía gitnexus.ai-lab.local (sin Cloudflare)."
 ---
 
-# GitNexus Local Hostname (LAN)
 
 ## Objetivo
 

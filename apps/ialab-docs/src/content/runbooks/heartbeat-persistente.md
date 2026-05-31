@@ -5,7 +5,6 @@ description: Servicio persistente de monitorización distribuida del cluster AI-
 pubDate: 2026-05-14
 ---
 
-# Heartbeat Persistente AI-LAB
 
 ## Objetivo
 

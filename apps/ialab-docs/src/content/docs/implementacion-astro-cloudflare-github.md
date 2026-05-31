@@ -4,7 +4,6 @@ summary: "Arquitectura de despliegue del portal AI-LAB con dos blogs (publico y 
 order: 22
 ---
 
-# Implementacion — Astro + Cloudflare Pages + GitHub
 
 ## Arquitectura General
 

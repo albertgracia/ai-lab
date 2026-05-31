@@ -4,7 +4,6 @@ summary: "Disciplina de worktree para AI-LAB: qué se commitea, qué nunca se co
 order: 31
 ---
 
-# Worktree Governance
 
 La trazabilidad git es parte de la gobernanza del runtime.
 

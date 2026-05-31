@@ -9,7 +9,6 @@ tags:
   - stability
 ---
 
-# AI-LAB ya no es un homelab clásico
 
 Un homelab clásico suele ser: “un modelo grande + un frontend + un par de scripts”.
 

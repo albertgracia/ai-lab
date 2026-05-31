@@ -11,7 +11,6 @@ tags:
   - governance
 ---
 
-# Evidence-Bound Reporting: cómo AI-LAB evita inventar su propio estado
 
 ## El informe que inventó una NVIDIA A100
 

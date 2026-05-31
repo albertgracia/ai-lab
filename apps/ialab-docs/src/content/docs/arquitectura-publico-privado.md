@@ -4,7 +4,6 @@ summary: "Split de metricas: sitio privado con datos reales via Service Token, s
 order: 26
 ---
 
-# Arquitectura Publico-Privado de Metricas
 
 ## Problema
 

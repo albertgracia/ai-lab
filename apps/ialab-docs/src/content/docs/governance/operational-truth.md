@@ -4,7 +4,6 @@ summary: "Separación activa entre active/loaded/discoverable/disabled y cómo e
 order: 30
 ---
 
-# Operational Truth vs Discoverable
 
 AI-LAB distingue explícitamente:
 

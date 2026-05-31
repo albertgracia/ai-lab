@@ -4,7 +4,6 @@ summary: "Motor de analiticas en tiempo real del AI-LAB: health score, metricas 
 order: 24
 ---
 
-# Runtime Analytics Engine — Documentacion Tecnica
 
 ## Arquitectura
 

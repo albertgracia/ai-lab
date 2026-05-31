@@ -4,7 +4,6 @@ summary: "Manejo de apagado limpio del gateway para evitar SIGKILL por timeout d
 order: 72
 ---
 
-# Gateway Graceful Shutdown
 
 ## Problema detectado
 

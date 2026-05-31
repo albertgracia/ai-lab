@@ -10,7 +10,6 @@ tags:
   - architecture
 ---
 
-# Dando a AI-LAB Memoria Estructural de la Codebase con GitNexus
 
 AI-LAB ha evolucionado de un LLM gateway simple a un runtime con cognición operacional. Se monitoriza a sí mismo via Prometheus, razona sobre su estado mediante sensor fusion y toma decisiones de governance basadas en evidencia.
 

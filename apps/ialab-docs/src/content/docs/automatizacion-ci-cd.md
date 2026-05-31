@@ -4,7 +4,6 @@ summary: "Sistema de publicacion automatica para ambos blogs: Cloudflare Pages p
 order: 23
 ---
 
-# Automatización CI/CD — Publicación Automática de Documentación
 
 ## ¿Cómo funciona?
 

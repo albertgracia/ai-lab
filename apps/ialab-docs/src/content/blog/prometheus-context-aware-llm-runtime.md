@@ -12,7 +12,6 @@ tags:
   - engineering
 ---
 
-# Cómo construimos un runtime contextualmente consciente de su propia infraestructura
 
 ## El problema de la conciencia contextual
 

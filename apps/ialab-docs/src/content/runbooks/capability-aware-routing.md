@@ -12,7 +12,6 @@ tags:
 date: "2026-05-14"
 ---
 
-# Capability-Aware Distributed Routing
 
 ## Objetivo
 

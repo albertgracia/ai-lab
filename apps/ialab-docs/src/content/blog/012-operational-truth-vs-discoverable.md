@@ -9,7 +9,6 @@ tags:
   - governance
 ---
 
-# Operational Truth vs Discoverable Models
 
 Que un modelo aparezca en `/v1/models` no significa que sea operativo.
 

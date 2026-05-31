@@ -11,7 +11,6 @@ tags:
   - architecture
 ---
 
-# AI-LAB: por qué consolidamos la madurez del runtime antes de Multi-GPU
 
 ## El espejismo del segundo nodo
 

@@ -4,7 +4,6 @@ summary: "Adoptar GitNexus como verdad estructural grounded para blast radius, c
 order: 45
 ---
 
-# ADR-005 — Structural Cognition (GitNexus)
 
 ## Contexto
 

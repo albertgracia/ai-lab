@@ -4,7 +4,6 @@ summary: "Decidir explícitamente retrasar Multi-GPU hasta que maturity/governan
 order: 46
 ---
 
-# ADR-006 — No Multi-GPU Before Stabilization
 
 ## Contexto
 

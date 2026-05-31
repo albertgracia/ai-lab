@@ -4,7 +4,6 @@ summary: "Problemas comunes con Cloudflare Pages y sus soluciones: submodules gi
 order: 21
 ---
 
-# Runbook — Cloudflare Pages y Sincronizacion
 
 ## Indice de Problemas
 

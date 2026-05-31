@@ -4,7 +4,6 @@ summary: "Mapa real de dominios (bounded contexts) del runtime AI-LAB: núcleo c
 order: 1
 ---
 
-# AI-LAB Runtime Domains
 
 Este documento realinea la arquitectura del runtime a sus **dominios reales** (bounded contexts) tras:
 

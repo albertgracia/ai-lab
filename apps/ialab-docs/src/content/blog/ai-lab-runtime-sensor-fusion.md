@@ -11,7 +11,6 @@ tags:
   - prometheus
 ---
 
-# AI-LAB Runtime Sensor Fusion: de métricas a contexto operacional
 
 Prometheus suele acabar en el mismo sitio: dashboards, alertas y poco más. En AI-LAB, 30I cambia esa relación. Las métricas dejan de ser solo telemetría y pasan a formar parte del contexto operativo del runtime.
 

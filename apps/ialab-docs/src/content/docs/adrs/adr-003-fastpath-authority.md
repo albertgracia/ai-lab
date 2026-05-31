@@ -4,7 +4,6 @@ summary: "Fastpath operacional debe basarse en autoridad/evidencia y mantener re
 order: 43
 ---
 
-# ADR-003 — Fastpath + Authority
 
 ## Contexto
 

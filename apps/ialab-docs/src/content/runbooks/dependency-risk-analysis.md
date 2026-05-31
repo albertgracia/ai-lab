@@ -4,7 +4,6 @@ summary: "Análisis de riesgos estructurales del grafo de dependencias del runti
 severity: "medium"
 ---
 
-# Dependency Risk Analysis
 
 ## Propósito
 

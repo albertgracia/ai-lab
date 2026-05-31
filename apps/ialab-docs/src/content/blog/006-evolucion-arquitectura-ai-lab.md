@@ -12,7 +12,6 @@ tags:
   - governance
 ---
 
-# AI-LAB: La Evolución Arquitectónica de un Runtime de IA Local
 
 AI-LAB empezó como un simple wrapper HTTP entre OpenCode/OpenWebUI y LM Studio. Hoy es una plataforma cognitiva local con 9 servicios, 22 fases completadas, streaming real, agentic runtime simulado y observabilidad de grado producción. Este es el recorrido.
 
