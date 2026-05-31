@@ -8,13 +8,45 @@ const mcpTools = [
   { name: "runtime health tool", status: "pending to confirm", use: "standby", risk: "low", note: "Tool observacional referenciada en documentación; nombre exacto pendiente de confirmar." },
 ];
 
-const roadmapItems = [
-  "AILAB_MCP_TOKEN + LAN controlled mode",
-  "Tools semánticas reales: sommelier, analyze_label, price_estimate",
-  "Diagnóstico ailab-router/auto",
-  "Rioja Marketplace integration",
-  "Multi-GPU runtime scheduler",
-  "Hyper-V checkpoint (operator action)",
+const statusBadgeClasses = {
+  confirmed: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
+  active: "border-cyan-500/30 bg-cyan-500/10 text-cyan-300",
+  pending: "border-yellow-500/30 bg-yellow-500/10 text-yellow-300",
+  "pending to confirm": "border-yellow-500/30 bg-yellow-500/10 text-yellow-300",
+  standby: "border-zinc-700 bg-zinc-900 text-zinc-300",
+  reserved: "border-rose-500/30 bg-rose-500/10 text-rose-300",
+  "read-only": "border-cyan-500/30 bg-cyan-500/10 text-cyan-300",
+  mutable: "border-rose-500/30 bg-rose-500/10 text-rose-300",
+  "operator action": "border-amber-500/30 bg-amber-500/10 text-amber-300",
+};
+
+const riskBadgeClasses = {
+  low: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
+  medium: "border-yellow-500/30 bg-yellow-500/10 text-yellow-300",
+  high: "border-rose-500/30 bg-rose-500/10 text-rose-300",
+};
+
+const roadmapBlocks = [
+  {
+    title: "Próximo bloque recomendado",
+    tone: "emerald",
+    items: ["AI-LAB-RUNTIME-HEALTH-SCORE-SEMANTICS-AUDIT-01"],
+  },
+  {
+    title: "Pendiente operativo",
+    tone: "yellow",
+    items: ["AILAB_MCP_TOKEN + LAN controlled mode", "Tools semánticas reales: sommelier, analyze_label, price_estimate", "Diagnóstico ailab-router/auto"],
+  },
+  {
+    title: "En reserva",
+    tone: "rose",
+    items: ["Multi-GPU runtime scheduler", "Hyper-V checkpoint", "Acciones mutables/destructivas"],
+  },
+  {
+    title: "Operator action",
+    tone: "amber",
+    items: ["Hyper-V checkpoint (operator action)"],
+  },
 ];
 
 const completedItems = [
@@ -29,34 +61,59 @@ const completedItems = [
 <Layout title="AI Infrastructure · AI-LAB">
   <section class="mx-auto max-w-7xl px-6 py-16 space-y-10">
     <header class="rounded-3xl border border-cyan-500/30 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black p-10">
-      <p class="text-sm uppercase tracking-[0.35em] text-cyan-400">AI-LAB PLATFORM VIEW</p>
+      <div class="flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.28em] text-cyan-300">
+        <span class="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1">AI-LAB PLATFORM VIEW</span>
+        <span class="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1 text-zinc-300">read-only</span>
+        <span class="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-emerald-300">visual standard applied</span>
+      </div>
       <h1 class="mt-4 text-5xl font-black text-white">AI Infrastructure</h1>
       <p class="mt-4 max-w-4xl text-xl leading-9 text-zinc-300">
         Estado operativo de la plataforma AI-LAB con foco en MCP, roadmap pendiente y condiciones de activación.
         El inventario físico actualizado vive en <a class="text-cyan-300 underline" href="/infra">/infra</a>.
       </p>
 
-      <div class="mt-6 flex flex-wrap gap-2 text-xs uppercase tracking-[0.2em] text-zinc-300">
-        <span class="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-cyan-300">MCP read-only</span>
-        <span class="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-cyan-300">LAN controlled mode pendiente</span>
-        <span class="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-cyan-300">Roadmap stabilization-first</span>
-        <span class="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-cyan-300">Publicación sanitizada</span>
+      <div class="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-5">
+          <p class="text-xs uppercase tracking-wider text-cyan-400">MCP Gateway</p>
+          <div class="mt-3 flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.2em]">
+            <span class={`rounded-full border px-3 py-1 ${statusBadgeClasses["read-only"]}`}>read-only</span>
+            <span class={`rounded-full border px-3 py-1 ${statusBadgeClasses.active}`}>active</span>
+          </div>
+          <p class="mt-3 text-zinc-300">Read-only, Streamable HTTP, bind local.</p>
+        </div>
+        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-5">
+          <p class="text-xs uppercase tracking-wider text-cyan-400">Active tools</p>
+          <div class="mt-3 flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.2em]">
+            <span class={`rounded-full border px-3 py-1 ${statusBadgeClasses.confirmed}`}>confirmed</span>
+            <span class={`rounded-full border px-3 py-1 ${statusBadgeClasses.active}`}>active</span>
+          </div>
+          <p class="mt-3 text-zinc-300">3 tools confirmadas y de bajo riesgo.</p>
+        </div>
+        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-5">
+          <p class="text-xs uppercase tracking-wider text-cyan-400">Roadmap</p>
+          <div class="mt-3 flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.2em]">
+            <span class={`rounded-full border px-3 py-1 ${statusBadgeClasses.pending}`}>pending</span>
+            <span class={`rounded-full border px-3 py-1 ${statusBadgeClasses.standby}`}>standby</span>
+          </div>
+          <p class="mt-3 text-zinc-300">MCP governance + semántica real + multi-GPU.</p>
+        </div>
+        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-5">
+          <p class="text-xs uppercase tracking-wider text-cyan-400">Security</p>
+          <div class="mt-3 flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.2em]">
+            <span class={`rounded-full border px-3 py-1 ${statusBadgeClasses["operator action"]}`}>operator action</span>
+            <span class={`rounded-full border px-3 py-1 ${statusBadgeClasses.reserved}`}>reserved</span>
+          </div>
+          <p class="mt-3 text-zinc-300">Sin tokens ni endpoints sensibles expuestos.</p>
+        </div>
       </div>
     </header>
-
-    <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-5"><p class="text-xs uppercase tracking-wider text-cyan-400">MCP Gateway</p><p class="mt-2 text-zinc-300">Read-only, Streamable HTTP, bind local.</p></div>
-      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-5"><p class="text-xs uppercase tracking-wider text-cyan-400">Active tools</p><p class="mt-2 text-zinc-300">3 tools confirmadas y de bajo riesgo.</p></div>
-      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-5"><p class="text-xs uppercase tracking-wider text-cyan-400">Roadmap</p><p class="mt-2 text-zinc-300">MCP governance + semántica real + multi-GPU.</p></div>
-      <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-5"><p class="text-xs uppercase tracking-wider text-cyan-400">Security</p><p class="mt-2 text-zinc-300">Sin tokens ni endpoints sensibles expuestos.</p></div>
-    </section>
 
     <section class="rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
       <h2 class="text-2xl font-black text-cyan-400 mb-6">Capas de Infraestructura</h2>
       <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6"><p class="text-xs uppercase tracking-wider text-cyan-400">1. Access Layer</p><p class="mt-2 text-zinc-400">Cloudflare Tunnel + Zero Trust + Traefik reverse proxy. Sin puertos entrantes abiertos.</p></div>
         <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6"><p class="text-xs uppercase tracking-wider text-emerald-400">2. Agent Layer</p><p class="mt-2 text-zinc-400">OpenCode consume MCP via SSH tunnel mientras el gateway permanece en local-only.</p></div>
-        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6"><p class="text-xs uppercase tracking-wider text-purple-400">3. MCP Semantic Gateway</p><p class="mt-2 text-zinc-400">3 tools read-only confirmadas. Transporte Streamable HTTP. `AILAB_MCP_TOKEN` reservado para control LAN.</p></div>
+        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6"><p class="text-xs uppercase tracking-wider text-purple-400">3. MCP Semantic Gateway</p><p class="mt-2 text-zinc-400">3 tools read-only confirmadas. Transporte Streamable HTTP. AILAB_MCP_TOKEN reservado para control LAN.</p></div>
         <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6"><p class="text-xs uppercase tracking-wider text-yellow-400">4. Runtime API Layer</p><p class="mt-2 text-zinc-400">Gateway (:8008), Router (:8083), Live API (:8084), Docs (:4322), Metrics (:3010).</p></div>
         <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6"><p class="text-xs uppercase tracking-wider text-red-400">5. Model Nodes</p><p class="mt-2 text-zinc-400">Nodos LM Studio y GPUs locales preparados para inferencia, pero no para Multi-GPU activo.</p></div>
         <div class="rounded-2xl border border-zinc-800 bg-black/30 p-6"><p class="text-xs uppercase tracking-wider text-cyan-400">6. Memory / Qdrant</p><p class="mt-2 text-zinc-400">Qdrant con colecciones gobernadas para history, incidents y knowledge.</p></div>
@@ -69,43 +126,75 @@ const completedItems = [
     <section class="rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
       <h2 class="text-2xl font-black text-cyan-400 mb-6">MCP Tools</h2>
       <div class="grid gap-6 lg:grid-cols-2">
-        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-5"><p class="text-xs uppercase tracking-[0.25em] text-zinc-500">Estado actual</p><p class="mt-3 text-zinc-300">MCP Semantic Gateway read-only. La superficie activa se usa para estado, salud y preview de rutas.</p></div>
-        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-5"><p class="text-xs uppercase tracking-[0.25em] text-zinc-500">Activación segura</p><p class="mt-3 text-zinc-300">`AILAB_MCP_TOKEN`, LAN controlled mode, allowlist de cliente, logging auditable y aprobación del operador para acciones sensibles.</p></div>
+        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-5">
+          <p class="text-xs uppercase tracking-[0.25em] text-zinc-500">Estado actual</p>
+          <p class="mt-3 text-zinc-300">MCP Semantic Gateway read-only. La superficie activa se usa para estado, salud y preview de rutas.</p>
+        </div>
+        <div class="rounded-2xl border border-zinc-800 bg-black/30 p-5">
+          <p class="text-xs uppercase tracking-[0.25em] text-zinc-500">Activación segura</p>
+          <p class="mt-3 text-zinc-300">AILAB_MCP_TOKEN, LAN controlled mode, allowlist de cliente, logging auditable y aprobación del operador para acciones sensibles.</p>
+        </div>
       </div>
 
-      <div class="mt-6 overflow-x-auto rounded-2xl border border-zinc-800">
-        <table class="min-w-full divide-y divide-zinc-800 text-left text-sm">
-          <thead class="bg-black/40 text-xs uppercase tracking-[0.2em] text-zinc-500">
-            <tr>
-              <th class="px-4 py-3">Tool</th><th class="px-4 py-3">Estado</th><th class="px-4 py-3">Uso recomendado</th><th class="px-4 py-3">Riesgo</th><th class="px-4 py-3">Nota</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-zinc-800 bg-zinc-950 text-zinc-300">
-            {mcpTools.map((tool) => (
-              <tr class="align-top">
-                <td class="px-4 py-4 font-semibold text-white">{tool.name}</td>
-                <td class="px-4 py-4">{tool.status}</td>
-                <td class="px-4 py-4">{tool.use}</td>
-                <td class="px-4 py-4">{tool.risk}</td>
-                <td class="px-4 py-4">{tool.note}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div class="mt-6 grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
+        {mcpTools.map((tool) => (
+          <div class="rounded-2xl border border-zinc-800 bg-gradient-to-b from-black/50 to-zinc-950 p-5">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <p class="text-sm font-semibold text-white">{tool.name}</p>
+                <p class="mt-1 text-xs uppercase tracking-[0.2em] text-zinc-500">{tool.note}</p>
+              </div>
+            </div>
+            <div class="mt-4 flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.2em]">
+              <span class={`rounded-full border px-3 py-1 ${statusBadgeClasses[tool.status] || statusBadgeClasses.pending}`}>{tool.status}</span>
+              <span class={`rounded-full border px-3 py-1 ${statusBadgeClasses[tool.use] || statusBadgeClasses.standby}`}>{tool.use}</span>
+              <span class={`rounded-full border px-3 py-1 ${riskBadgeClasses[tool.risk] || riskBadgeClasses.low}`}>{tool.risk} risk</span>
+            </div>
+          </div>
+        ))}
       </div>
 
       <div class="mt-6 grid gap-4 md:grid-cols-3">
-        <div class="rounded-xl bg-black/30 p-5"><p class="text-sm text-zinc-500 font-bold">Uso activo</p><ul class="mt-2 space-y-2 text-zinc-300 text-sm"><li>• `ailab_status`</li><li>• `ailab_runtime_health`</li><li>• `ailab_route_preview`</li></ul></div>
-        <div class="rounded-xl bg-black/30 p-5"><p class="text-sm text-zinc-500 font-bold">En preparación</p><ul class="mt-2 space-y-2 text-zinc-300 text-sm"><li>• `sommelier`</li><li>• `analyze_label`</li><li>• `price_estimate`</li><li>• Rioja Marketplace integration</li></ul></div>
+        <div class="rounded-xl bg-black/30 p-5"><p class="text-sm text-zinc-500 font-bold">Uso activo</p><ul class="mt-2 space-y-2 text-zinc-300 text-sm"><li>• ailab_status</li><li>• ailab_runtime_health</li><li>• ailab_route_preview</li></ul></div>
+        <div class="rounded-xl bg-black/30 p-5"><p class="text-sm text-zinc-500 font-bold">En preparación</p><ul class="mt-2 space-y-2 text-zinc-300 text-sm"><li>• sommelier</li><li>• analyze_label</li><li>• price_estimate</li><li>• Rioja Marketplace integration</li></ul></div>
         <div class="rounded-xl bg-black/30 p-5"><p class="text-sm text-zinc-500 font-bold">En reserva / standby</p><ul class="mt-2 space-y-2 text-zinc-300 text-sm"><li>• Tools mutables o destructivas</li><li>• Acciones que escriben estado/runtime</li><li>• Flujos que requieren aprobación del operador</li></ul></div>
       </div>
     </section>
 
     <section class="rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
       <h2 class="text-2xl font-black text-cyan-400 mb-6">Roadmap / Pendiente</h2>
-      <div class="grid gap-6 md:grid-cols-2">
-        <div class="rounded-xl border border-emerald-500/30 bg-emerald-950/10 p-6"><p class="text-sm uppercase tracking-wider text-emerald-400 mb-3">✓ Bloques recientes</p><ul class="space-y-2 text-zinc-400 text-sm">{completedItems.map((item) => <li>• {item}</li>)}</ul></div>
-        <div class="rounded-xl border border-yellow-500/30 bg-yellow-950/10 p-6"><p class="text-sm uppercase tracking-wider text-yellow-400 mb-3">◇ Pendiente</p><ul class="space-y-2 text-zinc-400 text-sm">{roadmapItems.map((item) => <li>• {item}</li>)}</ul></div>
+      <div class="grid gap-6 xl:grid-cols-4">
+        {roadmapBlocks.map((block) => (
+          <div class={`rounded-xl border p-6 ${block.tone === 'emerald' ? 'border-emerald-500/30 bg-emerald-950/10' : block.tone === 'yellow' ? 'border-yellow-500/30 bg-yellow-950/10' : block.tone === 'rose' ? 'border-rose-500/30 bg-rose-950/10' : 'border-amber-500/30 bg-amber-950/10'}`}>
+            <p class={`mb-3 text-sm uppercase tracking-wider ${block.tone === 'emerald' ? 'text-emerald-400' : block.tone === 'yellow' ? 'text-yellow-400' : block.tone === 'rose' ? 'text-rose-400' : 'text-amber-400'}`}>
+              {block.title}
+            </p>
+            <ul class="space-y-2 text-zinc-400 text-sm">
+              {block.items.map((item) => <li>• {item}</li>)}
+            </ul>
+          </div>
+        ))}
+      </div>
+      <div class="mt-6 rounded-2xl border border-zinc-800 bg-black/30 p-5">
+        <p class="text-xs uppercase tracking-[0.25em] text-zinc-500">Inventario físico</p>
+        <p class="mt-2 text-zinc-300">/infra concentra el inventario físico actualizado y no se duplica aquí.</p>
+      </div>
+      <div class="mt-6 grid gap-4 md:grid-cols-2">
+        <div class="rounded-xl border border-emerald-500/30 bg-emerald-950/10 p-6">
+          <p class="text-sm uppercase tracking-wider text-emerald-400 mb-3">✓ Bloques recientes</p>
+          <ul class="space-y-2 text-zinc-400 text-sm">{completedItems.map((item) => <li>• {item}</li>)}</ul>
+        </div>
+        <div class="rounded-xl border border-yellow-500/30 bg-yellow-950/10 p-6">
+          <p class="text-sm uppercase tracking-wider text-yellow-400 mb-3">◇ Pendiente</p>
+          <ul class="space-y-2 text-zinc-400 text-sm">
+            <li>• AILAB_MCP_TOKEN + LAN controlled mode</li>
+            <li>• Tools semánticas reales: sommelier, analyze_label, price_estimate</li>
+            <li>• Diagnóstico ailab-router/auto</li>
+            <li>• Rioja Marketplace integration</li>
+            <li>• Multi-GPU runtime scheduler</li>
+            <li>• Hyper-V checkpoint (operator action)</li>
+          </ul>
+        </div>
       </div>
     </section>
 
@@ -113,8 +202,24 @@ const completedItems = [
       <h2 class="text-2xl font-black text-cyan-400 mb-6">Seguridad y notas</h2>
       <div class="grid gap-4 md:grid-cols-3">
         <div class="rounded-xl bg-black/30 p-5"><p class="text-sm text-zinc-500 font-bold">Binding MCP</p><p class="mt-2 text-zinc-400">Local-only por defecto. Sin exposición de secretos ni tokens reales.</p></div>
-        <div class="rounded-xl bg-black/30 p-5"><p class="text-sm text-zinc-500 font-bold">Sugerencia operativa</p><p class="mt-2 text-zinc-400">`/infra` contiene el inventario físico; esta página concentra el roadmap y MCP.</p></div>
+        <div class="rounded-xl bg-black/30 p-5"><p class="text-sm text-zinc-500 font-bold">Sugerencia operativa</p><p class="mt-2 text-zinc-400">/infra contiene el inventario físico; esta página concentra el roadmap y MCP.</p></div>
         <div class="rounded-xl bg-black/30 p-5"><p class="text-sm text-zinc-500 font-bold">Pendiente de confirmar</p><p class="mt-2 text-zinc-400">Cualquier tool adicional no confirmada queda marcada como pendiente de confirmar.</p></div>
+      </div>
+
+      <div class="mt-6 grid gap-4 lg:grid-cols-2">
+        <div class="rounded-2xl border border-cyan-500/20 bg-cyan-950/10 p-6">
+          <p class="text-xs uppercase tracking-[0.25em] text-cyan-300">Checklist visual</p>
+          <ul class="mt-3 space-y-2 text-sm text-zinc-300">
+            <li>• Hero premium con estado y contexto.</li>
+            <li>• Cards ejecutivas en lugar de secciones planas.</li>
+            <li>• Roadmap separado de cualquier changelog.</li>
+            <li>• Matriz visual para MCP Tools.</li>
+          </ul>
+        </div>
+        <div class="rounded-2xl border border-amber-500/20 bg-amber-950/10 p-6">
+          <p class="text-xs uppercase tracking-[0.25em] text-amber-300">Próxima fase</p>
+          <p class="mt-3 text-zinc-300">AI-LAB-RUNTIME-HEALTH-SCORE-SEMANTICS-AUDIT-01 como siguiente bloque recomendado antes de ampliar superficies mutables.</p>
+        </div>
       </div>
     </section>
   </section>
