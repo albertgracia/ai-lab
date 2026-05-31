@@ -123,6 +123,9 @@ runtime/*
 !runtime/fastpath/contracts.py
 !runtime/fastpath/operational_fastpath.py
 
+# Routing
+runtime/routing/__pycache__/
+
 !runtime/precision/
 !runtime/precision/__init__.py
 !runtime/precision/contracts.py
@@ -230,7 +233,9 @@ runtime/domain_registry/**/*.pyc
 !runtime/contracts/*.py
 runtime/contracts/__pycache__/
 runtime/contracts/**/*.pyc
-sessions/
+
+# Runtime state (live - do not track)
+runtime/state/*
 
 
 # Runtime/private heavy data
@@ -248,3 +253,6 @@ apps/metrics-dashboard/node_modules
 
 # Infrastructure / external stacks (not part of AI-LAB runtime)
 stacks/
+
+# Prometheus backup artifacts
+monitorizacion/prometheus/rules/*.bak
