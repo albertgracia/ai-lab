@@ -32,15 +32,15 @@ runtime/codebase/
 
 ```mermaid
 flowchart TD
-  SRC[/runtime/*.py/] --> IDX[npx gitnexus analyze\n(index-only)]
-  IDX --> GRAPH[Structural graph\n(nodes/edges/clusters/flows)]
-  GRAPH --> SIG[Signals\n(hotspots, coupling, blast radius, drift)]
-  SIG --> INC[Incident intelligence\n(enrichment)]
-  SIG --> GOV[Governance / Validation\n(risk gates)]
-  SIG --> REP[Reporting\n(operator summary)]
+  SRC["runtime/*.py"] --> IDX["npx gitnexus analyze<br/>(index-only)"]
+  IDX --> GRAPH["Structural graph<br/>(nodes / edges / clusters / flows)"]
+  GRAPH --> SIG["Signals<br/>(hotspots, coupling, blast radius, drift)"]
+  SIG --> INC["Incident intelligence<br/>(enrichment)"]
+  SIG --> GOV["Governance / Validation<br/>(risk gates)"]
+  SIG --> REP["Reporting<br/>(operator summary)"]
 
-  NOTE[.gitnexusignore\n(governance)] -.-> IDX
-  STATE[runtime/state/*] -. excluded .-> IDX
+  NOTE[".gitnexusignore<br/>(governance)"] -.-> IDX
+  STATE["runtime/state/*"] -. "excluded" .-> IDX
 ```
 
 ### Separación de Verdad
