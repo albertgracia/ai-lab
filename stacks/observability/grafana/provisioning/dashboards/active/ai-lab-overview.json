@@ -566,9 +566,9 @@
     },
     {
       "type": "stat",
-      "title": "RHS Can\u00f3nico",
+      "title": "Runtime/Cognitive Health Score",
       "datasource": "Prometheus",
-      "description": "Fuente can\u00f3nica: cognitive_health_layer.py. Gateway inactive = UNAVAILABLE",
+      "description": "Canonical runtime/cognitive health score derived from /runtime/health. Primary metric for NOC runtime state.",
       "gridPos": {
         "h": 4,
         "w": 4,
@@ -636,9 +636,9 @@
     },
     {
       "type": "stat",
-      "title": "RHS Cross-check",
+      "title": "Infra/SLO Cross-check",
       "datasource": "Prometheus",
-      "description": "Prometheus Composite / Auxiliar. Normalizado de 0-1 a 0-100",
+      "description": "Binary Prometheus recording rule used as infrastructure/SLO cross-check. This is not the canonical cognitive/runtime health score.",
       "gridPos": {
         "h": 4,
         "w": 4,
@@ -700,7 +700,7 @@
     },
     {
       "type": "stat",
-      "title": "Drift Indicator",
+      "title": "Health Drift",
       "datasource": "Prometheus",
       "description": "Diferencia absoluta entre RHS can\u00f3nico y cross-check. >20 = warning",
       "gridPos": {
@@ -820,7 +820,7 @@
       "type": "stat",
       "title": "Routing Confidence",
       "datasource": "Prometheus",
-      "description": "Confianza del enrutamiento cognitivo. Normalizado a 0-100",
+      "description": "Current routing confidence reported by cognitive health.",
       "gridPos": {
         "h": 4,
         "w": 4,
@@ -881,9 +881,9 @@
     },
     {
       "type": "stat",
-      "title": "Nodes Online",
+      "title": "Inference Nodes Online",
       "datasource": "Prometheus",
-      "description": "Nodos online detectados por cognitive_health_layer",
+      "description": "Number of runtime inference nodes currently online as exported by cognitive health.",
       "gridPos": {
         "h": 4,
         "w": 4,
@@ -942,7 +942,7 @@
       "type": "stat",
       "title": "Watchdog Triggers",
       "datasource": "Prometheus",
-      "description": "Total de disparos del watchdog cognitivo",
+      "description": "Watchdog trigger. Should force critical only when there are zero online inference nodes.",
       "gridPos": {
         "h": 4,
         "w": 6,

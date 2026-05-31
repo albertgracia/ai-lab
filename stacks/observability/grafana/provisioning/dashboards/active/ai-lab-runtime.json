@@ -449,9 +449,9 @@
     },
     {
       "type": "timeseries",
-      "title": "RHS Historical",
+      "title": "Runtime/Cognitive Health Historical",
       "datasource": "Prometheus",
-      "description": "Fuente can\u00f3nica: cognitive_health_layer.py (0-100). Gateway inactive = sin datos",
+      "description": "Canonical runtime/cognitive health score derived from /runtime/health. Primary metric for NOC runtime state.",
       "gridPos": {
         "h": 8,
         "w": 12,
@@ -494,9 +494,9 @@
     },
     {
       "type": "timeseries",
-      "title": "RHS Cross-check Historical",
+      "title": "Infra/SLO Cross-check Historical",
       "datasource": "Prometheus",
-      "description": "Prometheus Composite Recording Rule. Normalizado de 0-1 a 0-100",
+      "description": "Binary Prometheus recording rule used as infrastructure/SLO cross-check. This is not the canonical cognitive/runtime health score.",
       "gridPos": {
         "h": 8,
         "w": 12,
@@ -539,7 +539,7 @@
     },
     {
       "type": "timeseries",
-      "title": "Drift Graph",
+      "title": "Health Drift Graph",
       "datasource": "Prometheus",
       "description": "abs(RHS can\u00f3nico - RHS cross-check). >20 = warning",
       "gridPos": {
@@ -604,7 +604,7 @@
       "type": "timeseries",
       "title": "Routing Confidence Historical",
       "datasource": "Prometheus",
-      "description": "Confianza del enrutamiento cognitivo. Normalizado a 0-100",
+      "description": "Current routing confidence reported by cognitive health.",
       "gridPos": {
         "h": 8,
         "w": 12,
@@ -649,7 +649,7 @@
       "type": "timeseries",
       "title": "Nodes Online Historical",
       "datasource": "Prometheus",
-      "description": "Nodos online detectados por cognitive_health_layer",
+      "description": "Number of runtime inference nodes currently online as exported by cognitive health.",
       "gridPos": {
         "h": 8,
         "w": 8,

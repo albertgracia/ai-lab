@@ -2163,9 +2163,9 @@
     },
     {
       "type": "stat",
-      "title": "Runtime Health Score",
+      "title": "Runtime/Cognitive Health Score",
       "datasource": "Prometheus",
-      "description": "Normalized runtime health (0-1)",
+      "description": "Canonical runtime/cognitive health score derived from /runtime/health. Primary metric for NOC runtime state.",
       "gridPos": {
         "h": 4,
         "w": 4,
@@ -3809,7 +3809,7 @@
       "type": "stat",
       "title": "Cognitive Health Score",
       "datasource": "Prometheus",
-      "description": "FASE 37A: metadata-only cognitive health score (0-100)",
+      "description": "Canonical runtime/cognitive health score derived from /runtime/health. Primary metric for NOC runtime state.",
       "gridPos": { "h": 4, "w": 6, "x": 0, "y": 97 },
       "fieldConfig": {
         "defaults": {
@@ -3840,7 +3840,7 @@
       "type": "stat",
       "title": "Routing Confidence",
       "datasource": "Prometheus",
-      "description": "FASE 37A: metadata-only routing confidence (0-1)",
+      "description": "Current routing confidence reported by cognitive health.",
       "gridPos": { "h": 4, "w": 6, "x": 6, "y": 97 },
       "fieldConfig": {
         "defaults": {
@@ -3871,7 +3871,7 @@
       "type": "stat",
       "title": "Nodes Online",
       "datasource": "Prometheus",
-      "description": "FASE 37A: nodes online (metadata-only)",
+      "description": "Number of runtime inference nodes currently online as exported by cognitive health.",
       "gridPos": { "h": 4, "w": 4, "x": 12, "y": 97 },
       "fieldConfig": {
         "defaults": {
@@ -3901,7 +3901,7 @@
       "type": "stat",
       "title": "Watchdog Triggers",
       "datasource": "Prometheus",
-      "description": "FASE 37A: watchdog triggers total (metadata-only)",
+      "description": "Watchdog trigger. Should force critical only when there are zero online inference nodes.",
       "gridPos": { "h": 4, "w": 4, "x": 16, "y": 97 },
       "fieldConfig": {
         "defaults": {
