@@ -8,7 +8,7 @@
         "Image": "traefik:latest",
         "Labels": "com.docker.compose.config-hash=6780ff2b9cf0676df176207420e3fc74ed5f6885479f7b307d28d61f72954b6b,com.docker.compose.container-number=1,com.docker.compose.depends_on=,com.docker.compose.image=sha256:eb328e2c806c53aafbbace6c451fa54d268961261a85452fcf0fb752a30c17be,com.docker.compose.oneoff=False,com.docker.compose.project.config_files=/opt/ai-lab/stacks/traefik/docker-compose.yml,com.docker.compose.project.working_dir=/opt/ai-lab/stacks/traefik,com.docker.compose.project=traefik,com.docker.compose.service=traefik,com.docker.compose.version=5.1.3,org.opencontainers.image.description=A modern reverse-proxy,org.opencontainers.image.documentation=https://docs.traefik.io,org.opencontainers.image.source=https://github.com/traefik/traefik,org.opencontainers.image.title=Traefik,org.opencontainers.image.url=https://traefik.io,org.opencontainers.image.vendor=Traefik Labs,org.opencontainers.image.version=v3.7.0",
         "LocalVolumes": "0",
-        "Mounts": "/var/run/docker.sock,/opt/ai-lab/data/traefik/acme.json,/opt/ai-lab/data/traefik/dynamic,/etc/localtime",
+        "Mounts": "/etc/localtime,/var/run/docker.sock,/opt/ai-lab/data/traefik/acme.json,/opt/ai-lab/data/traefik/dynamic",
         "Names": "traefik",
         "Networks": "proxy",
         "Platform": {
@@ -16,10 +16,10 @@
           "os": "linux"
         },
         "Ports": "0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp",
-        "RunningFor": "5 hours ago",
+        "RunningFor": "6 hours ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 5 hours"
+        "Status": "Up 6 hours"
       },
       {
         "Command": "\"bash start.sh\"",
@@ -39,7 +39,7 @@
         "RunningFor": "13 days ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 5 hours (healthy)"
+        "Status": "Up 6 hours (healthy)"
       },
       {
         "Command": "\"/usr/bin/promtail -config.file=/etc/promtail/promtail.yml\"",
@@ -48,7 +48,7 @@
         "Image": "grafana/promtail:3.4.2",
         "Labels": "cluster=ai-lab,com.docker.compose.config-hash=6d30a25a335dab0bd6643662b679eeca08b9ad3961738551cd43fdd8b419abe2,com.docker.compose.container-number=1,com.docker.compose.depends_on=,com.docker.compose.image=sha256:c6e9a987ca086cbfef945b8ebd708eb09f98b5e78bfb659e4e5a8b3bd604d11b,com.docker.compose.oneoff=False,com.docker.compose.project.config_files=/opt/ai-lab/stacks/promtail/docker-compose.yml,com.docker.compose.project.working_dir=/opt/ai-lab/stacks/promtail,com.docker.compose.project=promtail,com.docker.compose.replace=promtail,com.docker.compose.service=promtail,com.docker.compose.version=5.1.3,env=homelab,org.opencontainers.image.ref.name=ubuntu,org.opencontainers.image.version=24.04,role=logs",
         "LocalVolumes": "0",
-        "Mounts": "/opt/ai-lab/stacks/promtail/promtail.yml,/run/log,/var/lib/docker/containers,/var/log,/var/log/journal,/var/run/docker.sock",
+        "Mounts": "/var/run/docker.sock,/opt/ai-lab/stacks/promtail/promtail.yml,/run/log,/var/lib/docker/containers,/var/log,/var/log/journal",
         "Names": "promtail",
         "Networks": "proxy",
         "Platform": {
@@ -59,7 +59,7 @@
         "RunningFor": "2 weeks ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 5 hours"
+        "Status": "Up 6 hours"
       },
       {
         "Command": "\"/run.sh\"",
@@ -79,7 +79,7 @@
         "RunningFor": "2 weeks ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 5 hours (healthy)"
+        "Status": "Up 6 hours (healthy)"
       },
       {
         "Command": "\"/docker-entrypoint.sh nginx -g 'daemon off;'\"",
@@ -99,7 +99,7 @@
         "RunningFor": "2 weeks ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 5 hours"
+        "Status": "Up 6 hours"
       },
       {
         "Command": "\"docker-entrypoint.sh node server.js\"",
@@ -119,7 +119,7 @@
         "RunningFor": "2 weeks ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 5 hours"
+        "Status": "Up 6 hours"
       },
       {
         "Command": "\"/docker-entrypoint.sh nginx -g 'daemon off;'\"",
@@ -139,7 +139,7 @@
         "RunningFor": "2 weeks ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 5 hours"
+        "Status": "Up 6 hours"
       },
       {
         "Command": "\"/docker-entrypoint.sh nginx -g 'daemon off;'\"",
@@ -159,7 +159,7 @@
         "RunningFor": "2 weeks ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 5 hours"
+        "Status": "Up 6 hours"
       },
       {
         "Command": "\"/docker-entrypoint.sh nginx -g 'daemon off;'\"",
@@ -179,7 +179,7 @@
         "RunningFor": "2 weeks ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 5 hours"
+        "Status": "Up 6 hours"
       },
       {
         "Command": "\"/docker-entrypoint.sh nginx -g 'daemon off;'\"",
@@ -199,7 +199,7 @@
         "RunningFor": "2 weeks ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 5 hours"
+        "Status": "Up 6 hours"
       },
       {
         "Command": "\"docker-entrypoint.sh node server.js\"",
@@ -219,7 +219,7 @@
         "RunningFor": "2 weeks ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 5 hours"
+        "Status": "Up 6 hours"
       },
       {
         "Command": "\"docker-entrypoint.sh postgres\"",
@@ -239,7 +239,7 @@
         "RunningFor": "2 weeks ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 5 hours (healthy)"
+        "Status": "Up 6 hours (healthy)"
       },
       {
         "Command": "\"/usr/bin/cadvisor -logtostderr --docker_only=true --housekeeping_interval=30s\"",
@@ -248,7 +248,7 @@
         "Image": "gcr.io/cadvisor/cadvisor:v0.52.1",
         "Labels": "cluster=ai-lab,com.docker.compose.config-hash=adc117158f2d1b39d3f13b27d5e30cf02bd5d9b20ddbced53a49ce547eb2d4f9,com.docker.compose.container-number=1,com.docker.compose.depends_on=,com.docker.compose.image=sha256:f40e65878e25c2e78ea037f73a449527a0fb994e303dc3e34cb6b187b4b91435,com.docker.compose.oneoff=False,com.docker.compose.project.config_files=/opt/ai-lab/stacks/observability/docker-compose.yml,com.docker.compose.project.working_dir=/opt/ai-lab/stacks/observability,com.docker.compose.project=observability,com.docker.compose.service=cadvisor,com.docker.compose.version=5.1.3,env=homelab,role=containers",
         "LocalVolumes": "0",
-        "Mounts": "/,/sys,/var/lib/docker,/var/run,/dev/disk",
+        "Mounts": "/sys,/var/lib/docker,/var/run,/dev/disk,/",
         "Names": "cadvisor",
         "Networks": "proxy",
         "Platform": {
@@ -259,7 +259,7 @@
         "RunningFor": "2 weeks ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 5 hours (healthy)"
+        "Status": "Up 6 hours (healthy)"
       },
       {
         "Command": "\"/bin/node_exporter --path.procfs=/host/proc --path.sysfs=/host/sys --path.rootfs=/rootfs --collector.systemd --collector.processes --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($|/)\"",
@@ -268,7 +268,7 @@
         "Image": "prom/node-exporter:v1.9.1",
         "Labels": "cluster=ai-lab,com.docker.compose.config-hash=0bff548a7ed9656c2e98f49e06398f64b8536aed6634d14fc280f3844fc5151a,com.docker.compose.container-number=1,com.docker.compose.depends_on=,com.docker.compose.image=sha256:d00a542e409ee618a4edc67da14dd48c5da66726bbd5537ab2af9c1dfc442c8a,com.docker.compose.oneoff=False,com.docker.compose.project.config_files=/opt/ai-lab/stacks/observability/docker-compose.yml,com.docker.compose.project.working_dir=/opt/ai-lab/stacks/observability,com.docker.compose.project=observability,com.docker.compose.service=node-exporter,com.docker.compose.version=5.1.3,env=homelab,maintainer=The Prometheus Authors <prometheus-developers@googlegroups.com>,role=system",
         "LocalVolumes": "0",
-        "Mounts": "/proc,/sys,/",
+        "Mounts": "/,/proc,/sys",
         "Names": "node-exporter",
         "Networks": "proxy",
         "Platform": {
@@ -279,7 +279,7 @@
         "RunningFor": "2 weeks ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 5 hours"
+        "Status": "Up 6 hours"
       },
       {
         "Command": "\"./entrypoint.sh\"",
@@ -299,7 +299,7 @@
         "RunningFor": "3 weeks ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 5 hours"
+        "Status": "Up 6 hours"
       },
       {
         "Command": "\"/portainer\"",
@@ -319,7 +319,7 @@
         "RunningFor": "3 weeks ago",
         "Size": "0B",
         "State": "running",
-        "Status": "Up 5 hours"
+        "Status": "Up 6 hours"
       }
     ]
   },
@@ -327,7 +327,7 @@
     {
       "node": "RX9070",
       "host": "192.168.1.50",
-      "vram_used_gib": 13.69,
+      "vram_used_gib": 13.95,
       "vram_total_gib": 15.81
     },
     {
