@@ -99,6 +99,13 @@ export default defineConfig({
           ],
         },
         {
+          label: "Audits",
+          collapsed: false,
+          items: [
+            { label: "Index", link: "/audits/" },
+          ],
+        },
+        {
           label: "Historical",
           collapsed: false,
           items: [{ autogenerate: { directory: "historical" } }],
