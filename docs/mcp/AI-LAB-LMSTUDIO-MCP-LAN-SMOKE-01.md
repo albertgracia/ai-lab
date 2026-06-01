@@ -1,7 +1,7 @@
-# AI-LAB LM Studio MCP LAN Smoke — Documento Técnico
+# AI-LAB LM Studio MCP LAN Smoke ? Documento T?cnico
 
 **Fase:** `AI-LAB-LMSTUDIO-MCP-LAN-SMOKE-01`
-**Resultado:** PARTIAL
+**Resultado:** PASS
 
 ---
 
@@ -32,65 +32,74 @@ Validar el endpoint MCP LAN `8092` desde clientes reales de la red interna con t
 | 8092 sin token | `401 Unauthorized` |
 | 8092 con token (localhost) | `404` / `406` (auth OK) |
 | 8092 con token (LAN IP) | `404` / `406` (auth OK) |
-| 8091 intacto | ✅ Activo, 3h19m uptime |
+| 8091 intacto | ? Activo, 5h28m uptime |
 
 ---
 
 ## Prueba desde 192.168.1.50 (X870EAORUSPRO / Administrador)
 
+### LM Studio
+
 | Escenario | Resultado |
 |---|---|
-| Sin token | `401 Unauthorized` |
-| Con token (Authorization Bearer) | `404` / `406` (auth OK) |
-| **Conclusión** | ✅ Acceso LAN validado |
+| MCP Server URL: `http://192.168.1.30:8092/mcp` | ? Conectado |
+| Authorization: Bearer `<token>` | ? Autenticado |
+| **Conclusi?n** | ? LM Studio operativo contra MCP LAN |
+
+### OpenCode Desktop
+
+| Escenario | Resultado |
+|---|---|
+| Tools listadas con prefijo `ailab-runtime-mcp_*` | ? 8 tools visibles |
+| `ailab-runtime-mcp_ailab_status` | ? Gateway `:8008` OK `200`, Router `:8083` OK `200` |
+| `ailab-runtime-mcp_ailab_runtime_health` | ? Health Score `89.6`, Status `healthy`, 2/3 nodes online |
+| **Conclusi?n** | ? OpenCode Desktop operativo contra MCP LAN |
+
+> **Nota:** OpenCode `.50` puede mostrar una referencia heredada a `ailab-semantic-gateway 127.0.0.1:8091`. Esto es contexto del agente de fases previas; no afecta la conectividad funcional. Las tools `ailab-runtime-mcp_*` se ejecutan correctamente contra `8092`.
 
 ---
 
 ## Prueba desde 192.168.1.250 (NAS-N5 / LM Studio)
 
+### LM Studio
+
 | Escenario | Resultado |
 |---|---|
-| SSH | ❌ No accesible (timeout, puerto 22 y 2222) |
-| Prueba curl | ❌ Pendiente para operador |
-| **Conclusión** | ⏳ Pendiente — no se pudo probar remotamente |
+| MCP Server URL: `http://192.168.1.30:8092/mcp` | ? Conectado |
+| Authorization: Bearer `<token>` | ? Autenticado |
+| **Conclusi?n** | ? LM Studio operativo contra MCP LAN |
 
-### Configuración LM Studio pendiente
+### OpenCode Desktop
 
-```
-MCP Server URL: http://192.168.1.30:8092/mcp
-Header:        Authorization: Bearer <AILAB_MCP_TOKEN>
-```
-
-Tools recomendadas para probar primero:
-- `ailab_status`
-- `ailab_runtime_health`
-- `ailab_route_preview`
-- `ailab_slo_status`
-- `ailab_health_latency`
-
-Tools con cautela (no forzar):
-- `ailab_operator_summary`
-- `ailab_incidents_active`
-- `ailab_memory_search`
+| Escenario | Resultado |
+|---|---|
+| Tools listadas `ailab_*` | ? 8 tools visibles |
+| `ailab_status` | ? Gateway `:8008` OK `200`, Router `:8083` OK `200` |
+| **Conclusi?n** | ? OpenCode Desktop operativo contra MCP LAN |
 
 ---
 
-## OpenCode local
+## Tools AI-LAB Runtime validadas
 
-Tools AI-LAB Runtime esperadas (8):
-`ailab_status`, `ailab_runtime_health`, `ailab_route_preview`, `ailab_operator_summary`, `ailab_incidents_active`, `ailab_slo_status`, `ailab_health_latency`, `ailab_memory_search`
-
-Tools GitNexus esperadas (14):
-`gitnexus_list_repos`, `gitnexus_query`, `gitnexus_context`, `gitnexus_impact`, `gitnexus_cypher`, `gitnexus_analyze`, `gitnexus_detect_changes`, `gitnexus_rename`, `gitnexus_route_map`, `gitnexus_tool_map`, `gitnexus_shape_check`, `gitnexus_api_impact`, `gitnexus_group_list`, `gitnexus_group_sync`
+| Tool | Estado |
+|---|---|
+| `ailab_status` | ? Respuesta OK (`.50`, `.250`) |
+| `ailab_runtime_health` | ? Health Score 89.6, 2/3 nodes online |
+| `ailab_health_latency` | ? Visible |
+| `ailab_slo_status` | ? Visible |
+| `ailab_operator_summary` | ? Visible (cautela) |
+| `ailab_incidents_active` | ? Visible (cautela) |
+| `ailab_route_preview` | ? Visible |
+| `ailab_memory_search` | ? Visible (cautela) |
 
 ---
 
-## Limitaciones
+## Limitaciones y riesgos aceptados
 
-- No se pudo probar desde `192.168.1.250` (NAS-N5) — requiere acceso físico o configuración SSH adicional
-- Smoke desde LM Studio queda pendiente para el operador
-- No hay firewall — cualquier equipo LAN puede alcanzar el puerto 8092
-- La única protección es el token MCP
+- La red LAN puede alcanzar `8092` ? el token obligatorio protege el uso MCP
+- UFW permanece `inactive` ? no se modific? en esta fase
+- La referencia heredada en `.50` a `ailab-semantic-gateway 127.0.0.1:8091` no es un fallo funcional
+- No hay firewall de red ? la ?nica protecci?n es el token MCP
 
 ---
 
@@ -106,6 +115,6 @@ sudo bash /tmp/rollback-mcp-lan-bind-token-only.sh
 
 ## Siguientes fases
 
-1. `AI-LAB-LMSTUDIO-MCP-LAN-SMOKE-01` (reintento) — operador prueba LM Studio contra 8092
-2. `AI-LAB-MCP-LAN-SMOKE-PUSH-01` — push de commits documentales
-3. `AI-LAB-MCP-CONTROL-PLANE-REPO-UNIFICATION-01`
+1. `AI-LAB-MCP-LAN-SMOKE-PASS-PUSH-01` ? push de commits documentales
+2. `AI-LAB-MCP-CONTROL-PLANE-REPO-UNIFICATION-01`
+
