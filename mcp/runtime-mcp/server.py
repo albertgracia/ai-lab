@@ -3,14 +3,16 @@ AI-LAB MCP Semantic Gateway
 Serves read-only MCP tools for AI-LAB runtime observability.
 
 Architecture:
-  OpenCode → MCP remote → ailab-mcp-server → AI-LAB Gateway/Router/Live-API
+  OpenCode -> MCP remote -> ailab-mcp-server -> AI-LAB Gateway/Router/Live-API
 """
 
 import os
 import sys
 import logging
+from starlette.responses import PlainTextResponse
 from tools.client import logger as _logger
 from tools import register_all
+from metrics import MCPMetricsMiddleware, bootstrap_process_metrics, metrics_http_body
 
 # ---------------------------------------------------------------------------
 # Config
@@ -19,6 +21,9 @@ BIND_HOST = os.environ.get("AILAB_MCP_BIND", "127.0.0.1")
 BIND_PORT = int(os.environ.get("AILAB_MCP_PORT", "8091"))
 AUTH_TOKEN = os.environ.get("AILAB_MCP_TOKEN", "")
 LOG_LEVEL = os.environ.get("AILAB_MCP_LOG_LEVEL", "INFO").upper()
+ENDPOINT = "8091"
+BIND_KIND = "local"
+SERVICE_NAME = "semantic"
 
 logging.basicConfig(
     level=getattr(logging, LOG_LEVEL, logging.INFO),
@@ -27,10 +32,10 @@ logging.basicConfig(
 )
 
 if not AUTH_TOKEN:
-    _logger.info("AILAB_MCP_TOKEN not set — binding to 127.0.0.1 only (local dev mode)")
+    _logger.info("AILAB_MCP_TOKEN not set - binding to 127.0.0.1 only (local dev mode)")
     BIND_HOST = "127.0.0.1"
 else:
-    _logger.info("AILAB_MCP_TOKEN is set — binding to %s", BIND_HOST)
+    _logger.info("AILAB_MCP_TOKEN is set - binding to %s", BIND_HOST)
 
 # ---------------------------------------------------------------------------
 # MCP App
@@ -53,7 +58,15 @@ Tools:
 """,
 )
 
-register_all(mcp)
+register_all(mcp, endpoint=ENDPOINT, bind=BIND_KIND, service=SERVICE_NAME)
+
+
+async def metrics_endpoint(_request):
+    return PlainTextResponse(
+        metrics_http_body(),
+        media_type="text/plain; version=0.0.4; charset=utf-8",
+    )
+
 
 # ---------------------------------------------------------------------------
 # Entry point
@@ -67,8 +80,12 @@ def main():
     _logger.info("Live-API URL: %s", os.environ.get("AILAB_LIVE_API_URL", "http://127.0.0.1:8084"))
     _logger.info("Streamable HTTP endpoint: http://%s:%s/mcp", BIND_HOST, BIND_PORT)
 
+    bootstrap_process_metrics(ENDPOINT, BIND_KIND, SERVICE_NAME, auth_mode="none")
     app = mcp.streamable_http_app()
+    app.add_middleware(MCPMetricsMiddleware, endpoint=ENDPOINT, bind=BIND_KIND, service=SERVICE_NAME)
+    app.add_route("/metrics", metrics_endpoint, methods=["GET"])
     uvicorn.run(app, host=BIND_HOST, port=BIND_PORT, log_level=LOG_LEVEL.lower())
+
 
 if __name__ == "__main__":
     main()

@@ -5,8 +5,16 @@ Separate wrapper for LAN access. Does NOT affect the local MCP on :8091.
 import os
 import sys
 import logging
+from starlette.responses import PlainTextResponse, Response
 from tools.client import logger as _logger
 from tools import register_all
+from metrics import (
+    MCPMetricsMiddleware,
+    bootstrap_process_metrics,
+    metrics_http_body,
+    record_auth_failure,
+    record_auth_success,
+)
 
 # ---------------------------------------------------------------------------
 # Config
@@ -16,6 +24,9 @@ BIND_PORT = int(os.environ.get("AILAB_MCP_PORT", "8092"))
 REQUIRE_TOKEN = os.environ.get("AILAB_MCP_REQUIRE_TOKEN", "true").lower() == "true"
 AUTH_TOKEN = os.environ.get("AILAB_MCP_TOKEN", "")
 LOG_LEVEL = os.environ.get("AILAB_MCP_LOG_LEVEL", "INFO").upper()
+ENDPOINT = "8092"
+BIND_KIND = "lan"
+SERVICE_NAME = "lan"
 
 logging.basicConfig(
     level=getattr(logging, LOG_LEVEL, logging.INFO),
@@ -28,10 +39,10 @@ if REQUIRE_TOKEN and not AUTH_TOKEN:
     sys.exit(1)
 
 if not AUTH_TOKEN:
-    _logger.info("AILAB_MCP_TOKEN not set — binding to 127.0.0.1 only (local dev mode)")
+    _logger.info("AILAB_MCP_TOKEN not set - binding to 127.0.0.1 only (local dev mode)")
     BIND_HOST = "127.0.0.1"
 else:
-    _logger.info("AILAB_MCP_TOKEN is set — binding to %s", BIND_HOST)
+    _logger.info("AILAB_MCP_TOKEN is set - binding to %s", BIND_HOST)
 
 # ---------------------------------------------------------------------------
 # MCP App
@@ -59,13 +70,19 @@ Tools:
     ),
 )
 
-register_all(mcp)
+register_all(mcp, endpoint=ENDPOINT, bind=BIND_KIND, service=SERVICE_NAME)
+
+
+async def metrics_endpoint(_request):
+    return PlainTextResponse(
+        metrics_http_body(),
+        media_type="text/plain; version=0.0.4; charset=utf-8",
+    )
+
 
 # ---------------------------------------------------------------------------
 # Token Auth Middleware
 # ---------------------------------------------------------------------------
-from starlette.responses import Response
-
 class TokenAuthMiddleware:
     def __init__(self, inner_app):
         self.inner_app = inner_app
@@ -86,12 +103,16 @@ class TokenAuthMiddleware:
         ) if AUTH_TOKEN else True
 
         if not valid:
+            record_auth_failure(ENDPOINT, SERVICE_NAME, bind=BIND_KIND)
             _logger.warning("Unauthorized request from %s", scope.get("client"))
             response = Response("Unauthorized", status_code=401)
             await response(scope, receive, send)
             return
 
+        if REQUIRE_TOKEN:
+            record_auth_success(ENDPOINT, SERVICE_NAME, bind=BIND_KIND)
         await self.inner_app(scope, receive, send)
+
 
 # ---------------------------------------------------------------------------
 # Entry point
@@ -100,9 +121,13 @@ def main():
     import uvicorn
 
     app = mcp.streamable_http_app()
+    app.add_middleware(MCPMetricsMiddleware, endpoint=ENDPOINT, bind=BIND_KIND, service=SERVICE_NAME)
 
     if REQUIRE_TOKEN:
         app.add_middleware(TokenAuthMiddleware)
+
+    app.add_route("/metrics", metrics_endpoint, methods=["GET"])
+    bootstrap_process_metrics(ENDPOINT, BIND_KIND, SERVICE_NAME, auth_mode="token" if REQUIRE_TOKEN else "none")
 
     _logger.info("Starting ailab-mcp-lan-gateway on %s:%s", BIND_HOST, BIND_PORT)
     _logger.info("Require token: %s", REQUIRE_TOKEN)
