@@ -193,7 +193,7 @@ try {
     Pass "$docCount document(s) currently attached"
     @($workspace.documents) | Select-Object -First 10 | ForEach-Object {
         $name = if ($_.name) { $_.name } else { $_.title }
-        Info "  • $name"
+        Info "  - $name"
     }
 } catch {
     Fail "Workspace details failed: $_"
@@ -289,7 +289,8 @@ if ($Mode -eq "DryRun") {
             Info ("  Batch {0}/{1}: {2} file(s)" -f ($b + 1), $batches, $batchFiles.Count)
             foreach ($f in $batchFiles) {
                 $rel = [System.IO.Path]::GetRelativePath((Resolve-Path "."), $f.FullName)
-                Info "    • $rel ($([math]::Round($f.Length / 1KB, 1)) KB)"
+                $sk = [math]::Round($f.Length / 1024, 1)
+                Info ("    - " + $rel + " (" + $sk + " KB)")
             }
         }
         Info "Would execute $batches update-embeddings call(s) with $BatchDelaySeconds s delay"
