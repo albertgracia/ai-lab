@@ -278,6 +278,17 @@ def _detect_structural_risks(
     return risks
 
 
+# Risk-type penalty weights (37D: grounded by operational risk)
+#   wide_blast_radius: noise inherent to monorepo structure → 0 penalty
+#   authority_dependency_spread: false positive by design → 0 penalty
+#   high_coupling: expected coupling in 74-module codebase → reduced penalty
+#   high_reverse_coupling: real operational coupling risk → full penalty
+_REVERSE_COUPLING_PENALTY = 1.5   # per instance
+_REVERSE_COUPLING_CAP = 40.0
+_COUPLING_PENALTY = 0.5            # per instance
+_COUPLING_CAP = 12.0
+
+
 def _compute_score(
     modules: dict[str, CodebaseModule],
     risks: list[StructuralRisk],
@@ -285,25 +296,49 @@ def _compute_score(
 ) -> dict[str, Any]:
     total_modules = len(modules)
     total_edges = len(edges)
-    high_risks = sum(1 for r in risks if r.severity == "high")
-    medium_risks = sum(1 for r in risks if r.severity == "medium")
+
+    raw_high = sum(1 for r in risks if r.severity == "high")
+    raw_medium = sum(1 for r in risks if r.severity == "medium")
+    raw_low = sum(1 for r in risks if r.severity == "low")
+
+    reverse_coupling = sum(1 for r in risks if r.risk_type == "high_reverse_coupling")
+    forward_coupling = sum(1 for r in risks if r.risk_type == "high_coupling")
+    blast_radius = sum(1 for r in risks if r.risk_type == "wide_blast_radius")
+    auth_spread = sum(1 for r in risks if r.risk_type == "authority_dependency_spread")
+
     base = 100.0
-    base -= min(50.0, high_risks * 5.0)
-    base -= min(30.0, medium_risks * 2.0)
+    op_penalty = min(_REVERSE_COUPLING_CAP, reverse_coupling * _REVERSE_COUPLING_PENALTY)
+    debt_penalty = min(_COUPLING_CAP, forward_coupling * _COUPLING_PENALTY)
+    base -= op_penalty
+    base -= debt_penalty
+
     if total_modules > 0:
         edge_density = total_edges / max(total_modules, 1)
         if edge_density > 5.0:
             base -= min(15.0, (edge_density - 5.0) * 3.0)
+
     score = max(10.0, min(100.0, base))
-    level = "healthy" if score >= 80 else "degraded" if score >= 50 else "critical"
+    level = "healthy" if score >= 70 else "degraded" if score >= 40 else "critical"
+
     return {
         "structural_health_score": round(score, 1),
         "level": level,
         "modules_total": total_modules,
         "edges_total": total_edges,
-        "high_risks": high_risks,
-        "medium_risks": medium_risks,
-        "low_risks": sum(1 for r in risks if r.severity == "low"),
+        "high_risks": raw_high,
+        "medium_risks": raw_medium,
+        "low_risks": raw_low,
+        "total_findings": len(risks),
+        "breakdown": {
+            "operational_risk_points": round(op_penalty, 1),
+            "controlled_debt_points": round(debt_penalty, 1),
+            "noise_points_excluded": round(blast_radius + auth_spread, 1),
+        },
+        "risk_classification": {
+            "operational_risk_count": reverse_coupling,
+            "controlled_debt_count": forward_coupling,
+            "noise_count": blast_radius + auth_spread,
+        },
     }
 
 
