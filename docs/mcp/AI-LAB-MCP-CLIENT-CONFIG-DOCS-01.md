@@ -218,6 +218,54 @@ Devuelve solo datos reales.
 | No aparecen tools en OpenCode | OpenCode está leyendo otro archivo | Verificar `opencode.jsonc` (no `opencode.json`), reiniciar OpenCode Desktop |
 | No aparecen tools en LM Studio | MCP no habilitado en Settings | Activar "Enable MCP Servers" en LM Studio Settings > Tools |
 | `127.0.0.1:8092` no funciona desde Windows | Esperado — `127.0.0.1` es el propio Windows | Usar `192.168.1.30:8092` |
+
+## 4.1 GitNexus MCP en OpenCode Desktop Windows `.50`
+
+**Objetivo:** añadir acceso read-only a la capa estructural GitNexus desde el mismo OpenCode local de `.50`.
+
+**Endpoint validado por LAN:**
+
+- Health: `http://gitnexus.ai-lab.local:4747/api/health`
+- MCP: `http://gitnexus.ai-lab.local:4747/api/mcp`
+
+**Configuración mínima recomendada:**
+
+```jsonc
+{
+  "mcp": {
+    "gitnexus": {
+      "type": "remote",
+      "url": "http://gitnexus.ai-lab.local:4747/api/mcp",
+      "enabled": true,
+      "timeout": 20000
+    }
+  }
+}
+```
+
+**Notas:**
+
+- No requiere token observable en la validación LAN actual.
+- Usar `gitnexus.ai-lab.local` en vez de IP fija cuando el DNS local esté disponible.
+- Si OpenCode no muestra las tools nuevas, cerrar completamente y volver a abrir.
+
+**Tools MCP esperadas con prefijo `gitnexus_`:**
+
+- `gitnexus_list_repos`
+- `gitnexus_query`
+- `gitnexus_context`
+- `gitnexus_impact`
+- `gitnexus_detect_changes`
+- `gitnexus_route_map`
+- `gitnexus_tool_map`
+- `gitnexus_shape_check`
+- `gitnexus_api_impact`
+
+**Smokes read-only recomendadas:**
+
+1. `Lista las herramientas MCP disponibles.`
+2. `Usa gitnexus_list_repos y dime qué repos indexados hay.`
+3. `Usa gitnexus_query con la consulta ai-lab y resume los primeros resultados.`
 | WSL no funciona para configurar OpenCode | WSL tiene su propio filesystem | Usar PowerShell o el Explorador de archivos de Windows |
 
 ## 11. Seguridad
