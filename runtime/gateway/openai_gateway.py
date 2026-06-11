@@ -3937,7 +3937,10 @@ class GatewayHandler(BaseHTTPRequestHandler):
             try:
                 from runtime.validation import build_runtime_validation_report, VALIDATION_CONTRACT_VERSION
                 from runtime.telemetry.prometheus_metrics import record_validation_metrics
-                _report = build_runtime_validation_report()
+                from runtime.context.sensor_fusion import SensorFusionEngine
+                _sf = SensorFusionEngine()
+                _snap = _sf.collect()
+                _report = build_runtime_validation_report(sensor_snapshot=_snap.to_dict())
                 record_validation_metrics(_report)
                 self._send_json(200, {
                     "status": "ok",
@@ -3961,7 +3964,10 @@ class GatewayHandler(BaseHTTPRequestHandler):
         if self.path == "/runtime/validation/invariants":
             try:
                 from runtime.validation import build_runtime_invariants, VALIDATION_CONTRACT_VERSION
-                _inv = build_runtime_invariants()
+                from runtime.context.sensor_fusion import SensorFusionEngine
+                _inv_sf = SensorFusionEngine()
+                _inv_snap = _inv_sf.collect()
+                _inv = build_runtime_invariants(sensor_snapshot=_inv_snap.to_dict())
                 self._send_json(200, {
                     "status": "ok",
                     "service": "ai-lab-openai-gateway",
@@ -3985,7 +3991,10 @@ class GatewayHandler(BaseHTTPRequestHandler):
         if self.path == "/runtime/validation/gates":
             try:
                 from runtime.validation import build_runtime_safety_gates, VALIDATION_CONTRACT_VERSION
-                _gates = build_runtime_safety_gates()
+                from runtime.context.sensor_fusion import SensorFusionEngine
+                _gates_sf = SensorFusionEngine()
+                _gates_snap = _gates_sf.collect()
+                _gates = build_runtime_safety_gates(sensor_snapshot=_gates_snap.to_dict())
                 self._send_json(200, {
                     "status": "ok",
                     "service": "ai-lab-openai-gateway",

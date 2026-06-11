@@ -273,7 +273,7 @@ def build_runtime_invariants(
     grounding_ok = True
     try:
         from runtime.context.runtime_grounding import build_grounding_envelope
-        _env = build_grounding_envelope()
+        _env = build_grounding_envelope("")
         grounding_ok = isinstance(_env, dict)
     except Exception:
         grounding_ok = False
