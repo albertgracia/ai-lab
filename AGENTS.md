@@ -245,6 +245,20 @@ Las respuestas operacionales deben etiquetar explícitamente el tipo de verdad:
 3. Si algo requiere contexto amplio (p. ej. análisis estructural), delegar al dominio correspondiente y traer un summary contract.
 4. `runtime/state/*` es estado vivo: NO se versiona, NO se usa como “source of truth” documental.
 
+## Phase Closure — Documental Impact Rule
+
+Toda fase debe evaluar impacto documental antes de declararse PASS.
+
+Si hay impacto documental:
+- La documentación canónica en `apps/ialab-docs/` debe actualizarse
+- `npm run build` debe ejecutarse y pasar en `apps/ialab-docs/`
+- AnythingLLM debe reindexar el workspace AI-LAB
+- La recuperación documental debe validarse con preguntas representativas
+
+Si no es posible reindexar (entorno no disponible), el cierre puede ser PARTIAL documentando la razón.
+
+El protocolo completo está en `apps/ialab-docs/src/content/docs/governance/phase-closure-protocol.md`.
+
 ## Git Discipline & Checkpoint Integrity Rule
 
 No tag without commit. No phase closed with dirty working tree. A partir de ahora, ningún checkpoint, tag o fase se considera cerrada si el código no está commiteado.
@@ -323,9 +337,10 @@ Un modelo listado por LM Studio no se considera activo. ACTIVE solo significa qu
 Si un modelo está desactivado por runtime/config, debe aparecer siempre como DISABLED aunque LM Studio lo liste.
 
 3. Control-plane ≠ inference backend
-192.168.1.30 = primary-control-plane.
-192.168.1.50 = inference backend RX9070.
+192.168.1.30 = primary-control-plane (gateway, router, live-api).
+192.168.1.50 = inference backend RX9070 (LM Studio principal).
 192.168.1.60 = inventory/offline RX7900XT hasta que se reactive explícitamente.
+192.168.1.250 = storage + LM Studio secundario (NAS-N5, disponible para failover).
 
 4. No Multi-GPU before semantic readiness (todas las dependencias cerradas en FASE 30A-31B)
 No implementar scheduler Multi-GPU hasta cerrar:
@@ -591,6 +606,9 @@ FASE DOC-36X → GitNexus structural cognition documentation               ✅ C
 FASE DOC-36X → Spanish localization                                      ✅ CP-DOC-36X-SPANISH-LOCALIZATION-STABLE
 FASE 35D-HF1 → fastpath routing priority fix                             ✅ CP-35D-HF1-FASTPATH-ROUTING-PRIORITY-STABLE
 FASE 36B → runtime precision mode                                        ✅ CP-36B-RUNTIME-PRECISION-MODE-STABLE
+FASE 36C-A → validation score 56.3 investigation (READ-ONLY)             ✅ docs audit
+FASE 37A → cognitive health layer documentation                          ✅ docs audit
+FASE PC-01 → phase closure protocol                                      ✅ docs audit
 ```
 
 Tags git: desde `CP-21B-STABLE` hasta `CP-36B-RUNTIME-PRECISION-MODE-STABLE`.
@@ -629,15 +647,16 @@ Tags git: desde `CP-21B-STABLE` hasta `CP-36B-RUNTIME-PRECISION-MODE-STABLE`.
 - models: `/mnt/ai-models`
 - archives: `/mnt/opencode/ai-lab-archives`
 
-**Próxima fase:** FASE 36C — Operator Intent Reasoning
+**Próxima fase:** FASE 37B — Validation Authority Recovery
 
 ### Roadmap actual
 
 ```
-36C — Operator Intent Reasoning
-36D — Autonomous Observability Triage
-Pilot técnico
-Pilot operador
+37B — Validation Authority Recovery (restaurar Prometheus scrape targets)
+37C — Operator Intent Reasoning (diferido hasta restaurar authority)
+37D — Autonomous Observability Triage (diferido)
+Pilot técnico (post-authority)
+Pilot operador (post-pilot técnico)
 Multi-GPU (posterior)
 ```
 

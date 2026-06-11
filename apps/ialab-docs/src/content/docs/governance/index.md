@@ -13,6 +13,8 @@ order: 2
 - **Tool policies** (FASE 22A-22B) — 3 modos de tools, bash sanitizer, confirmation gate
 - **Operational Truth vs Discoverable** — separación active/loaded/discoverable/disabled y anti-drift.
 - **Worktree governance** — reglas de staging, runtime/state, commits y tags.
+- **Phase closure protocol (01)** — checklist obligatorio para cierre de fase: evaluación documental, Astro build, reindexación AnythingLLM y validación de recuperación.
+- **AnythingLLM reindex automation** — script PowerShell para automatizar el reindexado de AnythingLLM tras cambios documentales, con modos dry-run, apply y smoke queries.
 
 ## Principios
 

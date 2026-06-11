@@ -13,6 +13,8 @@ order: 3
 - **Evidence-Bound Runtime** — disciplina operacional para que el LLM no invente infraestructura.
 - **Storage Archive Policy** — governance del archive histórico y separación de tiers.
 - **Pre-Multi-GPU Baseline** — baseline estable antes de scheduler y placement Multi-GPU.
+- **AnythingLLM Role** — memoria documental, auditor RAG, consumidor oficial de documentación canónica.
+- **Cognitive Health Layer (37A)** — capa de salud del runtime: bounded, read-only, metadata-only, fail-safe. Contrato `37A-COGNITIVE-HEALTH-LAYER-01`.
 
 ## Alineación reciente
 
@@ -43,3 +45,4 @@ La arquitectura ya tiene capa de evidencia, contrato de sensores y política de 
 - mantener la baseline pre-Multi-GPU
 - no mezclar scheduler con observability contract
 - documentar authority + precision + operator intent como núcleo cognitivo
+- consolidar documentación AnythingLLM como memoria documental oficial

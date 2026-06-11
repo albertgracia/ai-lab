@@ -36,6 +36,8 @@ export default defineConfig({
             { label: "Cognitive Routing", link: "/routing-cognitivo" },
             { label: "Grounding + RAG", link: "/grounding-y-rag" },
             { label: "Codebase Structure", link: "/codebase-structural-cognition" },
+            { label: "AnythingLLM Role", link: "/architecture/anythingllm-role" },
+            { label: "Health Layer (37A)", link: "/architecture/cognitive-health-layer" },
             { label: "Event Bus", link: "/event_bus" },
             { label: "Schemas", items: [{ autogenerate: { directory: "schemas" } }] },
             { label: "Codebase", items: [{ autogenerate: { directory: "codebase" } }] },

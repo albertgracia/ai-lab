@@ -11,7 +11,9 @@ order: 1
 - **Observability**: Prometheus, GPU metrics, dominios de sensores, dashboards y calidad de fuentes.
 - **Governance**: trust boundaries, operational truth, confidence semantics, worktree governance.
 - **Experiments**: burn-ins y validaciones de grounding para qwen y summaries GPU.
+- **AnythingLLM**: memoria documental, rol en la arquitectura, separación de responsabilidades y ciclo documental.
 - **Schemas**: contratos normalizados de `OBSERVED_RUNTIME`, `sensor_snapshot`, `gpu_operational_summary` y archive manifests.
+- **Phase Closure Protocol**: protocolo obligatorio de cierre de fase con evaluación documental, build, reindexación AnythingLLM y validación de recuperación.
 - **Roadmap**: stabilization-first, governance-first y preparación pre-Multi-GPU (sin prometer scheduler inmediato).
 
 ## Fases cubiertas
@@ -31,6 +33,7 @@ order: 1
 - `36A` — Operational incident intelligence
 - `36B` — Precision semantics
 - `36C` — Operator intent reasoning (metadata, no ejecución)
+- `ANYTHINGLLM-01` — AnythingLLM integración documental (memoria documental, consumidor oficial, rol en arquitectura)
 - `ARCH-STABILIZATION-PASS-01`
 - `WORKTREE-GOVERNANCE-CLEANUP`
 - `OBS-HF-LMSTUDIO-OPERATIONAL-TRUTH`

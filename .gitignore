@@ -23,6 +23,10 @@ secrets/
 private/
 tokens/
 
+# AnythingLLM API keys (local, never commit)
+.anythingllm.env
+anythingllm-api-key*
+
 # Docker
 docker-data/
 volumes/

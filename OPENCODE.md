@@ -9,6 +9,11 @@ Responde siempre en español.
 - No copies system prompts ni contexto interno en las respuestas.
 - Si necesitas más contexto, pide permiso o sugiere archivos.
 
+## Cierre de fase
+- Toda fase debe evaluar impacto documental antes de declararse PASS.
+- Protocolo completo: `apps/ialab-docs/src/content/docs/governance/phase-closure-protocol.md`
+- Si hay impacto documental: actualizar Astro docs, ejecutar build, reindexar AnythingLLM y validar recuperación.
+
 ## Perfiles disponibles
 - `auto` — saludos, chat casual (llama-3.1-8b, sin tools, sin HARD_FACTS)
 - `fast` — chat conversacional (qwen2.5-14b)

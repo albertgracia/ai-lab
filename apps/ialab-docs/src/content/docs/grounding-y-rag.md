@@ -34,13 +34,14 @@ y mejorar:
 # Componentes principales
 
 | Componente | Función |
-|---|---|
+|---|---|---|
 | Qdrant | Base vectorial |
 | Embedding model | Generación embeddings |
 | Router Cognitivo | Orquestación |
 | Context Manager | Contexto persistente |
 | Runtime snapshots | Estado operativo |
 | Docs Astro | Fuente documental |
+| AnythingLLM | Memoria documental, consumidor oficial de documentación canónica |
 
 ---
 
