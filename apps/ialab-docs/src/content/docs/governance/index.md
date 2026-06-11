@@ -15,6 +15,7 @@ order: 2
 - **Worktree governance** — reglas de staging, runtime/state, commits y tags.
 - **Phase closure protocol (01)** — checklist obligatorio para cierre de fase: evaluación documental, Astro build, reindexación AnythingLLM y validación de recuperación.
 - **AnythingLLM reindex automation** — script PowerShell para automatizar el reindexado de AnythingLLM tras cambios documentales, con modos dry-run, apply y smoke queries.
+- **Document Publishing Automation** — pipeline completo de publicación documental: Astro público (Cloudflare), Astro privado (ailab-docs), AnythingLLM reindex y smoke queries, orquestado por invoke-phase-closure.ps1.
 
 ## Principios
 

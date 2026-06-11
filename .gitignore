@@ -23,6 +23,9 @@ secrets/
 private/
 tokens/
 
+# AnythingLLM workspace archive — local staging only, never commit
+anythingllm-core/
+
 # AnythingLLM API keys (local, never commit)
 .anythingllm.env
 anythingllm-api-key*

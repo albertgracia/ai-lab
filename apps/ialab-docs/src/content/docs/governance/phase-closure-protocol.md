@@ -143,11 +143,23 @@ Fases que solo crean o modifican documentación (sin cambios operacionales ni de
 
 Si una fase debe cerrarse rápido por emergencia operativa, se permite PARTIAL con documentación de la razón. La reindexación y validación deben completarse dentro de las siguientes 24h o en la siguiente fase programada.
 
+## Automatización
+
+El pipeline de publicación documental automatiza los pasos 3-5 de este protocolo:
+
+- `scripts/phase-closure/invoke-phase-closure.ps1` — orquestador que ejecuta public Astro, private Astro, AnythingLLM reindex y smoke queries
+- `scripts/phase-closure/publish-astro-public.ps1` — build, commit, push, wait Cloudflare, validate
+- `scripts/phase-closure/publish-astro-private.ps1` — SSH, pull, build, restart, validate
+- `scripts/anythingllm/reindex-workspace.ps1` — reindex AnythingLLM vía API
+
+Ver `document-publishing-automation.md` para detalles de uso y configuración.
+
 ## Relación con otros documentos
 
 | Documento | Relación |
 |---|---|
 | `anythingllm-role.md` | Define el rol de AnythingLLM como consumidor oficial. Este protocolo concreta cuándo y cómo reindexar. |
+| `document-publishing-automation.md` | Pipeline automatizado que implementa los pasos 3-5 de este protocolo. |
 | `AI-LAB-DOCUMENTATION-GOVERNANCE.md` | Define reglas generales de gobierno documental. Este protocolo las operacionaliza para cierre de fase. |
 | `AGENTS.md` | Lista de fases, reglas de git y checkpoint integrity. Este protocolo añade la evaluación documental como requisito de cierre. |
 | `AI-LAB-PHASE-METHODOLOGY.md` | Metodología de fases. Este protocolo es el checklist de cierre que complementa esa metodología. |
