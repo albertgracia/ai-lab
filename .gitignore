@@ -44,6 +44,7 @@ temp/
 .cache/
 
 # IDE
+.vs/
 .vscode/
 .idea/
 
