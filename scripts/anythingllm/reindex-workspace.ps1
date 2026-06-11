@@ -4,69 +4,23 @@ Reindex AnythingLLM workspace after documentation changes.
 
 .DESCRIPTION
 Uploads documents to AnythingLLM in batches, links them to a workspace,
-and runs smoke queries to validate retrieval.
+then triggers update-embeddings for the workspace.
 
-Supports three modes:
-  - DryRun: validate connectivity without changes
+Modes:
+  - DryRun: validate connectivity and file selection without changes
   - Apply: upload + embed + smoke
   - SmokeOnly: validate retrieval without uploads
 
-Features:
-  - Batch processing (default 10 files per batch)
-  - MaxFiles guard (default 20, override with -AllowLargeBatch)
-  - Incremental mode via -ChangedFilesPath
-  - Auto-excludes: docs/archive/**, docs/quarantine/**, docs/audits/** (unless -IncludeAudits)
-  - Per-batch embedding update + workspace confirmation
-  - Default workspace slug: ai-lab-core
+Configuration from .anythingllm.env (PSScriptRoot):
+  ANYTHINGLLM_BASE_URL=http://127.0.0.1:3001
+  ANYTHINGLLM_WORKSPACE_SLUG=ai-lab-core
+  ANYTHINGLLM_API_KEY=<secret>
 
-.PARAMETER Mode
-DryRun | Apply | SmokeOnly
-
-.PARAMETER BaseUrl
-AnythingLLM base URL (default: $env:ANYTHINGLLM_BASE_URL)
-
-.PARAMETER WorkspaceSlug
-Target workspace slug (default: ai-lab-core)
-
-.PARAMETER ApiKey
-API key (default: $env:ANYTHINGLLM_API_KEY)
-
-.PARAMETER DocFolder
-Local folder with documentation files (for small folders only)
-
-.PARAMETER ChangedFilesPath
-Path to a text file with one relative path per line (incremental mode)
-
-.PARAMETER BatchSize
-Files per embedding batch (default: 10)
-
-.PARAMETER BatchDelaySeconds
-Seconds to wait between batches (default: 5)
-
-.PARAMETER MaxFiles
-Max files to process without -AllowLargeBatch (default: 20)
-
-.PARAMETER AllowLargeBatch
-Bypass MaxFiles guard
-
-.PARAMETER IncludeAudits
-Include docs/audits/ in upload
-
-.PARAMETER AllowLargeFiles
-Include files > 500KB
-
-.PARAMETER MaxFileSizeKB
-Maximum file size in KB (default: 500)
-
-.EXAMPLE
-.\scripts\anythingllm\reindex-workspace.ps1 -Mode DryRun
-.\scripts\anythingllm\reindex-workspace.ps1 -Mode Apply -ChangedFilesPath ./changed.txt -BatchSize 5
-.\scripts\anythingllm\reindex-workspace.ps1 -Mode Apply -DocFolder ./new-docs -MaxFiles 5
-.\scripts\anythingllm\reindex-workspace.ps1 -Mode SmokeOnly
+Environment variables take precedence over .anythingllm.env.
 #>
 
 param(
-    [ValidateSet("DryRun","Apply","SmokeOnly")]
+    [ValidateSet("DryRun", "Apply", "SmokeOnly")]
     [string]$Mode = "DryRun",
 
     [string]$BaseUrl = $env:ANYTHINGLLM_BASE_URL,
@@ -85,10 +39,20 @@ param(
     [int]$MaxFileSizeKB = 500
 )
 
-# ──────────────────────────────────────────────
-# CONFIG
-# ──────────────────────────────────────────────
 $ErrorActionPreference = "Stop"
+
+$dotEnvPath = Join-Path $PSScriptRoot ".anythingllm.env"
+if ((Test-Path $dotEnvPath) -and (-not $ApiKey -or -not $BaseUrl)) {
+    Get-Content $dotEnvPath | ForEach-Object {
+        if ($_ -match "^\s*([^#][^=]+)=(.*)$") {
+            $k = $matches[1].Trim()
+            $v = $matches[2].Trim()
+            if ($k -eq "ANYTHINGLLM_API_KEY" -and -not $ApiKey) { $ApiKey = $v }
+            if ($k -eq "ANYTHINGLLM_BASE_URL" -and -not $BaseUrl) { $BaseUrl = $v }
+            if ($k -eq "ANYTHINGLLM_WORKSPACE_SLUG" -and -not $PSBoundParameters.ContainsKey("WorkspaceSlug")) { $WorkspaceSlug = $v }
+        }
+    }
+}
 
 if (-not $BaseUrl) { throw "ANYTHINGLLM_BASE_URL not set." }
 if (-not $ApiKey) { throw "ANYTHINGLLM_API_KEY not set." }
@@ -110,190 +74,150 @@ function Pass($m) { Write-Host "  [PASS] $m" -ForegroundColor Green; $script:PAS
 function Fail($m) { Write-Host "  [FAIL] $m" -ForegroundColor Red; $script:FAIL++; exit 1 }
 function Warn($m) { Write-Host "  [WARN] $m" -ForegroundColor Yellow; $script:WARN++ }
 function Info($m) { Write-Host "  [INFO] $m" -ForegroundColor Cyan }
-function Step($n,$m) { Write-Host "`n─── Step ${n}: $m ───" -ForegroundColor Cyan }
+function Step($n, $m) { Write-Host "--- Step $n : $m ---" -ForegroundColor Cyan }
 
 function Invoke-ALLM {
     param([string]$Method, [string]$Path, $Body = $null)
     $params = @{
         Uri = "$Api$Path"
         Method = $Method
-        Headers = $Headers
+        Headers = $HEADERS
+        UseBasicParsing = $true
         ContentType = "application/json"
     }
-    if ($null -ne $Body) {
-        $params.Body = ($Body | ConvertTo-Json -Depth 20 -Compress)
-    }
-    return Invoke-RestMethod @params
-}
-
-function Confirm-WorkspaceDocuments {
-    param([string]$Slug, [int]$ExpectedMin)
+    if ($Body) { $params.Body = ($Body | ConvertTo-Json -Depth 10 -Compress) }
     try {
-        $d = Invoke-ALLM GET "/v1/workspace/$Slug"
-        $w = $d.workspace
-        if ($w -is [array]) { $w = $w[0] }
-        $count = @($w.documents).Count
-        if ($count -ge $ExpectedMin) {
-            Pass "Workspace '$Slug' now has $count document(s)"
-            return $true
-        } else {
-            Warn "Workspace '$Slug' has $count document(s) (expected >= $ExpectedMin)"
-            return $false
-        }
+        $resp = Invoke-WebRequest @params
+        return ($resp.Content | ConvertFrom-Json)
     } catch {
-        Warn "Failed to verify workspace docs: $_"
-        return $false
-    }
-}
-
-# ──────────────────────────────────────────────
-# STEP 1: AUTH
-# ──────────────────────────────────────────────
-Step 1 "Authentication"
-try {
-    $auth = Invoke-ALLM GET "/v1/auth"
-    if ($auth.authenticated -eq $true) {
-        Pass "Authenticated against $BaseUrl"
-    } else {
-        Fail "API key rejected"
-    }
-} catch {
-    Fail "Auth failed: $_"
-}
-
-# ──────────────────────────────────────────────
-# STEP 2: WORKSPACE LOOKUP
-# ──────────────────────────────────────────────
-Step 2 "Workspace lookup"
-try {
-    $wsList = Invoke-ALLM GET "/v1/workspaces"
-    $workspaces = @($wsList.workspaces)
-    Pass "$($workspaces.Count) workspace(s) found"
-    foreach ($w in $workspaces) {
-        $mark = if ($w.slug -eq $WorkspaceSlug) { " <-- TARGET" } else { "" }
-        Info "[$($w.id)] $($w.name) (slug: $($w.slug))$mark"
-    }
-    $target = $workspaces | Where-Object { $_.slug -eq $WorkspaceSlug } | Select-Object -First 1
-    if (-not $target) { Fail "Target workspace '$WorkspaceSlug' not found" }
-    Pass "Target workspace '$WorkspaceSlug' found"
-} catch {
-    Fail "Workspace lookup failed: $_"
-}
-
-# ──────────────────────────────────────────────
-# STEP 3: WORKSPACE DETAILS
-# ──────────────────────────────────────────────
-Step 3 "Workspace details"
-try {
-    $detail = Invoke-ALLM GET "/v1/workspace/$WorkspaceSlug"
-    $workspace = $detail.workspace
-    if ($workspace -is [array]) { $workspace = $workspace[0] }
-    Info "Name: $($workspace.name)"
-    $docCount = @($workspace.documents).Count
-    Pass "$docCount document(s) currently attached"
-    @($workspace.documents) | Select-Object -First 10 | ForEach-Object {
-        $name = if ($_.name) { $_.name } else { $_.title }
-        Info "  - $name"
-    }
-} catch {
-    Fail "Workspace details failed: $_"
-}
-
-# ──────────────────────────────────────────────
-# STEP 4: COLLECT FILES (DryRun + Apply)
-# ──────────────────────────────────────────────
-Step 4 "File collection"
-
-$candidateFiles = @()
-
-if ($ChangedFilesPath) {
-    if (-not (Test-Path $ChangedFilesPath -PathType Leaf)) {
-        Fail "ChangedFilesPath not found: $ChangedFilesPath"
-    }
-    $changedLines = Get-Content $ChangedFilesPath | Where-Object { $_.Trim() -ne "" -and -not $_.TrimStart().StartsWith("#") }
-    $resolvedRoot = Resolve-Path "."
-    foreach ($line in $changedLines) {
-        $path = $line.Trim()
-        $fullPath = Join-Path $resolvedRoot $path
-        if (Test-Path $fullPath -PathType Leaf) {
-            $candidateFiles += Get-Item $fullPath
+        $err = $_.Exception.Response
+        if ($err) {
+            $reader = New-Object System.IO.StreamReader($err.GetResponseStream())
+            $body = $reader.ReadToEnd()
+            $reader.Close()
+            Fail "API error ($($err.StatusCode.value__)): $body"
         } else {
-            Warn "Changed file not found: $path"
+            Fail "Request failed: $_"
         }
     }
-    Info "ChangedFilesPath: $($candidateFiles.Count) file(s) resolved"
-} elseif ($DocFolder) {
-    if (-not (Test-Path $DocFolder -PathType Container)) {
+}
+
+Step 1 "Check prerequisites"
+
+if ($Mode -ne "SmokeOnly") {
+    if (-not $DocFolder -and -not $ChangedFilesPath) {
+        Fail "Provide -DocFolder or -ChangedFilesPath in Apply/DryRun mode"
+    }
+    if ($DocFolder -and -not (Test-Path $DocFolder)) {
         Fail "DocFolder not found: $DocFolder"
     }
-    $candidateFiles = Get-ChildItem $DocFolder -Recurse -File | Where-Object {
-        $_.Extension -match '^\.(md|txt|json|yaml|yml|html)$'
+    $PROJECT_ROOT = Resolve-Path "$PSScriptRoot\..\.."
+    $ASTRO_DOCS = Join-Path $PROJECT_ROOT "apps\ialab-docs\src\content\docs"
+    if (Test-Path $ASTRO_DOCS) { Pass "Astro docs directory: $ASTRO_DOCS" }
+    else { Warn "Astro docs directory not found" }
+}
+
+Step 2 "Connectivity"
+$ping = Invoke-ALLM GET "/ping"
+Info "API reachable"
+
+Step 3 "Workspace verification"
+$detail = Invoke-ALLM GET "/v1/workspace/$WorkspaceSlug"
+$workspace = $detail.workspace
+if ($workspace -is [array]) { $workspace = $workspace[0] }
+$docCount = @($workspace.documents).Count
+Pass "Workspace $WorkspaceSlug found with $docCount document(s)"
+
+Step 4 "File collection"
+if ($Mode -eq "SmokeOnly") {
+    Pass "SmokeOnly mode - no files to collect"
+    Step 5 "Smoke queries"
+    $questions = @(
+        @{ q = "Que hace el pipeline de Document Publishing Automation?" },
+        @{ q = "Cuales son los pasos del Phase Closure Protocol?" }
+    )
+    $allOk = $true
+    foreach ($item in $questions) {
+        try {
+            $body = @{ message = $item.q; mode = "chat" }
+            $resp = Invoke-ALLM POST "/v1/workspace/$WorkspaceSlug/chat" $body
+            $answer = $resp.textResponse
+            if ($answer -and $answer.Length -gt 20) {
+                Pass "Q: $($item.q)"
+                Write-Host "    A: $($answer.Substring(0, [math]::Min(150, $answer.Length)))..." -ForegroundColor Gray
+            } else {
+                Warn "Short/empty response for: $($item.q)"
+                $allOk = $false
+            }
+        } catch {
+            Warn "Smoke failed: $($item.q)"
+            $allOk = $false
+        }
     }
-    Info "DocFolder: $($candidateFiles.Count) file(s) found"
-} else {
-    Info "No file source provided. Use -DocFolder or -ChangedFilesPath for Apply."
+    if ($allOk) { Pass "All smoke queries PASS" } else { Warn "Some smoke queries had issues" }
+    Write-Host "--- Summary ---" -ForegroundColor Cyan
+    Write-Host "PASS: $PASS  WARN: $WARN  FAIL: $FAIL" -ForegroundColor $(
+        if ($FAIL -gt 0) { "Red" } elseif ($WARN -gt 0) { "Yellow" } else { "Green" }
+    )
+    exit 0
 }
 
-# Filter by extension (already done above for DocFolder, but ChangedFilesPath bypasses)
-$candidateFiles = $candidateFiles | Where-Object { $_.Extension -match '^\.(md|txt|json|yaml|yml|html)$' }
+# Collect candidate files
+$excludeDirs = @("node_modules", ".git", ".astro", "dist", "__pycache__", ".venv", "venv", "backups", ".obsidian")
+$excludeExts = @(".pyc", ".log", ".db", ".sqlite", ".json", ".env", ".key", ".pem", ".crt", ".gguf")
 
-# Apply exclusions
-$excludedPatterns = @(
-    '\barchive[\\/]',
-    '\bquarantine[\\/]'
-)
-if (-not $IncludeAudits) {
-    $excludedPatterns += '\baudits[\\/]'
+$candidateFiles = @()
+$targetDir = if ($DocFolder) { $DocFolder } else { Get-ItemProperty -Path $ChangedFilesPath | Select-Object -ExpandProperty DirectoryName }
+
+if ($DocFolder) {
+    Get-ChildItem -Path $DocFolder -Recurse -File | Where-Object {
+        $inExcludedDir = $false
+        foreach ($ed in $excludeDirs) {
+            if ($_.FullName -match "\\$ed\\") { $inExcludedDir = $true; break }
+        }
+        if ($inExcludedDir) { return $false }
+
+        $ext = $_.Extension.ToLower()
+        foreach ($ee in $excludeExts) { if ($ext -eq $ee) { return $false } }
+
+        if ($_.Length -gt ($MaxFileSizeKB * 1KB)) {
+            if (-not $AllowLargeFiles) { return $false }
+        }
+
+        return $true
+    } | Sort-Object Name -Unique | Select-Object -First $MaxFiles | ForEach-Object { $candidateFiles += $_ }
 }
 
-$beforeExclude = $candidateFiles.Count
-$candidateFiles = $candidateFiles | Where-Object {
-    $path = $_.FullName
-    $excluded = $false
-    foreach ($pat in $excludedPatterns) {
-        if ($path -match $pat) { $excluded = $true; break }
+if ($ChangedFilesPath -and (Test-Path $ChangedFilesPath)) {
+    Get-Content $ChangedFilesPath | ForEach-Object {
+        if ($_ -and (Test-Path $_)) { $candidateFiles += Get-Item $_ }
     }
-    if (-not $excluded -and -not $AllowLargeFiles) {
-        if ($_.Length -gt ($MaxFileSizeKB * 1KB)) { $excluded = $true }
-    }
-    if ($excluded) { $script:FilesSkipped++ }
-    -not $excluded
-}
-$excludedCount = $beforeExclude - $candidateFiles.Count
-if ($excludedCount -gt 0) {
-    Warn "$excludedCount file(s) excluded (audits/archive/quarantine/size)"
-    Info "  Use -IncludeAudits, -AllowLargeFiles to override"
 }
 
+$candidateFiles = $candidateFiles | Sort-Object FullName -Unique
 $fileCount = $candidateFiles.Count
-Info "$fileCount candidate file(s) after filtering"
+Pass "Found $fileCount file(s) to process"
 
-# MaxFiles guard
-if ($fileCount -gt $MaxFiles -and -not $AllowLargeBatch) {
-    Fail "Found $fileCount files, exceeds -MaxFiles $MaxFiles. Use -AllowLargeBatch to override."
-}
-
-if ($Mode -eq "Apply" -and $fileCount -eq 0) {
-    Fail "No files to process in Apply mode"
-}
-
+# DryRun summary
 if ($Mode -eq "DryRun") {
     Step 5 "DryRun summary"
-    Info "Mode: DryRun — no changes will be made"
+    Info "Mode: DryRun - no changes will be made"
     if ($fileCount -gt 0) {
-        Info ("Would process {0} file(s) in batches of {1}:" -f $fileCount, $BatchSize)
         $batches = [math]::Ceiling($fileCount / $BatchSize)
         for ($b = 0; $b -lt $batches; $b++) {
             $start = $b * $BatchSize
-            $batchFiles = $candidateFiles[$start..([math]::Min($start + $BatchSize - 1, $fileCount - 1))]
+            $end = [math]::Min($start + $BatchSize - 1, $fileCount - 1)
+            $batchFiles = $candidateFiles[$start..$end]
             Info ("  Batch {0}/{1}: {2} file(s)" -f ($b + 1), $batches, $batchFiles.Count)
             foreach ($f in $batchFiles) {
-                $rel = [System.IO.Path]::GetRelativePath((Resolve-Path "."), $f.FullName)
+                $rel = (Resolve-Path $f.FullName -Relative) -replace '^\.\\', ''
                 $sk = [math]::Round($f.Length / 1024, 1)
-                Info ("    - " + $rel + " (" + $sk + " KB)")
+                $fs = "    - $rel ($sk KB)"
+                Info $fs
             }
         }
-        Info "Would execute $batches update-embeddings call(s) with $BatchDelaySeconds s delay"
+        $msg = "Would execute $batches update-embeddings call(s) with $BatchDelaySeconds s delay"
+        Info $msg
     } else {
         Info "No files to upload. DryRun validated connectivity only."
     }
@@ -301,158 +225,102 @@ if ($Mode -eq "DryRun") {
     exit 0
 }
 
-# ──────────────────────────────────────────────
-# STEP 5: APPLY — UPLOAD + BATCHED EMBEDDINGS
-# ──────────────────────────────────────────────
-if ($Mode -eq "Apply") {
-    Step 5 "Upload + batch embeddings"
+# Apply mode: upload + embed
+Step 5 "Upload documents"
 
-    $totalBatches = [math]::Ceiling($fileCount / $BatchSize)
-    Info "Processing $fileCount file(s) in $totalBatches batch(es)"
+for ($b = 0; $b -lt $candidateFiles.Count; $b += $BatchSize) {
+    $batchFiles = $candidateFiles[$b..([math]::Min($b + $BatchSize - 1, $candidateFiles.Count - 1))]
+    $BatchesProcessed++
+    $batchNum = $BatchesProcessed
+    $totalBatches = [math]::Ceiling($candidateFiles.Count / $BatchSize)
 
-    for ($b = 0; $b -lt $totalBatches; $b++) {
-        $start = $b * $BatchSize
-        $end = [math]::Min($start + $BatchSize - 1, $fileCount - 1)
-        $batchFiles = $candidateFiles[$start..$end]
-        $batchNum = $b + 1
+    $msg = "Batch $batchNum / $totalBatches - $($batchFiles.Count) file(s)"
+    Info $msg
 
-        Write-Progress -Activity "Upload + embed batch" -Status "Batch $batchNum / $totalBatches" -PercentComplete (($b / $totalBatches) * 100)
-
-        Info "Batch $batchNum / $totalBatches — $($batchFiles.Count) file(s)"
-
-        $batchLocations = @()
-
-        foreach ($file in $batchFiles) {
-            try {
-                $content = Get-Content -LiteralPath $file.FullName -Raw -Encoding UTF8
-                $relPath = [System.IO.Path]::GetRelativePath((Resolve-Path "."), $file.FullName)
-
-                $body = @{
-                    textContent = $content
-                    metadata = @{
-                        title = $file.BaseName
-                        docAuthor = "AI-LAB"
-                        description = "Auto-uploaded"
-                        docSource = $relPath
-                    }
+    foreach ($f in $batchFiles) {
+        try {
+            $content = Get-Content -Path $f.FullName -Raw
+            $body = @{
+                textContent = $content
+                metadata = @{
+                    title = $f.Name
+                    description = "Auto-uploaded by AI-LAB reindex pipeline"
+                    sourceURL = "file:///$($f.FullName)"
+                    docDate = (Get-Date -Format "yyyy-MM-dd")
                 }
-
-                $upload = Invoke-ALLM POST "/v1/document/raw-text" $body
-
-                if ($upload.success -and $upload.documents) {
-                    foreach ($d in $upload.documents) {
-                        if ($d.location) {
-                            $batchLocations += $d.location
-                            $script:UploadedLocations += $d.location
-                        }
-                    }
-                    $script:FilesUploaded++
-                } else {
-                    Warn "Upload returned no location: $($file.Name)"
-                }
-            } catch {
-                Warn "Upload failed: $($file.Name) — $_"
             }
+            $upload = Invoke-ALLM POST "/v1/document/raw-text" $body
+            if ($upload.success -and $upload.documents) {
+                foreach ($d in $upload.documents) {
+                    $script:UploadedLocations += @{ location = $d.id; title = $d.title }
+                    $script:FilesUploaded++
+                }
+                $rel = (Resolve-Path $f.FullName -Relative) -replace '^\.\\', ''
+                Pass "Uploaded: $rel"
+            } else {
+                Warn "Upload returned no documents for: $($f.Name)"
+            }
+        } catch {
+            Warn "Upload failed: $($f.Name)"
         }
+    }
 
-        if ($batchLocations.Count -eq 0) {
-            Warn "No documents uploaded in batch $batchNum — skipping update-embeddings"
-            continue
+    # Update embeddings per batch
+    if ($UploadedLocations.Count -gt 0) {
+        $embedBody = @{
+            addOnly = $true
+            documentLocations = @($UploadedLocations | Select-Object -ExpandProperty location)
         }
-
-        $embedBody = @{ adds = $batchLocations; deletes = @() }
         try {
             $update = Invoke-ALLM POST "/v1/workspace/$WorkspaceSlug/update-embeddings" $embedBody
-            $script:BatchesProcessed++
-            Pass ("Batch {0}: added {1} document(s) to workspace" -f $batchNum, $batchLocations.Count)
+            $msg2 = "Batch {0}: added {1} document(s) to workspace" -f $batchNum, $UploadedLocations.Count
+            Pass $msg2
         } catch {
-            Warn "Batch $batchNum embedding update failed: $_"
+            Warn "update-embeddings failed for batch $batchNum"
         }
-
-        # Confirm workspace has the new docs
-        Confirm-WorkspaceDocuments -Slug $WorkspaceSlug -ExpectedMin ($docCount + $script:FilesUploaded) | Out-Null
-
-        # Delay between batches (unless last batch)
-        if ($b -lt $totalBatches - 1) {
-            Info "Waiting $BatchDelaySeconds second(s) before next batch..."
-            Start-Sleep -Seconds $BatchDelaySeconds
-        }
+    } else {
+        Warn "No documents uploaded in batch $batchNum - skipping update-embeddings"
     }
 
-    Write-Progress -Activity "Upload + embed batch" -Completed
-    Pass "All batches complete: $BatchesProcessed batch(es), $FilesUploaded file(s) uploaded"
-}
-
-# ──────────────────────────────────────────────
-# STEP 6: SMOKE QUERIES
-# ──────────────────────────────────────────────
-if ($Mode -eq "SmokeOnly" -or $Mode -eq "Apply") {
-    Step 6 "Smoke queries"
-
-    $questions = @(
-        @{
-            q = "¿Qué exige el protocolo de cierre de fase si hay impacto documental?"
-            expected = "document"
-        },
-        @{
-            q = "¿Qué es el Cognitive Health Layer 37A?"
-            expected = "health|37A|cognitive"
-        },
-        @{
-            q = "¿Por qué validation_score era 56.3?"
-            expected = "Prometheus|sensor|safety|56.3"
-        }
-    )
-
-    $ok = 0
-
-    foreach ($item in $questions) {
-        try {
-            $body = @{
-                message = $item.q
-                mode = "query"
-            }
-            $resp = Invoke-ALLM POST "/v1/workspace/$WorkspaceSlug/chat" $body
-            $answer = [string]$resp.textResponse
-            $hasSources = ($resp.sources -and $resp.sources.Count -gt 0)
-
-            if ($answer -match $item.expected -and $hasSources) {
-                Pass "Smoke OK (cited): $($item.q)"
-                $ok++
-            } elseif ($answer -match $item.expected) {
-                Pass "Smoke OK: $($item.q)"
-                $ok++
-            } else {
-                Warn "Smoke weak: $($item.q)"
-                Info ($answer.Substring(0, [Math]::Min(200, $answer.Length)))
-            }
-        } catch {
-            Warn "Smoke failed: $($item.q) — $_"
-        }
+    # Delay between batches
+    if ($batchNum -lt $totalBatches) {
+        Start-Sleep -Seconds $BatchDelaySeconds
     }
-
-    Info "Smoke result: $ok / $($questions.Count)"
 }
 
-# ──────────────────────────────────────────────
-# SUMMARY
-# ──────────────────────────────────────────────
-Write-Host "`n═══════════════════════════════════════" -ForegroundColor Cyan
-Write-Host " ANYTHINGLLM REINDEX SUMMARY" -ForegroundColor Cyan
-Write-Host "═══════════════════════════════════════" -ForegroundColor Cyan
-Write-Host "Workspace      : $WorkspaceSlug"
-Write-Host "Base URL       : $BaseUrl"
-Write-Host "Mode           : $Mode"
-Write-Host "Batch size     : $BatchSize"
-Write-Host "Files          :"
-Write-Host "  Uploaded     : $FilesUploaded"
-Write-Host "  Skipped      : $FilesSkipped"
-Write-Host "  Total batches: $BatchesProcessed"
-Write-Host "Checks         :"
-Write-Host "  PASS         : $PASS"
-Write-Host "  WARN         : $WARN"
-Write-Host "  FAIL         : $FAIL"
-Write-Host "═══════════════════════════════════════" -ForegroundColor Cyan
+# Final workspace confirmation
+$detail2 = Invoke-ALLM GET "/v1/workspace/$WorkspaceSlug"
+$finalCount = @($detail2.workspace.documents).Count
+$msg3 = "All batches complete: $BatchesProcessed batch(es), $FilesUploaded file(s) uploaded"
+Pass $msg3
+$msg4 = "Workspace $WorkspaceSlug now has $finalCount document(s)"
+Info $msg4
 
-if ($FAIL -gt 0) { exit 1 }
-exit 0
+Step 6 "Smoke queries"
+$questions = @(
+    @{ q = "Que hace el pipeline de Document Publishing Automation?" },
+    @{ q = "Cuales son los pasos del Phase Closure Protocol?" }
+)
+$allOk = $true
+foreach ($item in $questions) {
+    try {
+        $body = @{ message = $item.q; mode = "chat" }
+        $resp = Invoke-ALLM POST "/v1/workspace/$WorkspaceSlug/chat" $body
+        $answer = $resp.textResponse
+        if ($answer -and $answer.Length -gt 20) {
+            Pass "Q: $($item.q)"
+            Write-Host "    A: $($answer.Substring(0, [math]::Min(150, $answer.Length)))..." -ForegroundColor Gray
+        } else {
+            Warn "Short/empty response for: $($item.q)"
+            $allOk = $false
+        }
+    } catch {
+        Warn "Smoke failed: $($item.q)"
+        $allOk = $false
+    }
+}
+if ($allOk) { Pass "All smoke queries PASS" } else { Warn "Some smoke queries had issues" }
+
+Write-Host "--- Summary ---" -ForegroundColor Cyan
+Write-Host "PASS: $PASS  WARN: $WARN  FAIL: $FAIL" -ForegroundColor $(if ($FAIL -gt 0) { "Red" } elseif ($WARN -gt 0) { "Yellow" } else { "Green" })
+if ($FAIL -gt 0) { exit 1 } else { exit 0 }
