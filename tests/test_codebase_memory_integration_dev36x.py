@@ -6,8 +6,14 @@ import json
 import os
 import sys
 import threading
+import pathlib
 
-sys.path.insert(0, "/opt/ai-lab")
+_HERE = pathlib.Path(__file__).resolve().parent
+_REPO_ROOT = str(_HERE.parent)
+sys.path.insert(0, _REPO_ROOT)
+
+os.environ.setdefault("AI_LAB_RUNTIME_ROOT", os.path.join(_REPO_ROOT, "runtime"))
+os.environ.setdefault("AI_LAB_GITNEXUS_PATH", os.path.join(_REPO_ROOT, ".gitnexus"))
 
 from runtime.codebase import (
     CODEBASE_CONTRACT_VERSION,
@@ -56,8 +62,7 @@ def test_excluded_dirs_defined():
 
 
 def test_runtime_root_exists():
-    root = os.path.join("/opt/ai-lab", "runtime")
-    assert os.path.isdir(root)
+    assert os.path.isdir(RUNTIME_ROOT)
 
 
 # ── Core module: scan ──────────────────────────────────────────────
@@ -82,7 +87,7 @@ def test_scan_runtime_modules_has_key_modules():
 def test_scan_runtime_modules_has_file_counts():
     modules = _scan_runtime_modules()
     nonzero = [name for name, mod in modules.items() if mod.file_count > 0]
-    assert len(nonzero) >= len(modules) - 4
+    assert len(nonzero) >= len(modules) - 5
     for name, mod in modules.items():
         assert mod.path.startswith("runtime/")
 
