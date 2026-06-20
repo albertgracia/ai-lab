@@ -14,7 +14,7 @@
     "routing_decisions_total": 0,
     "sessions_total": 0,
     "active_sessions": 0,
-    "last_latency_ms": 0.0,
+    "last_latency_ms": 0,
     "active_streams": 0,
     "online_nodes": 1,
     "total_nodes": 3,
@@ -46,5 +46,5 @@
       "gpu_overheat": 0
     }
   },
-  "timestamp": 1781989096.4285593
+  "timestamp": 1781993458.6533551
 }
