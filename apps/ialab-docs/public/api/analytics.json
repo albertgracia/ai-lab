@@ -3,8 +3,7 @@
     "score": 0,
     "reasons": [
       "2 GPU(s) offline",
-      "Gateway down",
-      "Prometheus down"
+      "Gateway down"
     ],
     "level": "critical"
   },
@@ -47,5 +46,5 @@
       "gpu_overheat": 0
     }
   },
-  "timestamp": 1782383566.0983171
+  "timestamp": 1782389639.930757
 }
