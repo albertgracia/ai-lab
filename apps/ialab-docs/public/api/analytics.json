@@ -1,9 +1,8 @@
 {
   "health": {
-    "score": 0,
+    "score": 10,
     "reasons": [
-      "2 GPU(s) offline",
-      "Gateway down"
+      "2 GPU(s) offline"
     ],
     "level": "critical"
   },
@@ -14,7 +13,7 @@
     "routing_decisions_total": 0,
     "sessions_total": 0,
     "active_sessions": 0,
-    "last_latency_ms": 0,
+    "last_latency_ms": 0.0,
     "active_streams": 0,
     "online_nodes": 0,
     "total_nodes": 3,
@@ -46,5 +45,5 @@
       "gpu_overheat": 0
     }
   },
-  "timestamp": 1782560952.2219036
+  "timestamp": 1782565162.903494
 }
