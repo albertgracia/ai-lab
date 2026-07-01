@@ -4937,6 +4937,15 @@ class GatewayHandler(BaseHTTPRequestHandler):
 
             upstream_payload = dict(payload)
 
+            # MODEL-REGISTRY-CANONICAL-01: normalize canonical model IDs to backend LM Studio IDs
+            _BACKEND_MODEL_MAP = {
+                "qwen/qwen2.5-coder-14b-instruct": "qwen2.5-14b-instruct",
+                "qwen2.5-coder-14b-instruct": "qwen2.5-14b-instruct",
+            }
+            _backend_model = _BACKEND_MODEL_MAP.get(upstream_payload.get("model", ""))
+            if _backend_model:
+                upstream_payload["model"] = _backend_model
+
             # FASE 29.2: Real Streaming — pass stream=true to LM Studio
             _real_streaming = False
             try:
