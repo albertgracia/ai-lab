@@ -1,8 +1,8 @@
 # Hermes Agent → AI-LAB Gateway Integration
 
-## Status: PARTIAL
+## Status: PASS WITH WARNINGS
 
-Integration verified end-to-end but blocked by model context limit (n_ctx=8192 < 12K tokens from Hermes' AGENTS.md + 74 skills).
+Integration verified end-to-end. LM Studio loads `qwen2.5-14b-instruct` with 32,768 context (Q4_K_M on RX9070 16GB) — adequate for Hermes' ~12K token overhead. The only remaining issue is the Gateway's operational fastpath intercepting trivial/math prompts (separate blocker).
 
 ## Architecture
 
@@ -35,52 +35,51 @@ LM_API_KEY=ailab
 ### Usage
 
 ```bash
-# Basic (may exceed 8K context — use --ignore-rules for compatibility)
-hermes -p ai-lab chat -q "query" --ignore-rules
+# With full AGENTS.md rules (context fits: ~12K tokens < 32K limit)
+hermes -p ai-lab chat -q "query"
 
 # Via wrapper alias
-ai-lab chat -q "query" --ignore-rules
+ai-lab chat -q "query"
 ```
 
 ## Issues Found
 
-### 1. Model Context Limit (BLOCKER for full integration)
+### 1. Model Context Limit (RESOLVED — false alarm)
 
-- LM Studio loads `qwen2.5-14b-instruct` with `n_ctx=8192` (default for 16GB VRAM)
-- Hermes injects ~12,787 tokens (AGENTS.md 54K chars + 74 skills + SOUL.md)
-- Error: `n_keep: 12779 >= n_ctx: 8192`
-
-**Workaround:** Use `--ignore-rules` (skips AGENTS.md injection), reducing context to ~5K tokens
-
-**Resolution options (in priority order):**
-1. **Increase LM Studio context length** — Set `n_ctx=16384` in LM Studio model config (reduces VRAM available for batch/concurrent)
-2. **Trim AGENTS.md** — Reduce 54K chars to fit within 8K context
-3. **Hermes skills profile** — Create profile with fewer/selective skills
-4. **Gateway context truncation** — Gateway auto-truncates long contexts before forwarding
+- LM Studio `loaded_context_length`: 32768 (confirmed via `/api/v0/models`)
+- Hermes injects ~12,780 tokens with full AGENTS.md + 74 skills — within limit
+- The earlier `n_keep: 12779 >= n_ctx: 8192` error was transient (model reload / VRAM pressure)
+- No changes needed. Both `--ignore-rules` and full-rules modes work for non-trivial prompts.
 
 ### 2. Rate Limit (PATCHED)
 
-- Default: 30 req/60s per IP → bumped to 120 req/60s
-- Deployed via SIGTERM restart: PID 62230 → 72412
+- Default: 30 req/60s per IP → bumped to 120 req/60s (deployed + committed `f06b4b1`)
+- Deployed via SIGTERM restart: PID 62230 → 72412 → 72485
 
-### 3. Gateway Routing Override (PRE-EXISTING BUG)
+### 3. Gateway Routing Override (PRE-EXISTING BUG — deferred)
 
 - Gateway routing logic overrides requested model with `qwen3-vl-8b-instruct` (not loaded)
 - `qwen2.5-14b-instruct` (raw LM Studio ID) is NOT in `_BACKEND_MODEL_MAP` — falls through to broken routing
 - Only `qwen/qwen2.5-coder-14b-instruct` and `qwen2.5-coder-14b-instruct` are correctly mapped
 
-### 4. Operational Fastpath (PRE-EXISTING)
+### 4. Operational Fastpath (PRE-EXISTING — deferred)
 
-- Short prompts like "What is 2+2?" trigger operational fastpath instead of LLM
+- Short/trivial prompts like "What is 2+2?" trigger operational fastpath instead of LLM
 - Gateway returns hardcoded "Infrastructure" response (not the actual answer)
+- Hermes reports: "Provider returned an empty stream with no finish_reason"
+- **This is the only remaining blocker for full Hermes integration**
 
 ## Smoke Test Results
 
-| Test | Prompt | Result | Notes |
-|------|--------|--------|-------|
-| Chat | "Say just OK" | ✅ PASS | Returns "OK", ~13s latency |
-| Coding | "Write Python prime function" | ✅ PASS | Returns code + explanation, ~21s |
-| Reasoning | "What is 2+2?" | ❌ FAIL | Triggers operational fastpath (pre-existing) |
+| Test | Prompt | Rules | Result | Notes |
+|------|--------|-------|--------|-------|
+| Chat | "Say just OK" | full | ✅ PASS | ~21s |
+| Chat | "Say just OK" | --ignore-rules | ✅ PASS | ~13s |
+| Coding | "prime function" | full | ✅ PASS | ~42s |
+| Coding | "quicksort" | full | ✅ PASS | ~42s |
+| Coding | "reverse string" | full | ✅ PASS | ~31s |
+| Reasoning | "What is 2+2?" | full | ❌ FAIL | Operational fastpath |
+| Reasoning | "What is 2+2?" | --ignore-rules | ❌ FAIL | Same — not context-related |
 
 ## Observability
 

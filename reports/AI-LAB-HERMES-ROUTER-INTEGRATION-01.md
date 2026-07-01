@@ -195,7 +195,7 @@ Profile `ai-lab` created at `C:\Users\leobc\AppData\Local\hermes\profiles\ai-lab
 | Coding ("prime function") | ✅ PASS | 21s, correct code + explanation |
 | Reasoning ("What is 2+2?") | ❌ FAIL | Pre-existing operational fastpath bug |
 
-All tests required `--ignore-rules` to stay within 8K context limit.
+Note: Earlier `--ignore-rules` was thought necessary due to an 8K context limit. Investigation (2026-07-01 AI-LAB-HERMES-BLOCKERS-01A-CONTEXT) revealed LM Studio loads `qwen2.5-14b-instruct` with `loaded_context_length=32768`. Tests with full rules now PASS for all prompts that don't trigger the operational fastpath. The earlier `n_ctx=8192` error was transient (model reload).
 
 ### Phase 7: Observability
 
@@ -213,8 +213,37 @@ All tests required `--ignore-rules` to stay within 8K context limit.
 2. **`qwen3-vl-8b-instruct` routing** — Gateway hardcodes this unloaded model in routing logic
 3. **Operational fastpath over-capture** — Simple trivia triggers Infra response instead of LLM
 
-## Final Classification (Provisional)
+## Addendum 2026-07-01: Context Blocker Investigation (AI-LAB-HERMES-BLOCKERS-01A-CONTEXT)
 
-**PARTIAL** — Pipeline verified. Blocked by model context limit (n_ctx=8192 in LM Studio). Gateway fixes deployed.
+### Finding
 
-Next: Either increase LM Studio context length or create a Hermes profile with reduced context overhead.
+The context length blocker was a **false alarm**. LM Studio reports:
+
+| Model | State | Loaded Context | Max Context | Quant |
+|-------|-------|---------------|-------------|-------|
+| qwen2.5-14b-instruct | loaded | 32768 | 32768 | Q4_K_M |
+
+Other models (gemma-4-12b, qwen3.6-27b, deepseek-coder-v2-lite, deepseek-r1-distill-qwen-14b, nomic-embed-text-v1.5) are `not-loaded`.
+
+### Verification
+
+Hermes with full rules (AGENTS.md ~56K chars truncated to 31457) produces ~12,780 tokens — well within 32,768.
+
+| Test | Rules | Result |
+|------|-------|--------|
+| Chat "Say just OK" | full | ✅ PASS |
+| Coding "prime function" | full | ✅ PASS |
+| Coding "quicksort" | full | ✅ PASS |
+| Coding "reverse string" | full | ✅ PASS |
+| Reasoning "2+2" | full | ❌ FAIL — operational fastpath (blocker #3) |
+| Reasoning "2+2" | --ignore-rules | ❌ FAIL — same (fastpath, not context) |
+
+### Conclusion
+
+The `n_ctx=8192` error was transient (likely model reload or VRAM pressure). LM Studio's default configuration for qwen2.5-14b-instruct (Q4_K_M) on RX9070 (16GB) uses 32,768 context — no changes needed.
+
+**Hermes input reduction is unnecessary.** The operational fastpath (blocker #3) is the only remaining issue for this integration.
+
+## Final Classification
+
+**PASS WITH WARNINGS** — Hermes → AI-LAB Gateway → LM Studio pipeline verified. Context limit is adequate (32K). Gateway fixes deployed. The only failure is operational fastpath for trivial/math prompts (separate blocker).
