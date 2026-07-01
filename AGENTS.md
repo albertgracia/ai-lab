@@ -629,15 +629,20 @@ FASE 39B → runtime observability alerts                                 ✅
 FASE 39C → cognitive health followup                                    ✅
 FASE 39E → runtime stabilization release close                          ✅
 FASE 40A → post-release SLO drift watch                                 ✅
+SLO-ENFORCEMENT-01 → SLO enforcement read-only (13 SLOs, 26/26 tests)  ✅ CP-SLO-ENFORCEMENT-01
+VALIDATION-AUTHORITY-01 → validation authority read-only (57/57)        ✅ CP-VALIDATION-AUTHORITY-01
+AUTONOMOUS-OBSERVABILITY-TRIAGE-01 → triage read-only (34/34)           ✅ CP-AUTONOMOUS-OBSERVABILITY-TRIAGE-01
+OPERATOR-INTENT-REASONING-01 → operator intent (25/25)                  ✅ CP-OPERATOR-INTENT-REASONING-01
+MULTIGPU-READINESS-01 → readiness assessment (37/100)                   ✅ CP-MULTIGPU-READINESS-01
 ```
 
-Tags git: desde `CP-21B-STABLE` hasta `CP-40A-POST-RELEASE-SLO-DRIFT-WATCH-01-STABLE` (113 tags).
+Tags git: desde `CP-21B-STABLE` hasta `CP-MULTIGPU-READINESS-01` (114 tags).
 
 **Documentation hierarchy:** `docs/DOCUMENTATION-HIERARCHY.md` — Level 1: AGENTS.md, Level 2: ARCHITECTURE.md, Level 3: ROADMAP-2026.md, Level 4: conversation-history.md + audits/archive.
 
 ## Current Runtime Truth
 
-**Checkpoint actual:** `CP-40A-POST-RELEASE-SLO-DRIFT-WATCH-01-STABLE`
+**Checkpoint actual:** `CP-MULTIGPU-READINESS-01`
 
 **Runtime state source of truth:** `/runtime/maturity` (build_runtime_descriptor)
 
@@ -667,17 +672,15 @@ Tags git: desde `CP-21B-STABLE` hasta `CP-40A-POST-RELEASE-SLO-DRIFT-WATCH-01-ST
 - models: `/mnt/ai-models`
 - archives: `/mnt/opencode/ai-lab-archives`
 
-**Próxima fase:** FASE 37B — Validation Authority Recovery
+**Próxima fase:** FASE 37B — Validation Authority Recovery (restaurar Prometheus scrape targets)
 
 ### Roadmap actual
 
 ```
 37B — Validation Authority Recovery (restaurar Prometheus scrape targets)
-37C — Operator Intent Reasoning (diferido hasta restaurar authority)
-37D — Autonomous Observability Triage (diferido)
+Multi-GPU scheduling (post-node-reactivation + pre-requisites: 7-10d)
 Pilot técnico (post-authority)
 Pilot operador (post-pilot técnico)
-Multi-GPU (posterior)
 ```
 
 ### Roadmap completado (Blocks 37-40)

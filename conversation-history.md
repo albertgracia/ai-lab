@@ -1,6 +1,6 @@
 # AI-LAB Conversation History — Historical Timeline
 
-**Current state:** HEAD `0f5e3ab8` · 113 git tags · latest tag: `CP-40A-POST-RELEASE-SLO-DRIFT-WATCH`
+**Current state:** HEAD `cc4e793` · 114 git tags · latest tag: `CP-MULTIGPU-READINESS-01`
 
 ---
 
@@ -28,6 +28,7 @@
 | 38 | Jun 2026 | 4 | Runtime deep audit, graceful shutdown, GitNexus error triage, stability snapshot |
 | 39 | Jun 2026 | 4 | OpenCode contract hardening, observability alerts, stabilization release close |
 | 40 | Jul 2026 | 1 | Post-release SLO drift watch |
+| (41) | Jul 2026 | 1 | SLO enforcement read-only, Multi-GPU readiness assessment |
 
 ---
 
@@ -57,6 +58,13 @@
 
 ### Block 40 — Post-Release Watch
 - **CP-40A-POST-RELEASE-SLO-DRIFT-WATCH** — Post-release SLO monitoring across all dimensions. Drift detection with automated notification.
+
+### Post-40 Phases (SMB Workspace — E:\opencode\ai-lab)
+- **CP-SLO-ENFORCEMENT-01** — SLO enforcement read-only layer. `collect_slo_snapshot()`, `evaluate_slos()`, `build_slo_report()`. 13 SLOs covering gateway, router, runtime, GPU, observability, governance. `GET /api/slo/status` + `GET /api/slo/report`. 26/26 tests PASS. 117/117 global.
+- **CP-VALIDATION-AUTHORITY-01** — Validation authority read-only. `build_validation_decision()` in `runtime/governance/validation_authority.py`. Evidence assessment, rollback, approval levels. 57/57 tests PASS.
+- **CP-AUTONOMOUS-OBSERVABILITY-TRIAGE-01** — Autonomous observability triage. `collect_prometheus_snapshot()` + `build_observability_triage_report()`. `GET /api/observability/triage`. 34/34 tests PASS.
+- **CP-OPERATOR-INTENT-REASONING-01** — Operator intent reasoning. `analyze_operator_intent()` with risk/approval/target/action. `GET /api/operator/intent`. 25/25 tests PASS.
+- **CP-MULTIGPU-READINESS-01** — Readiness assessment for Multi-GPU scheduling. 10-phase read-only analysis. Score: 37/100. No runtime changes.
 
 ### Auxiliary Tags (Blocks 37–40 scope)
 - `AI-LAB_BLOCK37_STABLE_01` · `CP-GATEWAY-SHUTDOWN-GRACEFUL` · `CP-RUNTIME-STABILITY-SNAPSHOT`
@@ -177,11 +185,13 @@
 | **Hermes Integration** | ✅ Complete — Gateway model mapping fix, rate limit, context resolution, fastpath narrowed |
 | **Hermes BLOCKERS-01A-CONTEXT** | ✅ Closed — n_ctx=32768 was adequate, false alarm |
 | **Hermes BLOCKERS-01B-FASTPATH** | ✅ PASS — removed bare "what is"/"who is" from infrastructure intents |
-| **Operator Intent Reasoning** | ✅ PASS — FASE 36C, GET /api/operator/intent, risk/approval/target/action |
-| **Autonomous Observability Triage** | ✅ PASS — FASE 36D, GET /api/observability/triage, Prometheus snapshot + runtime triage |
-| **Validation Authority** | ✅ PASS — GET /api/validation/authority, evidence-based decision engine on top of OI + triage |
+| **Operator Intent Reasoning** | ✅ PASS — FASE 36C, `GET /api/operator/intent`, risk/approval/target/action |
+| **Autonomous Observability Triage** | ✅ PASS — FASE 36D, `GET /api/observability/triage`, Prometheus snapshot + runtime triage |
+| **Validation Authority** | ✅ PASS — `GET /api/validation/authority`, evidence-based decision engine on top of OI + triage |
+| **SLO Enforcement** | ✅ PASS — `GET /api/slo/status` + `GET /api/slo/report`, 13 SLOs, 26/26 tests |
+| **Multi-GPU Readiness** | ✅ PASS — Readiness score 37/100, scheduler contract, 10-phase read-only assessment |
 | **Validation Authority Recovery (37B)** | Restore Prometheus scrape targets, authority chain repair |
-| **Multi-GPU Scheduling** | Cross-GPU load balancing (post-semantic readiness) |
+| **Multi-GPU Scheduling** | Cross-GPU load balancing (requires .60 node reactivation + pre-requisites: 7-10d) |
 | **Marketplace Integration** | Model marketplace for community-contributed cognitive profiles |
 | **AnythingLLM** | AnythingLLM RAG integration with AI-LAB runtime context |
 | **Cloudflare Workers AI** | Edge inference via Cloudflare Workers AI for lightweight tasks |
