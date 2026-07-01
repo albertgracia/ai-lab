@@ -229,6 +229,8 @@ class APIHandler(BaseHTTPRequestHandler):
             self._handle_runtime_recall()
         elif self.path == "/api/mode":
             self._handle_get_mode()
+        elif self.path.startswith("/api/operator/intent"):
+            self._handle_operator_intent()
         elif self.path == "/api/commands/pending":
             self._handle_pending_commands()
         elif self.path == "/api/commands/history":
@@ -692,6 +694,20 @@ class APIHandler(BaseHTTPRequestHandler):
             })
         except ImportError as e:
             self._json({"error": f"quality assessment not available: {e}"})
+
+    def _handle_operator_intent(self):
+        try:
+            from runtime.operator_intent import analyze_operator_intent
+            qs = self._parse_qs()
+            text = qs.get("text", [""])[0]
+            result = analyze_operator_intent(text)
+            self._json({
+                "route_family": classify_api_route(self.path).family,
+                "input": text,
+                "result": result,
+            })
+        except ImportError as e:
+            self._json({"error": f"operator_intent not available: {e}"})
 
     # ─────────────────────────────────────────────────────────────────
 

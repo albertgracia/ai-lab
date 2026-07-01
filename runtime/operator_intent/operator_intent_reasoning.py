@@ -51,6 +51,11 @@ class OperatorIntentResult:
     authority: dict[str, Any] = field(default_factory=dict)
     precision: dict[str, Any] = field(default_factory=dict)
     explainability: dict[str, Any] = field(default_factory=dict)
+    risk: str = "low"
+    requires_approval: bool = False
+    allowed_modes: list[str] = field(default_factory=lambda: ["observe", "plan", "build", "execute"])
+    target: str = "unknown"
+    recommended_action: str = "answer"
     generated_at: float = 0.0
     deterministic_signature: str = ""
 
@@ -87,6 +92,8 @@ _MARKERS: dict[str, tuple[str, list[tuple[str, str]]]] = {
         ("estado runtime", "status_query"), ("runtime status", "status_query"),
         ("estado del runtime", "status_query"), ("como esta el runtime", "status_query"),
         ("cómo está el runtime", "status_query"), ("health del gateway", "status_query"),
+        ("ai-lab health", "status_query"), ("gateway health", "status_query"),
+        ("show me", "status_query"), ("show status", "status_query"),
     ]),
     OperatorIntentCategory.FAST_INFRASTRUCTURE.value: ("fast", [
         ("infraestructura", "infrastructure_terms"), ("infrastructure", "infrastructure_terms"),
@@ -166,7 +173,12 @@ _MARKERS: dict[str, tuple[str, list[tuple[str, str]]]] = {
 }
 
 _ACTION_TERMS = ("ejecuta", "reinicia", "restart", "borra", "delete", "rm -rf", "sudo", "aplica", "deploy", "despliega")
-_DANGEROUS_TERMS = ("rm -rf", "shutdown", "reboot", "format", "borrar", "eliminar", "drop database", "systemctl restart")
+_DANGEROUS_TERMS = ("rm -rf", "shutdown", "reboot", "format", "borrar", "eliminar", "delete all", "drop database", "systemctl restart")
+_EXECUTION_TERMS = ("execute", "run", "aplica", "apply", "deploy", "despliega", "push", "commit")
+_GIT_TERMS = ("git push", "git commit", "git merge", "git rebase", "push to origin", "push --force")
+_RESTART_TERMS = ("restart", "reinicia", "systemctl restart", "service restart", "reboot")
+_DELETE_TERMS = ("delete", "borra", "borrar", "eliminar", "rm -rf", "drop", "truncate")
+_DEPLOY_TERMS = ("deploy", "despliega", "release", "rollout", "publish")
 
 
 def _score_text(text: str) -> tuple[dict[str, dict[str, Any]], list[str], list[str]]:
@@ -254,13 +266,99 @@ def _safety(text: str, category: str) -> dict[str, Any]:
         "requires_human_confirmation": bool(action_markers or dangerous_markers or remediation_like),
         "unsafe_action_markers": sorted(set(dangerous_markers)),
         "action_markers": sorted(set(action_markers)),
-        "guards": [
-            "NO_AUTONOMOUS_EXECUTION",
-            "NO_REMEDIATION_AUTHORITY",
-            "NO_INFRASTRUCTURE_MUTATION",
-            "NO_INFERRED_OPERATIONAL_TRUTH",
-        ],
-    }
+    "guards": [
+        "NO_AUTONOMOUS_EXECUTION",
+        "NO_REMEDIATION_AUTHORITY",
+        "NO_INFRASTRUCTURE_MUTATION",
+        "NO_INFERRED_OPERATIONAL_TRUTH",
+    ],
+}
+
+
+def _target_from_text(text: str) -> str:
+    if any(t in text for t in ("gateway", "8008")):
+        return "gateway"
+    if any(t in text for t in ("router", "8083")):
+        return "router"
+    if any(t in text for t in ("live-api", "live api", "8084")):
+        return "live-api"
+    if any(t in text for t in ("prometheus", "9090")):
+        return "prometheus"
+    if any(t in text for t in ("grafana", "3000")):
+        return "grafana"
+    if any(t in text for t in ("lm studio", "lmstudio", "1234")):
+        return "lm-studio"
+    if any(t in text for t in ("git", "push", "commit", "merge", "rebase")):
+        return "git"
+    if any(t in text for t in ("file", "log", "archivo", "directorio", "rm -rf")):
+        return "filesystem"
+    return "unknown"
+
+
+def _risk_from_category_and_text(category: str, text: str, safety: dict[str, Any]) -> str:
+    if safety.get("unsafe_action_markers"):
+        return "critical"
+    if category in {
+        OperatorIntentCategory.IMPLEMENTATION_REQUEST.value,
+        OperatorIntentCategory.CODE_CHANGE_REQUEST.value,
+    }:
+        return "high"
+    if any(t in text for t in _EXECUTION_TERMS):
+        return "high"
+    if any(t in text for t in _RESTART_TERMS):
+        return "high"
+    if any(t in text for t in _DEPLOY_TERMS):
+        return "high"
+    if category in {
+        OperatorIntentCategory.PLANNING.value,
+        OperatorIntentCategory.REMEDIATION_DISCUSSION.value,
+    }:
+        return "medium"
+    if safety.get("action_markers"):
+        return "medium"
+    return "low"
+
+
+def _requires_approval(risk: str, category: str) -> bool:
+    if risk in ("critical", "high"):
+        return True
+    if category in {
+        OperatorIntentCategory.IMPLEMENTATION_REQUEST.value,
+        OperatorIntentCategory.CODE_CHANGE_REQUEST.value,
+        OperatorIntentCategory.REMEDIATION_DISCUSSION.value,
+    }:
+        return True
+    return False
+
+
+def _allowed_modes(category: str, risk: str) -> list[str]:
+    if risk in ("critical", "high"):
+        return ["observe"]
+    if category in {
+        OperatorIntentCategory.IMPLEMENTATION_REQUEST.value,
+        OperatorIntentCategory.CODE_CHANGE_REQUEST.value,
+    }:
+        return ["observe", "plan"]
+    if category in {
+        OperatorIntentCategory.PLANNING.value,
+        OperatorIntentCategory.CAPACITY_ANALYSIS.value,
+    }:
+        return ["observe", "plan", "build"]
+    return ["observe", "plan", "build", "execute"]
+
+
+def _recommended_action(risk: str, requires_approval: bool, category: str) -> str:
+    if risk == "critical":
+        return "block"
+    if requires_approval:
+        return "require_approval"
+    if category == OperatorIntentCategory.UNKNOWN.value:
+        return "answer"
+    if risk == "low":
+        return "answer"
+    if risk == "medium":
+        return "ask_clarification"
+    return "propose_command"
 
 
 def analyze_operator_intent(
@@ -305,6 +403,11 @@ def analyze_operator_intent(
         ],
     }
     safety = _safety(t, category)
+    risk = _risk_from_category_and_text(category, t, safety)
+    requires_approval = _requires_approval(risk, category)
+    target = _target_from_text(t)
+    allowed_modes = _allowed_modes(category, risk)
+    recommended_action = _recommended_action(risk, requires_approval, category)
     explainability = {
         "reason_codes": reason_codes,
         "matched_terms": matched_terms,
@@ -337,6 +440,11 @@ def analyze_operator_intent(
         authority=authority,
         precision=precision,
         explainability=explainability,
+        risk=risk,
+        requires_approval=requires_approval,
+        allowed_modes=allowed_modes,
+        target=target,
+        recommended_action=recommended_action,
         generated_at=generated_at,
         deterministic_signature=_hash(signature_payload),
     )

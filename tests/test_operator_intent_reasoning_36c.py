@@ -137,3 +137,82 @@ def test_signature_is_deterministic_for_same_input(monkeypatch):
 
 def test_classify_operator_intent_returns_category_string():
     assert classify_operator_intent("estado GPU RX9070") == OperatorIntentCategory.FAST_GPU_STATUS.value
+
+
+# ── Extended schema tests (FASE Operator Intent 01) ────────────────
+
+
+def test_trivia_not_operator():
+    result = _intent("What is 2+2?")
+    assert result["category"] == OperatorIntentCategory.UNKNOWN.value
+    assert result["risk"] == "low"
+    assert result["requires_approval"] is False
+    assert result["recommended_action"] == "answer"
+
+
+def test_restart_gateway_is_high_risk_requires_approval():
+    result = _intent("restart the gateway")
+    assert result["target"] == "gateway"
+    assert result["risk"] == "high"
+    assert result["requires_approval"] is True
+    assert result["recommended_action"] == "require_approval"
+    assert result["allowed_modes"] == ["observe"]
+
+
+def test_show_health_is_low_risk():
+    result = _intent("show me AI-LAB health")
+    assert result["category"] in {
+        OperatorIntentCategory.FAST_STATUS.value,
+        OperatorIntentCategory.FAST_OBSERVABILITY.value,
+    }
+    assert result["risk"] == "low"
+    assert result["requires_approval"] is False
+    assert result["recommended_action"] == "answer"
+
+
+def test_delete_logs_is_critical():
+    result = _intent("delete all logs")
+    assert result["safety"]["unsafe_action_markers"]
+    assert result["risk"] == "critical"
+    assert result["requires_approval"] is True
+    assert result["recommended_action"] == "block"
+    assert result["allowed_modes"] == ["observe"]
+
+
+def test_push_to_origin_main_is_high_risk():
+    result = _intent("push to origin main")
+    assert result["target"] == "git"
+    assert result["risk"] == "high"
+    assert result["requires_approval"] is True
+    assert result["recommended_action"] == "require_approval"
+
+
+def test_prepare_rollback_plan_is_planning():
+    result = _intent("prepare a rollback plan for the gateway")
+    assert result["category"] == OperatorIntentCategory.PLANNING.value
+    assert result["risk"] == "medium"
+    assert result["allowed_modes"] == ["observe", "plan", "build"]
+    assert result["recommended_action"] in ("ask_clarification", "require_approval")
+
+
+def test_rm_rf_is_critical_blocked():
+    result = _intent("rm -rf /opt/ai-lab/logs")
+    assert result["risk"] == "critical"
+    assert result["recommended_action"] == "block"
+    assert "unsafe_action_markers" in result["safety"]
+    assert result["safety"]["requires_human_confirmation"] is True
+
+
+def test_deploy_change_is_high_risk():
+    result = _intent("deploy this change to the gateway")
+    assert result["target"] == "gateway"
+    assert result["risk"] == "high"
+    assert result["requires_approval"] is True
+    assert result["allowed_modes"] == ["observe"]
+
+
+def test_prometheus_target_down_is_observability():
+    result = _intent("find why Prometheus target is down")
+    assert result["category"] == OperatorIntentCategory.FAST_OBSERVABILITY.value
+    assert result["target"] == "prometheus"
+    assert result["risk"] == "low"
