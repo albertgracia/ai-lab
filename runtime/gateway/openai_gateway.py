@@ -406,7 +406,7 @@ except ImportError:
     record_profile_metrics = None  # type: ignore[assignment]
     _HAVE_PROFILE_METRICS = False
 
-RATE_LIMIT_REQUESTS = 30
+RATE_LIMIT_REQUESTS = 120
 RATE_LIMIT_WINDOW = 60
 _rate_limit_data: dict = defaultdict(list)
 _rate_limit_lock = threading.Lock()
