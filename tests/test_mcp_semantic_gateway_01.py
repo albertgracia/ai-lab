@@ -1,5 +1,9 @@
 """
-Tests for MCP Semantic Gateway Phase 01 (MCP-SEMANTIC-GATEWAY-01)
+Tests for MCP tools — migrated from legacy to runtime-mcp snapshot
+
+NOTE: Originally imported from mcp/servers/ailab_semantic_gateway.py (LEGACY).
+Migrated to mcp/runtime-mcp/tools/ as part of AILAB-MCP-LEGACY-DOCUMENT-AND-MIGRATE-01.
+The legacy file is retained for reference but new tests must target runtime-mcp.
 
 Covers:
 - route_preview does NOT execute model inference
@@ -11,14 +15,12 @@ Covers:
 """
 import sys, json, os
 
-sys.path.insert(0, "/opt/ai-lab/mcp/servers")
+# Import from runtime-mcp snapshot (mcp/runtime-mcp/tools/)
+# Requires httpx + mcp packages (available in /opt/ai-lab/.venv)
+sys.path.insert(0, "/opt/ai-lab/mcp/runtime-mcp")
 
-from ailab_semantic_gateway import (
-    heuristic_route_preview,
-    get_client,
-    GATEWAY_URL,
-    ROUTER_URL,
-)
+from tools.client import get_client, GATEWAY_URL, ROUTER_URL
+from tools.route_preview import heuristic_route_preview
 
 # ---------------------------------------------------------------------------
 # heuristic_route_preview tests (no LLM call)
@@ -106,7 +108,7 @@ def test_runtime_health_unavailable_controlled():
 def test_prompt_not_logged_full():
     """Verify that prompts are truncated in logs (checked via code review)"""
     # Read the source to verify log truncation pattern
-    with open(os.path.join(os.path.dirname(__file__), "..", "mcp", "servers", "ailab_semantic_gateway.py")) as f:
+    with open(os.path.join(os.path.dirname(__file__), "..", "mcp", "runtime-mcp", "tools", "route_preview.py")) as f:
         source = f.read()
     # Should log truncated prompt, not full
     assert "logger.info(\"route_preview prompt=%.120s\"" in source

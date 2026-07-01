@@ -4,7 +4,7 @@ from .client import get_client, GATEWAY_URL, logger
 def register(mcp: FastMCP):
     @mcp.tool(
         name="ailab_health_latency",
-        description="Returns runtime health score and latency statistics (p50/p95/max)",
+        description="Returns runtime health score and latency statistics (p50/p95/max) from the Gateway. Use for performance monitoring and SLO tracking. Output: {status, latency, health_score}. Each field contains per-node or aggregate metrics. Individual endpoint failures return error details per field rather than failing the whole call.",
     )
     def ailab_health_latency() -> dict:
         client = get_client()

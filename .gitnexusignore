@@ -12,8 +12,18 @@ __pycache__/
 node_modules/
 dist/
 
+# Runtime source files (override .gitignore restrictions for indexing)
+# .gitignore has runtime/ + !runtime/ + runtime/* which blocks descent into
+# most runtime subdirectories. We unignore ALL runtime/ files here, then
+# re-exclude operational/data subdirectories.
+!runtime/**
+runtime/**/.pytest_cache/**
+runtime/**/__pycache__/**
+runtime/**/*.pyc
+runtime/**/*.log
+
 # Runtime operational data (never index)
-runtime/state/
+runtime/state/**
 
 # Common temp/log/data folders
 tmp/

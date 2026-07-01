@@ -37,7 +37,7 @@ def heuristic_route_preview(prompt: str) -> dict:
 def register(mcp: FastMCP):
     @mcp.tool(
         name="ailab_route_preview",
-        description="Heuristic route preview — classifies a prompt without LLM inference",
+        description="Heuristic route preview — classifies a prompt into a route family (coding|reasoning|tool_use|fast|unknown) without making any LLM call. Use to decide which model or pipeline should handle a request before inference. Output: {status, route_family, confidence, reason}. Zero-cost classification via regex signals.",
     )
     def ailab_route_preview(prompt: str) -> dict:
         if not prompt or not isinstance(prompt, str):

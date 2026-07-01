@@ -4,7 +4,7 @@ from .client import get_client, ROUTER_URL, logger
 def register(mcp: FastMCP):
     @mcp.tool(
         name="ailab_operator_summary",
-        description="Returns NOC-ready operator summary of AI-LAB runtime (services, nodes, GPU, watchdog)",
+        description="Returns NOC-ready operator summary of AI-LAB runtime (services, nodes, GPU status, watchdog state). Use for at-a-glance operational awareness. Output: {status, data} with aggregated runtime state from the Router. Returns unavailable if Router endpoint is unreachable.",
     )
     def ailab_operator_summary() -> dict:
         client = get_client()

@@ -1,14 +1,26 @@
 """
-AI-LAB MCP Semantic Gateway — PoC Read-Only
-FASE: MCP-SEMANTIC-GATEWAY-01
+[LEGACY] AI-LAB MCP Semantic Gateway — PoC Read-Only
 
-Exposes 3 read-only MCP tools:
+STATUS: LEGACY — Do NOT use for new development.
+
+This file is a Phase-1 proof-of-concept (MCP-SEMANTIC-GATEWAY-01).
+It is NOT the active runtime. The active runtime runs at /mnt/mcp_server/
+(systemd: ailab-mcp-semantic-gateway.service).
+
+SOURCE OF TRUTH (MCP Runtime):
+  Active runtime:  /mnt/mcp_server/
+  Snapshot (repo): mcp/runtime-mcp/
+  Legacy (repo):   mcp/servers/ailab_semantic_gateway.py
+
+New tests and development MUST target mcp/runtime-mcp/tools/.
+Do NOT add new tools or modify runtime logic in this file.
+
+Exposes 3 read-only MCP tools (duplicated from runtime-mcp):
   1. ailab_status          — health check of gateway + router
   2. ailab_runtime_health  — runtime health summary (nodes, scores, watchdog)
   3. ailab_route_preview   — heuristic route classification (no LLM call)
 
-Architecture:
-  OpenCode → MCP remote → ailab-mcp-semantic-gateway → AI-LAB Gateway/Router
+Original FASE: MCP-SEMANTIC-GATEWAY-01
 """
 
 import os
@@ -137,7 +149,7 @@ Tools:
 
 @mcp.tool(
     name="ailab_status",
-    description="Returns health status of AI-LAB Gateway and Router",
+    description="Returns health status of AI-LAB Gateway and Router. Use as a first-line check to confirm the MCP backend is reachable. Output: {status, gateway, router} with status ok|degraded|unavailable. Gateway and router must both respond 200 with status=ok for overall ok.",
 )
 def ailab_status() -> dict:
     """Check gateway and router health endpoints."""
@@ -191,7 +203,7 @@ def ailab_status() -> dict:
 
 @mcp.tool(
     name="ailab_runtime_health",
-    description="Returns detailed runtime health summary from AI-LAB Gateway",
+    description="Returns detailed runtime health summary from AI-LAB Gateway. Use for deep observability: node health, health scores, watchdog state, and overall_health. Output: {status, source, data} where data contains per-node breakdown. May time out after 3s if gateway is overloaded.",
 )
 def ailab_runtime_health() -> dict:
     """Fetch runtime health/summary from the gateway."""
@@ -233,7 +245,7 @@ def ailab_runtime_health() -> dict:
 
 @mcp.tool(
     name="ailab_route_preview",
-    description="Heuristic route preview — classifies a prompt without LLM inference",
+    description="Heuristic route preview — classifies a prompt into a route family (coding|reasoning|tool_use|fast|unknown) without making any LLM call. Use to decide which model or pipeline should handle a request before inference. Output: {status, route_family, confidence, reason}. Zero-cost classification via regex signals.",
 )
 def ailab_route_preview(prompt: str) -> dict:
     """Classify a prompt into a route family using local heuristics.

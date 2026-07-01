@@ -5,7 +5,7 @@ from .client import get_client, GATEWAY_URL, HEALTH_TIMEOUT, logger
 def register(mcp: FastMCP):
     @mcp.tool(
         name="ailab_runtime_health",
-        description="Returns detailed runtime health summary from AI-LAB Gateway",
+        description="Returns detailed runtime health summary from AI-LAB Gateway. Use for deep observability: node health, health scores, watchdog state, and overall_health. Output: {status, source, data} where data contains per-node breakdown. May time out after 3s if gateway is overloaded.",
     )
     def ailab_runtime_health() -> dict:
         client = get_client()

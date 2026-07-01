@@ -4,7 +4,7 @@ from .client import get_client, GATEWAY_URL, logger
 def register(mcp: FastMCP):
     @mcp.tool(
         name="ailab_incidents_active",
-        description="Returns active incident intelligence report (failures, offline nodes, degradations, correlations)",
+        description="Returns active incident intelligence report from the Gateway (failures, offline nodes, degradations, correlations). Use for real-time incident awareness and NOC-style monitoring. Output: {status, data} where data contains categorized active issues. Returns unavailable if Gateway endpoint is unreachable.",
     )
     def ailab_incidents_active() -> dict:
         client = get_client()

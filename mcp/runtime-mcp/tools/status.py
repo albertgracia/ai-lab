@@ -4,7 +4,7 @@ from .client import get_client, GATEWAY_URL, ROUTER_URL, logger
 def register(mcp: FastMCP):
     @mcp.tool(
         name="ailab_status",
-        description="Returns health status of AI-LAB Gateway and Router",
+        description="Returns health status of AI-LAB Gateway and Router. Use as a first-line check to confirm the MCP backend is reachable. Output: {status, gateway, router} with status ok|degraded|unavailable. Gateway and router must both respond 200 with status=ok for overall ok.",
     )
     def ailab_status() -> dict:
         client = get_client()
