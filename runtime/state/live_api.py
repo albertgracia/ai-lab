@@ -233,6 +233,10 @@ class APIHandler(BaseHTTPRequestHandler):
             self._handle_operator_intent()
         elif self.path.startswith("/api/observability/triage"):
             self._handle_observability_triage()
+        elif self.path.startswith("/api/slo/status"):
+            self._handle_slo_status()
+        elif self.path.startswith("/api/slo/report"):
+            self._handle_slo_report()
         elif self.path.startswith("/api/validation/authority"):
             self._handle_validation_authority()
         elif self.path == "/api/commands/pending":
@@ -761,6 +765,41 @@ class APIHandler(BaseHTTPRequestHandler):
             })
         except ImportError as e:
             self._json({"error": f"validation_authority not available: {e}"})
+
+    def _handle_slo_status(self):
+        try:
+            from runtime.governance.slo_enforcement import evaluate_slos
+            results = evaluate_slos()
+            critical = sum(1 for r in results if r["status"] == "critical")
+            warning = sum(1 for r in results if r["status"] == "warning")
+            passed = sum(1 for r in results if r["status"] == "pass")
+            overall = "critical" if critical > 0 else "warning" if warning > 0 else "pass"
+            self._json({
+                "route_family": classify_api_route(self.path).family,
+                "overall_status": overall,
+                "total_slos": len(results),
+                "pass": passed,
+                "warning": warning,
+                "critical": critical,
+                "critical_slos": [r["slo_id"] for r in results if r["status"] == "critical"],
+                "warning_slos": [r["slo_id"] for r in results if r["status"] == "warning"],
+                "requires_approval": overall == "critical",
+                "safe_to_auto_execute": False,
+                "contract_version": "SLO-ENFORCEMENT-01",
+            })
+        except ImportError as e:
+            self._json({"error": f"slo_enforcement not available: {e}"})
+
+    def _handle_slo_report(self):
+        try:
+            from runtime.governance.slo_enforcement import build_slo_report
+            report = build_slo_report()
+            self._json({
+                "route_family": classify_api_route(self.path).family,
+                "report": report,
+            })
+        except ImportError as e:
+            self._json({"error": f"slo_enforcement not available: {e}"})
 
     # ─────────────────────────────────────────────────────────────────
 
