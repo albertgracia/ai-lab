@@ -269,6 +269,12 @@ class APIHandler(BaseHTTPRequestHandler):
             self._handle_control_snapshots()
         elif self.path.startswith("/api/control/snapshots/"):
             self._handle_control_snapshot_detail(self.path.rsplit("/", 1)[-1])
+        elif self.path == "/api/nodes/registry":
+            self._handle_node_registry()
+        elif self.path == "/api/nodes/capabilities":
+            self._handle_node_capabilities()
+        elif self.path.startswith("/api/nodes/eligible"):
+            self._handle_node_eligible()
         elif self.path == "/api/control/recover":
             self._handle_control_recover()
         elif self.path == "/metrics":
@@ -800,6 +806,44 @@ class APIHandler(BaseHTTPRequestHandler):
             })
         except ImportError as e:
             self._json({"error": f"slo_enforcement not available: {e}"})
+
+    def _handle_node_registry(self):
+        try:
+            from runtime.state.dynamic_node_registry import build_node_registry, registry_to_dict
+            registry = build_node_registry()
+            self._json(registry_to_dict(registry))
+        except ImportError as e:
+            self._json({"error": f"dynamic_node_registry not available: {e}"})
+
+    def _handle_node_capabilities(self):
+        try:
+            from runtime.state.dynamic_node_registry import build_node_registry, build_capability_matrix
+            registry = build_node_registry()
+            matrix = build_capability_matrix(registry)
+            self._json({
+                "route_family": classify_api_route(self.path).family,
+                "capability_matrix": matrix,
+                "contract_version": "DYNAMIC-NODE-REGISTRY-01",
+            })
+        except ImportError as e:
+            self._json({"error": f"dynamic_node_registry not available: {e}"})
+
+    def _handle_node_eligible(self):
+        try:
+            from runtime.state.dynamic_node_registry import build_node_registry, select_eligible_nodes, entry_to_dict
+            qs = self._parse_qs()
+            requirements = qs.get("capability", [])
+            registry = build_node_registry()
+            eligible = select_eligible_nodes(registry, requirements=requirements if requirements else None)
+            self._json({
+                "route_family": classify_api_route(self.path).family,
+                "requirements": requirements,
+                "eligible_count": len(eligible),
+                "eligible_nodes": [entry_to_dict(e) for e in eligible],
+                "contract_version": "DYNAMIC-NODE-REGISTRY-01",
+            })
+        except ImportError as e:
+            self._json({"error": f"dynamic_node_registry not available: {e}"})
 
     # ─────────────────────────────────────────────────────────────────
 
