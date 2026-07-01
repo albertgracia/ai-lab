@@ -62,12 +62,15 @@ ai-lab chat -q "query"
 - `qwen2.5-14b-instruct` (raw LM Studio ID) is NOT in `_BACKEND_MODEL_MAP` — falls through to broken routing
 - Only `qwen/qwen2.5-coder-14b-instruct` and `qwen2.5-coder-14b-instruct` are correctly mapped
 
-### 4. Operational Fastpath (PRE-EXISTING — deferred)
+### 4. Operational Fastpath (RESOLVED — 2026-07-01)
 
-- Short/trivial prompts like "What is 2+2?" trigger operational fastpath instead of LLM
-- Gateway returns hardcoded "Infrastructure" response (not the actual answer)
-- Hermes reports: "Provider returned an empty stream with no finish_reason"
-- **This is the only remaining blocker for full Hermes integration**
+**Root cause:** `_FASTPATH_INTENTS["infrastructure"]` contained `"what is"`, `"who is"`, `"que es"`, `"qué es"` — bare question-word patterns that matched any query starting with those phrases.
+
+**Fix:** Removed these 4 patterns from both `tool_request_classifier.py:540-543` and `operational_fastpath.py:110`. The IP-specific identity check (IP + `what is`) remains for legitimate operational queries like "What is 192.168.1.30?".
+
+**Validation:** "What is 2+2?" now returns LLM answer through Hermes ✅. Operational queries ("estado runtime", "Check AI-LAB health") still return operational fastpath responses through direct Gateway ✅.
+
+**Note:** Operational health queries through Hermes still fail with "empty stream" error — pre-existing streaming compatibility issue, not related to this fix.
 
 ## Smoke Test Results
 

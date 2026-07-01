@@ -174,7 +174,9 @@
 
 | Phase | Scope |
 |-------|-------|
-| **Hermes Integration** | Hermes protocol embedding for cross-runtime communication |
+| **Hermes Integration** | ✅ Complete — Gateway model mapping fix, rate limit, context resolution, fastpath narrowed |
+| **Hermes BLOCKERS-01A-CONTEXT** | ✅ Closed — n_ctx=32768 was adequate, false alarm |
+| **Hermes BLOCKERS-01B-FASTPATH** | ✅ PASS — removed bare "what is"/"who is" from infrastructure intents |
 | **Operator Intent Reasoning** | Classify operator queries by intent (diagnosis, remediation, observation) |
 | **Autonomous Observability Triage** | Automated triage pipelines from alert → diagnosis → remediation proposal |
 | **Validation Authority Recovery** | Restore Prometheus scrape targets, authority chain repair |
