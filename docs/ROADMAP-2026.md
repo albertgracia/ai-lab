@@ -386,8 +386,9 @@ Additional tags not part of the numbered block sequence. Includes memory governa
 | 10 | `CP-DOCS-AILAB-MCP-INFRASTRUCTURE-UPDATE-01-STABLE` |
 | 11 | `CP-DOCS-ASTRO-ARCHITECTURE-UPDATE-01-STABLE` |
 | 12 | `CP-DOC-AUTOMATION-STABLE` |
+| 13 | `CP-VALIDATION-AUTHORITY-01-STABLE` |
 
-**12 tags** — Memory Qdrant, incidents schema, MCP gateway, doc automation.
+**13 tags** — Memory Qdrant, incidents schema, MCP gateway, doc automation, validation authority.
 
 > **Note:** `CP-GATEWAY-SHUTDOWN-GRACEFUL-01-STABLE` and `CP-RUNTIME-STABILITY-SNAPSHOT-01-STABLE` are aliases for `CP-38B` and `CP-38D` respectively (not duplicated here).
 
@@ -398,9 +399,10 @@ Additional tags not part of the numbered block sequence. Includes memory governa
 | Phase | Description | Status |
 |-------|-------------|--------|
 | Hermes Integration | Fast inter-agent messaging bus | Planned |
-| Operator Intent Reasoning | Intent classification and operator-driven decisions | Planned |
-| Autonomous Observability Triage | Self-healing observability pipeline | Planned |
-| Validation Authority Recovery | Restore Prometheus scrape targets, fix authority gaps | Next |
+| Operator Intent Reasoning | Intent classification and operator-driven decisions | ✅ Done |
+| Autonomous Observability Triage | Self-healing observability pipeline | ✅ Done |
+| Validation Authority | Evidence-based action validation on top of OI + triage | ✅ Done |
+| Validation Authority Recovery (37B) | Restore Prometheus scrape targets, fix authority gaps | Next |
 | Multi-GPU Scheduling | Scheduler for multi-GPU inference across nodes | On hold |
 | Marketplace Integration | Model/agent marketplace | Planned |
 | AnythingLLM | External LLM integration layer | Planned |

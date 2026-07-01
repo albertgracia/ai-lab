@@ -177,9 +177,10 @@
 | **Hermes Integration** | ✅ Complete — Gateway model mapping fix, rate limit, context resolution, fastpath narrowed |
 | **Hermes BLOCKERS-01A-CONTEXT** | ✅ Closed — n_ctx=32768 was adequate, false alarm |
 | **Hermes BLOCKERS-01B-FASTPATH** | ✅ PASS — removed bare "what is"/"who is" from infrastructure intents |
-| **Operator Intent Reasoning** | Classify operator queries by intent (diagnosis, remediation, observation) |
-| **Autonomous Observability Triage** | Automated triage pipelines from alert → diagnosis → remediation proposal |
-| **Validation Authority Recovery** | Restore Prometheus scrape targets, authority chain repair |
+| **Operator Intent Reasoning** | ✅ PASS — FASE 36C, GET /api/operator/intent, risk/approval/target/action |
+| **Autonomous Observability Triage** | ✅ PASS — FASE 36D, GET /api/observability/triage, Prometheus snapshot + runtime triage |
+| **Validation Authority** | ✅ PASS — GET /api/validation/authority, evidence-based decision engine on top of OI + triage |
+| **Validation Authority Recovery (37B)** | Restore Prometheus scrape targets, authority chain repair |
 | **Multi-GPU Scheduling** | Cross-GPU load balancing (post-semantic readiness) |
 | **Marketplace Integration** | Model marketplace for community-contributed cognitive profiles |
 | **AnythingLLM** | AnythingLLM RAG integration with AI-LAB runtime context |

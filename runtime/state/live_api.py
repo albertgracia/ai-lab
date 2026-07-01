@@ -233,6 +233,8 @@ class APIHandler(BaseHTTPRequestHandler):
             self._handle_operator_intent()
         elif self.path.startswith("/api/observability/triage"):
             self._handle_observability_triage()
+        elif self.path.startswith("/api/validation/authority"):
+            self._handle_validation_authority()
         elif self.path == "/api/commands/pending":
             self._handle_pending_commands()
         elif self.path == "/api/commands/history":
@@ -727,6 +729,38 @@ class APIHandler(BaseHTTPRequestHandler):
             })
         except ImportError as e:
             self._json({"error": f"observability_triage not available: {e}"})
+
+    def _handle_validation_authority(self):
+        try:
+            from runtime.governance.validation_authority import (
+                build_validation_decision,
+            )
+            from runtime.operator_intent.operator_intent_reasoning import (
+                analyze_operator_intent,
+            )
+            from runtime.observability.observability_triage import (
+                build_observability_triage_report,
+            )
+
+            qs = self._parse_qs()
+            text = qs.get("text", [""])[0]
+
+            operator_intent = analyze_operator_intent(text) if text else None
+            triage = build_observability_triage_report() if text else None
+
+            decision = build_validation_decision(
+                requested_action=text,
+                operator_intent=operator_intent,
+                triage=triage,
+            )
+
+            self._json({
+                "route_family": classify_api_route(self.path).family,
+                "input": text,
+                "validation": decision,
+            })
+        except ImportError as e:
+            self._json({"error": f"validation_authority not available: {e}"})
 
     # ─────────────────────────────────────────────────────────────────
 
