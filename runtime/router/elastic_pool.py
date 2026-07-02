@@ -41,6 +41,16 @@ class ElasticComputePool:
         self._ttl = ttl
         self._node_cache: dict[str, dict[str, Any]] = {}
         self._cache_time: float = 0.0
+        # CP-46: pool observability counters
+        self._selected_count: dict[str, int] = {}
+        self._fallback_count: dict[str, int] = {}
+        self._failure_count: dict[str, int] = {}
+        self._last_selected_at: dict[str, float] = {}
+        self._last_failure_at: dict[str, float] = {}
+        self._last_fallback_at: dict[str, float] = {}
+        self._total_selections = 0
+        self._total_fallbacks = 0
+        self._total_failures = 0
 
     # ── Registry loading ─────────────────────────────────────────────────
 
@@ -284,6 +294,10 @@ class ElasticComputePool:
             }
 
         best = eligible[0]
+        node_id = best["node_id"]
+        self._selected_count[node_id] = self._selected_count.get(node_id, 0) + 1
+        self._last_selected_at[node_id] = time.time()
+        self._total_selections += 1
         return {
             "selected_node": best["node_id"],
             "backend_url": best["url"],
@@ -323,6 +337,7 @@ class ElasticComputePool:
             # Same model available?
             if self._model_on_node(requested_model, candidate):
                 url = self._get_url(candidate)
+                self._record_fallback(candidate["node_id"])
                 return {"node_id": candidate["node_id"], "url": url,
                         "model": requested_model, "reason": "same_model_fallback"}
 
@@ -330,10 +345,12 @@ class ElasticComputePool:
             caps = self._extract_capabilities(candidate)
             if requires_vision and "vision" in caps:
                 url = self._get_url(candidate)
+                self._record_fallback(candidate["node_id"])
                 return {"node_id": candidate["node_id"], "url": url,
                         "model": requested_model, "reason": "vision_capability_fallback"}
             if requires_large and "large-context" in caps:
                 url = self._get_url(candidate)
+                self._record_fallback(candidate["node_id"])
                 return {"node_id": candidate["node_id"], "url": url,
                         "model": requested_model, "reason": "large_context_fallback"}
 
@@ -341,6 +358,7 @@ class ElasticComputePool:
         if candidates:
             c = candidates[0]
             url = self._get_url(c)
+            self._record_fallback(c["node_id"])
             return {"node_id": c["node_id"], "url": url,
                     "model": requested_model, "reason": "any_online_fallback"}
 
@@ -352,6 +370,43 @@ class ElasticComputePool:
             return BACKEND_URLS.get(node["node_id"], f"http://{node['ip']}:1234/v1")
         except Exception:
             return f"http://{node['ip']}:1234/v1"
+
+    # ── Observability ──────────────────────────────────────────────────
+
+    def _record_fallback(self, node_id: str) -> None:
+        self._fallback_count[node_id] = self._fallback_count.get(node_id, 0) + 1
+        self._last_fallback_at[node_id] = time.time()
+        self._total_fallbacks += 1
+
+    def record_failure(self, node_id: str, failure_type: str = "backend_error") -> None:
+        self._failure_count[node_id] = self._failure_count.get(node_id, 0) + 1
+        self._last_failure_at[node_id] = time.time()
+        self._total_failures += 1
+
+    def get_metrics(self) -> dict[str, Any]:
+        all_nodes: set[str] = set()
+        all_nodes.update(self._selected_count.keys())
+        all_nodes.update(self._fallback_count.keys())
+        all_nodes.update(self._failure_count.keys())
+        return {
+            "pool": "elastic-compute-pool-01",
+            "contract_version": "CP-46-POOL-OBSERVABILITY-01",
+            "timestamp": time.time(),
+            "total_selections": self._total_selections,
+            "total_fallbacks": self._total_fallbacks,
+            "total_failures": self._total_failures,
+            "per_node": {
+                nid: {
+                    "selected_count": self._selected_count.get(nid, 0),
+                    "fallback_count": self._fallback_count.get(nid, 0),
+                    "failure_count": self._failure_count.get(nid, 0),
+                    "last_selected_at": self._last_selected_at.get(nid, 0.0),
+                    "last_failure_at": self._last_failure_at.get(nid, 0.0),
+                    "last_fallback_at": self._last_fallback_at.get(nid, 0.0),
+                }
+                for nid in sorted(all_nodes)
+            },
+        }
 
     # ── Pool status ───────────────────────────────────────────────────
 
@@ -411,6 +466,11 @@ class ElasticComputePool:
             "nodes_offline": status["nodes_offline"],
             "nodes_degraded": status["nodes_degraded"],
             "required_offline_critical": status["required_offline_critical"],
+            "metrics_summary": {
+                "total_selections": self._total_selections,
+                "total_fallbacks": self._total_fallbacks,
+                "total_failures": self._total_failures,
+            },
         }
 
 
@@ -442,3 +502,7 @@ def get_pool_status() -> dict[str, Any]:
 
 def get_pool_summary() -> dict[str, Any]:
     return get_pool().get_summary()
+
+
+def get_pool_metrics() -> dict[str, Any]:
+    return get_pool().get_metrics()

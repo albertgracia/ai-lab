@@ -1138,15 +1138,22 @@ def _try_fallback(
             exception=exception,
             error_message=error_message,
         )
+        failed_node_id = current_backend.get("name", "")
         if failure_type.get("fallback_allowed", False):
             pool_candidate = pool.fallback(
                 requested_model=model,
-                failed_node_id=current_backend.get("name", ""),
+                failed_node_id=failed_node_id,
                 failure_type=failure_type.get("failure_type", "backend_error"),
             )
             if pool_candidate:
                 candidate = pool_candidate
                 failure = failure_type
+        # CP-46: record failure on the failed node
+        if failed_node_id:
+            pool.record_failure(
+                node_id=failed_node_id,
+                failure_type=failure_type.get("failure_type", "backend_error"),
+            )
     except Exception:
         pass
 
@@ -1331,6 +1338,19 @@ class GatewayHandler(BaseHTTPRequestHandler):
             except Exception as exc:
                 self._send_json(200, {
                     "error": "pool_unavailable",
+                    "detail": str(exc),
+                    "pool": "elastic-compute-pool-01",
+                })
+            return
+
+        # CP-46: Pool metrics — always responds 200
+        if self.path == "/runtime/pool/metrics":
+            try:
+                from runtime.router.elastic_pool import get_pool_metrics
+                self._send_json(200, get_pool_metrics())
+            except Exception as exc:
+                self._send_json(200, {
+                    "error": "metrics_unavailable",
                     "detail": str(exc),
                     "pool": "elastic-compute-pool-01",
                 })
