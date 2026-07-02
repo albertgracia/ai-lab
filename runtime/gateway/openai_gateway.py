@@ -1104,6 +1104,82 @@ def _response_error_message(response):
             return ""
 
 
+def _try_fallback(
+    model: str,
+    current_backend: dict,
+    payload: dict,
+    response_status: int | None = None,
+    exception: Exception | None = None,
+    error_message: str = "",
+) -> dict | None:
+    """Attempt a single fallback to an alternative backend node.
+
+    Returns dict with keys (response, target_backend, resolved_node, fallback_info)
+    or None if no safe fallback is available.
+    """
+    import requests as _req
+    try:
+        from runtime.router.fallback_engine import (
+            classify_backend_failure, build_fallback_candidates,
+            select_fallback_candidate,
+        )
+        from runtime.state.dynamic_node_registry import build_node_registry
+    except ImportError:
+        return None
+
+    registry = None
+    try:
+        registry = build_node_registry()
+    except Exception:
+        pass
+    if not registry:
+        return None
+
+    failure = classify_backend_failure(
+        response_status=response_status,
+        exception=exception,
+        error_message=error_message,
+    )
+    if not failure["fallback_allowed"]:
+        return None
+
+    candidates = build_fallback_candidates(model, current_backend["name"], registry)
+    candidate = select_fallback_candidate(candidates, model)
+    if not candidate:
+        return None
+
+    fallback_payload = dict(payload)
+    fallback_payload["model"] = candidate["model"]
+    fallback_payload.pop("stream", None)
+
+    try:
+        fb_resp = _req.post(
+            f"{candidate['url']}/chat/completions",
+            headers={"Content-Type": "application/json"},
+            json=fallback_payload,
+            stream=False,
+            timeout=(10, 600),
+        )
+        if fb_resp.status_code < 400:
+            return {
+                "response": fb_resp,
+                "target_backend": {"name": candidate["node_id"], "url": candidate["url"]},
+                "resolved_node": candidate["node_id"],
+                "fallback_info": {
+                    "fallback_model": candidate["model"],
+                    "fallback_node": candidate["node_id"],
+                    "fallback_reason": candidate["reason"],
+                    "failure_type": failure["failure_type"],
+                    "original_model": model,
+                    "original_node": current_backend["name"],
+                },
+            }
+        fb_resp.close()
+    except Exception:
+        pass
+    return None
+
+
 class GatewayHandler(BaseHTTPRequestHandler):
     timeout = 30
 
@@ -5023,6 +5099,20 @@ class GatewayHandler(BaseHTTPRequestHandler):
                         timeout=(10, 600),
                     )
 
+            # IFE-01: attempt fallback on 400+ after retry
+            if response.status_code >= 400:
+                _fallback_result = _try_fallback(
+                    selected_model, _target_backend, upstream_payload,
+                    response_status=response.status_code,
+                    error_message=error_msg if response.status_code >= 400 else "",
+                )
+                if _fallback_result:
+                    response = _fallback_result["response"]
+                    _target_backend = _fallback_result["target_backend"]
+                    _resolved_node = _fallback_result["resolved_node"]
+                    _fallback_info = _fallback_result["fallback_info"]
+                    _fallback_applied = True
+
             latency_ms = int(
                 (time.time() - start_time) * 1000
             )
@@ -5104,8 +5194,8 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 register_stream()
                 self._send_sse_headers()
 
-                # FASE 29.2: Real Streaming path
-                if _real_streaming:
+                # FASE 29.2: Real Streaming path (skip if fallback applied — fallback response is non-streaming)
+                if _real_streaming and not locals().get("_fallback_info"):
                     try:
                         chunk_count = relay_stream(response, self, selected_model)
                         # Record real TTFB and metrics
@@ -5193,7 +5283,15 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     from runtime.routing.routing_history import record_route_result as _rrr
                     _rrr(task_type=task_type, model=selected_model,
                          node=_target_backend["name"], host=_target_backend["url"],
-                         latency_ms=latency_ms, success=True, stream=True, failover=False)
+                         latency_ms=latency_ms, success=True, stream=True,
+                         failover=bool(locals().get("_fallback_info")),
+                         failure_type=(locals().get("_fallback_info") or {}).get("failure_type", ""),
+                         original_model=(locals().get("_fallback_info") or {}).get("original_model", selected_model),
+                         original_node=(locals().get("_fallback_info") or {}).get("original_node", _target_backend["name"]),
+                         fallback_model=(locals().get("_fallback_info") or {}).get("fallback_model", ""),
+                         fallback_node=(locals().get("_fallback_info") or {}).get("fallback_node", ""),
+                         fallback_reason=(locals().get("_fallback_info") or {}).get("fallback_reason", ""),
+                         reason_codes=["intelligent_fallback"] if locals().get("_fallback_info") else [])
                 except ImportError:
                     pass
 
@@ -5533,16 +5631,25 @@ class GatewayHandler(BaseHTTPRequestHandler):
             # MEMORY-INJECTION-TELEMETRY-01: record inference telemetry + routing result with usage data
             try:
                 from runtime.routing.routing_history import record_route_result as _rrr2
+                _fallback_info = locals().get("_fallback_info", None)
                 _rrr2(
                     task_type=task_type, model=selected_model,
                     node=_target_backend["name"], host=_target_backend["url"],
-                    latency_ms=latency_ms, success=True, stream=False, failover=False,
+                    latency_ms=latency_ms, success=True, stream=False,
+                    failover=bool(_fallback_info),
                     route_family=route_family,
                     prompt_tokens=ptokens,
                     completion_tokens=ctokens,
                     memory_injected=False,
                     chars_injected=0,
                     ttfb_ms=ttfb_ms,
+                    failure_type=(_fallback_info or {}).get("failure_type", ""),
+                    original_model=(_fallback_info or {}).get("original_model", selected_model),
+                    original_node=(_fallback_info or {}).get("original_node", _target_backend["name"]),
+                    fallback_model=(_fallback_info or {}).get("fallback_model", ""),
+                    fallback_node=(_fallback_info or {}).get("fallback_node", ""),
+                    fallback_reason=(_fallback_info or {}).get("fallback_reason", ""),
+                    reason_codes=["intelligent_fallback"] if _fallback_info else [],
                 )
                 from runtime.memory.memory_injection_telemetry import (
                     build_telemetry, record_telemetry_event,
@@ -5610,13 +5717,49 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 latency_ms=latency_ms,
             ))
             record_route_family_metrics(route_family, count=False, latency_ms=latency_ms, error=True)
+            # IFE-02: attempt fallback on RequestException
+            _fallback_result = _try_fallback(
+                selected_model if 'selected_model' in dir() else "",
+                _target_backend if '_target_backend' in dir() else get_active_backend(),
+                upstream_payload if 'upstream_payload' in dir() else {},
+                exception=exc,
+                error_message=str(exc),
+            )
+            if _fallback_result:
+                try:
+                    _fb_data = _fallback_result["response"].json()
+                    self._send_json(200, _fb_data)
+                except Exception:
+                    self._send_json(200, {"error": "fallback_partial"})
+                _fallback_result["response"].close()
+                _rrr_kwargs = dict(
+                    task_type=task_type, model=_fallback_result["fallback_info"]["fallback_model"],
+                    node=_fallback_result["target_backend"]["name"],
+                    host=_fallback_result["target_backend"]["url"],
+                    latency_ms=latency_ms, success=True, stream=False,
+                    failover=True, error=None,
+                    failure_type=_fallback_result["fallback_info"]["failure_type"],
+                    original_model=_fallback_result["fallback_info"]["original_model"],
+                    original_node=_fallback_result["fallback_info"]["original_node"],
+                    fallback_model=_fallback_result["fallback_info"]["fallback_model"],
+                    fallback_node=_fallback_result["fallback_info"]["fallback_node"],
+                    fallback_reason=_fallback_result["fallback_info"]["fallback_reason"],
+                    reason_codes=["intelligent_fallback"],
+                )
+                try:
+                    from runtime.routing.routing_history import record_route_result as _rrr
+                    _rrr(**_rrr_kwargs)
+                except ImportError:
+                    pass
+                return
             self._send_json(502, {"error": "backend_unreachable", "detail": str(exc)})
             try:
                 from runtime.routing.routing_history import record_route_result as _rrr
                 _rrr(task_type=task_type, model=selected_model,
                      node=_target_backend["name"], host=_target_backend["url"],
                      latency_ms=latency_ms, success=False, stream=stream_enabled,
-                    failover=False, error=str(exc))
+                    failover=False, error=str(exc), failure_type="node_offline",
+                    reason_codes=["fallback_unavailable"])
             except ImportError:
                 pass
 
@@ -5633,6 +5776,39 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 latency_ms=latency_ms,
             ))
             record_route_family_metrics(route_family, count=False, latency_ms=latency_ms, error=True)
+            # IFE-03: attempt fallback on generic Exception
+            _fallback_result = _try_fallback(
+                selected_model if 'selected_model' in dir() else "",
+                _target_backend if '_target_backend' in dir() else get_active_backend(),
+                upstream_payload if 'upstream_payload' in dir() else {},
+                exception=exc,
+                error_message=str(exc),
+            )
+            if _fallback_result:
+                try:
+                    _fb_data = _fallback_result["response"].json()
+                    self._send_json(200, _fb_data)
+                except Exception:
+                    self._send_json(200, {"error": "fallback_partial"})
+                _fallback_result["response"].close()
+                try:
+                    from runtime.routing.routing_history import record_route_result as _rrr
+                    _rrr(task_type=locals().get("task_type", "unknown"),
+                         model=_fallback_result["fallback_info"]["fallback_model"],
+                         node=_fallback_result["target_backend"]["name"],
+                         host=_fallback_result["target_backend"]["url"],
+                         latency_ms=latency_ms, success=True, stream=False,
+                         failover=True, error=None,
+                         failure_type=_fallback_result["fallback_info"]["failure_type"],
+                         original_model=_fallback_result["fallback_info"]["original_model"],
+                         original_node=_fallback_result["fallback_info"]["original_node"],
+                         fallback_model=_fallback_result["fallback_info"]["fallback_model"],
+                         fallback_node=_fallback_result["fallback_info"]["fallback_node"],
+                         fallback_reason=_fallback_result["fallback_info"]["fallback_reason"],
+                         reason_codes=["intelligent_fallback"])
+                except ImportError:
+                    pass
+                return
             self._send_json(500, {"error": "gateway_error", "detail": str(exc)})
             try:
                 from runtime.routing.routing_history import record_route_result as _rrr
@@ -5640,7 +5816,8 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 _rrr(task_type=locals().get("task_type", "unknown"), model=selected_model if 'selected_model' in locals() else "unknown",
                      node=_backend_fallback["name"], host=_backend_fallback["url"],
                      latency_ms=latency_ms, success=False, stream=False,
-                     failover=False, error=str(exc))
+                     failover=False, error=str(exc), failure_type="unknown_backend_error",
+                     reason_codes=["fallback_unavailable"])
             except ImportError:
                 pass
 

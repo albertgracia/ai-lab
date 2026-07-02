@@ -40,6 +40,13 @@ def record_route_result(
     memory_injected: bool = False,
     chars_injected: int = 0,
     ttfb_ms: float = 0.0,
+    failure_type: str = "",
+    original_model: str = "",
+    original_node: str = "",
+    fallback_model: str = "",
+    fallback_node: str = "",
+    fallback_reason: str = "",
+    reason_codes: list[str] | None = None,
 ):
     """Append one route record to the JSONL file."""
     record = {
@@ -64,6 +71,13 @@ def record_route_result(
         "memory_injected": memory_injected,
         "chars_injected": chars_injected,
         "ttfb_ms": round(ttfb_ms, 1) if ttfb_ms else 0.0,
+        "failure_type": failure_type,
+        "original_model": original_model or model,
+        "original_node": original_node or node,
+        "fallback_model": fallback_model,
+        "fallback_node": fallback_node,
+        "fallback_reason": fallback_reason,
+        "reason_codes": reason_codes or [],
         "confidence": 0.0,
         "confidence_reasons": [],
     }

@@ -1,6 +1,6 @@
 # AI-LAB Conversation History — Historical Timeline
 
-**Current state:** HEAD `cc4e793` · 114 git tags · latest tag: `CP-MULTIGPU-READINESS-01`
+**Current state:** HEAD `cc4e793` · 115 git tags · latest tag: `CP-INTELLIGENT-FALLBACK-ENGINE-01`
 
 ---
 
@@ -65,6 +65,7 @@
 - **CP-AUTONOMOUS-OBSERVABILITY-TRIAGE-01** — Autonomous observability triage. `collect_prometheus_snapshot()` + `build_observability_triage_report()`. `GET /api/observability/triage`. 34/34 tests PASS.
 - **CP-OPERATOR-INTENT-REASONING-01** — Operator intent reasoning. `analyze_operator_intent()` with risk/approval/target/action. `GET /api/operator/intent`. 25/25 tests PASS.
 - **CP-MULTIGPU-READINESS-01** — Readiness assessment for Multi-GPU scheduling. 10-phase read-only analysis. Score: 37/100. No runtime changes.
+- **CP-INTELLIGENT-FALLBACK-ENGINE-01** — Deterministic fallback on node failure. `runtime/router/fallback_engine.py`. 10 failure types, capability-safe selection. 26/26 tests. Gateway integration in error paths. No Prometheus metrics (observability via route history).
 
 ### Auxiliary Tags (Blocks 37–40 scope)
 - `AI-LAB_BLOCK37_STABLE_01` · `CP-GATEWAY-SHUTDOWN-GRACEFUL` · `CP-RUNTIME-STABILITY-SNAPSHOT`

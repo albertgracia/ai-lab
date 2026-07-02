@@ -1,7 +1,7 @@
 # AI-LAB Roadmap 2026
 
-**Current checkpoint:** `CP-40A-POST-RELEASE-SLO-DRIFT-WATCH-01-STABLE`
-**HEAD:** `0f5e3ab8`
+**Current checkpoint:** `CP-INTELLIGENT-FALLBACK-ENGINE-01`
+**HEAD:** `91f0a0e`
 
 ---
 
@@ -390,6 +390,16 @@ Additional tags not part of the numbered block sequence. Includes memory governa
 
 **13 tags** — Memory Qdrant, incidents schema, MCP gateway, doc automation, validation authority.
 
+## Intelligent Fallback Engine
+
+Deterministic fallback when multi-node routing selects a node that fails at runtime. 10 failure types, capability-safe selection, 26 tests.
+
+| # | Tag |
+|---|-----|
+| 1 | `CP-INTELLIGENT-FALLBACK-ENGINE-01` |
+
+**1 tag** — Fallback engine: classification, candidates, selection, gateway integration.
+
 > **Note:** `CP-GATEWAY-SHUTDOWN-GRACEFUL-01-STABLE` and `CP-RUNTIME-STABILITY-SNAPSHOT-01-STABLE` are aliases for `CP-38B` and `CP-38D` respectively (not duplicated here).
 
 ---
@@ -402,6 +412,7 @@ Additional tags not part of the numbered block sequence. Includes memory governa
 | Operator Intent Reasoning | Intent classification and operator-driven decisions | ✅ Done |
 | Autonomous Observability Triage | Self-healing observability pipeline | ✅ Done |
 | Validation Authority | Evidence-based action validation on top of OI + triage | ✅ Done |
+| Intelligent Fallback Engine | Deterministic fallback on node failure | ✅ Done |
 | Validation Authority Recovery (37B) | Restore Prometheus scrape targets, fix authority gaps | Next |
 | Multi-GPU Scheduling | Scheduler for multi-GPU inference across nodes | On hold |
 | Marketplace Integration | Model/agent marketplace | Planned |
@@ -410,5 +421,5 @@ Additional tags not part of the numbered block sequence. Includes memory governa
 
 ---
 
-**Total tags (all blocks):** ~145
-**Checkpoint progress:** Block 40 complete — entering post-release monitoring phase.
+**Total tags (all blocks):** ~146
+**Checkpoint progress:** Post-40 — Intelligent Fallback Engine complete.
