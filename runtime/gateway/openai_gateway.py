@@ -4915,10 +4915,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
             _rm_lower = requested_model.lower() if isinstance(requested_model, str) else ""
             _sm_lower = selected_model.lower() if isinstance(selected_model, str) else ""
             if _rm_lower and _rm_lower != _sm_lower:
-                if _rm_lower in ("qwen/qwen2.5-coder-14b-instruct", "qwen2.5-coder-14b-instruct"):
-                    selected_model = "qwen/qwen2.5-coder-14b-instruct"
-                elif _rm_lower == "qwen3-vl-8b-instruct":
-                    selected_model = "qwen3-vl-8b-instruct"
+                selected_model = requested_model
 
             if selected_model not in _warmed_models:
                 _warmed_models.add(selected_model)
@@ -4928,23 +4925,40 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 except ImportError:
                     pass
 
-            session_id = create_session(task_type, selected_model, get_active_backend()["name"])
+            # DYNAMIC-NODE-REGISTRY-01: resolve backend node per selected model
+            _target_backend = get_active_backend()
+            try:
+                from runtime.router.multi_node_routing import resolve_backend_for_model
+                _routing = resolve_backend_for_model(selected_model)
+                _target_backend = {"name": _routing["node_id"], "url": _routing["url"]}
+                _resolved_node = _routing["node_id"]
+            except Exception:
+                _resolved_node = _target_backend["name"]
+
+            session_id = create_session(task_type, selected_model, _target_backend["name"])
             payload["model"] = selected_model
             payload["_ai_lab_selected_model"] = selected_model
             payload["_ai_lab_route_family"] = route_family
+            payload["_ai_lab_backend_node"] = _target_backend["name"]
 
             stream_enabled = bool(payload.get("stream", False))
 
             upstream_payload = dict(payload)
 
-            # MODEL-REGISTRY-CANONICAL-01: normalize canonical model IDs to backend LM Studio IDs
-            _BACKEND_MODEL_MAP = {
-                "qwen/qwen2.5-coder-14b-instruct": "qwen2.5-14b-instruct",
-                "qwen2.5-coder-14b-instruct": "qwen2.5-14b-instruct",
-            }
-            _backend_model = _BACKEND_MODEL_MAP.get(upstream_payload.get("model", ""))
-            if _backend_model:
-                upstream_payload["model"] = _backend_model
+            # MODEL-REGISTRY-CANONICAL-01 + DYNAMIC-NODE-REGISTRY-01: normalize model ID per backend
+            try:
+                from runtime.router.multi_node_routing import normalize_model_for_backend
+                _normalized = normalize_model_for_backend(upstream_payload.get("model", ""), _resolved_node)
+                if _normalized:
+                    upstream_payload["model"] = _normalized
+            except Exception:
+                _BACKEND_MODEL_MAP = {
+                    "qwen/qwen2.5-coder-14b-instruct": "qwen2.5-14b-instruct",
+                    "qwen2.5-coder-14b-instruct": "qwen2.5-14b-instruct",
+                }
+                _backend_model = _BACKEND_MODEL_MAP.get(upstream_payload.get("model", ""))
+                if _backend_model:
+                    upstream_payload["model"] = _backend_model
 
             # FASE 29.2: Real Streaming — pass stream=true to LM Studio
             _real_streaming = False
@@ -4962,7 +4976,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
             upstream_payload["parallel_tool_calls"] = False
 
             response = requests.post(
-                f"{get_active_backend()['url']}/chat/completions",
+                f"{_target_backend['url']}/chat/completions",
                 headers=backend_headers(),
                 json=upstream_payload,
                 stream=stream_enabled if _real_streaming else False,
@@ -5002,7 +5016,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 if "unloaded" in error_msg.lower():
                     response.close()
                     response = requests.post(
-                        f"{get_active_backend()['url']}/chat/completions",
+                        f"{_target_backend['url']}/chat/completions",
                         headers=backend_headers(),
                         json=upstream_payload,
                         stream=False,
@@ -5056,7 +5070,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
             register_latency(latency_ms, model=selected_model, route_family=route_family, kind="request_total")
             if stream_enabled:
                 register_stream()
-            record_model_selection(task_type, selected_model, get_active_backend()["name"], latency_ms)
+            record_model_selection(task_type, selected_model, _target_backend["name"], latency_ms)
 
             # FASE 29.4: Record stream backlog
             if _HAVE_SLO:
@@ -5178,7 +5192,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 try:
                     from runtime.routing.routing_history import record_route_result as _rrr
                     _rrr(task_type=task_type, model=selected_model,
-                         node=get_active_backend()["name"], host=get_active_backend()["url"],
+                         node=_target_backend["name"], host=_target_backend["url"],
                          latency_ms=latency_ms, success=True, stream=True, failover=False)
                 except ImportError:
                     pass
@@ -5519,10 +5533,9 @@ class GatewayHandler(BaseHTTPRequestHandler):
             # MEMORY-INJECTION-TELEMETRY-01: record inference telemetry + routing result with usage data
             try:
                 from runtime.routing.routing_history import record_route_result as _rrr2
-                node_info = get_active_backend()
                 _rrr2(
                     task_type=task_type, model=selected_model,
-                    node=node_info["name"], host=node_info["url"],
+                    node=_target_backend["name"], host=_target_backend["url"],
                     latency_ms=latency_ms, success=True, stream=False, failover=False,
                     route_family=route_family,
                     prompt_tokens=ptokens,
@@ -5601,9 +5614,9 @@ class GatewayHandler(BaseHTTPRequestHandler):
             try:
                 from runtime.routing.routing_history import record_route_result as _rrr
                 _rrr(task_type=task_type, model=selected_model,
-                     node=get_active_backend()["name"], host=get_active_backend()["url"],
+                     node=_target_backend["name"], host=_target_backend["url"],
                      latency_ms=latency_ms, success=False, stream=stream_enabled,
-                     failover=False, error=str(exc))
+                    failover=False, error=str(exc))
             except ImportError:
                 pass
 
@@ -5623,8 +5636,9 @@ class GatewayHandler(BaseHTTPRequestHandler):
             self._send_json(500, {"error": "gateway_error", "detail": str(exc)})
             try:
                 from runtime.routing.routing_history import record_route_result as _rrr
-                _rrr(task_type=task_type, model=selected_model if 'selected_model' in locals() else "unknown",
-                     node=get_active_backend()["name"], host=get_active_backend()["url"],
+                _backend_fallback = locals().get("_target_backend", get_active_backend())
+                _rrr(task_type=locals().get("task_type", "unknown"), model=selected_model if 'selected_model' in locals() else "unknown",
+                     node=_backend_fallback["name"], host=_backend_fallback["url"],
                      latency_ms=latency_ms, success=False, stream=False,
                      failover=False, error=str(exc))
             except ImportError:
