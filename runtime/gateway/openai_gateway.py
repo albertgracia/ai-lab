@@ -1114,42 +1114,69 @@ def _try_fallback(
 ) -> dict | None:
     """Attempt a single fallback to an alternative backend node.
 
+    Uses CP-45 Elastic Compute Pool for candidate selection.
+    Falls back to legacy IFE if pool is unavailable.
+
     Returns dict with keys (response, target_backend, resolved_node, fallback_info)
     or None if no safe fallback is available.
     """
     import requests as _req
     try:
         from runtime.router.fallback_engine import (
-            classify_backend_failure, build_fallback_candidates,
-            select_fallback_candidate,
+            classify_backend_failure,
         )
-        from runtime.state.dynamic_node_registry import build_node_registry
     except ImportError:
         return None
 
-    registry = None
+    # CP-45: use pool for fallback candidate
+    candidate = None
     try:
-        registry = build_node_registry()
+        from runtime.router.elastic_pool import get_pool
+        pool = get_pool()
+        failure_type = classify_backend_failure(
+            response_status=response_status,
+            exception=exception,
+            error_message=error_message,
+        )
+        if failure_type.get("fallback_allowed", False):
+            pool_candidate = pool.fallback(
+                requested_model=model,
+                failed_node_id=current_backend.get("name", ""),
+                failure_type=failure_type.get("failure_type", "backend_error"),
+            )
+            if pool_candidate:
+                candidate = pool_candidate
+                failure = failure_type
     except Exception:
         pass
-    if not registry:
-        return None
 
-    failure = classify_backend_failure(
-        response_status=response_status,
-        exception=exception,
-        error_message=error_message,
-    )
-    if not failure["fallback_allowed"]:
-        return None
+    # CP-45 fallback: legacy IFE if pool did not find a candidate
+    if not candidate:
+        try:
+            from runtime.router.fallback_engine import (
+                build_fallback_candidates, select_fallback_candidate,
+            )
+            from runtime.state.dynamic_node_registry import build_node_registry
+            registry = build_node_registry()
+            if registry:
+                failure = classify_backend_failure(
+                    response_status=response_status,
+                    exception=exception,
+                    error_message=error_message,
+                )
+                if failure["fallback_allowed"]:
+                    candidates = build_fallback_candidates(model, current_backend["name"], registry)
+                    candidate_from_ife = select_fallback_candidate(candidates, model)
+                    if candidate_from_ife:
+                        candidate = candidate_from_ife
+        except Exception:
+            pass
 
-    candidates = build_fallback_candidates(model, current_backend["name"], registry)
-    candidate = select_fallback_candidate(candidates, model)
     if not candidate:
         return None
 
     fallback_payload = dict(payload)
-    fallback_payload["model"] = candidate["model"]
+    fallback_payload["model"] = candidate.get("model", model)
     fallback_payload.pop("stream", None)
 
     try:
@@ -1166,10 +1193,10 @@ def _try_fallback(
                 "target_backend": {"name": candidate["node_id"], "url": candidate["url"]},
                 "resolved_node": candidate["node_id"],
                 "fallback_info": {
-                    "fallback_model": candidate["model"],
+                    "fallback_model": candidate.get("model", model),
                     "fallback_node": candidate["node_id"],
-                    "fallback_reason": candidate["reason"],
-                    "failure_type": failure["failure_type"],
+                    "fallback_reason": candidate.get("reason", "pool_fallback"),
+                    "failure_type": locals().get("failure", {}).get("failure_type", "backend_error"),
                     "original_model": model,
                     "original_node": current_backend["name"],
                 },
@@ -1224,7 +1251,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
         )
         self.send_header(
             "Connection",
-            "keep-alive",
+            "close",
         )
         self.end_headers()
 
@@ -1268,11 +1295,18 @@ class GatewayHandler(BaseHTTPRequestHandler):
             self._send_json(429, {"error": "rate_limit_exceeded", "message": "Too many requests. Try again later."})
             return
         if self.path == "/health":
+            _pool_health = {}
+            try:
+                from runtime.router.elastic_pool import get_pool_summary
+                _pool_health = get_pool_summary()
+            except Exception:
+                pass
             payload = {
                 "status": "ok",
                 "service": "ai-lab-openai-gateway",
                 "backend": get_active_backend()["url"],
                 "mode": "stream-aware sanitized",
+                "pool": _pool_health,
                 "time": int(time.time()),
             }
             if _shutting_down:
@@ -1287,6 +1321,19 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 self._send_json(200, _slo_manager.get_runtime_health())
             else:
                 self._send_json(200, _DISABLED_SLO_PAYLOAD)
+            return
+
+        # CP-45: Elastic Compute Pool status — always responds 200
+        if self.path == "/runtime/pool":
+            try:
+                from runtime.router.elastic_pool import get_pool_status
+                self._send_json(200, get_pool_status())
+            except Exception as exc:
+                self._send_json(200, {
+                    "error": "pool_unavailable",
+                    "detail": str(exc),
+                    "pool": "elastic-compute-pool-01",
+                })
             return
 
         if self.path == "/metrics":
@@ -5001,37 +5048,37 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 except ImportError:
                     pass
 
-            # CAPABILITY-SCHEDULER-01: deterministic capability scheduling
-            _scheduler_decision = None
+            # CP-45: Elastic Compute Pool — unified node selection
+            _pool_decision = None
             _scheduler_reason_codes = []
-            _scheduler_selected = False
+            _pool_selected = False
             try:
-                from runtime.router.capability_scheduler import build_scheduler_decision
+                from runtime.router.elastic_pool import select_node
                 _profile_name = payload.get("_profile", payload.get("_client_profile", ""))
-                _scheduler_decision = build_scheduler_decision(
+                _pool_decision = select_node(
                     requested_model=requested_model,
                     profile=_profile_name,
                     route_family=route_family,
                     messages=payload.get("messages", []),
                 )
-                if _scheduler_decision and _scheduler_decision.get("decision") == "selected":
+                if _pool_decision and _pool_decision.get("decision") == "selected":
                     _target_backend = {
-                        "name": _scheduler_decision["selected_node"],
-                        "url": _scheduler_decision["backend_url"],
+                        "name": _pool_decision["selected_node"],
+                        "url": _pool_decision["backend_url"],
                     }
-                    _resolved_node = _scheduler_decision["selected_node"]
-                    _scheduler_reason_codes = _scheduler_decision.get("reason_codes", [])
-                    _scheduler_selected = True
+                    _resolved_node = _pool_decision["selected_node"]
+                    _scheduler_reason_codes = _pool_decision.get("reason_codes", [])
+                    _pool_selected = True
                     logger.info(
-                        "scheduler: %s -> %s (%s)",
+                        "pool: %s -> %s (%s)",
                         requested_model, _resolved_node,
                         ",".join(_scheduler_reason_codes),
                     )
             except Exception:
                 pass
 
-            # DYNAMIC-NODE-REGISTRY-01: resolve backend node per selected model
-            if not _scheduler_selected:
+            # CP-45: fallback to legacy routing if pool did not select
+            if not _pool_selected:
                 _target_backend = get_active_backend()
                 try:
                     from runtime.router.multi_node_routing import resolve_backend_for_model
