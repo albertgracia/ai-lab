@@ -622,12 +622,12 @@ HOST = "0.0.0.0"
 PORT = 8008
 
 BACKENDS = [
-    {"name": "rx9070", "url": "http://192.168.1.50:1234/v1", "enabled": True},
+    {"name": "rx9070-node", "url": "http://192.168.1.50:1234/v1", "enabled": True},
     {"name": "nas-n5", "url": "http://192.168.1.200:12345/v1", "enabled": False},
-    {"name": "rx7900xt", "url": "http://192.168.1.60:1234/v1", "enabled": False},
+    {"name": "rx7900xt-node", "url": "http://192.168.1.60:1234/v1", "enabled": False},
 ]
 
-PRIMARY_BACKEND = "rx9070"
+PRIMARY_BACKEND = "rx9070-node"
 
 
 def get_active_backend():
