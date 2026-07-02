@@ -571,3 +571,71 @@ def get_pool_summary() -> dict[str, Any]:
 
 def get_pool_metrics() -> dict[str, Any]:
     return get_pool().get_metrics()
+
+
+def get_prometheus_metrics() -> str:
+    """Export pool metrics in Prometheus text/plain format."""
+    pool = get_pool()
+    status = pool.get_status()
+    summary = pool.get_summary()
+    m = pool.get_metrics()
+
+    lines: list[str] = []
+
+    def _g(name: str, help_text: str, value_type: str = "gauge"):
+        lines.append(f"# HELP {name} {help_text}")
+        lines.append(f"# TYPE {name} {value_type}")
+
+    def _val(name: str, value, **labels):
+        if labels:
+            label_str = ",".join(f'{k}="{v}"' for k, v in sorted(labels.items()))
+            lines.append(f"{name}{{{label_str}}} {value}")
+        else:
+            lines.append(f"{name} {value}")
+
+    # Pool totals
+    _g("ailab_pool_nodes_total", "Total nodes in pool")
+    _val("ailab_pool_nodes_total", status["nodes_total"], contract_version="CP-48A")
+    _g("ailab_pool_nodes_online", "Online nodes")
+    _val("ailab_pool_nodes_online", status["nodes_online"])
+    _g("ailab_pool_nodes_degraded", "Degraded nodes")
+    _val("ailab_pool_nodes_degraded", status["nodes_degraded"])
+    _g("ailab_pool_nodes_offline", "Offline nodes")
+    _val("ailab_pool_nodes_offline", status["nodes_offline"])
+
+    # Event counters (TYPE counter, _total suffix)
+    _g("ailab_pool_selections_total", "Total node selections", "counter")
+    _val("ailab_pool_selections_total", m["total_selections"])
+    _g("ailab_pool_fallbacks_total", "Total fallback selections", "counter")
+    _val("ailab_pool_fallbacks_total", m["total_fallbacks"])
+    _g("ailab_pool_failures_total", "Total backend failures recorded", "counter")
+    _val("ailab_pool_failures_total", m["total_failures"])
+
+    # Per-node metrics
+    for node_entry in status.get("nodes", []):
+        nid = node_entry["node_id"]
+        pn = m.get("per_node", {}).get(nid, {})
+        base_score = node_entry.get("score", 0.0)
+        on = 1 if node_entry.get("status") == "online" and node_entry.get("routing_eligible") else 0
+        dg = 1 if node_entry.get("degraded", False) else 0
+        caps = ",".join(sorted(node_entry.get("capabilities", [])))
+
+        _g("ailab_pool_node_score", "Current baseline node score")
+        _val("ailab_pool_node_score", base_score, node=nid, capabilities=caps)
+
+        _g("ailab_pool_node_selected_total", "Total selections for this node", "counter")
+        _val("ailab_pool_node_selected_total", pn.get("selected_count", 0), node=nid)
+
+        _g("ailab_pool_node_fallback_total", "Total fallbacks to this node", "counter")
+        _val("ailab_pool_node_fallback_total", pn.get("fallback_count", 0), node=nid)
+
+        _g("ailab_pool_node_failure_total", "Total failures on this node", "counter")
+        _val("ailab_pool_node_failure_total", pn.get("failure_count", 0), node=nid)
+
+        _g("ailab_pool_node_online", "Whether the node is online (1/0)")
+        _val("ailab_pool_node_online", on, node=nid)
+
+        _g("ailab_pool_node_degraded", "Whether the node is degraded (1/0)")
+        _val("ailab_pool_node_degraded", dg, node=nid)
+
+    return "\n".join(lines) + "\n"

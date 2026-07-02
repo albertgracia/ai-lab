@@ -1356,6 +1356,29 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 })
             return
 
+        # CP-48A: Pool Prometheus export — always responds 200
+        if self.path == "/runtime/pool/prometheus":
+            try:
+                from runtime.router.elastic_pool import get_prometheus_metrics
+                body = get_prometheus_metrics().encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+            except Exception:
+                body = (
+                    "# HELP ailab_pool_export_error Pool Prometheus export failure\n"
+                    "# TYPE ailab_pool_export_error gauge\n"
+                    "ailab_pool_export_error 1\n"
+                ).encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+            return
+
         if self.path == "/metrics":
             # Source of truth for gateway counters is in-memory telemetry.
             _metrics_start = time.time()
