@@ -1,7 +1,7 @@
 # AI-LAB Roadmap 2026
 
-**Current checkpoint:** `CP-INTELLIGENT-FALLBACK-ENGINE-01`
-**HEAD:** `91f0a0e`
+**Current checkpoint:** `CP-CAPABILITY-SCHEDULER-01`
+**HEAD:** `7f71ef9`
 
 ---
 
@@ -402,6 +402,16 @@ Deterministic fallback when multi-node routing selects a node that fails at runt
 
 > **Note:** `CP-GATEWAY-SHUTDOWN-GRACEFUL-01-STABLE` and `CP-RUNTIME-STABILITY-SNAPSHOT-01-STABLE` are aliases for `CP-38B` and `CP-38D` respectively (not duplicated here).
 
+## Capability Scheduler
+
+Deterministic capability-based scheduling — selects node/model for vision, large-context, and rx7900xt-only models. Runs before DNR; skips for normal chat/coding. 37 tests, live-validated on all three routing scenarios.
+
+| # | Tag |
+|---|-----|
+| 1 | `CP-CAPABILITY-SCHEDULER-01` |
+
+**1 tag** — Scheduler engine: capability extraction, candidate scoring, selection, gateway integration, IFE fallback path alignment.
+
 ---
 
 ## Future Phases
@@ -413,6 +423,7 @@ Deterministic fallback when multi-node routing selects a node that fails at runt
 | Autonomous Observability Triage | Self-healing observability pipeline | ✅ Done |
 | Validation Authority | Evidence-based action validation on top of OI + triage | ✅ Done |
 | Intelligent Fallback Engine | Deterministic fallback on node failure | ✅ Done |
+| Capability Scheduler | Deterministic capability-based node selection | ✅ Done |
 | Validation Authority Recovery (37B) | Restore Prometheus scrape targets, fix authority gaps | Next |
 | Multi-GPU Scheduling | Scheduler for multi-GPU inference across nodes | On hold |
 | Marketplace Integration | Model/agent marketplace | Planned |
@@ -421,5 +432,5 @@ Deterministic fallback when multi-node routing selects a node that fails at runt
 
 ---
 
-**Total tags (all blocks):** ~146
-**Checkpoint progress:** Post-40 — Intelligent Fallback Engine complete.
+**Total tags (all blocks):** ~147
+**Checkpoint progress:** Post-40 — Capability Scheduler complete.

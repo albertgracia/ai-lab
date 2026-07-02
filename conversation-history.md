@@ -1,6 +1,6 @@
 # AI-LAB Conversation History — Historical Timeline
 
-**Current state:** HEAD `cc4e793` · 115 git tags · latest tag: `CP-INTELLIGENT-FALLBACK-ENGINE-01`
+**Current state:** HEAD `7f71ef9` · 116 git tags · latest tag: `CP-CAPABILITY-SCHEDULER-01`
 
 ---
 
@@ -66,6 +66,7 @@
 - **CP-OPERATOR-INTENT-REASONING-01** — Operator intent reasoning. `analyze_operator_intent()` with risk/approval/target/action. `GET /api/operator/intent`. 25/25 tests PASS.
 - **CP-MULTIGPU-READINESS-01** — Readiness assessment for Multi-GPU scheduling. 10-phase read-only analysis. Score: 37/100. No runtime changes.
 - **CP-INTELLIGENT-FALLBACK-ENGINE-01** — Deterministic fallback on node failure. `runtime/router/fallback_engine.py`. 10 failure types, capability-safe selection. 26/26 tests. Gateway integration in error paths. No Prometheus metrics (observability via route history).
+- **CP-CAPABILITY-SCHEDULER-01** — Deterministic capability-based node selection. `runtime/router/capability_scheduler.py`. Vision/large-context/rx7900xt-only routing. 37/37 tests. Runs before DNR; skip for normal chat/coding. Live-validated: moondream2→.60, qwen3.6-35b→.60, qwen2.5-14b→.50. Fallback path reason_codes aligned.
 
 ### Auxiliary Tags (Blocks 37–40 scope)
 - `AI-LAB_BLOCK37_STABLE_01` · `CP-GATEWAY-SHUTDOWN-GRACEFUL` · `CP-RUNTIME-STABILITY-SNAPSHOT`

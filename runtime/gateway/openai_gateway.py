@@ -5001,15 +5001,45 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 except ImportError:
                     pass
 
-            # DYNAMIC-NODE-REGISTRY-01: resolve backend node per selected model
-            _target_backend = get_active_backend()
+            # CAPABILITY-SCHEDULER-01: deterministic capability scheduling
+            _scheduler_decision = None
+            _scheduler_reason_codes = []
+            _scheduler_selected = False
             try:
-                from runtime.router.multi_node_routing import resolve_backend_for_model
-                _routing = resolve_backend_for_model(selected_model)
-                _target_backend = {"name": _routing["node_id"], "url": _routing["url"]}
-                _resolved_node = _routing["node_id"]
+                from runtime.router.capability_scheduler import build_scheduler_decision
+                _profile_name = payload.get("_profile", payload.get("_client_profile", ""))
+                _scheduler_decision = build_scheduler_decision(
+                    requested_model=requested_model,
+                    profile=_profile_name,
+                    route_family=route_family,
+                    messages=payload.get("messages", []),
+                )
+                if _scheduler_decision and _scheduler_decision.get("decision") == "selected":
+                    _target_backend = {
+                        "name": _scheduler_decision["selected_node"],
+                        "url": _scheduler_decision["backend_url"],
+                    }
+                    _resolved_node = _scheduler_decision["selected_node"]
+                    _scheduler_reason_codes = _scheduler_decision.get("reason_codes", [])
+                    _scheduler_selected = True
+                    logger.info(
+                        "scheduler: %s -> %s (%s)",
+                        requested_model, _resolved_node,
+                        ",".join(_scheduler_reason_codes),
+                    )
             except Exception:
-                _resolved_node = _target_backend["name"]
+                pass
+
+            # DYNAMIC-NODE-REGISTRY-01: resolve backend node per selected model
+            if not _scheduler_selected:
+                _target_backend = get_active_backend()
+                try:
+                    from runtime.router.multi_node_routing import resolve_backend_for_model
+                    _routing = resolve_backend_for_model(selected_model)
+                    _target_backend = {"name": _routing["node_id"], "url": _routing["url"]}
+                    _resolved_node = _routing["node_id"]
+                except Exception:
+                    _resolved_node = _target_backend["name"]
 
             session_id = create_session(task_type, selected_model, _target_backend["name"])
             payload["model"] = selected_model
@@ -5281,6 +5311,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
 
                 try:
                     from runtime.routing.routing_history import record_route_result as _rrr
+                    _sched_reason = locals().get("_scheduler_reason_codes", [])
                     _rrr(task_type=task_type, model=selected_model,
                          node=_target_backend["name"], host=_target_backend["url"],
                          latency_ms=latency_ms, success=True, stream=True,
@@ -5291,7 +5322,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                          fallback_model=(locals().get("_fallback_info") or {}).get("fallback_model", ""),
                          fallback_node=(locals().get("_fallback_info") or {}).get("fallback_node", ""),
                          fallback_reason=(locals().get("_fallback_info") or {}).get("fallback_reason", ""),
-                         reason_codes=["intelligent_fallback"] if locals().get("_fallback_info") else [])
+                         reason_codes=_sched_reason + (["intelligent_fallback"] if locals().get("_fallback_info") else []))
                 except ImportError:
                     pass
 
@@ -5649,7 +5680,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     fallback_model=(_fallback_info or {}).get("fallback_model", ""),
                     fallback_node=(_fallback_info or {}).get("fallback_node", ""),
                     fallback_reason=(_fallback_info or {}).get("fallback_reason", ""),
-                    reason_codes=["intelligent_fallback"] if _fallback_info else [],
+                    reason_codes=_scheduler_reason_codes + (["intelligent_fallback"] if _fallback_info else []),
                 )
                 from runtime.memory.memory_injection_telemetry import (
                     build_telemetry, record_telemetry_event,
@@ -5744,7 +5775,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     fallback_model=_fallback_result["fallback_info"]["fallback_model"],
                     fallback_node=_fallback_result["fallback_info"]["fallback_node"],
                     fallback_reason=_fallback_result["fallback_info"]["fallback_reason"],
-                    reason_codes=["intelligent_fallback"],
+                    reason_codes=_scheduler_reason_codes + ["intelligent_fallback"],
                 )
                 try:
                     from runtime.routing.routing_history import record_route_result as _rrr
@@ -5805,7 +5836,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                          fallback_model=_fallback_result["fallback_info"]["fallback_model"],
                          fallback_node=_fallback_result["fallback_info"]["fallback_node"],
                          fallback_reason=_fallback_result["fallback_info"]["fallback_reason"],
-                         reason_codes=["intelligent_fallback"])
+                         reason_codes=_scheduler_reason_codes + ["intelligent_fallback"])
                 except ImportError:
                     pass
                 return
