@@ -1,7 +1,7 @@
 # AI-LAB Roadmap 2026
 
-**Current checkpoint:** `CP-CAPABILITY-SCHEDULER-01`
-**HEAD:** `7f71ef9`
+**Current checkpoint:** `CP-HERMES-OPERABILITY-TUNING-01`
+**HEAD:** `cde3d64`
 
 ---
 
@@ -412,13 +412,23 @@ Deterministic capability-based scheduling — selects node/model for vision, lar
 
 **1 tag** — Scheduler engine: capability extraction, candidate scoring, selection, gateway integration, IFE fallback path alignment.
 
+## Hermes Operability Tuning
+
+Hermes Agent configured as primary AI-LAB operator console. Gateway endpoint, correct active model, operator diagnostics, context optimization, documented daily workflow.
+
+| # | Tag |
+|---|-----|
+| 1 | `CP-HERMES-OPERABILITY-TUNING-01` |
+
+**1 tag** — Config audit, profile fix, context measurement, .hermes/AGENTS.md, operability guide.
+
 ---
 
 ## Future Phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| Hermes Integration | Fast inter-agent messaging bus | Planned |
+| Hermes Integration | Fast inter-agent messaging bus | ✅ Done |
 | Operator Intent Reasoning | Intent classification and operator-driven decisions | ✅ Done |
 | Autonomous Observability Triage | Self-healing observability pipeline | ✅ Done |
 | Validation Authority | Evidence-based action validation on top of OI + triage | ✅ Done |
@@ -432,5 +442,5 @@ Deterministic capability-based scheduling — selects node/model for vision, lar
 
 ---
 
-**Total tags (all blocks):** ~147
-**Checkpoint progress:** Post-40 — Capability Scheduler complete.
+**Total tags (all blocks):** ~148
+**Checkpoint progress:** Post-40 — Hermes Operability Tuning complete.
