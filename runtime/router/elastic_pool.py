@@ -142,6 +142,121 @@ class ElasticComputePool:
                 return True
         return False
 
+    # ── Node scoring ─────────────────────────────────────────────────
+
+    def calculate_score(
+        self,
+        node: dict[str, Any],
+        requirements: dict[str, Any],
+        requested_model: str,
+    ) -> dict[str, Any]:
+        """Score a node's suitability for a request context.
+
+        Returns:
+            score, reasons[], breakdown{}, rejected bool, reject_reason,
+            model_available, capability_match
+        """
+        node_id = node["node_id"]
+        caps = self._extract_capabilities(node)
+        model_on_node = self._model_on_node(requested_model, node)
+        health = node.get("metrics", {}).get("health_score", 0.8)
+        latency = node.get("metrics", {}).get("latency_ms", 0)
+
+        score = 0.0
+        reasons: list[str] = []
+        breakdown: dict[str, float] = {}
+
+        # 1. Model match (+4.0)
+        if model_on_node:
+            score += 4.0
+            reasons.append("model_match")
+            breakdown["model_match"] = 4.0
+
+        # 2. Capability match (+3.0)
+        cap_match = True
+        for cap_key in ("vision", "coding", "reasoning", "large_context", "embedding"):
+            if requirements.get(cap_key) and cap_key not in caps:
+                cap_match = False
+        if cap_match and any(requirements.get(k) for k in ("vision", "coding", "reasoning", "large_context", "embedding")):
+            score += 3.0
+            reasons.append("capability_match")
+            breakdown["capability_match"] = 3.0
+
+        # 3. rx7900xt requirement (hard gate)
+        if requirements.get("requires_rx7900xt"):
+            if "rx7900xt" not in node_id:
+                return {
+                    "score": 0.0, "reasons": ["rejected:model_only_on_rx7900xt"],
+                    "breakdown": {}, "rejected": True,
+                    "reject_reason": "model_only_on_rx7900xt",
+                    "model_available": model_on_node, "capability_match": cap_match,
+                }
+            score += 5.0
+            reasons.append("rx7900xt_required")
+            breakdown["rx7900xt_required"] = 5.0
+
+        # 4. Health (0-2.0)
+        health_contrib = health * 2.0
+        score += health_contrib
+        breakdown["health"] = round(health_contrib, 2)
+        if health >= 0.9:
+            reasons.append("health_ok")
+        elif health < 0.5:
+            reasons.append("health_low")
+
+        # 5. Degradation penalty (-2.0)
+        is_degraded = (
+            node.get("status") == "online" and node.get("routing_eligible")
+            and (health < 0.5 or (latency and latency > 10000))
+        )
+        if is_degraded:
+            score -= 2.0
+            reasons.append("degraded_penalty")
+            breakdown["degraded_penalty"] = -2.0
+
+        # 6. Recent failures penalty (0 to -2.0)
+        failures = self._failure_count.get(node_id, 0)
+        if failures > 0:
+            fpen = min(failures / 3.0, 2.0)
+            score -= fpen
+            reasons.append(f"failures({failures})")
+            breakdown["failures_penalty"] = -round(fpen, 2)
+
+        # 7. Recent fallbacks penalty (0 to -1.0)
+        fallbacks = self._fallback_count.get(node_id, 0)
+        if fallbacks > 0:
+            fbpen = min(fallbacks / 5.0, 1.0)
+            score -= fbpen
+            reasons.append(f"fallbacks({fallbacks})")
+            breakdown["fallbacks_penalty"] = -round(fbpen, 2)
+
+        # 8. Recency penalty (recently selected = likely busy)
+        last_sel = self._last_selected_at.get(node_id, 0.0)
+        if last_sel > 0 and (time.time() - last_sel) < 30:
+            score -= 0.5
+            reasons.append("recency_penalty")
+            breakdown["recency_penalty"] = -0.5
+
+        # 9. Latency penalty
+        if latency and latency > 5000:
+            score -= 0.5
+            reasons.append("high_latency")
+            breakdown["latency_penalty"] = -0.5
+        elif latency and latency > 2000:
+            score -= 0.2
+            reasons.append("elevated_latency")
+            breakdown["latency_penalty"] = -0.2
+
+        return {
+            "score": round(score, 2),
+            "reasons": reasons,
+            "breakdown": breakdown,
+            "rejected": False,
+            "reject_reason": None,
+            "model_available": model_on_node,
+            "capability_match": cap_match,
+        }
+
     # ── Capability requirement extraction ─────────────────────────────
 
     def extract_requirements(
@@ -196,9 +311,10 @@ class ElasticComputePool:
     ) -> dict[str, Any]:
         """Select the best node for a given request.
 
+        Uses calculate_score() for multi-factor scoring.
         Returns:
             selected_node, backend_url, decision, confidence,
-            reason_codes[], fallback_candidates[]
+            reason_codes[], score_breakdown{}, fallback_candidates[]
         """
         registry = self.get_nodes()
         online = self.get_online_nodes(registry)
@@ -213,73 +329,16 @@ class ElasticComputePool:
                 "fallback_candidates": [], "requirements": requirements,
             }
 
-        # Score each online node
         scored = []
         for node in online:
-            caps = self._extract_capabilities(node)
-            model_on_node = self._model_on_node(requested_model, node)
-            health = node.get("metrics", {}).get("health_score", 0.8)
-
-            score = 0.0
-            reasons = []
-
-            # Model match
-            if model_on_node:
-                score += 4.0
-                reasons.append("model_on_node")
-
-            # Capability match
-            cap_match = True
-            for cap_key in ("vision", "coding", "reasoning", "large_context", "embedding"):
-                if requirements.get(cap_key) and cap_key not in caps:
-                    cap_match = False
-            if cap_match and any(requirements.get(k) for k in ("vision", "coding", "reasoning", "large_context", "embedding")):
-                score += 3.0
-                reasons.append("capability_match")
-
-            # rx7900xt requirement
-            if requirements.get("requires_rx7900xt"):
-                if "rx7900xt" not in node["node_id"]:
-                    reasons.append("rejected: model_only_on_rx7900xt")
-                    scored.append({
-                        "node_id": node["node_id"],
-                        "url": node.get("ip", ""),
-                        "score": 0.0,
-                        "model_available": model_on_node,
-                        "capability_match": cap_match,
-                        "reasons": reasons,
-                        "rejected": True,
-                        "reject_reason": "model_only_on_rx7900xt",
-                    })
-                    continue
-                score += 5.0
-                reasons.append("rx7900xt_required")
-
-            # Health
-            score += health * 2.0
-            if health >= 0.9:
-                reasons.append("health_ok")
-            elif health < 0.5:
-                reasons.append("health_degraded")
-
-            # URL
-            try:
-                from runtime.router.multi_node_routing import BACKEND_URLS
-                url = BACKEND_URLS.get(node["node_id"], f"http://{node['ip']}:1234/v1")
-            except Exception:
-                url = f"http://{node['ip']}:1234/v1"
-
+            result = self.calculate_score(node, requirements, requested_model)
+            url = self._get_url(node)
             scored.append({
                 "node_id": node["node_id"],
                 "url": url,
-                "score": round(score, 2),
-                "model_available": model_on_node,
-                "capability_match": cap_match,
-                "reasons": reasons,
-                "rejected": False,
+                **result,
             })
 
-        # Sort by score descending
         eligible = [s for s in scored if not s.get("rejected")]
         eligible.sort(key=lambda s: s["score"], reverse=True)
 
@@ -304,7 +363,13 @@ class ElasticComputePool:
             "decision": "selected",
             "confidence": 0.95 if best.get("capability_match") and best.get("model_available") else 0.8,
             "reason_codes": ["pool_selected"] + best.get("reasons", []),
-            "fallback_candidates": eligible[1:],
+            "score_breakdown": best.get("breakdown", {}),
+            "fallback_candidates": [{
+                "node_id": c["node_id"],
+                "url": c["url"],
+                "score": c.get("score", 0.0),
+                "reasons": c.get("reasons", []),
+            } for c in eligible[1:]],
             "requirements": requirements,
         }
 
@@ -318,51 +383,45 @@ class ElasticComputePool:
     ) -> dict[str, Any] | None:
         """Select a fallback node when the primary node fails.
 
+        Uses calculate_score() to pick the best available candidate.
+        Prefers same-model nodes, then highest-scored.
         Returns fallback dict or None if no safe fallback exists.
         """
         registry = self.get_nodes()
         online = self.get_online_nodes(registry)
 
-        # Exclude failed node
         candidates = [n for n in online if n["node_id"] != failed_node_id]
         if not candidates:
             return None
 
-        # Prefer same model, then capability match
-        model_lower = requested_model.lower()
-        requires_vision = "moondream" in model_lower or "vision" in model_lower
-        requires_large = any(p in model_lower for p in ("32b", "35b", "30b"))
+        requirements = self.extract_requirements(requested_model, "", "", [])
+        scored = []
+        for n in candidates:
+            s = self.calculate_score(n, requirements, requested_model)
+            if s.get("rejected"):
+                continue
+            url = self._get_url(n)
+            scored.append({
+                "node_id": n["node_id"], "url": url,
+                **s,
+            })
 
-        for candidate in candidates:
-            # Same model available?
-            if self._model_on_node(requested_model, candidate):
-                url = self._get_url(candidate)
-                self._record_fallback(candidate["node_id"])
-                return {"node_id": candidate["node_id"], "url": url,
-                        "model": requested_model, "reason": "same_model_fallback"}
+        if not scored:
+            return None
 
-            # Capability match for vision/large?
-            caps = self._extract_capabilities(candidate)
-            if requires_vision and "vision" in caps:
-                url = self._get_url(candidate)
-                self._record_fallback(candidate["node_id"])
-                return {"node_id": candidate["node_id"], "url": url,
-                        "model": requested_model, "reason": "vision_capability_fallback"}
-            if requires_large and "large-context" in caps:
-                url = self._get_url(candidate)
-                self._record_fallback(candidate["node_id"])
-                return {"node_id": candidate["node_id"], "url": url,
-                        "model": requested_model, "reason": "large_context_fallback"}
-
-        # Last resort: any online node
-        if candidates:
-            c = candidates[0]
-            url = self._get_url(c)
-            self._record_fallback(c["node_id"])
-            return {"node_id": c["node_id"], "url": url,
-                    "model": requested_model, "reason": "any_online_fallback"}
-
-        return None
+        # Prefer same-model, then highest score
+        scored.sort(key=lambda s: (-s.get("model_available", False), -s["score"]))
+        best = scored[0]
+        reason = "same_model_fallback" if best.get("model_available") else "scored_fallback"
+        self._record_fallback(best["node_id"])
+        return {
+            "node_id": best["node_id"],
+            "url": best["url"],
+            "model": requested_model,
+            "reason": reason,
+            "fallback_score": best["score"],
+            "fallback_reasons": best.get("reasons", []),
+        }
 
     def _get_url(self, node: dict[str, Any]) -> str:
         try:
@@ -390,7 +449,7 @@ class ElasticComputePool:
         all_nodes.update(self._failure_count.keys())
         return {
             "pool": "elastic-compute-pool-01",
-            "contract_version": "CP-46-POOL-OBSERVABILITY-01",
+            "contract_version": "CP-47-NODE-SCORING-01",
             "timestamp": time.time(),
             "total_selections": self._total_selections,
             "total_fallbacks": self._total_fallbacks,
@@ -406,6 +465,7 @@ class ElasticComputePool:
                 }
                 for nid in sorted(all_nodes)
             },
+            "scoring_version": "CP-47-NODE-SCORING-01",
         }
 
     # ── Pool status ───────────────────────────────────────────────────
@@ -432,7 +492,7 @@ class ElasticComputePool:
 
         return {
             "pool": "elastic-compute-pool-01",
-            "contract_version": "CP-45-ELASTIC-COMPUTE-POOL-01",
+            "contract_version": "CP-47-NODE-SCORING-01",
             "timestamp": time.time(),
             "nodes_total": len(registry),
             "nodes_online": len(online),
@@ -453,6 +513,11 @@ class ElasticComputePool:
                 "health_score": n.get("metrics", {}).get("health_score", 0.0),
                 "routing_eligible": n.get("routing_eligible", False),
                 "degraded": n["node_id"] in {d["node_id"] for d in degraded},
+                "score": self.calculate_score(n, {
+                    "vision": False, "coding": False, "reasoning": False,
+                    "large_context": False, "embedding": False,
+                    "requires_rx7900xt": False, "source": "none",
+                }, "").get("score", 0.0),
             } for n in registry],
         }
 
