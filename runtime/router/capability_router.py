@@ -4,7 +4,7 @@
 
 # ---- original static capabilities (preserved as fallback) ---------------
 MODEL_CAPABILITIES = {
-    "qwen3-vl-8b-instruct": {
+    "qwen2.5-14b-instruct": {
         "reasoning": 6, "coding": 6, "speed": 10, "memory": 8, "node": "rx9070",
     },
     "qwen2.5-coder-14b-instruct": {
@@ -155,5 +155,5 @@ def choose_model(task_type="general"):
     if task_type == "reasoning":
         return "qwen/qwen2.5-coder-14b-instruct"
     if task_type == "fast":
-        return "qwen3-vl-8b-instruct"
-    return "qwen3-vl-8b-instruct"
+        return "qwen2.5-14b-instruct"
+    return "qwen2.5-14b-instruct"
