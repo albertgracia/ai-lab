@@ -1,0 +1,89 @@
+# AI-LAB Runtime Operations
+# Capability ID: ai-lab-runtime
+
+id: ai-lab-runtime
+name: "AI-LAB Runtime Operations"
+version: "1.0.0"
+
+purpose: "Monitor, diagnosticar y reportar el estado del runtime AI-LAB: gateway, router, live-api, SLO, nodos de inferencia y LM Studio"
+
+domains:
+  - ai-lab
+
+required_mcp:
+  - ailab-runtime-mcp
+
+optional_mcp: []
+
+required_tools:
+  - curl
+  - read
+
+inputs:
+  target_service:
+    description: "Servicio específico a consultar (gateway, router, live-api, slo, lm-studio)"
+    type: string
+    required: false
+  scope:
+    description: "Alcance del reporte (full, health-only, metrics-only, slo-only)"
+    type: string
+    required: false
+
+outputs:
+  health_report:
+    description: "Reporte de salud de servicios AI-LAB"
+    format: markdown
+  metric_report:
+    description: "Reporte de métricas Prometheus del gateway"
+    format: markdown
+  slo_report:
+    description: "Estado SLO con violaciones y nivel de degradación"
+    format: markdown
+
+permissions:
+  read_only: true
+  governance_levels:
+    - normal
+    - elevated
+    - degraded
+    - lockdown
+  requires_authorization: false
+  max_concurrent: 2
+
+forbidden_actions:
+  - "Modificar configuración del gateway"
+  - "Reiniciar servicios sin autorización"
+  - "Enviar tráfico de prueba a producción"
+  - "Modificar LM Studio settings"
+
+evidence_requirements:
+  min_confidence: high
+  require_citations: true
+  require_timestamp: true
+  require_source_endpoint: true
+
+fallback_strategy:
+  primary_fallback: "Direct curl a health endpoints"
+  secondary_fallback: "GitNexus query de configuracion estatica"
+  description: "Si MCP ailab-runtime-mcp no responde, usar curl directo a :8008/health, :8083/health, :8084/health"
+  timeout_seconds: 30
+
+reports:
+  - type: runtime-health
+    description: "Estado de salud de todos los servicios runtime"
+    format: markdown
+  - type: runtime-metrics
+    description: "Métricas clave del gateway (requests, latencia, errores)"
+    format: markdown
+  - type: slo-status
+    description: "Estado SLO con violaciones activas y nivel de degradación"
+    format: markdown
+  - type: inference-nodes
+    description: "Estado de nodos de inferencia (modelos cargados, GPU, VRAM)"
+    format: markdown
+
+dependencies: []
+
+health_check:
+  endpoint: "http://192.168.1.30:8008/health"
+  interval_seconds: 30

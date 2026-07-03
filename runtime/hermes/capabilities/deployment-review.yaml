@@ -1,0 +1,83 @@
+# Deployment Review
+# Capability ID: deployment-review
+
+id: deployment-review
+name: "Deployment Review"
+version: "1.0.0"
+
+purpose: "Revisar readiness de despliegue: estado Git, build, tests, SLO health, impacto de cambios"
+
+domains:
+  - ai-lab
+  - gitnexus
+
+required_mcp:
+  - ailab-runtime-mcp
+  - gitnexus
+
+optional_mcp: []
+
+required_tools:
+  - bash
+  - read
+
+inputs:
+  target_branch:
+    description: "Rama a desplegar"
+    type: string
+    required: false
+  scope:
+    description: "Alcance de la revisión (full, quick, slo-only)"
+    type: string
+    required: false
+  include_gitnexus_impact:
+    description: "Incluir análisis de impacto GitNexus"
+    type: boolean
+    required: false
+
+outputs:
+  deployment_report:
+    description: "Reporte de readiness de despliegue"
+    format: markdown
+  risk_assessment:
+    description: "Evaluación de riesgo del despliegue"
+    format: markdown
+
+permissions:
+  read_only: true
+  governance_levels:
+    - elevated
+  requires_authorization: false
+  max_concurrent: 1
+
+forbidden_actions:
+  - "Ejecutar el despliegue"
+  - "Modificar archivos de producción"
+  - "Reiniciar servicios"
+  - "Hacer commit o push"
+
+evidence_requirements:
+  min_confidence: high
+  require_citations: true
+  require_timestamp: true
+  require_source_endpoint: true
+
+fallback_strategy:
+  primary_fallback: "Revisión manual via bash + git commands"
+  secondary_fallback: "Sin GitNexus, solo git log/diff manual"
+  description: "Si MCP ailab-runtime-mcp no responde, hacer revisión manual con comandos git y curl directo"
+  timeout_seconds: 120
+
+reports:
+  - type: deployment-readiness
+    description: "Readiness de despliegue con checklist de verificación"
+    format: markdown
+  - type: risk-assessment
+    description: "Evaluación de riesgo del cambio propuesto"
+    format: markdown
+
+dependencies:
+  - ai-lab-runtime
+  - gitnexus-analysis
+
+health_check: {}

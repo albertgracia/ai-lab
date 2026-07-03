@@ -1,0 +1,94 @@
+# Incident Response
+# Capability ID: incident-response
+
+id: incident-response
+name: "Incident Response"
+version: "1.0.0"
+
+purpose: "Detectar, diagnosticar y reportar incidentes runtime con análisis basado en evidencia"
+
+domains:
+  - ai-lab
+  - observability
+
+required_mcp:
+  - ailab-runtime-mcp
+
+optional_mcp:
+  - gitnexus
+
+required_tools:
+  - curl
+  - webfetch
+  - read
+
+inputs:
+  incident_type:
+    description: "Tipo de incidente (service-down, high-latency, model-error, gpu-pressure, unknown)"
+    type: string
+    required: false
+  time_window:
+    description: "Ventana temporal del incidente (5m, 15m, 1h, 6h)"
+    type: string
+    required: false
+  include_correlation:
+    description: "Incluir correlación con otros eventos"
+    type: boolean
+    required: false
+
+outputs:
+  incident_report:
+    description: "Reporte completo del incidente con evidencia"
+    format: markdown
+  correlation_report:
+    description: "Correlación con otros eventos y métricas"
+    format: markdown
+  remediation_proposal:
+    description: "Propuesta de remediación (sin ejecución)"
+    format: markdown
+
+permissions:
+  read_only: true
+  governance_levels:
+    - normal
+    - elevated
+  requires_authorization: false
+  max_concurrent: 1
+
+forbidden_actions:
+  - "Ejecutar remediación sin autorización explícita"
+  - "Reiniciar servicios"
+  - "Modificar configuración"
+  - "Descartar alertas"
+
+evidence_requirements:
+  min_confidence: high
+  require_citations: true
+  require_timestamp: true
+  require_source_endpoint: true
+
+fallback_strategy:
+  primary_fallback: "Curl directo a health endpoints y Prometheus"
+  secondary_fallback: "Análisis basado en reportes previos y documentación"
+  description: "Si MCP ailab-runtime-mcp no responde, diagnosticar con curl directo a endpoints"
+  timeout_seconds: 60
+
+reports:
+  - type: incident-diagnosis
+    description: "Diagnóstico completo del incidente con evidencia"
+    format: markdown
+  - type: incident-timeline
+    description: "Línea de tiempo del incidente"
+    format: markdown
+  - type: correlation-analysis
+    description: "Correlación con otros eventos y métricas"
+    format: markdown
+  - type: remediation-proposal
+    description: "Propuesta de remediación (read-only, sin ejecución)"
+    format: markdown
+
+dependencies:
+  - ai-lab-runtime
+  - observability
+
+health_check: {}
