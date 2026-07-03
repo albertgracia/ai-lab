@@ -1379,6 +1379,187 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 self.wfile.write(body)
             return
 
+        # ── CP-49A: Elastic Pool Admin API (read-only, always 200) ──
+        if self.path == "/runtime/admin/health":
+            try:
+                from runtime.router.elastic_pool import get_pool_summary
+                _ps = get_pool_summary()
+                self._send_json(200, {
+                    "ok": True, "readonly": True,
+                    "gateway_ok": True,
+                    "pool_ok": _ps.get("nodes_total", 0) > 0,
+                    "nodes_online": _ps.get("nodes_online", 0),
+                    "nodes_degraded": _ps.get("nodes_degraded", 0),
+                    "nodes_offline": _ps.get("nodes_offline", 0),
+                    "admin_api": "readonly",
+                    "timestamp": time.time(),
+                })
+            except Exception as exc:
+                self._send_json(200, {"ok": False, "error": str(exc), "readonly": True})
+            return
+
+        if self.path == "/runtime/admin/pool":
+            try:
+                from runtime.router.elastic_pool import get_pool_summary, get_pool_metrics
+                _s = get_pool_summary()
+                _m = get_pool_metrics()
+                self._send_json(200, {
+                    "ok": True, "readonly": True,
+                    "contract_version": _s.get("pool", "unknown"),
+                    "nodes_total": _s.get("nodes_total", 0),
+                    "nodes_online": _s.get("nodes_online", 0),
+                    "nodes_offline": _s.get("nodes_offline", 0),
+                    "nodes_degraded": _s.get("nodes_degraded", 0),
+                    "total_selections": _m.get("total_selections", 0),
+                    "total_fallbacks": _m.get("total_fallbacks", 0),
+                    "total_failures": _m.get("total_failures", 0),
+                    "scoring_version": _m.get("scoring_version", "unknown"),
+                    "timestamp": time.time(),
+                })
+            except Exception as exc:
+                self._send_json(200, {"ok": False, "error": str(exc), "readonly": True})
+            return
+
+        if self.path == "/runtime/admin/nodes":
+            try:
+                from runtime.router.elastic_pool import get_pool_status, get_pool_metrics
+                _st = get_pool_status()
+                _m = get_pool_metrics()
+                _per_node = _m.get("per_node", {})
+                _nodes = []
+                for n in _st.get("nodes", []):
+                    nid = n["node_id"]
+                    pn = _per_node.get(nid, {})
+                    _nodes.append({
+                        "node_id": nid,
+                        "status": n.get("status", "unknown"),
+                        "capabilities": n.get("capabilities", []),
+                        "score": n.get("score", 0.0),
+                        "selected_count": pn.get("selected_count", 0),
+                        "fallback_count": pn.get("fallback_count", 0),
+                        "failure_count": pn.get("failure_count", 0),
+                        "last_selected_at": pn.get("last_selected_at", 0.0),
+                        "last_failure_at": pn.get("last_failure_at", 0.0),
+                        "last_fallback_at": pn.get("last_fallback_at", 0.0),
+                    })
+                self._send_json(200, {
+                    "ok": True, "readonly": True,
+                    "nodes": _nodes,
+                    "timestamp": time.time(),
+                })
+            except Exception as exc:
+                self._send_json(200, {"ok": False, "error": str(exc), "readonly": True})
+            return
+
+        if self.path == "/runtime/admin/scoring":
+            try:
+                from runtime.router.elastic_pool import get_pool, get_pool_status, get_pool_metrics
+                _pool = get_pool()
+                _st = get_pool_status()
+                _m = get_pool_metrics()
+                _req = {"vision": False, "coding": False, "reasoning": False,
+                        "large_context": False, "embedding": False,
+                        "requires_rx7900xt": False, "source": "none"}
+                _baseline = {}
+                for n in _st.get("nodes", []):
+                    _baseline[n["node_id"]] = _pool.calculate_score(n, _req, "")
+                self._send_json(200, {
+                    "ok": True, "readonly": True,
+                    "scoring_version": _m.get("scoring_version", "unknown"),
+                    "factors": [
+                        {"name": "model_match", "weight": 4.0, "description": "+4.0 if model hosted on node"},
+                        {"name": "capability_match", "weight": 3.0, "description": "+3.0 if node capabilities match requirements"},
+                        {"name": "rx7900xt_required", "weight": 5.0, "description": "+5.0 hard gate for rx7900xt-only models"},
+                        {"name": "health", "weight": "0-2.0", "description": "health_score scaled to 0-2.0"},
+                        {"name": "degraded_penalty", "weight": -2.0, "description": "-2.0 if node is degraded"},
+                        {"name": "failures_penalty", "weight": "0 to -2.0", "description": "penalty based on recent failures"},
+                        {"name": "fallbacks_penalty", "weight": "0 to -1.0", "description": "penalty based on recent fallbacks"},
+                        {"name": "recency_penalty", "weight": -0.5, "description": "-0.5 if selected in last 30s"},
+                        {"name": "latency_penalty", "weight": "-0.2/-0.5", "description": "penalty for high latency"},
+                    ],
+                    "baseline_scores": {
+                        nid: {
+                            "score": r.get("score", 0.0),
+                            "reasons": r.get("reasons", []),
+                            "breakdown": r.get("breakdown", {}),
+                        }
+                        for nid, r in _baseline.items()
+                    },
+                    "notas_algorithm": "calculate_score() with 9 factors: model_match, capability_match, rx7900xt_gate, health, degraded_penalty, failures_penalty, fallbacks_penalty, recency_penalty, latency_penalty",
+                    "riesgos_conocidos": [
+                        "recency penalty may cause thrashing under rapid sequential requests",
+                        "latency penalty may not reflect current load if metrics are stale",
+                        "rx7900xt hard gate blocks all non-rx7900xt nodes even if model loads elsewhere",
+                    ],
+                    "timestamp": time.time(),
+                })
+            except Exception as exc:
+                self._send_json(200, {"ok": False, "error": str(exc), "readonly": True})
+            return
+
+        if self.path == "/runtime/admin/contracts":
+            try:
+                from runtime.router.elastic_pool import get_pool_metrics
+                _m = get_pool_metrics()
+                self._send_json(200, {
+                    "ok": True, "readonly": True,
+                    "elastic_pool": {
+                        "contract_version": _m.get("contract_version", "unknown"),
+                        "pool": _m.get("pool", "unknown"),
+                    },
+                    "scoring_version": _m.get("scoring_version", "unknown"),
+                    "metrics_schema": "CP-48A",
+                    "endpoints": [
+                        "/runtime/admin/health",
+                        "/runtime/admin/pool",
+                        "/runtime/admin/nodes",
+                        "/runtime/admin/scoring",
+                        "/runtime/admin/contracts",
+                        "/runtime/admin/models",
+                        "/runtime/pool",
+                        "/runtime/pool/metrics",
+                        "/runtime/pool/prometheus",
+                    ],
+                    "timestamp": time.time(),
+                })
+            except Exception as exc:
+                self._send_json(200, {"ok": False, "error": str(exc), "readonly": True})
+            return
+
+        if self.path == "/runtime/admin/models":
+            try:
+                from runtime.router.elastic_pool import get_pool_status
+                _st = get_pool_status()
+                _model_map: dict[str, list[dict]] = {}
+                for n in _st.get("nodes", []):
+                    nid = n["node_id"]
+                    for m in n.get("models", []):
+                        mid = m.get("id", "?") if isinstance(m, dict) else str(m)
+                        if mid not in _model_map:
+                            _model_map[mid] = []
+                        _model_map[mid].append({
+                            "node_id": nid,
+                            "status": n.get("status", "unknown"),
+                            "score": n.get("score", 0.0),
+                        })
+                _models = [
+                    {
+                        "model_id": mid,
+                        "nodes": nodes,
+                        "node_count": len(nodes),
+                    }
+                    for mid, nodes in sorted(_model_map.items())
+                ]
+                self._send_json(200, {
+                    "ok": True, "readonly": True,
+                    "models": _models,
+                    "total_models": len(_models),
+                    "timestamp": time.time(),
+                })
+            except Exception as exc:
+                self._send_json(200, {"ok": False, "error": str(exc), "readonly": True})
+            return
+
         if self.path == "/metrics":
             # Source of truth for gateway counters is in-memory telemetry.
             _metrics_start = time.time()
