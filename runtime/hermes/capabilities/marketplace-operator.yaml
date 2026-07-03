@@ -1,0 +1,80 @@
+# Marketplace Read-only Operations
+# Capability ID: marketplace-operator
+
+id: marketplace-operator
+name: "Marketplace Read-only Operations"
+version: "1.0.0"
+
+purpose: "Observar y auditar Rioja Marketplace OS via GitNexus MCP y API pública"
+
+domains:
+  - marketplace
+
+required_mcp:
+  - gitnexus
+
+optional_mcp: []
+
+required_tools:
+  - webfetch
+  - read
+
+inputs:
+  scope:
+    description: "Alcance de la observación (full, catalog, sommelier, blog, b2b)"
+    type: string
+    required: false
+  include_anomalies:
+    description: "Incluir detección de anomalías en el reporte"
+    type: boolean
+    required: false
+
+outputs:
+  marketplace_report:
+    description: "Reporte de estado del marketplace"
+    format: markdown
+  anomaly_report:
+    description: "Detección de anomalías operacionales"
+    format: markdown
+
+permissions:
+  read_only: true
+  governance_levels:
+    - normal
+    - elevated
+  requires_authorization: false
+  max_concurrent: 1
+
+forbidden_actions:
+  - "Modificar productos o catálogo"
+  - "Acceder a Stripe API keys o datos de pago"
+  - "Modificar configuración del marketplace"
+  - "Ejecutar comandos en el servidor del marketplace"
+  - "Modificar base de datos"
+
+evidence_requirements:
+  min_confidence: medium
+  require_citations: true
+  require_timestamp: false
+  require_source_endpoint: true
+
+fallback_strategy:
+  primary_fallback: "Webfetch directo a marketplace.labrazahome.com"
+  secondary_fallback: "GitNexus query del repositorio rioja-marketplace"
+  description: "Si GitNexus MCP no responde, usar webfetch a la API pública del marketplace"
+  timeout_seconds: 60
+
+reports:
+  - type: marketplace-status
+    description: "Estado operacional del marketplace (frontend, API, catálogo, sommelier)"
+    format: markdown
+  - type: marketplace-anomalies
+    description: "Anomalías detectadas en el marketplace"
+    format: markdown
+
+dependencies:
+  - gitnexus-analysis
+
+health_check:
+  endpoint: "https://marketplace.labrazahome.com"
+  interval_seconds: 300

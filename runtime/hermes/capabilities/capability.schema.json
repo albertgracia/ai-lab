@@ -1,0 +1,132 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Capability — Hermes Enterprise Capability Registry",
+  "description": "Schema for individual capability YAML files in runtime/hermes/capabilities/",
+  "type": "object",
+  "version": "1.0.0",
+  "required": [
+    "id", "name", "version", "purpose", "domains",
+    "required_mcp", "optional_mcp", "required_tools",
+    "inputs", "outputs", "permissions",
+    "forbidden_actions", "evidence_requirements",
+    "fallback_strategy", "reports"
+  ],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9-]+$", "description": "Unique capability identifier" },
+    "name": { "type": "string", "minLength": 1, "description": "Human-readable name" },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "purpose": { "type": "string", "minLength": 1, "description": "One-line operational purpose" },
+    "domains": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["ai-lab", "marketplace", "observability", "gitnexus", "windows"] },
+      "minItems": 1,
+      "description": "SOUL domains this capability operates in"
+    },
+    "required_mcp": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "MCP server IDs required for operation"
+    },
+    "optional_mcp": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "MCP server IDs that enhance operation but are not required"
+    },
+    "required_tools": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Runtime tool names required (read, bash, curl, webfetch, etc.)"
+    },
+    "inputs": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-z_]+$": {
+          "type": "object",
+          "properties": {
+            "description": { "type": "string" },
+            "type": { "type": "string" },
+            "required": { "type": "boolean" }
+          }
+        }
+      },
+      "description": "Expected input parameters"
+    },
+    "outputs": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-z_]+$": {
+          "type": "object",
+          "properties": {
+            "description": { "type": "string" },
+            "format": { "type": "string", "enum": ["markdown", "json", "yaml", "text", "metric", "alert"] }
+          }
+        }
+      },
+      "description": "Expected outputs produced"
+    },
+    "permissions": {
+      "type": "object",
+      "required": ["read_only", "governance_levels"],
+      "properties": {
+        "read_only": { "type": "boolean", "default": true },
+        "governance_levels": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["normal", "elevated", "degraded", "lockdown"] },
+          "minItems": 1
+        },
+        "requires_authorization": { "type": "boolean", "default": false },
+        "max_concurrent": { "type": "integer", "minimum": 1, "default": 1 }
+      }
+    },
+    "forbidden_actions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Actions this capability must never perform"
+    },
+    "evidence_requirements": {
+      "type": "object",
+      "required": ["min_confidence", "require_citations"],
+      "properties": {
+        "min_confidence": { "type": "string", "enum": ["high", "medium", "low"] },
+        "require_citations": { "type": "boolean" },
+        "require_timestamp": { "type": "boolean", "default": false },
+        "require_source_endpoint": { "type": "boolean", "default": false }
+      }
+    },
+    "fallback_strategy": {
+      "type": "object",
+      "required": ["primary_fallback", "description"],
+      "properties": {
+        "primary_fallback": { "type": "string" },
+        "secondary_fallback": { "type": "string" },
+        "description": { "type": "string" },
+        "timeout_seconds": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "reports": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "description"],
+        "properties": {
+          "type": { "type": "string" },
+          "description": { "type": "string" },
+          "format": { "type": "string", "enum": ["markdown", "json", "yaml"] }
+        }
+      },
+      "description": "Report types this capability can produce"
+    },
+    "dependencies": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Capability IDs this capability depends on"
+    },
+    "health_check": {
+      "type": "object",
+      "properties": {
+        "endpoint": { "type": "string" },
+        "interval_seconds": { "type": "integer", "minimum": 1 }
+      }
+    }
+  }
+}

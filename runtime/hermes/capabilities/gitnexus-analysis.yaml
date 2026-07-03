@@ -1,0 +1,94 @@
+# GitNexus Code Analysis
+# Capability ID: gitnexus-analysis
+
+id: gitnexus-analysis
+name: "GitNexus Code Analysis"
+version: "1.0.0"
+
+purpose: "Analizar el grafo de conocimiento del código para impacto, contexto, estructura y trazabilidad de cambios"
+
+domains:
+  - gitnexus
+
+required_mcp:
+  - gitnexus
+
+optional_mcp: []
+
+required_tools:
+  - read
+
+inputs:
+  target:
+    description: "Símbolo o archivo a analizar"
+    type: string
+    required: true
+  analysis_type:
+    description: "Tipo de análisis (impact, context, query, route_map, shape_check, detect_changes)"
+    type: string
+    required: true
+  direction:
+    description: "Dirección del análisis (upstream, downstream) — solo para impact"
+    type: string
+    required: false
+
+outputs:
+  impact_report:
+    description: "Análisis de impacto con blast radius"
+    format: json
+  context_report:
+    description: "Vista 360 de un símbolo (callers, callees, procesos)"
+    format: json
+  query_report:
+    description: "Resultados de búsqueda semántica en el grafo"
+    format: json
+  change_report:
+    description: "Detección de cambios y procesos afectados"
+    format: json
+
+permissions:
+  read_only: true
+  governance_levels:
+    - normal
+    - elevated
+    - degraded
+    - lockdown
+  requires_authorization: false
+  max_concurrent: 3
+
+forbidden_actions:
+  - "Modificar el índice de GitNexus"
+  - "Ejecutar rename tool sin dry-run primero"
+  - "Modificar archivos basado solo en análisis GitNexus sin verificación adicional"
+
+evidence_requirements:
+  min_confidence: high
+  require_citations: true
+  require_timestamp: false
+  require_source_endpoint: true
+
+fallback_strategy:
+  primary_fallback: "Grep + glob manual en lugar de GitNexus query"
+  secondary_fallback: "Impact analysis manual via git log + git diff"
+  description: "Si GitNexus MCP no responde, usar búsqueda manual con grep y glob"
+  timeout_seconds: 60
+
+reports:
+  - type: impact-analysis
+    description: "Blast radius de cambios propuestos"
+    format: json
+  - type: symbol-context
+    description: "Contexto completo de un símbolo"
+    format: json
+  - type: change-detection
+    description: "Procesos afectados por cambios unstaged/staged"
+    format: json
+  - type: route-map
+    description: "Mapeo de rutas API y sus consumidores"
+    format: json
+
+dependencies: []
+
+health_check:
+  endpoint: "gitnexus://repo/ai-lab/context"
+  interval_seconds: 300

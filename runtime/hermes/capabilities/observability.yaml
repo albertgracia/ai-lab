@@ -1,0 +1,87 @@
+# Observability Operations
+# Capability ID: observability
+
+id: observability
+name: "Observability Operations"
+version: "1.0.0"
+
+purpose: "Consultar métricas de Prometheus, dashboards de Grafana y logs de Loki para diagnóstico operacional"
+
+domains:
+  - observability
+
+required_mcp: []
+
+optional_mcp: []
+
+required_tools:
+  - curl
+  - webfetch
+
+inputs:
+  query:
+    description: "Consulta PromQL a ejecutar"
+    type: string
+    required: true
+  time_range:
+    description: "Rango temporal (5m, 1h, 6h, 24h, 7d)"
+    type: string
+    required: false
+  datasource:
+    description: "Fuente de datos (prometheus, grafana, loki)"
+    type: string
+    required: false
+
+outputs:
+  metric_report:
+    description: "Resultados de consulta PromQL"
+    format: json
+  dashboard_report:
+    description: "Resumen de dashboards Grafana"
+    format: markdown
+  log_report:
+    description: "Resultados de consulta Loki"
+    format: markdown
+
+permissions:
+  read_only: true
+  governance_levels:
+    - normal
+    - elevated
+  requires_authorization: false
+  max_concurrent: 3
+
+forbidden_actions:
+  - "Modificar dashboards de Grafana"
+  - "Modificar reglas de alerta"
+  - "Modificar configuración de Prometheus"
+  - "Silenciar alertas"
+
+evidence_requirements:
+  min_confidence: high
+  require_citations: true
+  require_timestamp: true
+  require_source_endpoint: true
+
+fallback_strategy:
+  primary_fallback: "Curl directo a API de Prometheus (:9090)"
+  secondary_fallback: "Curl directo a API de Grafana (:3000)"
+  description: "Si no hay MCP de observabilidad, usar curl directo a Prometheus API"
+  timeout_seconds: 30
+
+reports:
+  - type: metric-query
+    description: "Resultado de consulta PromQL"
+    format: json
+  - type: dashboard-summary
+    description: "Resumen de paneles Grafana activos"
+    format: markdown
+  - type: alerts-status
+    description: "Estado actual de alertas"
+    format: markdown
+
+dependencies: []
+
+health_check:
+  endpoint: "http://192.168.1.40:9090/api/v1/query?query=up"
+  interval_seconds: 60
