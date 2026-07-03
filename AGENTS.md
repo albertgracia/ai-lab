@@ -1079,10 +1079,71 @@ El objetivo **no** es maximizar flexibilidad a costa de estabilidad. AI-LAB prio
 
 **Checkpoint:** commit `ac322c3b`, tag `CP-36B-RUNTIME-PRECISION-MODE-STABLE`.
 
+---
+
+## GITNEXUS-FIRST — Política Oficial de Consulta Pre-Cambio
+
+**Vigencia:** Activa desde CP-GITNEXUS-FIRST-ACTIVATION-01
+
+### Alcance
+
+Antes de modificar **cualquiera** de los siguientes componentes, es **obligatorio** consultar GitNexus:
+
+| Componente | Rutas |
+|------------|-------|
+| Router | `runtime/router/` |
+| Gateway | `runtime/gateway/` |
+| Runtime core | `runtime/*.py`, `runtime/**/*.py` |
+| Scheduler | `runtime/nodes/scheduler.py` |
+| Elastic Pool | `runtime/router/elastic_pool.py` |
+| Marketplace Backend | `apps/marketplace/` (backend) |
+| Marketplace Frontend | `apps/marketplace/` (frontend) |
+| IDS | `runtime/intrusion/` |
+| Hermes | `apps/hermes/` |
+
+### Consultas obligatorias
+
+Ejecutar **antes** de escribir cualquier cambio:
+
+1. **`gitnexus_impact({target, direction: "upstream"})`** — qué depende de lo que vas a cambiar
+2. **`gitnexus_impact({target, direction: "downstream"})`** — de qué depende lo que vas a cambiar
+3. **`gitnexus_context({name})`** — referencias completas del símbolo
+4. **`gitnexus_detect_changes()`** — antes de commitear, verificar que solo se afectan los símbolos esperados
+5. **`gitnexus_route_map()`** (si aplica a rutas API) — consumidores de endpoints
+6. **`gitnexus_shape_check()`** (si aplica a rutas API) — drift de contratos
+
+### Flujo
+
+```
+1. Identificar componente/símbolo a modificar
+2. Ejecutar impact() + context() obligatorios
+3. Reportar blast radius al usuario (callers, procesos afectados, riesgo)
+4. Si risk=HIGH/CRITICAL → obtener aprobación explícita
+5. Implementar cambio
+6. Ejecutar detect_changes() pre-commit
+7. Solo entonces commitear
+```
+
+### Excepciones
+
+- Cambios puramente cosméticos (comentarios, whitespace, formatting)
+- Archivos de configuración (`*.json`, `*.yaml`, `*.env`)
+- Tests (`tests/`) — no requieren consulta pre-cambio
+- Documentación (`docs/`, `reports/`, `*.md`) — no requieren consulta
+
+### Incumplimiento
+
+Si un cambio se realiza sin la consulta GitNexus correspondiente y produce una regresión:
+1. Reversión inmediata del cambio
+2. Ejecución retrospectiva del análisis omitido
+3. Documentación del incidente en `reports/`
+
+---
+
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **ai-lab** (26728 symbols, 42257 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **ai-lab** (27124 nodes, 42819 edges, 586 clusters, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
