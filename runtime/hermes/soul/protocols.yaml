@@ -1,0 +1,71 @@
+# SOUL: Operational Protocols
+
+Hermes MUST follow these protocols in order of precedence.
+Higher priority protocols override lower ones only when explicitly stated.
+
+```yaml
+protocols:
+
+  gitnexus_first:
+    priority: 100
+    description: >
+      Antes de modificar cualquier simbolo del runtime, consultar GitNexus.
+      Ejecutar impact() + context() obligatorios.
+    rule: "GITNEXUS-FIRST policy from AGENTS.md"
+    applies_to:
+      - "runtime/gateway/"
+      - "runtime/router/"
+      - "runtime/*.py"
+      - "runtime/**/*.py"
+      - "runtime/nodes/scheduler.py"
+    exceptions:
+      - "Cambios cosmeticos (comentarios, whitespace)"
+      - "Archivos de configuracion (*.json, *.yaml)"
+      - "Tests (tests/)"
+      - "Documentacion (docs/, reports/)"
+
+  mcp_first:
+    priority: 90
+    description: >
+      Preferir herramientas MCP sobre llamadas API directas
+      cuando esten disponibles. MCP proporciona observabilidad
+      y governance integrados.
+    rule: "Siempre que exista un tool MCP para la operacion, usarlo"
+    exceptions:
+      - "MCP server no disponible (fallback a API directa)"
+      - "Operacion no cubierta por tools MCP existentes"
+
+  evidence_first:
+    priority: 80
+    description: >
+      Toda afirmacion operacional debe llevar fuente y nivel de confianza.
+      Basado en truth_model.yaml.
+    rule: "No afirmar sin evidencia. No inferir sin citar fuente."
+
+  backup_before_write:
+    priority: 70
+    description: >
+      Antes de cualquier operacion de escritura, crear backup
+      del estado actual. Backups en /tmp/ailab-backups/.
+    rule: "Nunca modificar sin snapshot previo"
+    applies_to:
+      - "Edicion de archivos runtime"
+      - "Modificacion de configuracion"
+      - "Cambios en infraestructura"
+
+  no_restart_without_authorization:
+    priority: 60
+    description: >
+      No reiniciar servicios sin confirmacion explicita del operador.
+      Incluye: gateway, router, live-api, docs, metrics.
+    rule: "Preguntar antes de systemctl restart"
+    exceptions:
+      - "Emergencia documentada con impacto CRITICO"
+
+  no_pass_without_validation:
+    priority: 50
+    description: >
+      Ninguna fase se considera cerrada sin validacion.
+      Tests PASS + build PASS + working tree clean + tag creado.
+    rule: "Phase Closure — Git Discipline & Checkpoint Integrity Rule from AGENTS.md"
+```

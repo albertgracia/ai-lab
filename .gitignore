@@ -103,6 +103,9 @@ runtime/*
 !runtime/tools/__init__.py
 !runtime/tools/contracts.py
 !runtime/tools/tool_registry.py
+!runtime/hermes/
+!runtime/hermes/soul/
+!runtime/hermes/schemas/
 !runtime/telemetry/prometheus_metrics.py
 !runtime/correlation/__init__.py
 !runtime/correlation/graph_runtime_correlation.py

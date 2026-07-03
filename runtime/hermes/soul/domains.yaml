@@ -1,0 +1,101 @@
+# SOUL: Managed Domains
+
+Hermes operates across five domains.
+Each domain has defined scope, nodes, MCP access, and limitations.
+
+```yaml
+domains:
+
+  ai_lab:
+    description: "AI-LAB runtime cognitivo-operacional"
+    scope: "Gateway, Router, Live-API, LM Studio, SLO"
+    nodes:
+      - host: "192.168.1.30"
+        role: "control-plane"
+        services:
+          - "ailab-gateway:8008"
+          - "ailab-router:8083"
+          - "ailab-live-api:8084"
+      - host: "192.168.1.50"
+        role: "inference-backend"
+        services:
+          - "LM-Studio:1234"
+      - host: "192.168.1.60"
+        role: "inventory-offline"
+        status: "expected_offline"
+    mcp_access:
+      primary: "ailab-runtime-mcp"
+      fallback: "direct-curl"
+    limitations:
+      - "No modificar runtime sin aprobacion"
+      - "No reiniciar servicios sin confirmacion"
+
+  marketplace:
+    description: "Rioja Marketplace OS"
+    scope: "Frontend, API, GitNexus digital twin"
+    nodes:
+      - host: "192.168.1.150"
+        role: "application-server"
+        services:
+          - "frontend:80"
+          - "api:8080"
+          - "postgresql:5432"
+    mcp_access:
+      primary: "gitnexus (rioja-marketplace repo)"
+      fallback: "webfetch directo a marketplace.labrazahome.com"
+    limitations:
+      - "Solo lectura via API publica"
+      - "Requiere RDP para operaciones profundas"
+      - "No tocar Stripe"
+      - "No modificar produccion"
+
+  observability:
+    description: "Prometheus + Grafana + Loki stack"
+    scope: "Metricas, dashboards, alertas, logs"
+    nodes:
+      - host: "192.168.1.40"
+        role: "observability-server"
+        services:
+          - "prometheus:9090"
+          - "grafana:3000"
+          - "loki:3100"
+    mcp_access:
+      primary: "planned prometheus-mcp"
+      fallback: "curl directo a API de Prometheus"
+    limitations:
+      - "Solo consulta de metricas"
+      - "No modificar dashboards ni alertas sin aprobacion"
+
+  gitnexus:
+    description: "Code intelligence graph"
+    scope: "Impact analysis, context, route mapping, change detection"
+    nodes:
+      - host: "192.168.1.30"
+        role: "gitnexus-server"
+        services:
+          - "gitnexus MCP (v1.6.5)"
+    mcp_access:
+      primary: "gitnexus MCP tools"
+      fallback: null
+    limitations:
+      - "Solo consulta read-only"
+      - "rename tool requiere dry-run primero"
+
+  windows:
+    description: "Windows Server nodes for marketplace and infrastructure"
+    scope: "RDP access, service management, configuration"
+    nodes:
+      - host: "192.168.1.150"
+        role: "marketplace-server"
+        os: "Windows Server 2025"
+      - host: "192.168.1.250"
+        role: "nas-storage"
+        os: "Windows Server (NAS-N5)"
+    mcp_access:
+      primary: null
+      fallback: "RDP only — no MCP available"
+    limitations:
+      - "Sin acceso MCP directo"
+      - "Requiere credenciales de Administrador"
+      - "Solo operaciones autorizadas"
+```
