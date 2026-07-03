@@ -19,13 +19,13 @@ Architecture:
 """
 
 CANONICAL_MODELS = {
-    "fast": "qwen3-vl-8b-instruct",
-    "observe": "qwen3-vl-8b-instruct",
-    "minimal": "qwen3-vl-8b-instruct",
-    "fallback": "qwen3-vl-8b-instruct",
-    "degraded": "qwen3-vl-8b-instruct",
-    "greeting": "qwen3-vl-8b-instruct",
-    "lightweight": "qwen3-vl-8b-instruct",
+    "fast": "qwen2.5-14b-instruct",
+    "observe": "qwen2.5-14b-instruct",
+    "minimal": "qwen2.5-14b-instruct",
+    "fallback": "qwen2.5-14b-instruct",
+    "degraded": "qwen2.5-14b-instruct",
+    "greeting": "qwen2.5-14b-instruct",
+    "lightweight": "qwen2.5-14b-instruct",
     "auto": "qwen/qwen2.5-coder-14b-instruct",
     "coding": "qwen/qwen2.5-coder-14b-instruct",
     "reasoning": "qwen/qwen2.5-coder-14b-instruct",

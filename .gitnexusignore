@@ -1,4 +1,4 @@
-# GitNexus index exclusions (FASE 36B+)
+# GitNexus index exclusions (FASE 36B+) — REINDEX FIX 01
 # Goal: keep structural truth clean; avoid operational/runtime data and build artifacts.
 
 # Git / environments
@@ -12,25 +12,54 @@ __pycache__/
 node_modules/
 dist/
 
-# Runtime source files (override .gitignore restrictions for indexing)
+# ── Runtime source files ──────────────────────────────────────────────
 # .gitignore has runtime/ + !runtime/ + runtime/* which blocks descent into
-# most runtime subdirectories. We unignore ALL runtime/ files here, then
-# re-exclude operational/data subdirectories.
+# most runtime subdirectories. We override with fine-grained includes.
+
+# Include ALL runtime source directories
 !runtime/**
+!runtime/gateway/
+!runtime/gateway/*.py
+
+# Explicit includes for files excluded by .gitignore selective un-ignore
+!runtime/gateway/openai_gateway.py
+!runtime/gateway/tool_request_classifier.py
+!runtime/gateway/runtime_api_routes.py
+!runtime/gateway/stream_sanitizer.py
+!runtime/gateway/tool_call_parser.py
+!runtime/gateway/process_guard.py
+
+# Exclude runtime operational / generated data
 runtime/**/.pytest_cache/**
 runtime/**/__pycache__/**
 runtime/**/*.pyc
 runtime/**/*.log
-
-# Runtime operational data (never index)
 runtime/state/**
 
-# Common temp/log/data folders
+# Exclude backup and temp files
+*.bak
+*.bak.*
+*.backup
+*.backup.*
+*.cp*bak*
+**/*.bak
+**/*.bak.*
+**/*.backup
+**/*.backup.*
+**/*.cp*bak*
+tests/*.bak*
+runtime/**/*.bak*
+runtime/**/*.backup*
+
+# ── Reports ───────────────────────────────────────────────────────────
+reports/
+!reports/*.md
+
+# ── Common temp/log/data folders ─────────────────────────────────────
 tmp/
 logs/
 data/
 
-
-# Astro docs build artifacts
+# ── Astro docs build artifacts ───────────────────────────────────────
 apps/ialab-docs/dist/
 apps/ialab-docs/node_modules/
