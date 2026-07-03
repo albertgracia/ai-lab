@@ -1,0 +1,93 @@
+# Marketplace Audit
+# Operator ID: marketplace-audit
+
+id: marketplace-audit
+name: "Marketplace Audit"
+version: "1.0.0"
+description: "Auditar el estado del Marketplace Rioja: frontend, API publica, catalogo, sommelier y gemelo digital GitNexus"
+
+capabilities:
+  - marketplace-operator
+
+domains:
+  - marketplace
+
+execution_mode: readonly
+
+required_mcp:
+  - gitnexus
+
+required_skills: []
+
+required_protocols:
+  - mcp_first
+  - evidence_first
+
+authorization_required: false
+
+inputs:
+  scope:
+    type: string
+    description: "Alcance de la auditoria (full, frontend, api, catalog, sommelier, code)"
+    required: false
+    default: full
+  include_anomalies:
+    type: boolean
+    description: "Incluir deteccion de anomalias"
+    required: false
+    default: true
+
+outputs:
+  report_format: operator_marketplace_audit
+  description: "Reporte de auditoria del marketplace con evidencias por endpoint"
+  artifacts:
+    - marketplace-snapshot.json
+
+validation:
+  pre_conditions:
+    - "GitNexus MCP debe responder para analisis de codigo"
+    - "marketplace.labrazahome.com debe ser accesible"
+  post_conditions:
+    - "Reporte generado en reports/"
+    - "API publica no modificada"
+
+reports:
+  - type: marketplace-status
+    description: "Estado del marketplace (frontend, API, catalogo, sommelier, blog)"
+    format: markdown
+  - type: marketplace-anomalies
+    description: "Anomalias detectadas"
+    format: markdown
+  - type: code-analysis
+    description: "Analisis GitNexus del codigo fuente"
+    format: markdown
+
+rollback:
+  strategy: none
+  description: "Operacion de solo lectura — no requiere rollback"
+
+forbidden_actions:
+  - "Modificar productos o catalogo"
+  - "Acceder a Stripe API keys"
+  - "Ejecutar comandos en servidor marketplace"
+  - "Modificar base de datos"
+
+truth_model:
+  min_confidence: medium
+  require_citations: true
+  require_timestamp: false
+
+priority: 60
+
+success_criteria:
+  - "Frontend responde HTTP 200"
+  - "API /api/v1/wines devuelve catalogo"
+  - "Sommelier responde con recomendaciones"
+  - "Blog sirve contenido"
+  - "GitNexus reporta cambios recientes"
+
+failure_conditions:
+  - "Frontend timeout o 5xx"
+  - "API de catalogo devuelve 0 productos"
+  - "Sommelier no responde"
+  - "GitNexus no responde tras fallback a webfetch"

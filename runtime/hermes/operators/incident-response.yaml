@@ -1,0 +1,101 @@
+# Incident Triage
+# Operator ID: incident-triage
+
+id: incident-triage
+name: "Incident Triage"
+version: "1.0.0"
+description: "Triage de incidentes runtime con diagnostico basado en evidencia, linea de tiempo y propuesta de remediacion"
+
+capabilities:
+  - incident-response
+
+domains:
+  - ai-lab
+  - observability
+
+execution_mode: advisory
+
+required_mcp:
+  - ailab-runtime-mcp
+
+required_skills: []
+
+required_protocols:
+  - evidence_first
+  - no_restart_without_authorization
+
+authorization_required: false
+
+inputs:
+  incident_id:
+    type: string
+    description: "Identificador del incidente"
+    required: true
+  symptoms:
+    type: string
+    description: "Sintomas observados (descripcion libre)"
+    required: true
+  time_window:
+    type: string
+    description: "Ventana temporal del incidente (5m, 15m, 1h, 6h)"
+    required: false
+    default: 15m
+
+outputs:
+  report_format: operator_incident_report
+  description: "Reporte completo de incidente con evidencia, timeline, diagnostico y propuesta de remediacion"
+  artifacts:
+    - incident-evidence.json
+
+validation:
+  pre_conditions:
+    - "MCP ailab-runtime-mcp debe responder"
+    - "Gateway debe estar accesible"
+  post_conditions:
+    - "Diagnostico basado en evidencia OBSERVADA o INFERIDA"
+    - "Propuesta de remediacion etiquetada como advisory"
+    - "Ninguna accion ejecutada en produccion"
+
+reports:
+  - type: incident-diagnosis
+    description: "Diagnostico completo con evidencia por fuente"
+    format: markdown
+  - type: incident-timeline
+    description: "Linea de tiempo basada en metricas y logs"
+    format: markdown
+  - type: correlation-analysis
+    description: "Correlacion con otros eventos (si hay datos)"
+    format: markdown
+  - type: remediation-proposal
+    description: "Propuesta de remediacion (advisory, sin ejecucion)"
+    format: markdown
+
+rollback:
+  strategy: none
+  description: "Operacion de solo lectura y diagnostico — no ejecuta cambios"
+
+forbidden_actions:
+  - "Ejecutar remediacion sin autorizacion explicita"
+  - "Reiniciar servicios"
+  - "Modificar configuracion"
+  - "Descartar alertas"
+  - "Modificar reglas de alerta"
+
+truth_model:
+  min_confidence: high
+  require_citations: true
+  require_timestamp: true
+
+priority: 90
+
+success_criteria:
+  - "Endpoint de gateway responde con estado actual"
+  - "SLO health endpoint disponible"
+  - "Diagnostico basado en al menos una fuente OBSERVADA"
+  - "Propuesta de remediacion documentada con pasos concretos"
+
+failure_conditions:
+  - "Gateway no responde (imposible verificar estado)"
+  - "MCP ailab-runtime-mcp no responde tras fallback"
+  - "Sin metricas disponibles en ventana temporal"
+  - "No se puede determinar causa raiz con evidencia disponible"

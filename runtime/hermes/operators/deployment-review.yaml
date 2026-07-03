@@ -1,0 +1,104 @@
+# Deployment Readiness Review
+# Operator ID: deployment-review
+
+id: deployment-review
+name: "Deployment Readiness Review"
+version: "1.0.0"
+description: "Revisar readiness de despliegue: estado Git, build, tests, SLO health, impacto GitNexus"
+
+capabilities:
+  - deployment-review
+
+domains:
+  - ai-lab
+  - gitnexus
+
+execution_mode: advisory
+
+required_mcp:
+  - ailab-runtime-mcp
+  - gitnexus
+
+required_skills:
+  - deployment-procedures
+
+required_protocols:
+  - gitnexus_first
+  - mcp_first
+  - evidence_first
+  - backup_before_write
+  - no_restart_without_authorization
+  - no_pass_without_validation
+
+authorization_required: false
+
+inputs:
+  target:
+    type: string
+    description: "Componente a revisar (runtime, docs, marketplace, all)"
+    required: true
+  include_gitnexus_impact:
+    type: boolean
+    description: "Incluir analisis de impacto GitNexus"
+    required: false
+    default: true
+  check_slo:
+    type: boolean
+    description: "Verificar SLO health antes de recomendar despliegue"
+    required: false
+    default: true
+
+outputs:
+  report_format: operator_deployment_review
+  description: "Reporte de readiness con checklist, riesgo y recomendacion"
+  artifacts:
+    - deployment-checklist.json
+
+validation:
+  pre_conditions:
+    - "Gateway debe responder 200 en /health"
+    - "Git working tree debe ser analizable"
+    - "GitNexus indice debe estar fresco"
+  post_conditions:
+    - "Checklist completado con PASS/FAIL por item"
+    - "Ningun cambio realizado en produccion"
+
+reports:
+  - type: deployment-readiness
+    description: "Checklist de readiness con estado PASS/FAIL por item"
+    format: markdown
+  - type: risk-assessment
+    description: "Evaluacion de riesgo del cambio propuesto"
+    format: markdown
+
+rollback:
+  strategy: none
+  description: "Operacion de solo lectura y asesoramiento — no requiere rollback"
+
+forbidden_actions:
+  - "Ejecutar el despliegue"
+  - "Modificar archivos de produccion"
+  - "Reiniciar servicios"
+  - "Hacer commit o push"
+  - "Modificar configuracion activa"
+
+truth_model:
+  min_confidence: high
+  require_citations: true
+  require_timestamp: true
+
+priority: 70
+
+success_criteria:
+  - "Checklist PASS en todos los items"
+  - "SLO state GREEN o YELLOW"
+  - "Git working tree clean (o cambios documentados)"
+  - "GitNexus impact analysis con riesgo LOW"
+  - "Build y tests PASS"
+
+failure_conditions:
+  - "SLO state RED"
+  - "Git working tree sucio sin documentacion"
+  - "GitNexus impact analysis con riesgo HIGH o CRITICAL"
+  - "Build o tests FAIL"
+  - "Gateway no responde"
