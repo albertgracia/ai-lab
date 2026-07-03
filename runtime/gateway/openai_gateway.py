@@ -5154,9 +5154,9 @@ class GatewayHandler(BaseHTTPRequestHandler):
             selected_model = choose_model(task_type)
             if route_variant == "creative" or route_family == "report":
                 selected_model = "qwen/qwen2.5-coder-14b-instruct"
-            # ROUTER-HF-MODEL-POLICY-01: tool-use -> always qwen3-vl-8b-instruct
+            # ROUTER-HF-MODEL-POLICY-01: tool-use -> fast model
             elif should_use_tool_fastpath(payload):
-                selected_model = "qwen3-vl-8b-instruct"
+                selected_model = "qwen2.5-14b-instruct"
                 try:
                     from runtime.telemetry.prometheus_metrics import record_greeting_fastpath
                     record_greeting_fastpath()
@@ -5172,13 +5172,13 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     except ImportError:
                         pass
                 else:
-                    selected_model = "qwen3-vl-8b-instruct"
+                    selected_model = "qwen2.5-14b-instruct"
             # FASE 29.3.1: don't override qwen escalation with observe fastpath
             _already_qwen = "qwen" in (selected_model or "").lower()
             if (current_mode() == "observe" or observe_fastpath) and not should_use_tool_fastpath(payload) and not _already_qwen:
-                selected_model = "qwen3-vl-8b-instruct"
+                selected_model = "qwen2.5-14b-instruct"
             elif should_use_greeting_fastpath(payload):
-                selected_model = "qwen3-vl-8b-instruct"
+                selected_model = "qwen2.5-14b-instruct"
                 try:
                     from runtime.telemetry.prometheus_metrics import record_greeting_fastpath
                     record_greeting_fastpath()
@@ -5194,7 +5194,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     pass
             # ROUTER-HF-MODEL-POLICY-01: tool_use task_type before lightweight
             elif task_type == "tool_use":
-                selected_model = "qwen3-vl-8b-instruct"
+                selected_model = "qwen2.5-14b-instruct"
                 try:
                     from runtime.telemetry.prometheus_metrics import record_greeting_fastpath
                     record_greeting_fastpath()
@@ -5202,7 +5202,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     pass
             # FASE 29.3.1: Lightweight prompt heuristic — short/simple -> fast model
             elif is_lightweight_prompt(observe_user_text):
-                selected_model = "qwen3-vl-8b-instruct"
+                selected_model = "qwen2.5-14b-instruct"
                 try:
                     from runtime.telemetry.prometheus_metrics import record_greeting_fastpath
                     record_greeting_fastpath()
@@ -5218,7 +5218,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     except ImportError:
                         pass
                 else:
-                    selected_model = "qwen3-vl-8b-instruct"
+                    selected_model = "qwen2.5-14b-instruct"
 
             # FASE 30I-F0: Model routing policy — validate operational/coding/deprecated
             _validated = validate_model_selection(
