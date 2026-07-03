@@ -1,8 +1,8 @@
 {
   "health": {
-    "score": 0,
+    "score": 15,
     "reasons": [
-      "2 GPU(s) offline",
+      "1 GPU(s) offline",
       "Gateway down",
       "Prometheus down"
     ],
@@ -17,7 +17,7 @@
     "active_sessions": 0,
     "last_latency_ms": 0,
     "active_streams": 0,
-    "online_nodes": 0,
+    "online_nodes": 1,
     "total_nodes": 3,
     "events_per_minute": 0
   },
@@ -47,5 +47,5 @@
       "gpu_overheat": 0
     }
   },
-  "timestamp": 1783066363.7830482
+  "timestamp": 1783072012.5021343
 }
