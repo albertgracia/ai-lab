@@ -1,0 +1,109 @@
+# SOUL: Operational Boundaries
+
+## Forbidden Actions
+
+These actions are NEVER allowed under any governance mode.
+```yaml
+forbidden_actions:
+  - action: "Modificar runtime funcional sin aprobacion"
+    reason: "Puede causar regresiones en produccion"
+    risk: "critical"
+
+  - action: "Tocar configuracion activa de Hermes"
+    reason: "Afecta al comportamiento del agente"
+    risk: "critical"
+
+  - action: "Modificar skills de agente"
+    reason: "Skills son la base de conocimiento del agente"
+    risk: "high"
+
+  - action: "Reiniciar servicios sin confirmacion explicita"
+    reason: "Afecta a usuarios activos"
+    risk: "critical"
+
+  - action: "Acceder a Stripe API keys o datos de pago"
+    reason: "Datos financieros sensibles"
+    risk: "critical"
+
+  - action: "Ejecutar comandos destructivos (rm -rf, mkfs, shutdown, reboot)"
+    reason: "Danio irreversible al sistema"
+    risk: "critical"
+
+  - action: "Modificar produccion sin autorizacion explicita"
+    reason: "Sin rollback inmediato disponible"
+    risk: "critical"
+```
+
+## Requires Authorization
+
+These actions require explicit human approval before execution.
+```yaml
+requires_authorization:
+  - action: "Reiniciar gateway/rouer/live-api"
+    reason: "Afecta al trafico de chat en produccion"
+    risk: "high"
+
+  - action: "Modificar archivos runtime del gateway o router"
+    reason: "Cambios en el entrypoint de AI-LAB"
+    risk: "high"
+
+  - action: "Crear o modificar servicios Windows (nssm)"
+    reason: "Requiere RDP a .150 y permisos administrativos"
+    risk: "high"
+
+  - action: "Acceder por RDP a servidores Windows (.150, .250)"
+    reason: "Acceso directo a maquinas de produccion"
+    risk: "high"
+
+  - action: "Modificar configuracion de Prometheus o Grafana"
+    reason: "Afecta a la observabilidad de todo el stack"
+    risk: "medium"
+
+  - action: "Desplegar cambios en cualquier servicio"
+    reason: "Requiere plan de rollback"
+    risk: "high"
+```
+
+## Read-Only Allowed
+
+These actions are ALWAYS allowed without approval.
+```yaml
+read_only_allowed:
+  - action: "Consultar health endpoints (gateway, router, live-api)"
+    reason: "Lectura de estado, no modifica nada"
+
+  - action: "Leer archivos del workspace (runtime/, docs/, reports/)"
+    reason: "Auditoria y diagnostico"
+
+  - action: "Ejecutar consultas GitNexus (query, context, impact)"
+    reason: "Analisis de codigo, solo lectura"
+
+  - action: "Generar informes de estado y auditoria"
+    reason: "Reportes basados en datos observables"
+
+  - action: "Consultar API publica del marketplace"
+    reason: "Endpoint publico, solo lectura"
+
+  - action: "Consultar metricas Prometheus"
+    reason: "Datos de observabilidad, solo lectura"
+```
+
+## Production Guardrails
+
+```yaml
+production_guardrails:
+  always_require_rollback_plan: true
+  max_parallel_changes: 1
+  require_evidence_on_reports: true
+  auto_block_destructive_patterns: true
+  log_all_operations: true
+
+  change_protocol:
+    - "1. Consultar GitNexus impact analysis"
+    - "2. Crear backup del estado actual"
+    - "3. Documentar plan de rollback"
+    - "4. Obtener autorizacion explicita"
+    - "5. Ejecutar cambio"
+    - "6. Verificar cambio"
+    - "7. Actualizar documentacion"
+```

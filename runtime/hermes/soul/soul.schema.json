@@ -1,0 +1,195 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SOUL — System Ontological Unified Layer",
+  "description": "Schema for Hermes Enterprise SOUL declarative files",
+  "version": "1.0.0",
+  "type": "object",
+  "definitions": {
+    "identity": {
+      "type": "object",
+      "required": ["name", "version", "operator_role", "mission"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "edition": { "type": "string" },
+        "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+        "operator_role": { "type": "string" },
+        "mission": { "type": "string" },
+        "personality": {
+          "type": "object",
+          "properties": {
+            "tone": { "type": "string" },
+            "style": { "type": "string" },
+            "language": { "type": "string", "pattern": "^[a-z]{2}$" }
+          }
+        },
+        "owner": { "type": "string" },
+        "parent_document": { "type": "string" },
+        "parent_precedence": { "type": "boolean" },
+        "secondary_objectives": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "non_goals": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "truth_model": {
+      "type": "object",
+      "required": ["truth_levels", "evidence_required"],
+      "properties": {
+        "truth_levels": {
+          "type": "object",
+          "patternProperties": {
+            "^(OBSERVADO|INFERIDO|SUPUESTO)$": {
+              "type": "object",
+              "required": ["description", "confidence", "sources"],
+              "properties": {
+                "description": { "type": "string" },
+                "confidence": { "type": "string", "enum": ["high", "medium", "low"] },
+                "sources": { "type": "array", "items": { "type": "string" } },
+                "rules": { "type": "array", "items": { "type": "string" } }
+              }
+            }
+          }
+        },
+        "evidence_required": { "type": "boolean" },
+        "default_confidence_if_unknown": { "type": "string", "enum": ["high", "medium", "low"] },
+        "citation_format": { "type": "object" },
+        "pass_fail_rules": { "type": "array", "items": { "type": "string" } },
+        "validation": {
+          "type": "object",
+          "properties": {
+            "require_evidence_on_reports": { "type": "boolean" },
+            "require_confidence_on_claims": { "type": "boolean" },
+            "auto_reject_unverified_claims": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "protocols": {
+      "type": "object",
+      "required": ["protocols"],
+      "properties": {
+        "protocols": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["priority", "description", "rule"],
+            "properties": {
+              "priority": { "type": "integer", "minimum": 1, "maximum": 100 },
+              "description": { "type": "string" },
+              "rule": { "type": "string" },
+              "applies_to": { "type": "array", "items": { "type": "string" } },
+              "exceptions": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      }
+    },
+    "boundaries": {
+      "type": "object",
+      "required": ["forbidden_actions", "read_only_allowed"],
+      "properties": {
+        "forbidden_actions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["action", "reason", "risk"],
+            "properties": {
+              "action": { "type": "string" },
+              "reason": { "type": "string" },
+              "risk": { "type": "string", "enum": ["critical", "high", "medium", "low"] }
+            }
+          }
+        },
+        "requires_authorization": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["action", "reason", "risk"],
+            "properties": {
+              "action": { "type": "string" },
+              "reason": { "type": "string" },
+              "risk": { "type": "string", "enum": ["critical", "high", "medium", "low"] }
+            }
+          }
+        },
+        "read_only_allowed": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["action", "reason"],
+            "properties": {
+              "action": { "type": "string" },
+              "reason": { "type": "string" }
+            }
+          }
+        },
+        "production_guardrails": {
+          "type": "object",
+          "properties": {
+            "always_require_rollback_plan": { "type": "boolean" },
+            "max_parallel_changes": { "type": "integer", "minimum": 1 },
+            "require_evidence_on_reports": { "type": "boolean" },
+            "auto_block_destructive_patterns": { "type": "boolean" },
+            "log_all_operations": { "type": "boolean" },
+            "change_protocol": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "domains": {
+      "type": "object",
+      "required": ["domains"],
+      "properties": {
+        "domains": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["description", "scope", "nodes"],
+            "properties": {
+              "description": { "type": "string" },
+              "scope": { "type": "string" },
+              "nodes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["host", "role"],
+                  "properties": {
+                    "host": { "type": "string" },
+                    "role": { "type": "string" },
+                    "services": {
+                      "type": "array",
+                      "items": { "type": "string" }
+                    },
+                    "status": { "type": "string" }
+                  }
+                }
+              },
+              "mcp_access": {
+                "type": "object",
+                "properties": {
+                  "primary": { "type": ["string", "null"] },
+                  "fallback": { "type": ["string", "null"] }
+                }
+              },
+              "limitations": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "anyOf": [
+    { "required": ["name", "version", "operator_role", "mission"] },
+    { "required": ["truth_levels", "evidence_required"] },
+    { "required": ["protocols"] },
+    { "required": ["forbidden_actions", "read_only_allowed"] },
+    { "required": ["domains"] }
+  ]
+}
