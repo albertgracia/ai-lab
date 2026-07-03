@@ -1,0 +1,92 @@
+# Observability Query
+# Operator ID: observability-query
+
+id: observability-query
+name: "Observability Query"
+version: "1.0.0"
+description: "Consultar metricas Prometheus, dashboards Grafana y logs Loki para diagnostico operacional"
+
+capabilities:
+  - observability
+
+domains:
+  - observability
+
+execution_mode: readonly
+
+required_mcp: []
+
+required_skills: []
+
+required_protocols:
+  - evidence_first
+
+authorization_required: false
+
+inputs:
+  query:
+    type: string
+    description: "Consulta PromQL a ejecutar"
+    required: true
+  time_range:
+    type: string
+    description: "Rango temporal (5m, 1h, 6h, 24h, 7d)"
+    required: false
+    default: 5m
+  datasource:
+    type: string
+    description: "Fuente de datos (prometheus, grafana, loki)"
+    required: false
+    default: prometheus
+
+outputs:
+  report_format: operator_observability_result
+  description: "Resultados de consulta con datos, timestamp y fuente"
+  artifacts:
+    - query-result.json
+
+validation:
+  pre_conditions:
+    - "Prometheus debe responder en :9090"
+    - "Curl debe estar disponible"
+  post_conditions:
+    - "Resultados con timestamp y source endpoint"
+    - "Datos sin modificar"
+
+reports:
+  - type: metric-query
+    description: "Resultado de consulta PromQL con metadatos"
+    format: json
+  - type: dashboard-summary
+    description: "Resumen de paneles Grafana activos"
+    format: markdown
+  - type: alerts-status
+    description: "Estado actual de alertas Prometheus"
+    format: markdown
+
+rollback:
+  strategy: none
+  description: "Operacion de solo lectura — no requiere rollback"
+
+forbidden_actions:
+  - "Modificar dashboards Grafana"
+  - "Modificar reglas de alerta"
+  - "Modificar configuracion Prometheus"
+  - "Silenciar alertas"
+
+truth_model:
+  min_confidence: high
+  require_citations: true
+  require_timestamp: true
+
+priority: 50
+
+success_criteria:
+  - "Prometheus responde a consulta PromQL"
+  - "Datos devueltos con metadatos de serie temporal"
+  - "Al menos un datapoint por serie consultada"
+
+failure_conditions:
+  - "Prometheus timeout o 5xx"
+  - "Query PromQL sin datos (empty result)"
+  - "Endpoint :9090 no accesible"

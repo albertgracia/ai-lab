@@ -1,0 +1,169 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Operator — Hermes Enterprise Operator Registry",
+  "description": "Schema for individual operator YAML files in runtime/hermes/operators/",
+  "type": "object",
+  "version": "1.0.0",
+  "required": [
+    "id", "name", "version", "description",
+    "capabilities", "domains", "execution_mode",
+    "required_mcp", "required_skills", "required_protocols",
+    "inputs", "outputs", "validation",
+    "reports", "rollback",
+    "forbidden_actions", "truth_model",
+    "priority", "success_criteria", "failure_conditions"
+  ],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9-]+$", "description": "Unique operator identifier" },
+    "name": { "type": "string", "minLength": 1, "description": "Human-readable name" },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "description": { "type": "string", "minLength": 1, "description": "One-line operational purpose" },
+    "capabilities": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "description": "Capability IDs from Capability Registry that this operator requires"
+    },
+    "domains": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["ai-lab", "marketplace", "observability", "gitnexus", "windows"] },
+      "minItems": 1,
+      "description": "SOUL domains this operator operates in"
+    },
+    "execution_mode": {
+      "type": "string",
+      "enum": ["readonly", "advisory", "execute"],
+      "description": "readonly = solo lectura, advisory = propuesta sin ejecucion, execute = ejecucion con autorizacion"
+    },
+    "required_mcp": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "MCP server IDs required for execution"
+    },
+    "required_skills": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Agent skill names required"
+    },
+    "required_protocols": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "SOUL protocol names that govern this operator"
+    },
+    "authorization_required": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether explicit human authorization is required before execution"
+    },
+    "inputs": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-z_]+$": {
+          "type": "object",
+          "required": ["type", "description"],
+          "properties": {
+            "description": { "type": "string" },
+            "type": { "type": "string" },
+            "required": { "type": "boolean", "default": true },
+            "default": { "type": ["string", "boolean", "integer", "null"] }
+          }
+        }
+      },
+      "description": "Expected input parameters"
+    },
+    "outputs": {
+      "type": "object",
+      "required": ["report_format"],
+      "properties": {
+        "report_format": { "type": "string" },
+        "description": { "type": "string" },
+        "artifacts": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "required": ["pre_conditions", "post_conditions"],
+      "properties": {
+        "pre_conditions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Conditions that must be true before execution"
+        },
+        "post_conditions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Conditions that must be true after execution"
+        }
+      }
+    },
+    "reports": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "description"],
+        "properties": {
+          "type": { "type": "string" },
+          "description": { "type": "string" },
+          "format": { "type": "string", "enum": ["markdown", "json", "yaml"] }
+        }
+      },
+      "description": "Report types this operator can produce"
+    },
+    "rollback": {
+      "type": "object",
+      "required": ["strategy", "description"],
+      "properties": {
+        "strategy": { "type": "string", "enum": ["manual", "automatic", "none"] },
+        "description": { "type": "string" }
+      },
+      "description": "Rollback strategy if execution fails or produces unexpected results"
+    },
+    "forbidden_actions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Actions this operator must never perform"
+    },
+    "truth_model": {
+      "type": "object",
+      "required": ["min_confidence", "require_citations"],
+      "properties": {
+        "min_confidence": { "type": "string", "enum": ["high", "medium", "low"] },
+        "require_citations": { "type": "boolean" },
+        "require_timestamp": { "type": "boolean", "default": false }
+      }
+    },
+    "priority": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100,
+      "description": "Operator priority (higher = more urgent)"
+    },
+    "success_criteria": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Criteria that define successful execution"
+    },
+    "failure_conditions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Conditions that indicate execution failure"
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "description": { "type": "string" },
+          "tool": { "type": "string" },
+          "mcp": { "type": "string" },
+          "expected_output": { "type": "string" }
+        }
+      },
+      "description": "Execution steps (for future enforcement)"
+    }
+  }
+}

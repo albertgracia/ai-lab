@@ -1,0 +1,89 @@
+# Runtime Health Check
+# Operator ID: runtime-health-check
+
+id: runtime-health-check
+name: "Runtime Health Check"
+version: "1.0.0"
+description: "Verificar salud de todos los servicios runtime AI-LAB: gateway, router, live-api, SLO, nodos de inferencia"
+
+capabilities:
+  - ai-lab-runtime
+
+domains:
+  - ai-lab
+
+execution_mode: readonly
+
+required_mcp:
+  - ailab-runtime-mcp
+
+required_skills: []
+
+required_protocols:
+  - mcp_first
+  - evidence_first
+  - no_restart_without_authorization
+
+authorization_required: false
+
+inputs:
+  target:
+    type: string
+    description: "Servicio a verificar (gateway, router, live-api, slo, models, all)"
+    required: false
+    default: all
+  include_metrics:
+    type: boolean
+    description: "Incluir metricas Prometheus en el reporte"
+    required: false
+    default: false
+
+outputs:
+  report_format: operator_health_status
+  description: "Reporte de salud con estado de cada servicio, metricas y anomalias"
+  artifacts:
+    - health-snapshot.json
+
+validation:
+  pre_conditions:
+    - "MCP ailab-runtime-mcp debe responder"
+    - "Curl debe estar disponible"
+  post_conditions:
+    - "Reporte generado en reports/"
+    - "Ningun servicio modificado"
+
+reports:
+  - type: health-status
+    description: "Estado de salud de servicios AI-LAB con evidencia por endpoint"
+    format: markdown
+  - type: anomaly-detection
+    description: "Anomalias detectadas en el health check"
+    format: markdown
+
+rollback:
+  strategy: none
+  description: "Operacion de solo lectura — no requiere rollback"
+
+forbidden_actions:
+  - "Reiniciar servicios"
+  - "Modificar configuracion"
+  - "Enviar trafico de prueba"
+
+truth_model:
+  min_confidence: high
+  require_citations: true
+  require_timestamp: true
+
+priority: 80
+
+success_criteria:
+  - "Todos los endpoints responden 200"
+  - "SLO state no es RED"
+  - "LM Studio reporta modelos activos"
+  - "Reporte generado en menos de 60s"
+
+failure_conditions:
+  - "Endpoint /health devuelve timeout o 5xx"
+  - "SLO degradation level HEAVY o EMERGENCY"
+  - "LM Studio sin modelos cargados"
+  - "MCP ailab-runtime-mcp no responde tras fallback"
