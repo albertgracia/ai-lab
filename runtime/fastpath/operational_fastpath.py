@@ -107,7 +107,7 @@ _FAST_MAP: list[tuple[str, tuple[str, ...]]] = [
     ("FAST_GOVERNANCE", ("governance", "gobernanza", "policy", "degraded domains", "dominios degradados")),
     ("FAST_VALIDATION", ("validation", "validacion", "validación", "invariants", "safety gates")),
     ("FAST_TOPOLOGY", ("topology", "topologia", "topología", "control plane", "control-plane")),
-    ("FAST_INFRASTRUCTURE", ("infra", "infrastructure", "nodo", "node", "who is", "what is", "qué es", "que es")),
+    ("FAST_INFRASTRUCTURE", ("infra", "infrastructure", "nodo", "node")),
     ("FAST_OPERATIONAL", ("estado runtime", "runtime status", "estado del runtime", "estado cluster", "cluster status", "status runtime")),
 ]
 

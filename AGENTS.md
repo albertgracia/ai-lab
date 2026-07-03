@@ -609,15 +609,40 @@ FASE 36B → runtime precision mode                                        ✅ C
 FASE 36C-A → validation score 56.3 investigation (READ-ONLY)             ✅ docs audit
 FASE 37A → cognitive health layer documentation                          ✅ docs audit
 FASE PC-01 → phase closure protocol                                      ✅ docs audit
+FASE 36C → operator intent reasoning                                    ✅
+FASE 36D → autonomous observability triage                              ✅
+FASE FEDERATION → domain registry, contracts, doctrine, budgets         ✅
+FASE CANONICAL-MODEL-REGISTRY → canonical model registry, aliases       ✅
+FASE COGNITIVE-SLO → bounded cognitive SLO framework                    ✅
+FASE ARCHITECTURE-GOVERNANCE → architecture governance framework        ✅
+FASE 37A → cognitive health layer documentation                         ✅
+FASE 37B → graph-runtime correlation                                    ✅
+FASE 37C → critical path analysis                                       ✅
+FASE 37D → graph hotspot history                                        ✅
+FASE 37E → governance drift detection                                   ✅
+FASE 38A → runtime deep audit                                           ✅
+FASE 38B → gateway shutdown graceful                                    ✅
+FASE 38C → GitNexus NAPI error triage                                   ✅
+FASE 38D → runtime stability snapshot                                   ✅
+FASE 39A → OpenCode gateway contract hardening                          ✅
+FASE 39B → runtime observability alerts                                 ✅
+FASE 39C → cognitive health followup                                    ✅
+FASE 39E → runtime stabilization release close                          ✅
+FASE 40A → post-release SLO drift watch                                 ✅
+SLO-ENFORCEMENT-01 → SLO enforcement read-only (13 SLOs, 26/26 tests)  ✅ CP-SLO-ENFORCEMENT-01
+VALIDATION-AUTHORITY-01 → validation authority read-only (57/57)        ✅ CP-VALIDATION-AUTHORITY-01
+AUTONOMOUS-OBSERVABILITY-TRIAGE-01 → triage read-only (34/34)           ✅ CP-AUTONOMOUS-OBSERVABILITY-TRIAGE-01
+OPERATOR-INTENT-REASONING-01 → operator intent (25/25)                  ✅ CP-OPERATOR-INTENT-REASONING-01
+MULTIGPU-READINESS-01 → readiness assessment (37/100)                   ✅ CP-MULTIGPU-READINESS-01
 ```
 
-Tags git: desde `CP-21B-STABLE` hasta `CP-36B-RUNTIME-PRECISION-MODE-STABLE`.
+Tags git: desde `CP-21B-STABLE` hasta `CP-MULTIGPU-READINESS-01` (114 tags).
 
-**Deuda saldada:** FASE 29.4.4-C — `/slo/health` ahora responde 200 siempre, con payload disabled cuando enforcement=false.
+**Documentation hierarchy:** `docs/DOCUMENTATION-HIERARCHY.md` — Level 1: AGENTS.md, Level 2: ARCHITECTURE.md, Level 3: ROADMAP-2026.md, Level 4: conversation-history.md + audits/archive.
 
 ## Current Runtime Truth
 
-**Checkpoint actual:** `CP-36B-RUNTIME-PRECISION-MODE-STABLE`
+**Checkpoint actual:** `CP-MULTIGPU-READINESS-01`
 
 **Runtime state source of truth:** `/runtime/maturity` (build_runtime_descriptor)
 
@@ -647,17 +672,24 @@ Tags git: desde `CP-21B-STABLE` hasta `CP-36B-RUNTIME-PRECISION-MODE-STABLE`.
 - models: `/mnt/ai-models`
 - archives: `/mnt/opencode/ai-lab-archives`
 
-**Próxima fase:** FASE 37B — Validation Authority Recovery
+**Próxima fase:** FASE 37B — Validation Authority Recovery (restaurar Prometheus scrape targets)
 
 ### Roadmap actual
 
 ```
 37B — Validation Authority Recovery (restaurar Prometheus scrape targets)
-37C — Operator Intent Reasoning (diferido hasta restaurar authority)
-37D — Autonomous Observability Triage (diferido)
+Multi-GPU scheduling (post-node-reactivation + pre-requisites: 7-10d)
 Pilot técnico (post-authority)
 Pilot operador (post-pilot técnico)
-Multi-GPU (posterior)
+```
+
+### Roadmap completado (Blocks 37-40)
+
+```
+Block 37 — Cognitive Health & Graph Analysis (37A-37E)
+Block 38 — Runtime Stability (38A-38D: deep audit, graceful shutdown, error triage, snapshot)
+Block 39 — Release Hardening (39A-39E: gateway contracts, observability alerts, followup, close)
+Block 40 — Post-Release SLO Drift Watch (40A)
 ```
 
 

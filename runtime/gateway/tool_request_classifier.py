@@ -538,7 +538,6 @@ _FASTPATH_INTENTS: dict[str, tuple[str, ...]] = {
         "watchdog", "watchdogs", "timeouts", "hardening", "escalation", "containment",
     ),
     "infrastructure": (
-        "que es", "qué es", "who is", "what is",
         "infra", "infrastructure", "nodo", "node",
         "prometheus authority", "grafana", "control plane", "control-plane",
     ),

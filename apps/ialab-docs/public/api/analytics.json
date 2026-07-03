@@ -1,23 +1,19 @@
 {
   "health": {
-    "score": 0,
-    "reasons": [
-      "2 GPU(s) offline",
-      "Gateway down",
-      "Prometheus down"
-    ],
-    "level": "critical"
+    "score": 70,
+    "reasons": [],
+    "level": "good"
   },
   "metrics": {
-    "requests_total": 0,
-    "streams_total": 0,
-    "errors_total": 0,
-    "routing_decisions_total": 0,
-    "sessions_total": 0,
-    "active_sessions": 0,
-    "last_latency_ms": 0,
+    "requests_total": 23,
+    "streams_total": 18,
+    "errors_total": 37,
+    "routing_decisions_total": 23,
+    "sessions_total": 14,
+    "active_sessions": 14,
+    "last_latency_ms": 2.0,
     "active_streams": 0,
-    "online_nodes": 0,
+    "online_nodes": 2,
     "total_nodes": 3,
     "events_per_minute": 0
   },
@@ -47,5 +43,5 @@
       "gpu_overheat": 0
     }
   },
-  "timestamp": 1782901908.712048
+  "timestamp": 1783093982.197515
 }

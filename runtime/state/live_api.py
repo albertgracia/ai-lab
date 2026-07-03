@@ -229,6 +229,16 @@ class APIHandler(BaseHTTPRequestHandler):
             self._handle_runtime_recall()
         elif self.path == "/api/mode":
             self._handle_get_mode()
+        elif self.path.startswith("/api/operator/intent"):
+            self._handle_operator_intent()
+        elif self.path.startswith("/api/observability/triage"):
+            self._handle_observability_triage()
+        elif self.path.startswith("/api/slo/status"):
+            self._handle_slo_status()
+        elif self.path.startswith("/api/slo/report"):
+            self._handle_slo_report()
+        elif self.path.startswith("/api/validation/authority"):
+            self._handle_validation_authority()
         elif self.path == "/api/commands/pending":
             self._handle_pending_commands()
         elif self.path == "/api/commands/history":
@@ -259,6 +269,12 @@ class APIHandler(BaseHTTPRequestHandler):
             self._handle_control_snapshots()
         elif self.path.startswith("/api/control/snapshots/"):
             self._handle_control_snapshot_detail(self.path.rsplit("/", 1)[-1])
+        elif self.path == "/api/nodes/registry":
+            self._handle_node_registry()
+        elif self.path == "/api/nodes/capabilities":
+            self._handle_node_capabilities()
+        elif self.path.startswith("/api/nodes/eligible"):
+            self._handle_node_eligible()
         elif self.path == "/api/control/recover":
             self._handle_control_recover()
         elif self.path == "/metrics":
@@ -692,6 +708,142 @@ class APIHandler(BaseHTTPRequestHandler):
             })
         except ImportError as e:
             self._json({"error": f"quality assessment not available: {e}"})
+
+    def _handle_operator_intent(self):
+        try:
+            from runtime.operator_intent import analyze_operator_intent
+            qs = self._parse_qs()
+            text = qs.get("text", [""])[0]
+            result = analyze_operator_intent(text)
+            self._json({
+                "route_family": classify_api_route(self.path).family,
+                "input": text,
+                "result": result,
+            })
+        except ImportError as e:
+            self._json({"error": f"operator_intent not available: {e}"})
+
+    def _handle_observability_triage(self):
+        try:
+            from runtime.observability.observability_triage import (
+                build_observability_triage_report,
+            )
+            qs = self._parse_qs()
+            operator_text = qs.get("operator_intent", [None])[0]
+            report = build_observability_triage_report(
+                operator_intent_text=operator_text,
+            )
+            self._json({
+                "route_family": classify_api_route(self.path).family,
+                "triage": report,
+            })
+        except ImportError as e:
+            self._json({"error": f"observability_triage not available: {e}"})
+
+    def _handle_validation_authority(self):
+        try:
+            from runtime.governance.validation_authority import (
+                build_validation_decision,
+            )
+            from runtime.operator_intent.operator_intent_reasoning import (
+                analyze_operator_intent,
+            )
+            from runtime.observability.observability_triage import (
+                build_observability_triage_report,
+            )
+
+            qs = self._parse_qs()
+            text = qs.get("text", [""])[0]
+
+            operator_intent = analyze_operator_intent(text) if text else None
+            triage = build_observability_triage_report() if text else None
+
+            decision = build_validation_decision(
+                requested_action=text,
+                operator_intent=operator_intent,
+                triage=triage,
+            )
+
+            self._json({
+                "route_family": classify_api_route(self.path).family,
+                "input": text,
+                "validation": decision,
+            })
+        except ImportError as e:
+            self._json({"error": f"validation_authority not available: {e}"})
+
+    def _handle_slo_status(self):
+        try:
+            from runtime.governance.slo_enforcement import evaluate_slos
+            results = evaluate_slos()
+            critical = sum(1 for r in results if r["status"] == "critical")
+            warning = sum(1 for r in results if r["status"] == "warning")
+            passed = sum(1 for r in results if r["status"] == "pass")
+            overall = "critical" if critical > 0 else "warning" if warning > 0 else "pass"
+            self._json({
+                "route_family": classify_api_route(self.path).family,
+                "overall_status": overall,
+                "total_slos": len(results),
+                "pass": passed,
+                "warning": warning,
+                "critical": critical,
+                "critical_slos": [r["slo_id"] for r in results if r["status"] == "critical"],
+                "warning_slos": [r["slo_id"] for r in results if r["status"] == "warning"],
+                "requires_approval": overall == "critical",
+                "safe_to_auto_execute": False,
+                "contract_version": "SLO-ENFORCEMENT-01",
+            })
+        except ImportError as e:
+            self._json({"error": f"slo_enforcement not available: {e}"})
+
+    def _handle_slo_report(self):
+        try:
+            from runtime.governance.slo_enforcement import build_slo_report
+            report = build_slo_report()
+            self._json({
+                "route_family": classify_api_route(self.path).family,
+                "report": report,
+            })
+        except ImportError as e:
+            self._json({"error": f"slo_enforcement not available: {e}"})
+
+    def _handle_node_registry(self):
+        try:
+            from runtime.state.dynamic_node_registry import build_node_registry, registry_to_dict
+            registry = build_node_registry()
+            self._json(registry_to_dict(registry))
+        except ImportError as e:
+            self._json({"error": f"dynamic_node_registry not available: {e}"})
+
+    def _handle_node_capabilities(self):
+        try:
+            from runtime.state.dynamic_node_registry import build_node_registry, build_capability_matrix
+            registry = build_node_registry()
+            matrix = build_capability_matrix(registry)
+            self._json({
+                "route_family": classify_api_route(self.path).family,
+                "capability_matrix": matrix,
+                "contract_version": "DYNAMIC-NODE-REGISTRY-01",
+            })
+        except ImportError as e:
+            self._json({"error": f"dynamic_node_registry not available: {e}"})
+
+    def _handle_node_eligible(self):
+        try:
+            from runtime.state.dynamic_node_registry import build_node_registry, select_eligible_nodes, entry_to_dict
+            qs = self._parse_qs()
+            requirements = qs.get("capability", [])
+            registry = build_node_registry()
+            eligible = select_eligible_nodes(registry, requirements=requirements if requirements else None)
+            self._json({
+                "route_family": classify_api_route(self.path).family,
+                "requirements": requirements,
+                "eligible_count": len(eligible),
+                "eligible_nodes": [entry_to_dict(e) for e in eligible],
+                "contract_version": "DYNAMIC-NODE-REGISTRY-01",
+            })
+        except ImportError as e:
+            self._json({"error": f"dynamic_node_registry not available: {e}"})
 
     # ─────────────────────────────────────────────────────────────────
 

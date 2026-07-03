@@ -148,6 +148,13 @@ def get_control_routes(limit: int = 10) -> list[dict[str, Any]]:
                 "latency_ms": h.get("latency_ms"),
                 "success": h.get("success"),
                 "failover": h.get("failover"),
+                "fallback_triggered": bool(h.get("failover")),
+                "fallback_model": h.get("fallback_model", ""),
+                "fallback_node": h.get("fallback_node", ""),
+                "fallback_reason": h.get("fallback_reason", ""),
+                "failure_type": h.get("failure_type", ""),
+                "original_model": h.get("original_model", ""),
+                "original_node": h.get("original_node", ""),
                 "reason_codes": h.get("reason_codes", []),
             })
         return routes
@@ -180,6 +187,12 @@ def explain_last_route() -> dict[str, Any]:
             "reason_codes": last.get("reason_codes", []),
             "failover": last.get("failover", False),
             "fallback_triggered": bool(last.get("failover")),
+            "fallback_model": last.get("fallback_model", ""),
+            "fallback_node": last.get("fallback_node", ""),
+            "fallback_reason": last.get("fallback_reason", ""),
+            "failure_type": last.get("failure_type", ""),
+            "original_model": last.get("original_model", ""),
+            "original_node": last.get("original_node", ""),
         }
     except Exception:
         return {"error": "routing history unavailable"}
