@@ -1,0 +1,55 @@
+# GitNexus MCP Server
+# Code knowledge graph for impact analysis, context, and structural cognition
+# Protocol: gitnexus-native (tools via MCP interface)
+
+id: gitnexus
+name: GitNexus Code Intelligence
+description: "Code knowledge graph for impact analysis, context, and structural cognition"
+version: "1.6.5"
+protocol: gitnexus
+auth:
+  type: none
+tools:
+  - name: gitnexus_impact
+    description: "Blast radius analysis — upstream/downstream callers"
+    read_only: true
+  - name: gitnexus_context
+    description: "360-degree symbol view with categorized references"
+    read_only: true
+  - name: gitnexus_query
+    description: "Semantic code search across execution flows"
+    read_only: true
+  - name: gitnexus_detect_changes
+    description: "Pre-commit change analysis and affected flows"
+    read_only: true
+  - name: gitnexus_route_map
+    description: "API route mapping with consumers and handlers"
+    read_only: true
+  - name: gitnexus_rename
+    description: "Coordinated symbol rename across codebase"
+    read_only: false
+  - name: gitnexus_list_repos
+    description: "List indexed repositories"
+    read_only: true
+  - name: gitnexus_group_list
+    description: "List configured repository groups"
+    read_only: true
+  - name: gitnexus_shape_check
+    description: "API response shape drift detection"
+    read_only: true
+  - name: gitnexus_cypher
+    description: "Direct Cypher queries on code knowledge graph"
+    read_only: true
+  - name: gitnexus_api_impact
+    description: "Pre-change impact report for API route handlers"
+    read_only: true
+priority: 100
+health_check:
+  endpoint: "gitnexus://repo/ai-lab/context"
+  interval_seconds: 300
+  timeout_seconds: 10
+fallback: null
+status: active
+domains:
+  - gitnexus
+  - ai-lab

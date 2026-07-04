@@ -1,0 +1,35 @@
+# Prometheus MCP Server (Planned)
+# Query Prometheus for runtime metrics and alerts
+# Protocol: URL — 192.168.1.40:9090
+
+id: prometheus
+name: Prometheus Metrics
+description: "Query Prometheus for runtime metrics and alerts"
+version: "1.0.0"
+protocol: url
+url: "http://192.168.1.40:9090"
+auth:
+  type: none
+tools:
+  - name: prometheus_query
+    description: "Instant PromQL query"
+    read_only: true
+  - name: prometheus_range
+    description: "Range PromQL query"
+    read_only: true
+  - name: prometheus_targets
+    description: "List scrape targets and health"
+    read_only: true
+  - name: prometheus_alerts
+    description: "Active alerting rules"
+    read_only: true
+priority: 70
+health_check:
+  endpoint: "http://192.168.1.40:9090/api/v1/query?query=up"
+  interval_seconds: 60
+  timeout_seconds: 5
+fallback: null
+status: planned
+domains:
+  - observability
+  - ai-lab

@@ -1,0 +1,47 @@
+# AI-LAB Runtime MCP Server
+# Read-only MCP tools for AI-LAB runtime observability (gateway, SLO, incidents)
+# Protocol: URL (HTTP) — served by ailab-semantic-gateway :8091
+
+id: ailab-runtime-mcp
+name: AI-LAB Runtime MCP
+description: "Read-only MCP tools for AI-LAB runtime observability"
+version: "1.0.0"
+protocol: url
+url: "http://127.0.0.1:8091/mcp"
+auth:
+  type: token
+  token_var: AILAB_MCP_TOKEN
+tools:
+  - name: ailab_status
+    description: "Gateway + router health"
+    read_only: true
+  - name: ailab_runtime_health
+    description: "Detailed runtime health from gateway"
+    read_only: true
+  - name: ailab_route_preview
+    description: "Heuristic route classification (no LLM)"
+    read_only: true
+  - name: ailab_operator_summary
+    description: "NOC-ready operator summary"
+    read_only: true
+  - name: ailab_incidents_active
+    description: "Active incident intelligence report"
+    read_only: true
+  - name: ailab_slo_status
+    description: "SLO health + violations"
+    read_only: true
+  - name: ailab_health_latency
+    description: "Latency stats + health score"
+    read_only: true
+  - name: ailab_memory_search
+    description: "Semantic search across Qdrant collections"
+    read_only: true
+priority: 90
+health_check:
+  endpoint: "http://127.0.0.1:8091"
+  interval_seconds: 30
+  timeout_seconds: 5
+fallback: null
+status: active
+domains:
+  - ai-lab

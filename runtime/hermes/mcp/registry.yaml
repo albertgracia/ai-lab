@@ -1,0 +1,16 @@
+# MCP Registry — Registry Metadata
+
+registry_version: "1.0.0"
+servers_total: 5
+enabled_servers: 0
+servers:
+  - gitnexus
+  - ailab-runtime-mcp
+  - filesystem
+  - prometheus
+  - marketplace-mcp
+default_priority_policy: highest_wins
+health_checks_enabled: false
+enforcement: disabled
+activation_status: skeleton_only
+mode: declarative_only

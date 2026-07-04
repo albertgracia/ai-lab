@@ -1,0 +1,17 @@
+# Marketplace MCP Server (Planned)
+# Rioja Marketplace read-only operations via GitNexus
+# Protocol: gitnexus — no dedicated MCP server yet
+
+id: marketplace-mcp
+name: Marketplace MCP
+description: "Rioja Marketplace read-only operations via GitNexus"
+version: "1.0.0"
+protocol: gitnexus
+auth:
+  type: none
+tools: []
+priority: 60
+fallback: gitnexus
+status: planned
+domains:
+  - marketplace

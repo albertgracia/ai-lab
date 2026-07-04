@@ -16,7 +16,7 @@ These schemas validate YAML/JSON configuration files.
 | SOUL | `soul.schema.json` (in ../soul/) | ✅ CREATED |
 | Capability Registry | `capability_schema.json` | 📋 Planned (E-02) |
 | Operator Registry | `operator_schema.json` | 📋 Planned (E-02) |
-| MCP Registry | `mcp_server_schema.json` | 📋 Planned (E-03) |
+| MCP Registry | `mcp_server_schema.json` | ✅ CREATED |
 | Hook Registry | `hook_schema.json` | 📋 Planned (E-04) |
 | Governance | `governance_schema.json` | 📋 Planned (E-01B) |
 
