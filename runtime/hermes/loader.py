@@ -164,8 +164,14 @@ def load_operators() -> list[Operator]:
             domains=data.get("domains", []),
             execution_mode=data.get("execution_mode", "readonly"),
             required_mcp=data.get("required_mcp", []),
-            priority=data.get("priority", 50),
+            required_protocols=data.get("required_protocols", []),
             authorization_required=data.get("authorization_required", False),
+            priority=data.get("priority", 50),
+            reports=data.get("reports", []),
+            forbidden_actions=data.get("forbidden_actions", []),
+            truth_model=data.get("truth_model", {}),
+            success_criteria=data.get("success_criteria", []),
+            failure_conditions=data.get("failure_conditions", []),
             raw=data,
         ))
     return operators

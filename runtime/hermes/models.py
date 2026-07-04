@@ -90,8 +90,14 @@ class Operator:
     domains: list[str]
     execution_mode: str
     required_mcp: list[str]
-    priority: int
+    required_protocols: list[str]
     authorization_required: bool
+    priority: int
+    reports: list[dict[str, Any]]
+    forbidden_actions: list[str]
+    truth_model: dict[str, Any]
+    success_criteria: list[str]
+    failure_conditions: list[str]
     raw: dict[str, Any] = field(default_factory=dict)
 
 

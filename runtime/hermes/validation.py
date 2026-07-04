@@ -18,8 +18,16 @@ def validate_all(registry: HermesRegistry) -> ValidationResult:
     _validate_capability_evidence(registry, result)
     _validate_critical_capabilities(registry, result)
 
+    _validate_operator_ids_unique(registry, result)
     _validate_operator_capabilities(registry, result)
     _validate_operator_domains(registry, result)
+    _validate_operator_mcp(registry, result)
+    _validate_operator_execution_mode(registry, result)
+    _validate_operator_protocols(registry, result)
+    _validate_operator_reports(registry, result)
+    _validate_operator_forbidden_actions(registry, result)
+    _validate_operator_success_criteria(registry, result)
+    _validate_operator_truth_model(registry, result)
     _validate_hooks_disabled(registry, result)
     _validate_mcp_servers_status(registry, result)
     _validate_hook_modes(registry, result)
@@ -251,9 +259,28 @@ def _validate_critical_capabilities(registry: HermesRegistry, result: Validation
             ))
 
 
+def _validate_operator_ids_unique(registry: HermesRegistry, result: ValidationResult) -> None:
+    seen: set[str] = set()
+    for op in registry.operators:
+        if op.id in seen:
+            result.errors.append(ValidationError(
+                field="id",
+                message=f"Duplicate operator ID '{op.id}'",
+                source=f"operators/{op.id}",
+            ))
+        seen.add(op.id)
+
+
 def _validate_operator_capabilities(registry: HermesRegistry, result: ValidationResult) -> None:
     cap_ids = {c.id for c in registry.capabilities}
     for op in registry.operators:
+        if not op.capabilities:
+            result.errors.append(ValidationError(
+                field="capabilities",
+                message=f"Operator '{op.id}' has no capabilities declared",
+                source=f"operators/{op.id}",
+            ))
+            continue
         for cap_id in op.capabilities:
             if cap_id not in cap_ids:
                 result.errors.append(ValidationError(
@@ -266,6 +293,13 @@ def _validate_operator_capabilities(registry: HermesRegistry, result: Validation
 def _validate_operator_domains(registry: HermesRegistry, result: ValidationResult) -> None:
     valid_domains = {"ai-lab", "marketplace", "observability", "gitnexus", "windows"}
     for op in registry.operators:
+        if not op.domains:
+            result.errors.append(ValidationError(
+                field="domains",
+                message=f"Operator '{op.id}' has no domains declared",
+                source=f"operators/{op.id}",
+            ))
+            continue
         for domain in op.domains:
             if domain not in valid_domains:
                 result.errors.append(ValidationError(
@@ -273,6 +307,125 @@ def _validate_operator_domains(registry: HermesRegistry, result: ValidationResul
                     message=f"Operator '{op.id}' references unknown domain '{domain}'",
                     source=f"operators/{op.id}",
                 ))
+
+
+def _validate_operator_mcp(registry: HermesRegistry, result: ValidationResult) -> None:
+    mcp_ids = {s.id for s in registry.mcp_servers}
+    for op in registry.operators:
+        for mcp_id in op.required_mcp:
+            if mcp_id not in mcp_ids:
+                result.warnings.append(ValidationWarning(
+                    field="required_mcp",
+                    message=f"Operator '{op.id}' requires MCP '{mcp_id}' which is not in registry",
+                    source=f"operators/{op.id}",
+                ))
+
+
+def _validate_operator_execution_mode(registry: HermesRegistry, result: ValidationResult) -> None:
+    valid_modes = {"readonly", "advisory", "execute"}
+    for op in registry.operators:
+        if op.execution_mode not in valid_modes:
+            result.errors.append(ValidationError(
+                field="execution_mode",
+                message=f"Operator '{op.id}' has invalid execution_mode '{op.execution_mode}'",
+                source=f"operators/{op.id}",
+            ))
+        if op.execution_mode == "readonly" and op.authorization_required:
+            result.warnings.append(ValidationWarning(
+                field="authorization_required",
+                message=f"Operator '{op.id}' is readonly but requires authorization",
+                source=f"operators/{op.id}",
+            ))
+        if op.execution_mode == "execute" and not op.authorization_required:
+            result.warnings.append(ValidationWarning(
+                field="authorization_required",
+                message=f"Operator '{op.id}' is execute mode but does not require authorization",
+                source=f"operators/{op.id}",
+            ))
+
+
+def _validate_operator_protocols(registry: HermesRegistry, result: ValidationResult) -> None:
+    valid_protocols = {
+        "gitnexus_first", "mcp_first", "evidence_first",
+        "backup_before_write", "no_restart_without_authorization",
+        "no_pass_without_validation",
+    }
+    for op in registry.operators:
+        for proto in op.required_protocols:
+            if proto not in valid_protocols:
+                result.warnings.append(ValidationWarning(
+                    field="required_protocols",
+                    message=f"Operator '{op.id}' references unknown protocol '{proto}'",
+                    source=f"operators/{op.id}",
+                ))
+
+
+def _validate_operator_reports(registry: HermesRegistry, result: ValidationResult) -> None:
+    for op in registry.operators:
+        if not op.reports:
+            result.warnings.append(ValidationWarning(
+                field="reports",
+                message=f"Operator '{op.id}' has no reports declared",
+                source=f"operators/{op.id}",
+            ))
+        else:
+            for r in op.reports:
+                if not isinstance(r.get("type"), str):
+                    result.warnings.append(ValidationWarning(
+                        field="reports.type",
+                        message=f"Operator '{op.id}' has report without type",
+                        source=f"operators/{op.id}",
+                    ))
+
+
+def _validate_operator_forbidden_actions(registry: HermesRegistry, result: ValidationResult) -> None:
+    for op in registry.operators:
+        if not op.forbidden_actions:
+            result.warnings.append(ValidationWarning(
+                field="forbidden_actions",
+                message=f"Operator '{op.id}' has no forbidden actions declared",
+                source=f"operators/{op.id}",
+            ))
+
+
+def _validate_operator_success_criteria(registry: HermesRegistry, result: ValidationResult) -> None:
+    for op in registry.operators:
+        if not op.success_criteria:
+            result.warnings.append(ValidationWarning(
+                field="success_criteria",
+                message=f"Operator '{op.id}' has no success_criteria declared",
+                source=f"operators/{op.id}",
+            ))
+        if not op.failure_conditions:
+            result.warnings.append(ValidationWarning(
+                field="failure_conditions",
+                message=f"Operator '{op.id}' has no failure_conditions declared",
+                source=f"operators/{op.id}",
+            ))
+
+
+def _validate_operator_truth_model(registry: HermesRegistry, result: ValidationResult) -> None:
+    for op in registry.operators:
+        tm = op.truth_model
+        if not isinstance(tm, dict):
+            result.warnings.append(ValidationWarning(
+                field="truth_model",
+                message=f"Operator '{op.id}' missing truth_model",
+                source=f"operators/{op.id}",
+            ))
+            continue
+        if "min_confidence" not in tm:
+            result.warnings.append(ValidationWarning(
+                field="truth_model.min_confidence",
+                message=f"Operator '{op.id}' missing min_confidence in truth_model",
+                source=f"operators/{op.id}",
+            ))
+        if "require_citations" not in tm:
+            result.warnings.append(ValidationWarning(
+                field="truth_model.require_citations",
+                message=f"Operator '{op.id}' missing require_citations in truth_model",
+                source=f"operators/{op.id}",
+            ))
 
 
 def _validate_hooks_disabled(registry: HermesRegistry, result: ValidationResult) -> None:
