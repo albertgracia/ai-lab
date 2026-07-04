@@ -1,0 +1,55 @@
+# Hook: Write Backup
+# Lifecycle: before_write
+
+id: write-backup
+name: "Write Backup"
+version: "1.0.0"
+lifecycle_event: before_write
+description: "Crear backup del estado actual antes de cualquier operacion de escritura"
+
+enabled: false
+mode: declarative_only
+
+trigger:
+  event: before_write
+  blocking: true
+  async: false
+
+required_capabilities:
+  - ai-lab-runtime
+
+required_mcp: []
+
+truth_model:
+  min_confidence: high
+  require_citations: true
+  require_timestamp: true
+
+authorization_required: true
+
+forbidden_actions:
+  - "Ejecutar escritura sin backup completado"
+  - "Sobrescribir backup existente sin verificacion"
+
+evidence_requirements:
+  log_result: true
+  emit_metric: false
+  require_source_endpoint: false
+
+timeout_ms: 10000
+
+failure_policy: block
+
+reports:
+  - type: backup-result
+    description: "Resultado de la operacion de backup"
+    format: json
+
+rollback:
+  strategy: manual
+  description: "Si el backup falla, la escritura no debe proceder"
+
+governance_levels:
+  - elevated
+
+priority: 10

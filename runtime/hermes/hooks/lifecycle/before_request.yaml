@@ -1,0 +1,63 @@
+# Hook: Governance Validation
+# Lifecycle: before_request
+
+id: governance-validation
+name: "Governance Validation"
+version: "1.0.0"
+lifecycle_event: before_request
+description: "Validar governance level, identity y boundaries antes de permitir cualquier operacion"
+
+enabled: false
+mode: declarative_only
+
+trigger:
+  event: before_request
+  blocking: true
+  async: false
+
+required_capabilities:
+  - ai-lab-runtime
+  - gitnexus-analysis
+
+required_mcp:
+  - ailab-runtime-mcp
+
+truth_model:
+  min_confidence: high
+  require_citations: true
+  require_timestamp: true
+
+authorization_required: false
+
+forbidden_actions:
+  - "Permitir operaciones en governance level LOCKDOWN"
+  - "Saltarse validacion de boundaries"
+
+evidence_requirements:
+  log_result: true
+  emit_metric: true
+  require_source_endpoint: true
+
+timeout_ms: 5000
+
+failure_policy: block
+
+reports:
+  - type: governance-block
+    description: "Reporte cuando una operacion es bloqueada por governance"
+    format: markdown
+  - type: validation-result
+    description: "Resultado de validacion de identidad y boundaries"
+    format: json
+
+rollback:
+  strategy: none
+  description: "Hook de solo lectura — no requiere rollback"
+
+governance_levels:
+  - normal
+  - elevated
+  - degraded
+  - lockdown
+
+priority: 10

@@ -1,0 +1,108 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Hook — Hermes Enterprise Hook Registry",
+  "description": "Schema for hook YAML files in runtime/hermes/hooks/lifecycle/",
+  "type": "object",
+  "version": "1.0.0",
+  "required": [
+    "id", "name", "version", "lifecycle_event", "description",
+    "enabled", "mode", "trigger",
+    "required_capabilities", "required_mcp",
+    "truth_model", "authorization_required",
+    "forbidden_actions", "evidence_requirements",
+    "timeout_ms", "failure_policy",
+    "reports", "rollback"
+  ],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9-]+$", "description": "Unique hook identifier" },
+    "name": { "type": "string", "minLength": 1, "description": "Human-readable name" },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "lifecycle_event": {
+      "type": "string",
+      "enum": [
+        "before_request", "after_request",
+        "before_tool", "after_tool",
+        "before_write", "after_write",
+        "on_error", "on_incident", "on_shutdown"
+      ],
+      "description": "Lifecycle event that triggers this hook"
+    },
+    "description": { "type": "string", "minLength": 1 },
+    "enabled": { "type": "boolean", "default": false, "description": "Whether this hook is currently active" },
+    "mode": { "type": "string", "enum": ["declarative_only", "active"], "default": "declarative_only" },
+    "trigger": {
+      "type": "object",
+      "required": ["event", "blocking"],
+      "properties": {
+        "event": { "type": "string" },
+        "blocking": { "type": "boolean", "description": "If true, execution waits for hook completion" },
+        "async": { "type": "boolean", "default": true }
+      }
+    },
+    "required_capabilities": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Capability IDs required for this hook to execute"
+    },
+    "required_mcp": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "MCP server IDs required by this hook"
+    },
+    "truth_model": {
+      "type": "object",
+      "required": ["min_confidence", "require_citations"],
+      "properties": {
+        "min_confidence": { "type": "string", "enum": ["high", "medium", "low"] },
+        "require_citations": { "type": "boolean" },
+        "require_timestamp": { "type": "boolean", "default": false }
+      }
+    },
+    "authorization_required": { "type": "boolean", "default": false },
+    "forbidden_actions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Actions this hook must never perform"
+    },
+    "evidence_requirements": {
+      "type": "object",
+      "properties": {
+        "log_result": { "type": "boolean", "default": true },
+        "emit_metric": { "type": "boolean", "default": false },
+        "require_source_endpoint": { "type": "boolean", "default": false }
+      }
+    },
+    "timeout_ms": { "type": "integer", "minimum": 100, "maximum": 60000, "default": 5000 },
+    "failure_policy": {
+      "type": "string",
+      "enum": ["ignore", "log", "warn", "block", "retry"],
+      "description": "Behavior when hook execution fails"
+    },
+    "reports": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "description"],
+        "properties": {
+          "type": { "type": "string" },
+          "description": { "type": "string" },
+          "format": { "type": "string", "enum": ["markdown", "json", "yaml", "metric"] }
+        }
+      }
+    },
+    "rollback": {
+      "type": "object",
+      "required": ["strategy", "description"],
+      "properties": {
+        "strategy": { "type": "string", "enum": ["manual", "automatic", "none"] },
+        "description": { "type": "string" }
+      }
+    },
+    "governance_levels": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["normal", "elevated", "degraded", "lockdown"] },
+      "description": "Governance levels where this hook is active"
+    },
+    "priority": { "type": "integer", "minimum": 1, "maximum": 100, "description": "Execution order within lifecycle event (lower = first)" }
+  }
+}
