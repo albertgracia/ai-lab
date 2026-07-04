@@ -6,6 +6,7 @@ from runtime.hermes.models import (
     HermesRegistry, Capability, MCPServer, MCPTool,
     Operator, Hook, SoulIdentity, SoulTruthModel,
     SoulProtocol, SoulBoundaries, SoulDomain,
+    GovernanceModeDef, TriggerSignals,
 )
 
 HERMES_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -203,6 +204,38 @@ def load_hooks() -> list[Hook]:
             raw=data,
         ))
     return hooks
+
+
+def load_governance_modes() -> dict[str, GovernanceModeDef]:
+    gov_dir = os.path.join(HERMES_DIR, "governance")
+    modes_path = os.path.join(gov_dir, "modes.json")
+    if not os.path.exists(modes_path):
+        return {}
+    import json
+    with open(modes_path, encoding="utf-8") as f:
+        data = json.load(f)
+    modes = {}
+    for name, cfg in data.get("modes", {}).items():
+        modes[name] = GovernanceModeDef(
+            name=name,
+            description=cfg.get("description", ""),
+            allows=cfg.get("allows", []),
+            blocks=cfg.get("blocks", []),
+            default_capability_behavior=cfg.get("default_capability_behavior", "read_only"),
+            requires_approval=cfg.get("requires_approval", []),
+        )
+    return modes
+
+
+def load_governance_matrix() -> dict[str, dict[str, str]]:
+    gov_dir = os.path.join(HERMES_DIR, "governance")
+    matrix_path = os.path.join(gov_dir, "matrix.json")
+    if not os.path.exists(matrix_path):
+        return {}
+    import json
+    with open(matrix_path, encoding="utf-8") as f:
+        data = json.load(f)
+    return data.get("capability_governance", {})
 
 
 def load_all() -> HermesRegistry:

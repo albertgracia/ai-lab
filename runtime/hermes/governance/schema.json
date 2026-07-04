@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GovernanceConfig",
+  "type": "object",
+  "properties": {
+    "version": { "type": "string" },
+    "modes": {
+      "type": "object",
+      "patternProperties": {
+        "^(NORMAL|ELEVATED|DEGRADED|LOCKDOWN)$": {
+          "type": "object",
+          "properties": {
+            "description": { "type": "string" },
+            "allows": { "type": "array", "items": { "type": "string" } },
+            "blocks": { "type": "array", "items": { "type": "string" } },
+            "default_capability_behavior": { "type": "string", "enum": ["read_only", "requires_approval", "blocked_except_observe", "blocked"] },
+            "requires_approval": { "type": "array", "items": { "type": "string" } }
+          },
+          "required": ["description", "allows", "blocks", "default_capability_behavior"]
+        }
+      },
+      "minProperties": 4,
+      "maxProperties": 4
+    }
+  },
+  "required": ["version", "modes"]
+}

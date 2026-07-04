@@ -158,6 +158,43 @@ class CapabilityDependencyGraph:
 
 
 @dataclass
+class TriggerSignals:
+    slo_state: str = "GREEN"
+    degradation_level: str = "NONE"
+    emergency_mode: bool = False
+    vram_pressure: float = 0.0
+    gpu_pressure: float = 0.0
+    timeout_rate: float = 0.0
+
+
+@dataclass
+class GovernanceModeDef:
+    name: str
+    description: str
+    allows: list[str]
+    blocks: list[str]
+    default_capability_behavior: str
+    requires_approval: list[str]
+
+
+@dataclass
+class GovernanceState:
+    mode: str
+    source: str
+    resolved_at: float
+    trigger_signals: TriggerSignals
+    capabilities: dict[str, str] = field(default_factory=dict)
+    previous_mode: Optional[str] = None
+    transition_count: int = 0
+
+
+@dataclass
+class CapabilityGovernanceEntry:
+    capability_id: str
+    status: str
+
+
+@dataclass
 class StatusReport:
     registries_loaded: bool
     soul_loaded: bool
@@ -171,3 +208,5 @@ class StatusReport:
     capability_validation: Optional[dict[str, Any]] = None
     capability_dependency_graph: Optional[dict[str, Any]] = None
     capability_cycles_detected: bool = False
+    governance_mode: Optional[str] = None
+    governance_transition_count: int = 0

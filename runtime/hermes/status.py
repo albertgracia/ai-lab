@@ -1,9 +1,10 @@
 import json
 import os
 
-from runtime.hermes.loader import load_all, load_soul
+from runtime.hermes.loader import load_all, load_soul, load_governance_modes
 from runtime.hermes.validation import validate_all, build_capability_dependency_graph
 from runtime.hermes.models import StatusReport, HermesRegistry
+from runtime.hermes.governance.resolver import GovernanceResolver, TriggerSignals
 
 
 def _soul_files_exist() -> bool:
@@ -39,6 +40,11 @@ def build_status_report(registry: HermesRegistry | None = None) -> StatusReport:
         "cycles": dep_graph.cycles,
     }
 
+    gov_modes = load_governance_modes()
+    governance_mode = list(gov_modes.keys()) if gov_modes else []
+    gov_resolver = GovernanceResolver()
+    gov_state = gov_resolver.resolve(TriggerSignals())
+
     return StatusReport(
         registries_loaded=True,
         soul_loaded=_soul_files_exist(),
@@ -52,6 +58,8 @@ def build_status_report(registry: HermesRegistry | None = None) -> StatusReport:
         capability_validation=cap_validation,
         capability_dependency_graph=dep_info,
         capability_cycles_detected=dep_graph.cycles_detected,
+        governance_mode=gov_state.mode,
+        governance_transition_count=gov_state.transition_count,
     )
 
 
@@ -70,6 +78,8 @@ def status_json(registry: HermesRegistry | None = None) -> str:
         "capability_validation": report.capability_validation,
         "capability_dependency_graph": report.capability_dependency_graph,
         "capability_cycles_detected": report.capability_cycles_detected,
+        "governance_mode": report.governance_mode,
+        "governance_transition_count": report.governance_transition_count,
     }, indent=2, ensure_ascii=False)
 
 

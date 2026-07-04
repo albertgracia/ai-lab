@@ -1,0 +1,78 @@
+{
+  "version": "1.0.0",
+  "modes": {
+    "NORMAL": {
+      "description": "Full operational capacity. All capabilities available under default permissions.",
+      "allows": [
+        "All read-only operations",
+        "All MCP queries",
+        "GitNexus analysis",
+        "Report generation",
+        "Health checks",
+        "Status queries"
+      ],
+      "blocks": [
+        "Write operations without explicit approval",
+        "Infrastructure modifications",
+        "Service restarts",
+        "Configuration changes"
+      ],
+      "default_capability_behavior": "read_only",
+      "requires_approval": ["write", "configure", "restart"]
+    },
+    "ELEVATED": {
+      "description": "Increased scrutiny. All operations require explicit approval.",
+      "allows": [
+        "All read-only operations",
+        "Approved write operations with rollback plan",
+        "Deployment review with explicit approval",
+        "Incident response with explicit approval"
+      ],
+      "blocks": [
+        "Automatic write operations",
+        "Unapproved configuration changes",
+        "Service restarts without plan",
+        "Any operation without evidence chain"
+      ],
+      "default_capability_behavior": "requires_approval",
+      "requires_approval": ["all operations", "write", "configure", "restart", "deploy"]
+    },
+    "DEGRADED": {
+      "description": "Runtime is operating with reduced capacity. Only critical observation allowed.",
+      "allows": [
+        "Health checks",
+        "Status queries",
+        "Incident reporting",
+        "Read-only MCP queries",
+        "GitNexus read-only queries"
+      ],
+      "blocks": [
+        "All write operations",
+        "All tool execution",
+        "Deployment review",
+        "Marketplace audit",
+        "Any non-critical operation"
+      ],
+      "default_capability_behavior": "blocked_except_observe",
+      "requires_approval": []
+    },
+    "LOCKDOWN": {
+      "description": "Emergency mode. Only observation and incident reporting.",
+      "allows": [
+        "Health checks (read-only)",
+        "Active incident reporting"
+      ],
+      "blocks": [
+        "All non-essential operations",
+        "All write operations",
+        "All MCP queries except health",
+        "All tool execution",
+        "All GitNexus queries",
+        "Report generation",
+        "Marketplace queries"
+      ],
+      "default_capability_behavior": "blocked",
+      "requires_approval": []
+    }
+  }
+}

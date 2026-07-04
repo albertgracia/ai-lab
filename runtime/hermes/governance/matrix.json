@@ -1,0 +1,41 @@
+{
+  "version": "1.0.0",
+  "capability_governance": {
+    "ai-lab-runtime": {
+      "NORMAL": "allowed",
+      "ELEVATED": "requires_approval",
+      "DEGRADED": "allowed",
+      "LOCKDOWN": "allowed"
+    },
+    "marketplace-operator": {
+      "NORMAL": "allowed",
+      "ELEVATED": "allowed",
+      "DEGRADED": "blocked",
+      "LOCKDOWN": "blocked"
+    },
+    "observability": {
+      "NORMAL": "allowed",
+      "ELEVATED": "allowed",
+      "DEGRADED": "allowed",
+      "LOCKDOWN": "blocked"
+    },
+    "gitnexus-analysis": {
+      "NORMAL": "allowed",
+      "ELEVATED": "allowed",
+      "DEGRADED": "allowed",
+      "LOCKDOWN": "blocked"
+    },
+    "deployment-review": {
+      "NORMAL": "requires_approval",
+      "ELEVATED": "requires_approval",
+      "DEGRADED": "blocked",
+      "LOCKDOWN": "blocked"
+    },
+    "incident-response": {
+      "NORMAL": "allowed",
+      "ELEVATED": "allowed",
+      "DEGRADED": "allowed",
+      "LOCKDOWN": "allowed"
+    }
+  }
+}

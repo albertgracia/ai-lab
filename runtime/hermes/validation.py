@@ -2,6 +2,7 @@ from runtime.hermes.models import (
     HermesRegistry, ValidationResult, ValidationError, ValidationWarning,
     CapabilityDependencyGraph,
 )
+from runtime.hermes.loader import load_governance_modes, load_governance_matrix
 
 
 def validate_all(registry: HermesRegistry) -> ValidationResult:
@@ -31,6 +32,10 @@ def validate_all(registry: HermesRegistry) -> ValidationResult:
     _validate_hooks_disabled(registry, result)
     _validate_mcp_servers_status(registry, result)
     _validate_hook_modes(registry, result)
+
+    _validate_governance_modes_loaded(registry, result)
+    _validate_governance_matrix_consistency(registry, result)
+    _validate_governance_capabilities_in_matrix(registry, result)
 
     if result.errors:
         result.valid = False
@@ -445,6 +450,51 @@ def _validate_mcp_servers_status(registry: HermesRegistry, result: ValidationRes
                 field="status",
                 message=f"MCP server '{server.id}' has unknown status '{server.status}'",
                 source=f"mcp/{server.id}",
+            ))
+
+
+def _validate_governance_modes_loaded(registry: HermesRegistry, result: ValidationResult) -> None:
+    modes = load_governance_modes()
+    expected = {"NORMAL", "ELEVATED", "DEGRADED", "LOCKDOWN"}
+    loaded = set(modes.keys())
+    missing = expected - loaded
+    if missing:
+        result.errors.append(ValidationError(
+            field="governance_modes",
+            message=f"Missing governance modes: {', '.join(sorted(missing))}",
+            source="governance/modes.json",
+        ))
+
+
+def _validate_governance_matrix_consistency(registry: HermesRegistry, result: ValidationResult) -> None:
+    matrix = load_governance_matrix()
+    valid_statuses = {"allowed", "requires_approval", "blocked"}
+    for cap_id, modes in matrix.items():
+        for mode_name, status in modes.items():
+            if status not in valid_statuses:
+                result.warnings.append(ValidationWarning(
+                    field="capability_governance",
+                    message=f"Capability '{cap_id}' has invalid status '{status}' for mode '{mode_name}'",
+                    source="governance/matrix.json",
+                ))
+
+
+def _validate_governance_capabilities_in_matrix(registry: HermesRegistry, result: ValidationResult) -> None:
+    matrix = load_governance_matrix()
+    cap_ids = {c.id for c in registry.capabilities}
+    for cap_id in matrix:
+        if cap_id not in cap_ids:
+            result.warnings.append(ValidationWarning(
+                field="capability_governance",
+                message=f"Capability '{cap_id}' in governance matrix but not in capability registry",
+                source="governance/matrix.json",
+            ))
+    for cap in registry.capabilities:
+        if cap.id not in matrix:
+            result.warnings.append(ValidationWarning(
+                field="capability_governance",
+                message=f"Capability '{cap.id}' has no governance matrix entry",
+                source=f"capabilities/{cap.id}",
             ))
 
 
