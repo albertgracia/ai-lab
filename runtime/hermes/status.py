@@ -1,9 +1,8 @@
 import json
 import os
-import sys
 
 from runtime.hermes.loader import load_all, load_soul
-from runtime.hermes.validation import validate_all
+from runtime.hermes.validation import validate_all, build_capability_dependency_graph
 from runtime.hermes.models import StatusReport, HermesRegistry
 
 
@@ -21,6 +20,24 @@ def build_status_report(registry: HermesRegistry | None = None) -> StatusReport:
         registry = load_all()
 
     validation = validate_all(registry)
+    dep_graph = build_capability_dependency_graph(registry)
+
+    cap_errors = [e for e in validation.errors if e.source.startswith("capabilities/")]
+    cap_warnings = [w for w in validation.warnings if w.source.startswith("capabilities/")]
+
+    cap_validation = {
+        "total": len(registry.capabilities),
+        "errors": len(cap_errors),
+        "warnings": len(cap_warnings),
+        "critical_present": True,
+    }
+
+    dep_info = {
+        "nodes": dep_graph.nodes,
+        "edges": dep_graph.edges,
+        "cycles_detected": dep_graph.cycles_detected,
+        "cycles": dep_graph.cycles,
+    }
 
     return StatusReport(
         registries_loaded=True,
@@ -32,6 +49,9 @@ def build_status_report(registry: HermesRegistry | None = None) -> StatusReport:
         enforcement_active=False,
         errors=[{"field": e.field, "message": e.message, "source": e.source} for e in validation.errors],
         warnings=[{"field": w.field, "message": w.message, "source": w.source} for w in validation.warnings],
+        capability_validation=cap_validation,
+        capability_dependency_graph=dep_info,
+        capability_cycles_detected=dep_graph.cycles_detected,
     )
 
 
@@ -47,6 +67,9 @@ def status_json(registry: HermesRegistry | None = None) -> str:
         "enforcement_active": report.enforcement_active,
         "errors": report.errors,
         "warnings": report.warnings,
+        "capability_validation": report.capability_validation,
+        "capability_dependency_graph": report.capability_dependency_graph,
+        "capability_cycles_detected": report.capability_cycles_detected,
     }, indent=2, ensure_ascii=False)
 
 

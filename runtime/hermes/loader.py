@@ -94,6 +94,10 @@ def load_capabilities() -> list[Capability]:
             required_mcp=data.get("required_mcp", []),
             optional_mcp=data.get("optional_mcp", []),
             permissions=data.get("permissions", {}),
+            forbidden_actions=data.get("forbidden_actions", []),
+            evidence_requirements=data.get("evidence_requirements", {}),
+            reports=data.get("reports", []),
+            dependencies=data.get("dependencies", []),
             raw=data,
         ))
     return capabilities
