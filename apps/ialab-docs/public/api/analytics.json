@@ -1,8 +1,10 @@
 {
   "health": {
-    "score": 70,
-    "reasons": [],
-    "level": "good"
+    "score": 40,
+    "reasons": [
+      "1 GPU(s) offline"
+    ],
+    "level": "poor"
   },
   "metrics": {
     "requests_total": 16,
@@ -13,7 +15,7 @@
     "active_sessions": 8,
     "last_latency_ms": 3155.0,
     "active_streams": 0,
-    "online_nodes": 2,
+    "online_nodes": 1,
     "total_nodes": 3,
     "events_per_minute": 0
   },
@@ -43,5 +45,5 @@
       "gpu_overheat": 0
     }
   },
-  "timestamp": 1783201094.9872656
+  "timestamp": 1783204621.5976033
 }
