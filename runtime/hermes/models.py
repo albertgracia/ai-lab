@@ -52,6 +52,10 @@ class Capability:
     required_mcp: list[str]
     optional_mcp: list[str]
     permissions: dict[str, Any]
+    forbidden_actions: list[str]
+    evidence_requirements: dict[str, Any]
+    reports: list[dict[str, Any]]
+    dependencies: list[str]
     raw: dict[str, Any] = field(default_factory=dict)
 
 
@@ -140,6 +144,14 @@ class ValidationResult:
 
 
 @dataclass
+class CapabilityDependencyGraph:
+    nodes: list[str]
+    edges: list[dict[str, str]]
+    cycles_detected: bool
+    cycles: list[list[str]]
+
+
+@dataclass
 class StatusReport:
     registries_loaded: bool
     soul_loaded: bool
@@ -150,3 +162,6 @@ class StatusReport:
     enforcement_active: bool
     errors: list[dict[str, str]]
     warnings: list[dict[str, str]]
+    capability_validation: Optional[dict[str, Any]] = None
+    capability_dependency_graph: Optional[dict[str, Any]] = None
+    capability_cycles_detected: bool = False
