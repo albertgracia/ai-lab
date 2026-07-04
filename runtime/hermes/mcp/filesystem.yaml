@@ -1,0 +1,33 @@
+# Filesystem MCP Server
+# Local file read/write operations via OpenCode built-in tools
+# Protocol: URL (internal) — no network endpoint
+
+id: filesystem
+name: Filesystem Access
+description: "Local file read/write operations"
+version: "1.0.0"
+protocol: url
+auth:
+  type: none
+tools:
+  - name: read
+    description: "Read file contents"
+    read_only: true
+  - name: glob
+    description: "File pattern matching"
+    read_only: true
+  - name: grep
+    description: "Content search with regex"
+    read_only: true
+  - name: write
+    description: "Write file contents"
+    read_only: false
+  - name: edit
+    description: "Edit file with exact string replacement"
+    read_only: false
+priority: 50
+fallback: null
+status: active
+domains:
+  - ai-lab
+  - gitnexus
