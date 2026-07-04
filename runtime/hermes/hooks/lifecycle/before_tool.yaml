@@ -1,0 +1,62 @@
+# Hook: Tool Authorization
+# Lifecycle: before_tool
+
+id: tool-authorization
+name: "Tool Authorization"
+version: "1.0.0"
+lifecycle_event: before_tool
+description: "Validar que la herramienta/MCP solicitada esta permitida por el capability registry"
+
+enabled: false
+mode: declarative_only
+
+trigger:
+  event: before_tool
+  blocking: true
+  async: false
+
+required_capabilities:
+  - gitnexus-analysis
+
+required_mcp:
+  - gitnexus
+
+truth_model:
+  min_confidence: high
+  require_citations: true
+  require_timestamp: false
+
+authorization_required: false
+
+forbidden_actions:
+  - "Permitir tools no registradas en capability registry"
+  - "Ejecutar herramientas sin MCP requerido disponible"
+
+evidence_requirements:
+  log_result: true
+  emit_metric: true
+  require_source_endpoint: false
+
+timeout_ms: 3000
+
+failure_policy: block
+
+reports:
+  - type: tool-blocked
+    description: "Reporte cuando una herramienta es bloqueada"
+    format: markdown
+  - type: tool-audit
+    description: "Auditoria de herramientas ejecutadas"
+    format: json
+
+rollback:
+  strategy: none
+  description: "Hook de solo lectura — no requiere rollback"
+
+governance_levels:
+  - normal
+  - elevated
+  - degraded
+  - lockdown
+
+priority: 10

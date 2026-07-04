@@ -1,0 +1,62 @@
+# Hook: Error Capture
+# Lifecycle: on_error
+
+id: error-capture
+name: "Error Capture"
+version: "1.0.0"
+lifecycle_event: on_error
+description: "Capturar contexto de error, emitir alerta y registrar en log de incidentes"
+
+enabled: false
+mode: declarative_only
+
+trigger:
+  event: on_error
+  blocking: false
+  async: true
+
+required_capabilities:
+  - incident-response
+
+required_mcp:
+  - ailab-runtime-mcp
+
+truth_model:
+  min_confidence: high
+  require_citations: true
+  require_timestamp: true
+
+authorization_required: false
+
+forbidden_actions:
+  - "Modificar el error original"
+  - "Suprimir alertas sin autorizacion"
+
+evidence_requirements:
+  log_result: true
+  emit_metric: true
+  require_source_endpoint: true
+
+timeout_ms: 5000
+
+failure_policy: ignore
+
+reports:
+  - type: error-context
+    description: "Contexto completo del error (stack, estado, metricas)"
+    format: json
+  - type: error-alert
+    description: "Alerta de error para observabilidad"
+    format: metric
+
+rollback:
+  strategy: none
+  description: "Hook de solo lectura — no requiere rollback"
+
+governance_levels:
+  - normal
+  - elevated
+  - degraded
+  - lockdown
+
+priority: 10

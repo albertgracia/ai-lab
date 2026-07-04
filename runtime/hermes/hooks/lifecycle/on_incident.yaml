@@ -1,0 +1,66 @@
+# Hook: Incident Logger
+# Lifecycle: on_incident
+
+id: incident-logger
+name: "Incident Logger"
+version: "1.0.0"
+lifecycle_event: on_incident
+description: "Registrar incidente en Qdrant, emitir alerta y notificar al operador"
+
+enabled: false
+mode: declarative_only
+
+trigger:
+  event: on_incident
+  blocking: false
+  async: true
+
+required_capabilities:
+  - incident-response
+  - observability
+
+required_mcp:
+  - ailab-runtime-mcp
+
+truth_model:
+  min_confidence: high
+  require_citations: true
+  require_timestamp: true
+
+authorization_required: false
+
+forbidden_actions:
+  - "Descartar el incidente sin registro"
+  - "Modificar datos del incidente"
+
+evidence_requirements:
+  log_result: true
+  emit_metric: true
+  require_source_endpoint: true
+
+timeout_ms: 10000
+
+failure_policy: log
+
+reports:
+  - type: incident-record
+    description: "Registro del incidente en memoria cognitiva"
+    format: json
+  - type: incident-alert
+    description: "Alerta del incidente para dashboards"
+    format: metric
+  - type: incident-notification
+    description: "Notificacion al operador"
+    format: markdown
+
+rollback:
+  strategy: none
+  description: "Hook de solo lectura — no requiere rollback"
+
+governance_levels:
+  - normal
+  - elevated
+  - degraded
+  - lockdown
+
+priority: 10

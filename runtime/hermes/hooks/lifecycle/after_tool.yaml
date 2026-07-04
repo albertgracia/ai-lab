@@ -1,0 +1,62 @@
+# Hook: Tool Result Logger
+# Lifecycle: after_tool
+
+id: tool-result-logger
+name: "Tool Result Logger"
+version: "1.0.0"
+lifecycle_event: after_tool
+description: "Registrar resultado de herramienta ejecutada y emitir metricas"
+
+enabled: false
+mode: declarative_only
+
+trigger:
+  event: after_tool
+  blocking: false
+  async: true
+
+required_capabilities:
+  - ai-lab-runtime
+  - observability
+
+required_mcp: []
+
+truth_model:
+  min_confidence: high
+  require_citations: true
+  require_timestamp: true
+
+authorization_required: false
+
+forbidden_actions:
+  - "Modificar resultado de la herramienta"
+  - "Bloquear flujo"
+
+evidence_requirements:
+  log_result: true
+  emit_metric: true
+  require_source_endpoint: false
+
+timeout_ms: 5000
+
+failure_policy: log
+
+reports:
+  - type: tool-metrics
+    description: "Metricas de herramienta (duracion, exito, tamaño respuesta)"
+    format: metric
+  - type: tool-log
+    description: "Log estructurado de la herramienta ejecutada"
+    format: json
+
+rollback:
+  strategy: none
+  description: "Hook asincrono de solo lectura — no requiere rollback"
+
+governance_levels:
+  - normal
+  - elevated
+  - degraded
+  - lockdown
+
+priority: 50

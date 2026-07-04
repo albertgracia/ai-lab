@@ -1,0 +1,62 @@
+# Hook: Runtime Metrics
+# Lifecycle: after_request
+
+id: runtime-metrics
+name: "Runtime Metrics Emitter"
+version: "1.0.0"
+lifecycle_event: after_request
+description: "Emitir metricas Prometheus y registrar resultado de cada operacion completada"
+
+enabled: false
+mode: declarative_only
+
+trigger:
+  event: after_request
+  blocking: false
+  async: true
+
+required_capabilities:
+  - ai-lab-runtime
+  - observability
+
+required_mcp: []
+
+truth_model:
+  min_confidence: high
+  require_citations: true
+  require_timestamp: true
+
+authorization_required: false
+
+forbidden_actions:
+  - "Modificar estado de la operacion completada"
+  - "Bloquear flujo de ejecucion"
+
+evidence_requirements:
+  log_result: true
+  emit_metric: true
+  require_source_endpoint: false
+
+timeout_ms: 10000
+
+failure_policy: log
+
+reports:
+  - type: operation-metrics
+    description: "Metricas de operacion (duracion, exito, errores)"
+    format: metric
+  - type: operation-log
+    description: "Log estructurado de la operacion completada"
+    format: json
+
+rollback:
+  strategy: none
+  description: "Hook asincrono de solo lectura — no requiere rollback"
+
+governance_levels:
+  - normal
+  - elevated
+  - degraded
+  - lockdown
+
+priority: 50

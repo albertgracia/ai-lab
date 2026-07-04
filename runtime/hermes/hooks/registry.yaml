@@ -1,0 +1,19 @@
+# Hook Registry — Registry Metadata
+
+registry_version: "1.0.0"
+hooks_total: 9
+enabled_hooks: 0
+lifecycle_events:
+  - before_request
+  - after_request
+  - before_tool
+  - after_tool
+  - before_write
+  - after_write
+  - on_error
+  - on_incident
+  - on_shutdown
+default_failure_policy: log
+enforcement: disabled
+activation_status: skeleton_only
+mode: declarative_only

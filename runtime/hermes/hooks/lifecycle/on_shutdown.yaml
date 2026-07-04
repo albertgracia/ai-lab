@@ -1,0 +1,61 @@
+# Hook: Graceful Shutdown
+# Lifecycle: on_shutdown
+
+id: graceful-shutdown
+name: "Graceful Shutdown"
+version: "1.0.0"
+lifecycle_event: on_shutdown
+description: "Flush de metricas pendientes, guardar estado y detener servicios gracefulmente"
+
+enabled: false
+mode: declarative_only
+
+trigger:
+  event: on_shutdown
+  blocking: true
+  async: false
+
+required_capabilities:
+  - ai-lab-runtime
+
+required_mcp: []
+
+truth_model:
+  min_confidence: high
+  require_citations: true
+  require_timestamp: true
+
+authorization_required: false
+
+forbidden_actions:
+  - "Forzar cierre sin flush"
+  - "Ignorar metricas pendientes"
+
+evidence_requirements:
+  log_result: true
+  emit_metric: true
+  require_source_endpoint: false
+
+timeout_ms: 30000
+
+failure_policy: ignore
+
+reports:
+  - type: shutdown-log
+    description: "Registro del proceso de shutdown"
+    format: json
+  - type: flush-report
+    description: "Reporte de metricas flusheadas"
+    format: json
+
+rollback:
+  strategy: none
+  description: "Hook terminal — no hay rollback posible en shutdown"
+
+governance_levels:
+  - normal
+  - elevated
+  - degraded
+  - lockdown
+
+priority: 10

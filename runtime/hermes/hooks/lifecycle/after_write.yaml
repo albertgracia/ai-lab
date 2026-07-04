@@ -1,0 +1,58 @@
+# Hook: Write Verification
+# Lifecycle: after_write
+
+id: write-verification
+name: "Write Verification"
+version: "1.0.0"
+lifecycle_event: after_write
+description: "Verificar integridad de la operacion de escritura y emitir evento de auditoria"
+
+enabled: false
+mode: declarative_only
+
+trigger:
+  event: after_write
+  blocking: false
+  async: true
+
+required_capabilities:
+  - ai-lab-runtime
+
+required_mcp: []
+
+truth_model:
+  min_confidence: high
+  require_citations: true
+  require_timestamp: true
+
+authorization_required: true
+
+forbidden_actions:
+  - "Revertir la escritura automaticamente"
+  - "Modificar el contenido escrito"
+
+evidence_requirements:
+  log_result: true
+  emit_metric: true
+  require_source_endpoint: true
+
+timeout_ms: 10000
+
+failure_policy: warn
+
+reports:
+  - type: write-audit
+    description: "Evento de auditoria de escritura"
+    format: json
+  - type: integrity-check
+    description: "Resultado de verificacion de integridad"
+    format: json
+
+rollback:
+  strategy: manual
+  description: "Hook de solo lectura — no revierte escrituras. Notifica al operador si hay fallo."
+
+governance_levels:
+  - elevated
+
+priority: 10
