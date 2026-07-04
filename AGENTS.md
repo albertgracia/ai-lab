@@ -1143,24 +1143,25 @@ Si un cambio se realiza sin la consulta GitNexus correspondiente y produce una r
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **ai-lab** (27124 nodes, 42819 edges, 586 clusters, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **ai-lab** (20327 symbols, 32455 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
-> If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
+> Index stale? Run `node .gitnexus/run.cjs analyze` from the project root — it auto-selects an available runner. No `.gitnexus/run.cjs` yet? `npx gitnexus analyze` (npm 11 crash → `npm i -g gitnexus`; #1939).
 
 ## Always Do
 
-- **MUST run impact analysis before editing any symbol.** Before modifying a function, class, or method, run `gitnexus_impact({target: "symbolName", direction: "upstream"})` and report the blast radius (direct callers, affected processes, risk level) to the user.
-- **MUST run `gitnexus_detect_changes()` before committing** to verify your changes only affect expected symbols and execution flows.
+- **MUST run impact analysis before editing any symbol.** Before modifying a function, class, or method, run `impact({target: "symbolName", direction: "upstream"})` and report the blast radius (direct callers, affected processes, risk level) to the user.
+- **MUST run `detect_changes()` before committing** to verify your changes only affect expected symbols and execution flows. For regression review, compare against the default branch: `detect_changes({scope: "compare", base_ref: "main"})`.
 - **MUST warn the user** if impact analysis returns HIGH or CRITICAL risk before proceeding with edits.
-- When exploring unfamiliar code, use `gitnexus_query({query: "concept"})` to find execution flows instead of grepping. It returns process-grouped results ranked by relevance.
-- When you need full context on a specific symbol — callers, callees, which execution flows it participates in — use `gitnexus_context({name: "symbolName"})`.
+- When exploring unfamiliar code, use `query({search_query: "concept"})` to find execution flows instead of grepping. It returns process-grouped results ranked by relevance.
+- When you need full context on a specific symbol — callers, callees, which execution flows it participates in — use `context({name: "symbolName"})`.
+- For security review, `explain({target: "fileOrSymbol"})` lists taint findings (source→sink flows; needs `analyze --pdg`).
 
 ## Never Do
 
-- NEVER edit a function, class, or method without first running `gitnexus_impact` on it.
+- NEVER edit a function, class, or method without first running `impact` on it.
 - NEVER ignore HIGH or CRITICAL risk warnings from impact analysis.
-- NEVER rename symbols with find-and-replace — use `gitnexus_rename` which understands the call graph.
-- NEVER commit changes without running `gitnexus_detect_changes()` to check affected scope.
+- NEVER rename symbols with find-and-replace — use `rename` which understands the call graph.
+- NEVER commit changes without running `detect_changes()` to check affected scope.
 
 ## Resources
 
@@ -1183,3 +1184,49 @@ This project is indexed by GitNexus as **ai-lab** (27124 nodes, 42819 edges, 586
 | Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
 
 <!-- gitnexus:end -->
+
+<!-- ANCHORED SUMMARY -->
+## Goal
+Deliver y documentar Hermes Enterprise Core completo: SOUL, Capability, Operator, Hook, MCP, Governance, Status Endpoint y documentación Astro.
+
+## Constraints & Preferences
+- Solo estructura declarativa, validación y documentación — no enforcement, no hooks activos, no modificar runtime existente
+- No modificar Gateway/Router/Marketplace/Prometheus/Grafana, no reiniciar servicios, no cambiar comportamiento del agente
+- Todo el código enterprise en `runtime/hermes/`, tests en `tests/`, documentación en `apps/ialab-docs/`
+- Separar claramente implementado vs planificado en la documentación
+
+## Progress
+### Done
+- **HERMES-E02C-OPERATOR-REGISTRY-VALIDATOR**: 12 validaciones profundas de operadores (IDs únicos, capabilities, MCP, protocols, execution_mode, domains, forbidden_actions, reports, success_criteria, truth_model). 17 tests nuevos. Commit `5f72dc5`, tag `CP-E02C-OPERATOR-REGISTRY-VALIDATOR-STABLE`.
+- **HERMES-E06-DYNAMIC-GOVERNANCE**: Sistema completo ADR-006. 4 modos (NORMAL/ELEVATED/DEGRADED/LOCKDOWN), `GovernanceResolver` con 6 señales trigger (slo_state, degradation, emergency, VRAM, GPU, timeout), anti-flapping 30s, transition rules con stabilization periods, capability-governance matrix (6 caps × 4 modos), validación cruzada, integración en status JSON. Commit `beca850`, tag `CP-E06-DYNAMIC-GOVERNANCE-STABLE`.
+- **CP-HERMES-ENTERPRISE-CORE-01**: Checkpoint formal de cierre del Core. 113 tests PASS, 6 componentes completados. Commit `c80781f`, tag `CP-HERMES-ENTERPRISE-CORE-01`.
+- **HERMES-E07-ENTERPRISE-RUNTIME-STATUS-ENDPOINT**: `GET /hermes/status` en puerto `:8095`. Response JSON con 14 bloques: service, version, build, git, enterprise, soul, capabilities, operators, hooks, mcp, governance, architecture (CORE/E08/READY/compatibility), tests, status. HTTP server standalone `runtime/hermes/endpoint.py`. 72 tests nuevos. Commit `df84882`, tag `CP-E07-ENTERPRISE-RUNTIME-STATUS-ENDPOINT-STABLE`.
+- **HERMES-DOCS-ASTRO-ENTERPRISE-UPDATE-01**: 10 páginas de documentación Astro en `apps/ialab-docs/src/content/docs/hermes/` (Overview, Architecture, SOUL, Capability Registry, Operator Registry, Hook Registry, MCP Registry, Dynamic Governance, Status Endpoint, Roadmap). Sidebar actualizado en `astro.config.mjs`. Build Astro exitoso (275 págs, 0 errores). Commit `(pending)`, tag `CP-HERMES-DOCS-ASTRO-ENTERPRISE-01`.
+
+### In Progress
+- (none)
+
+### Blocked
+- (none)
+
+## Key Decisions
+- Status endpoint (`:8095`) es capa HTTP pura que reutiliza `runtime.hermes.status` como única fuente de verdad — sin lógica propia
+- Architecture block (enterprise_phase, next_phase, readiness, compatibility) es declarativo, read-only, parte del JSON de status
+- Documentación Astro separa claramente ✅ IMPLEMENTADO, ⚠️ EXPERIMENTAL/SKELETON y 📋 PLANIFICADO
+- Hooks siguen todos `enabled: false, mode: declarative_only` incluso con skeleton completo
+- MCP servers `prometheus` y `marketplace-mcp` declarados como `planned` sin tools activas
+
+## Next Steps
+1. **HERMES-E08-HOOK-INTEGRATION**: Activar primer lifecycle hook real
+2. **HERMES-E09-GOVERNANCE-ENFORCEMENT**: Conectar resolver a runtime para bloqueo activo
+3. AnythingLLM reindex con documentación Astro Hermes Enterprise
+
+## Critical Context
+- HEAD: `df84882` (origin/main). Tags: 12 tags CP-Hermes sincronizados (E01A→E07 + Foundation-01 + Core-01 + Docs-01).
+- Tests: **185 PASS** (27 loader + 24 capability + 17 operator + 45 governance + 72 enterprise status).
+- Status endpoint vivo: `GET /hermes/status → :8095`. Enforcement_active=false, governance=NORMAL.
+- Architecture actual: `enterprise_phase: "CORE", next_phase: "E08", readiness: "READY"`.
+- Build Astro: 275 páginas, 0 errores, sidebar Hermes Enterprise visible.
+- Documentación oficial: `apps/ialab-docs/src/content/docs/hermes/` (10 páginas).
+- ADRs originales: `docs/hermes/` (ADR-001 a ADR-006).
+
