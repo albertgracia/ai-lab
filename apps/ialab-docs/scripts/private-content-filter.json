@@ -34,6 +34,7 @@
     { "path": "docs/runtime/runtime-current-state.md", "action": "REMOVE_FILE" },
     { "path": "docs/runtime/runtime-sensor-fusion.md", "action": "REMOVE_FILE" },
     { "path": "runbooks", "action": "REMOVE_DIR" },
-    { "path": "incidents", "action": "REMOVE_DIR" }
+    { "path": "incidents", "action": "REMOVE_DIR" },
+    { "path": "docs/architecture/marketplace-digital-twin.md", "action": "REMOVE_FILE" }
   ]
 }

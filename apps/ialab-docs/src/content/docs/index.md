@@ -71,6 +71,8 @@ Desde el baseline 30I-D se alcanzaron:
 - `CP-HERMES-ENTERPRISE-CORE-01`, `CP-E07-ENTERPRISE-RUNTIME-STATUS-ENDPOINT-STABLE`
 - `CP-HERMES-DOCS-ASTRO-ENTERPRISE-01`
 - `CP-ANYTHINGLLM-ENTERPRISE-04-COMPLETE`
+- `CP-AI-LAB-ASTRO-DOCS-REFRESH-01` — actualización masiva de documentación (277 págs, 0 errores)
+- `CP-ASTRO-PUBLIC-PRIVATE-SEPARATION-01` — separación público/privado con build filter
 - `CP-SLO-ENFORCEMENT-01`, `CP-VALIDATION-AUTHORITY-01`, `CP-AUTONOMOUS-OBSERVABILITY-TRIAGE-01`, `CP-OPERATOR-INTENT-REASONING-01`, `CP-MULTIGPU-READINESS-01`
 
 ## Estado estable
@@ -88,6 +90,7 @@ AI-LAB ya no opera como "LLM + prompts". Opera como runtime **evidence-bound** c
 
 - HERMES-E08: activar primer lifecycle hook real
 - HERMES-E09: governance enforcement activo
+- AI-LAB-ASTRO-DOCS-REFRESH-01B: refresh continuo de documentación con separación público/privado
 - ANYTHINGLLM-ENTERPRISE-05: cuando exista necesidad funcional real
 - Validar acceso a .150 para secretos/servicios de Marketplace
 - Multi-GPU cuando RX7900XT se reactive

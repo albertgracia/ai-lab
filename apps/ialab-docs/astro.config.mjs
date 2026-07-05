@@ -33,7 +33,9 @@ export default defineConfig({
             { label: "Codebase Structure", link: "/codebase-structural-cognition" },
             { label: "AnythingLLM Role", link: "/architecture/anythingllm-role" },
             { label: "AnythingLLM Enterprise", link: "/architecture/anythingllm-enterprise" },
-            { label: "Marketplace Digital Twin", link: "/architecture/marketplace-digital-twin" },
+            ...(isPublicBuild ? [] : [
+              { label: "Marketplace Digital Twin", link: "/architecture/marketplace-digital-twin" },
+            ]),
             { label: "Health Layer (37A)", link: "/architecture/cognitive-health-layer" },
             { label: "Event Bus", link: "/event_bus" },
             { label: "Schemas", items: [{ autogenerate: { directory: "schemas" } }] },

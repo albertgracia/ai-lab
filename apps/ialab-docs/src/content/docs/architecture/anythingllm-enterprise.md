@@ -8,13 +8,11 @@ order: 8
 
 | Componente | Host | Puerto | Detalle |
 |------------|------|--------|---------|
-| AnythingLLM Desktop | 192.168.1.50 | 3001 | v1.x — API REST + UI |
-| LM Studio | 192.168.1.50 | 1234 | Backend de inferencia y embeddings |
+| AnythingLLM Desktop | Red privada | 3001 | v1.x — API REST + UI |
+| LM Studio | Red privada | 1234 | Backend de inferencia y embeddings |
 | Embedder | multilingual-e5-small (Q8_0) | — | 384 dimensiones |
 | Chat LLM | qwen2.5-14b-instruct (Q4_K_M) | — | Modelo de respuesta RAG |
-| Vector DB | LanceDB | — | Integrado en AnythingLLM |
-
-**ATENCIÓN:** `192.168.1.30:3001` es **Grafana v12.0.2**, NO AnythingLLM. No confundir las URLs.
+| Vector DB | LanceDB | — | Integrado en AnythingLLM
 
 ## Workspaces
 
