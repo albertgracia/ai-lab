@@ -73,7 +73,78 @@ AnythingLLM se considera **consumidor oficial** de la documentación de AI-LAB. 
 
 ## Estado actual
 
-AnythingLLM opera con un workspace AI-LAB dedicado. Indexa documentación canónica desde `anythingllm-core/` y documentación Astro publicada.
+AnythingLLM opera como **Knowledge Base Enterprise** multi-workspace desde julio de 2026. Indexa documentación canónica de todo el ecosistema AI-LAB y expone recuperación RAG vía API.
 
-Clasificación documental: **CANÓNICO**
+## Estado actual (Julio 2026)
+
+### Despliegue Enterprise
+
+AnythingLLM se ejecuta en `192.168.1.50:3001`. Su API key está configurada en el runtime de AI-LAB y en OpenCode para consultas RAG automatizadas.
+
+**ATENCIÓN:** `192.168.1.30:3001` NO es AnythingLLM. Ese puerto en `.30` corresponde a **Grafana v12.0.2**. No confundir las URLs.
+
+### Arquitectura de workspaces
+
+AnythingLLM aloja **12 workspaces**, de los cuales **9 contienen documentos** y **3 están vacíos (legacy):**
+
+| Workspace | Documentos | Estado |
+|---|---|---|
+| `ai-lab-runtime` | Documentación del runtime AI-LAB (AGENTS.md, fases, configuraciones) | ✅ Activo |
+| `hermes-enterprise` | Documentación completa de Hermes (SOUL, Capability, Operator, Hook, MCP, Governance) | ✅ Activo |
+| `adrs` | Architecture Decision Records (ADR-001 a ADR-006 y posteriores) | ✅ Activo |
+| `reports` | Reportes de fase, burn-ins, análisis operativos | ✅ Activo |
+| `rioja-marketplace` | Documentación del Marketplace Rioja | ✅ Activo |
+| `observabilidad` | Documentación de observabilidad (Prometheus, Grafana, métricas, alertas) | ✅ Activo |
+| `runbooks` | Runbooks operativos y procedimientos de recuperación | ✅ Activo |
+| `stack-2026` | Documentación del stack tecnológico 2026 | ✅ Activo |
+| `mcp-y-a2a` | Documentación de servidores MCP y protocolo A2A | ✅ Activo |
+| `mi-espacio-de-trabajo` | Legacy — sin documentos | Vacío |
+| `assistant-chats` | Legacy — sin documentos | Vacío |
+| `ids` | Legacy — sin documentos | Vacío |
+
+**Total de vectores:** 1304
+
+### Embedder definitivo
+
+El modelo de embedding utilizado por AnythingLLM es **multilingual-e5-small** (Q8_0, 384 dimensiones), servido por LM Studio en `192.168.1.50:1234`.
+
+Este embedder fue seleccionado tras una migración desde el embedder por defecto de AnythingLLM. Soporta multilingüismo (español e inglés), permitiendo consultas RAG en ambos idiomas con alta precisión semántica.
+
+### Chat LLM
+
+El modelo usado por AnythingLLM para responder consultas RAG es `qwen2.5-14b-instruct`, servido por LM Studio en `192.168.1.50:1234`.
+
+### Configuración de workspaces
+
+Cada workspace activo tiene configurado:
+
+- **Similarity threshold:** 0.60 — 0.75 (según contexto del workspace)
+- **Top N:** 4 — 8 fragmentos recuperados
+- **Temperature:** 0.1 — 0.3 (baja, priorizando precisión documental)
+- **Document limit:** 20 — 50 documentos por workspace
+- **Chunk size:** 750 — 1500 caracteres (tuning por tipo de documento)
+- **Chunk overlap:** 150 — 250 caracteres
+
+### Validación RAG E2E
+
+La recuperación documental fue validada extremo a extremo con preguntas representativas de cada dominio:
+
+- **RAG E2E validation: 100% PASS**
+- La cobertura documental permite responder preguntas sobre runtime, Hermes Enterprise, ADRs, reportes, marketplace, observabilidad, runbooks y MCP/A2A.
+
+### Baseline congelada
+
+El estado actual de AnythingLLM está congelado como baseline en el checkpoint:
+
+```
+CP-ANYTHINGLLM-ENTERPRISE-04-COMPLETE
+```
+
+Cualquier cambio posterior en workspaces, documentos o configuración debe partir de esta baseline y documentarse como fase nueva de AnythingLLM Enterprise.
+
+### Clasificación documental
+
+Clasificación: **CANÓNICO**
 Prioridad: **ALTA**
+
+AnythingLLM es el punto oficial de consulta RAG para agentes, operadores y documentación automatizada. Su contenido debe reflejar fielmente la documentación canónica publicada en Astro y los ADRs aprobados.

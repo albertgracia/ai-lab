@@ -1,91 +1,188 @@
 ---
 title: "Roadmap"
-summary: "Roadmap realista stabilization-first: authority + precision + governance + burn-in + memory maturity antes de reactivar Multi-GPU."
+summary: "Roadmap realista stabilization-first con Hermes Enterprise Core completado, AnythingLLM Enterprise baseline, y próxima gobernanza activa."
 order: 8
 ---
-
 
 
 ## Known issues operativos
 
 | Issue | Estado |
 |-------|--------|
-| Live API bind en 0.0.0.0 | Pendiente de refactor Traefik (LIVE-API-BIND-LOCALHOST-HARDENING-02) |
-| /api/history endpoint 404 | No implementado en live_api.py |
-| openai_gateway.py monolito | ~5700 lineas, risk HIGH, pendiente de auditoria |
-| LM Studio apagado | Voluntario; 502 en chat es esperado |
-| Router/LM Studio diagnosis | Pendiente cuando LM Studio este online |
-| Stash antiguo pre-sync-mcp | Pendiente de revision/limpieza |
+| `openai_gateway.py` monolito | ~5700 líneas, risk HIGH, pendiente de auditoría y refactor |
+| LM Studio sin modelo cargado | `POST /chat/completions` responde "No models loaded" — no siempre tiene el modelo activo tras reinicio |
+| Router/LM Studio diagnosis | Pendiente de diagnosis cuando LM Studio esté estable |
+| Stash antiguo pre-sync-mcp | Pendiente de revisión y limpieza |
+| `192.168.1.30:3001` ≠ AnythingLLM | Ese puerto es Grafana v12.0.2. AnythingLLM está en `192.168.1.50:3001` |
 
-## Estado actual (real)
+---
 
-AI-LAB está en modo **stabilization-first** y **governance-first** tras:
+## IMPLEMENTADO
 
-- ARCH-STABILIZATION-PASS-01
-- 36A (incident intelligence)
-- DEV-36X / DOC-36X (GitNexus structural cognition)
-- 36B (precision semantics)
-- OBS-HF-LMSTUDIO-OPERATIONAL-TRUTH
-- WORKTREE-GOVERNANCE-CLEANUP
-- 36C (operator intent reasoning)
+### Runtime stabilization — Blocks 37-40
 
-### Completado (21 fases desde 30I-D)
+| Fase | Descripción | Estado |
+|------|-------------|--------|
+| Block 37 | Cognitive Health & Graph Analysis (37A-37E) | ✅ |
+| Block 38 | Runtime Stability (38A-38D: deep audit, graceful shutdown, error triage, runtime snapshot) | ✅ |
+| Block 39 | Release Hardening (39A-39E: gateway contracts, observability alerts, cognitive followup, stabilization close) | ✅ |
+| Block 40 | Post-Release SLO Drift Watch (40A) | ✅ |
 
-| FASE | Estado |
-|------|--------|
-| 30I-D — Sensor Semantics Normalization | ✅ |
-| 30I-E — Operational Response Formatting | ✅ |
-| 30I-F — Runtime Cognitive Compression | ✅ |
-| 30I-F0 — Runtime Model Routing Cleanup | ✅ |
-| 30I-G — Deterministic Runtime Grounding | ✅ |
-| OBS-31A — Observability Source-of-Truth Audit | ✅ |
-| OBS-31A.1 — Prometheus Authority Audit | ✅ |
-| OBS-31A.2 — Grafana Drift Audit | ✅ |
-| OBS-31A.3 — Runtime-Observability Alignment | ✅ |
-| OBS-31A.4 — Observability Remediation Plan | ✅ |
-| OBS-31A.5 — Safe Quick Wins Execution | ✅ |
-| 31B — Runtime Semantic Maturity | ✅ |
-| 31C — Operational Reporting Discipline | ✅ |
-| 31E — Active/Inventory/Discoverable Separation | ✅ |
-| 31D — Runtime Topology Awareness | ✅ |
-| 32A — Runtime UI Alignment | ✅ |
-| 32B — Grafana Semantic Cleanup | ✅ |
-| 33A — Runtime Governance Registry | ✅ |
-| 33B — Runtime Pre-Pilot Validation Framework | ✅ |
-| 28.4 — Tool Contracts & Cross-Plan GC | ✅ |
+### Hermes Enterprise Core — 6 componentes
+
+| Componente | Tests | Estado |
+|------------|-------|--------|
+| **SOUL** (Self-organizing Unified Logic) — sistema declarativo de identidad, propósito y verdad del runtime enterprise | 27 tests | ✅ |
+| **Capability Registry** — registro declarativo de capacidades con validación de dependencias, versiones y slots | 24 tests | ✅ |
+| **Operator Registry** — 12 validaciones profundas (IDs únicos, capabilities, MCP, protocols, execution_mode, domains, forbidden_actions, reports, success_criteria, truth_model) | 17 tests | ✅ |
+| **Hook Registry** — 9 lifecycle hooks declarativos (`enabled: false, mode: declarative_only`) | Skeleton completo | ✅ |
+| **MCP Registry** — 5 servidores MCP declarados (ai-lab-runtime, rioja-marketplace, prometheus, marketplace-mcp, filesystem) | Skeleton completo | ✅ |
+| **Dynamic Governance** — ADR-006: 4 modos (NORMAL/ELEVATED/DEGRADED/LOCKDOWN), `GovernanceResolver` con 6 señales trigger, anti-flapping 30s, capability-governance matrix (6 caps × 4 modos) | 45 tests | ✅ |
+| **`GET /hermes/status`** — endpoint en `:8095` con 14 bloques: service, version, build, git, enterprise, soul, capabilities, operators, hooks, mcp, governance, architecture, tests, status | 72 tests | ✅ |
+
+**Total:** 185 tests PASS. Checkpoints: `CP-HERMES-ENTERPRISE-CORE-01`, `CP-E07-ENTERPRISE-RUNTIME-STATUS-ENDPOINT-STABLE`.
+
+### AnythingLLM Enterprise — Knowledge Base
+
+| Componente | Detalle | Estado |
+|------------|---------|--------|
+| Import canónico | 84 documentos importados desde el filesystem | ✅ |
+| Validación multilingual | Soportados ES/EN/FR/DE/IT/PT, 0 errores de codificación | ✅ |
+| Migración embedder | `text-embedding-multilingual-e5-small` (Q8_0, 384-dim) — reemplaza a `nomic-embed-text-v1.5` | ✅ |
+| Chunking tuning | Chunk size 800, overlap 100 | ✅ |
+| Evidence reports | 53 documentos en workspace evidence-reports | ✅ |
+| Marketplace docs | 7 documentos sobre Rioja Marketplace | ✅ |
+| Observabilidad + IDS | 2 documentos sobre stack de observabilidad | ✅ |
+| Runbooks + Stack 2026 | 8 documentos operativos | ✅ |
+| MCP + A2A | 19 documentos sobre protocolos MCP y A2A | ✅ |
+
+**Totales:** 1304 vectores, 7 workspaces activos. RAG E2E validation: 100%. Baseline congelada en `CP-ANYTHINGLLM-ENTERPRISE-04-COMPLETE`.
+
+**Workspaces configurados:**
+- `ai-lab-core-runtime`
+- `ai-lab-architecture-governance`
+- `ai-lab-operations-runbooks`
+- `ai-lab-marketplace-docs`
+- `ai-lab-enterprise-hermes`
+- `ai-lab-evidence-reports`
+- `ai-lab-stack-2026`
+
+### Marketplace Digital Twin — Rioja Marketplace
+
+| Componente | Detalle | Estado |
+|------------|---------|--------|
+| Indexación GitNexus | 1421 nodes, 2231 edges — estructura completa de rutas, handlers y modelos | ✅ |
+| MCP read-only | Validado y operativo desde Hermes | ✅ |
+| Hermes Marketplace Operator | Operator registrado y validado en el registry | ✅ |
+| Backend | Go + Fiber v2 en `192.168.1.150:8080`, PostgreSQL 17 | ✅ |
+| Frontend | Next.js 15 + React 19 RC | ✅ |
+| URL pública | `marketplace.labrazahome.com` | ✅ |
+
+### GitNexus — Code Intelligence
+
+| Capacidad | Detalle | Estado |
+|-----------|---------|--------|
+| Repos indexados | `ai-lab` (20327 symbols) + `rioja-marketplace` (1421 nodes) | ✅ |
+| Impact analysis | `impact()` con blast radius por depth (d1/d2/d3), risk assessment | ✅ |
+| Context tool | `context()` con 360° de referencias, procesos participantes | ✅ |
+| Rename tool | `rename()` multi-file con confianza graph/text_search | ✅ |
+| detect_changes | Pre-commit analysis con procesos afectados | ✅ |
+| Cypher queries | Consultas directas al knowledge graph | ✅ |
+| GITNEXUS-FIRST policy | Consulta pre-cambio obligatoria para runtime, gateway, router, scheduler, marketplace, IDS, Hermes | ✅ |
+
+### Observability Stack
+
+| Componente | Host | Puerto | Estado |
+|------------|------|--------|--------|
+| Prometheus (source of truth) | 192.168.1.40 | 9090 | ✅ |
+| Grafana (visualization) | 192.168.1.40 | 3000 | ✅ |
+| Loki (logs) | 192.168.1.40 | — | ✅ |
+| node_exporter | 192.168.1.30 | 9100 | ✅ |
+| cadvisor | 192.168.1.30 | 8081 | ✅ |
+
+**Métricas:** 100+ métricas `ailab_*` (perfiles, latencia, tools, memoria, calidad, streaming, GPU, SLO, report grounding, lifecycle). 19 reglas de alerta activas con health=ok. 15 dashboards Grafana en carpeta AI-LAB (TIER 1: operación diaria, TIER 2: troubleshooting).
+
+> **NOTA IMPORTANTE:** `192.168.1.30:3001` es Grafana v12.0.2. AnythingLLM está en `192.168.1.50:3001`.
+
+### Modelos activos
+
+| Modelo | Rol | Host | Estado |
+|--------|-----|------|--------|
+| `llama-3.1-8b-instruct` | PRIMARY_OPERATIONAL_MODEL (minimal, greetings, observe, light prompts) | 192.168.1.50:1234 | ✅ |
+| `qwen2.5-coder-14b-instruct` | PRIMARY_CODING_MODEL (coding, report, architecture, reasoning, creative) | 192.168.1.50:1234 | ✅ |
+| `nomic-embed-text-v1.5` | Embedding (temporal — migrado a e5-small en AnythingLLM) | 192.168.1.50:1234 | ✅ |
+| `qwen3.6-27b` | DESACTIVADO (disponible para tests manuales) | 192.168.1.50:1234 | ✅ Desactivado |
+| `qwen2.5-coder-32b` | DOWN (nodo RX7900XT apagado) | 192.168.1.60:1234 | ❌ Nodo offline |
+
+---
+
+## PENDIENTE
+
+### Hermes Enterprise — Próximas fases
+
+| Fase | Descripción | Estado |
+|------|-------------|--------|
+| **HERMES-E08** | Activar primer lifecycle hook real (hook execution runtime) | 📋 Planificado |
+| **HERMES-E09** | Governance enforcement activo — conectar `GovernanceResolver` al runtime para bloqueo real de capacidades | 📋 Planificado |
+| **ANYTHINGLLM-ENTERPRISE-05** | Nueva fase de Knowledge Base cuando exista necesidad funcional real | 📋 Bloqueado |
+
+### Marketplace — Próximos pasos
+
+| Tarea | Descripción | Estado |
+|-------|-------------|--------|
+| Acceso a `.150` | Validar secretos, servicios y conectividad con Marketplace backend | 📋 Pendiente |
+| Stripe real | Integración de pagos reales (actualmente en sandbox) | 📋 Planificado |
+| Inventory API | Endpoints de gestión de inventario | 📋 Planificado |
+| Documentación Marketplace | Páginas Astro dedicadas al ecosistema Marketplace | 📋 Planificado |
+
+### Multi-GPU Scheduling
+
+| Requisito | Estado |
+|-----------|--------|
+| Reactivación de nodo RX7900XT (192.168.1.60) | ❌ Nodo apagado |
+| Scheduler contracts definidos | 📋 Pendiente |
+| Prerrequisitos cerrados (30H→31B) | ✅ Cerrados desde CP-31B |
+| Readiness assessment | 37/100 — `CP-MULTIGPU-READINESS-01` |
+
+**Estado:** No documentado como funcionalidad operativa cerrada. Pendiente de reactivación del nodo RX7900XT y definición de scheduler contracts.
+
+---
+
+## Resumen de checkpoints
+
+| Checkpoint | Componente | Fecha |
+|------------|------------|-------|
+| `CP-30I-G-RUNTIME-GROUNDING-STABLE` | Deterministic Runtime Grounding | ✅ |
+| `CP-OBS-31A.5-EXECUTOR-STABLE` | Observability Quick Wins | ✅ |
+| `CP-31B-RUNTIME-SEMANTIC-MATURITY-STABLE` | Runtime Semantic Maturity | ✅ |
+| `CP-35C-LIVE-AUTHORITY-BACKED-COGNITION-STABLE` | Live Authority Cognition | ✅ |
+| `CP-35D-OPERATIONAL-FAST-PATH-STABLE` | Operational Fast Path | ✅ |
+| `CP-36A-OPERATIONAL-INCIDENT-INTELLIGENCE-STABLE` | Incident Intelligence | ✅ |
+| `CP-36B-RUNTIME-PRECISION-MODE-STABLE` | Runtime Precision Mode | ✅ |
+| `CP-36C-OPERATOR-INTENT-REASONING-STABLE` | Operator Intent Reasoning | ✅ |
+| `CP-36D-AUTONOMOUS-OBSERVABILITY-TRIAGE-STABLE` | Autonomous Observability Triage | ✅ |
+| `CP-HERMES-ENTERPRISE-CORE-01` | Hermes Enterprise Core (6 componentes) | ✅ |
+| `CP-ANYTHINGLLM-ENTERPRISE-04-COMPLETE` | AnythingLLM Knowledge Base (1304 vectores) | ✅ |
+| `CP-MULTIGPU-READINESS-01` | Multi-GPU Readiness Assessment (37/100) | 📋 |
+
+---
 
 ## Próximas prioridades
 
-1. Semantic stabilization (contratos y semántica operativa consistente)
-2. Authority hardening (freshness/gaps/confidence por dominio)
-3. Precision semantics (degradación segura, conflict handling)
-4. Burn-in operacional y cognitivo (no solo tests)
-5. Memory maturity (Qdrant governance, recall ROI, contaminación)
-6. Distributed cognition (topología + dominios + authority chain)
+1. **Hermes E08/E09** — Activar lifecycle hooks reales y governance enforcement conectado al runtime
+2. **Marketplace hardening** — Acceso a `.150`, Stripe real, Inventory API, documentación
+3. **Refactor gateway** — Reducir monolito `openai_gateway.py` (~5700 líneas)
+4. **Multi-GPU** — Reactivar RX7900XT y completar readiness assessment
+5. **LM Studio diagnosis** — Estabilizar carga de modelos post-reinicio
+6. **AnythingLLM-05** — Nueva fase Knowledge Base cuando haya necesidad funcional
 
-## Roadmap futuro
+## Roadmap futuro oficial
 
-- Pilot técnico
-- Pilot operador
-- Multi-GPU federation (futuro)
-
-## Roadmap futuro oficial (37A+)
-
-- `37A` — GRAPH-RUNTIME-CORRELATION-01
-- `37B` — CRITICAL-PATH-ANALYSIS-01
-- `37C` — GRAPH-HOTSPOT-HISTORY-01
-- `37D` — GOVERNANCE-DRIFT-DETECTION-01
-- `37E` — GRAPH-AWARE-INCIDENT-REASONING-01
-- `38A` — NEXUS-AI-RUNTIME-OPERATOR-01
-- `38B` — COGNITIVE-MEMORY-LAYER-01
-- `38C` — TOPOLOGY-AWARE-PROMPTING-01
-- `39A` — FEDERATION-INTELLIGENCE-01
-- `39B` — RUNTIME-DIGITAL-TWIN-01
-- `40` — AI-LAB COGNITIVE CONTROL PLANE
-
-### Multi-GPU
-No documentado como funcionalidad operativa cerrada. Pendiente de:
-- Runtime maturity estable
-- Governance semantics cerradas
-- Scheduler contracts definidos
-- RX7900XT recovery (actualmente inventory/expected_offline)
+- `HERMES-E08` — Hook execution runtime (lifecycle hooks reales)
+- `HERMES-E09` — Governance enforcement activo
+- `MARKETPLACE-DOCS-01` — Documentación Astro del ecosistema Marketplace
+- `GATEWAY-REFACTOR-01` — Descomposición del monolito openai_gateway.py
+- `MULTIGPU-SCHEDULER-01` — Scheduler Multi-GPU (post reactivación RX7900XT)
+- `ANYTHINGLLM-ENTERPRISE-05` — Nueva fase Knowledge Base
+- `PILOT-TECNICO-01` — Pilot técnico del runtime gobernado
+- `PILOT-OPERADOR-01` — Pilot con operadores reales
