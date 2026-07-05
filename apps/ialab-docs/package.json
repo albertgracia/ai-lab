@@ -8,6 +8,8 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "build:public": "node scripts/build-public-wrapper.mjs",
+    "build:private": "astro build",
     "preview": "astro preview",
     "astro": "astro",
     "validate:visual": "node scripts/validate-astro-visual.mjs"
