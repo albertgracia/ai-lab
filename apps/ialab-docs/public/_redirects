@@ -1,0 +1,25 @@
+# AI-LAB Public Site — Private Route Blocking
+# Added 2026-07-05 — ASTRO-PUBLIC-PRIVATE-URGENT-MITIGATION-01
+# These rules block private content on the public Cloudflare Pages site.
+# The private site (blog-ai-lab) uses Cloudflare Access + Traefik instead.
+# ============================================================
+
+# Block runbooks (32 pages — operational commands, IPs, systemd)
+/runbooks/* / 404
+
+# Block incidents (2 pages — Docker paths, recovery procedures)
+/incidents/* / 404
+
+# Block private Astro page sections (per astro-architecture.md §4)
+/ops/* / 404
+/portal/* / 404
+/services/* / 404
+/knowledge/* / 404
+/models/* / 404
+
+# Block sensitive individual docs pages with IPs and operational data
+/docs/operacion-privada-ai-lab/ / 404
+/docs/rutas-internas-ai-lab/ / 404
+/docs/informe-completo-ai-lab/ / 404
+/docs/informe-operacional-exhaustivo/ / 404
+/docs/servicios-persistentes-systemd/ / 404

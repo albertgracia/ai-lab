@@ -28,13 +28,7 @@ Listado de accesos principales del laboratorio.
 | `/v1/models` | Modelos disponibles |
 | `/v1/chat/completions` | Chat completions |
 
-## Credenciales conocidas
-
-| Servicio | Usuario | Contraseña |
-|---|---|---|
-| OpenCode | `opencode` | `ailab` |
-| Open WebUI | pendiente documentar | pendiente documentar |
-| Portainer | pendiente documentar | pendiente documentar |
+<!-- CREDENCIALES REDACTED en ASTRO-PUBLIC-PRIVATE-URGENT-MITIGATION-01 -->
 
 ## Validación rápida
 

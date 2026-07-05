@@ -1235,3 +1235,6 @@ Deliver y documentar Hermes Enterprise Core completo: SOUL, Capability, Operator
 - AnythingLLM: `.50:3001`, API key `YHNYABM-TVVM8Y3-HKHFD2S-SZVZVH2`. LM Studio `.50:1234` UP con `qwen2.5-14b-instruct` + `text-embedding-multilingual-e5-small` (Q8_0). **1304 vectores**, 7 workspaces activos. Baseline congelada en `CP-ANYTHINGLLM-ENTERPRISE-04-COMPLETE`.
 - **Nota:** `192.168.1.30:3001` es Grafana v12.0.2, NO AnythingLLM.
 
+
+*\.bak
+
