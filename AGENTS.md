@@ -1206,12 +1206,10 @@ Deliver y documentar Hermes Enterprise Core completo: SOUL, Capability, Operator
 - **ANYTHINGLLM-ENTERPRISE-02-PROVIDER-CHECK**: Validación de providers. LM Studio `.50:1234` OK (`qwen2.5-14b-instruct`+`nomic-embed-text-v1.5`). AnythingLLM en `127.0.0.1:3001` (NAS-N5 .200), API key funcional. Reporte `reports/ANYTHINGLLM-ENTERPRISE-02-PROVIDER-CHECK.md`. **ACTUALIZADO:** Mapa de hosts corregido — AnythingLLM en .50, Grafana en .40.
 - **ANYTHINGLLM-LAN-ENABLE-01**: Análisis de bind address AnythingLLM. `bootHTTP()` usa `app.listen(port)` → 0.0.0.0 por defecto. Firewall de Windows causa "Connection refused". Reporte `reports/ANYTHINGLLM-LAN-ENABLE-01.md`.
 - **ANYTHINGLLM-ENTERPRISE-03-WORKSPACE-CREATE**: 10 workspaces Enterprise creados vía API REST (`POST /api/v1/workspace/new`) desde NAS-N5 a `.50:3001` (LAN). System prompts, similarityThreshold, topN, temperature configurados. Cero documentos, cero indexación. ✅ PASS. Reporte `reports/ANYTHINGLLM-ENTERPRISE-03-WORKSPACE-CREATE.md`.
-
-### In Progress
-- **ANYTHINGLLM-ENTERPRISE-04-DOCUMENT-IMPORT-FOUNDATION**: Cargar documentación canónica (Nivel 1: Hermes Enterprise + ADRs) en los workspaces.
+- **ANYTHINGLLM-ENTERPRISE-04-COMPLETE**: Bloque completo de Knowledge Base Enterprise. 9 subfases (04A-04C): import canónico (84 docs), validación multilingual, migración embedder e5-small, chunking tuning, evidence reports (53 docs), marketplace (7 docs), observabilidad+IDS (2 docs), runbooks+stack-2026 (8 docs), MCP+A2A (19 docs). 1304 vectores, 7 workspaces activos. RAG E2E validation: 100%. Baseline congelada. Commit `7981efc`, tag `CP-ANYTHINGLLM-ENTERPRISE-04-COMPLETE`.
 
 ### Blocked
-- (ninguno)
+- (none)
 
 ## Key Decisions
 - Status endpoint (`:8095`) es capa HTTP pura que reutiliza `runtime.hermes.status` como única fuente de verdad — sin lógica propia
@@ -1221,17 +1219,18 @@ Deliver y documentar Hermes Enterprise Core completo: SOUL, Capability, Operator
 - MCP servers `prometheus` y `marketplace-mcp` declarados como `planned` sin tools activas
 
 ## Next Steps
-1. **ANYTHINGLLM-ENTERPRISE-04-DOCUMENT-IMPORT-FOUNDATION**: Cargar documentación canónica (Nivel 1: Hermes Enterprise + ADRs)
+1. **ANYTHINGLLM-ENTERPRISE-05**: Cuando exista necesidad funcional real
 2. **HERMES-E08-HOOK-INTEGRATION**: Activar primer lifecycle hook real
 3. **HERMES-E09-GOVERNANCE-ENFORCEMENT**: Conectar resolver a runtime para bloqueo activo
 
 ## Critical Context
-- HEAD: `d92cc92` (origin/main). Tags: 13 tags CP-Hermes sincronizados (E01A→E07 + Foundation-01 + Core-01 + Docs-01).
+- HEAD: `7981efc` (origin/main). Tags: 14 tags CP-Hermes + CP-ANYTHINGLLM-ENTERPRISE-04-COMPLETE.
 - Tests: **185 PASS** (27 loader + 24 capability + 17 operator + 45 governance + 72 enterprise status).
 - Status endpoint vivo: `GET /hermes/status → :8095`. Enforcement_active=false, governance=NORMAL.
 - Architecture actual: `enterprise_phase: "CORE", next_phase: "E08", readiness: "READY"`.
 - Build Astro: 275 páginas, 0 errores, sidebar Hermes Enterprise visible.
 - Documentación oficial: `apps/ialab-docs/src/content/docs/hermes/` (10 páginas).
 - ADRs originales: `docs/hermes/` (ADR-001 a ADR-006).
-- AnythingLLM: `127.0.0.1:3001` (NAS-N5 .200), API key `YHNYABM-TVVM8Y3-HKHFD2S-SZVZVH2`, LLM provider no configurado. LM Studio `.50:1234` UP con `qwen2.5-14b-instruct` + `nomic-embed-text-v1.5`. **Nota:** `192.168.1.30:3001` es Grafana v12.0.2, NO AnythingLLM (error de documentación previo).
+- AnythingLLM: `.50:3001`, API key `YHNYABM-TVVM8Y3-HKHFD2S-SZVZVH2`. LM Studio `.50:1234` UP con `qwen2.5-14b-instruct` + `text-embedding-multilingual-e5-small` (Q8_0). **1304 vectores**, 7 workspaces activos. Baseline congelada en `CP-ANYTHINGLLM-ENTERPRISE-04-COMPLETE`.
+- **Nota:** `192.168.1.30:3001` es Grafana v12.0.2, NO AnythingLLM.
 
