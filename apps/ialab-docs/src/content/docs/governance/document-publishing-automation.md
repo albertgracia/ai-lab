@@ -116,7 +116,7 @@ Toda la configuración compartida está en `scripts/phase-closure/config.ps1`:
 | PUBLIC_ASTRO_URL | https://ai-lab.labrazahome.com | URL pública |
 | PRIVATE_ASTRO_LOCAL_URL | http://127.0.0.1:4322 | URL privada local |
 | CLOUDFLARE_DEPLOY_TIMEOUT_SECONDS | 300 | Timeout espera Cloudflare |
-| ANYTHINGLLM_BASE_URL | http://192.168.1.30:3001 | URL AnythingLLM |
+| ANYTHINGLLM_BASE_URL | http://192.168.1.50:3001 | URL AnythingLLM |
 | ANYTHINGLLM_WORKSPACE | ai-lab-core | Workspace AnythingLLM |
 
 ## Validaciones
