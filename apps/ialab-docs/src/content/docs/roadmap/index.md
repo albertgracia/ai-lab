@@ -13,7 +13,7 @@ order: 8
 | LM Studio sin modelo cargado | `POST /chat/completions` responde "No models loaded" — no siempre tiene el modelo activo tras reinicio |
 | Router/LM Studio diagnosis | Pendiente de diagnosis cuando LM Studio esté estable |
 | Stash antiguo pre-sync-mcp | Pendiente de revisión y limpieza |
-| `192.168.1.30:3001` ≠ AnythingLLM | Ese puerto es Grafana v12.0.2. AnythingLLM está en `192.168.1.50:3001` |
+| URL Grafana confundida con AnythingLLM | Grafana v12.0.2 en puerto 3001 del host de control. AnythingLLM está en host de inferencia |
 
 ---
 
@@ -74,9 +74,23 @@ order: 8
 | Indexación GitNexus | 1421 nodes, 2231 edges — estructura completa de rutas, handlers y modelos | ✅ |
 | MCP read-only | Validado y operativo desde Hermes | ✅ |
 | Hermes Marketplace Operator | Operator registrado y validado en el registry | ✅ |
-| Backend | Go + Fiber v2 en `192.168.1.150:8080`, PostgreSQL 17 | ✅ |
+| Backend | Go + Fiber v2 en red privada, PostgreSQL 17 | ✅ |
 | Frontend | Next.js 15 + React 19 RC | ✅ |
 | URL pública | `marketplace.labrazahome.com` | ✅ |
+
+### Astro Docs — Public/Private Separation
+
+| Componente | Detalle | Estado |
+|------------|---------|--------|
+| Clasificación de sensibilidad | Auditadas 212 páginas: 35% PUBLIC_SAFE, 64% PRIVATE_ONLY | ✅ |
+| Build filter | `private-content-filter.json` (33 entries) elimina paths PRIVATE_ONLY antes del build público | ✅ |
+| Sidebar condicional | `AILAB_PUBLIC_BUILD` env var oculta secciones Private/Runbooks/Incidents en build público | ✅ |
+| Redirects edge | `_redirects` bloquea rutas privadas en Cloudflare Pages | ✅ |
+| Pipeline CI/CD | `publish-astro-public.ps1` y `publish-astro-private.ps1` en `scripts/phase-closure/` | ✅ |
+| Público (Cloudflare) | `ai-lab.labrazahome.com` — 171 páginas, 0 IPs internas | ✅ |
+| Privado (Traefik) | `blog-ai-lab.labrazahome.com` — 277 páginas con contenido completo | ✅ |
+
+**Checkpoints:** `CP-AI-LAB-ASTRO-DOCS-REFRESH-01`, `CP-ASTRO-PUBLIC-PRIVATE-SEPARATION-01`.
 
 ### GitNexus — Code Intelligence
 
@@ -92,27 +106,25 @@ order: 8
 
 ### Observability Stack
 
-| Componente | Host | Puerto | Estado |
-|------------|------|--------|--------|
-| Prometheus (source of truth) | 192.168.1.40 | 9090 | ✅ |
-| Grafana (visualization) | 192.168.1.40 | 3000 | ✅ |
-| Loki (logs) | 192.168.1.40 | — | ✅ |
-| node_exporter | 192.168.1.30 | 9100 | ✅ |
-| cadvisor | 192.168.1.30 | 8081 | ✅ |
+| Componente | Rol |
+|------------|-----|
+| Prometheus | Source of truth (métricas, alertas) |
+| Grafana | Visualización (15 dashboards) |
+| Loki | Logs del runtime |
+| node_exporter | Métricas de host |
+| cadvisor | Métricas de contenedores |
 
 **Métricas:** 100+ métricas `ailab_*` (perfiles, latencia, tools, memoria, calidad, streaming, GPU, SLO, report grounding, lifecycle). 19 reglas de alerta activas con health=ok. 15 dashboards Grafana en carpeta AI-LAB (TIER 1: operación diaria, TIER 2: troubleshooting).
 
-> **NOTA IMPORTANTE:** `192.168.1.30:3001` es Grafana v12.0.2. AnythingLLM está en `192.168.1.50:3001`.
-
 ### Modelos activos
 
-| Modelo | Rol | Host | Estado |
-|--------|-----|------|--------|
-| `llama-3.1-8b-instruct` | PRIMARY_OPERATIONAL_MODEL (minimal, greetings, observe, light prompts) | 192.168.1.50:1234 | ✅ |
-| `qwen2.5-coder-14b-instruct` | PRIMARY_CODING_MODEL (coding, report, architecture, reasoning, creative) | 192.168.1.50:1234 | ✅ |
-| `nomic-embed-text-v1.5` | Embedding (temporal — migrado a e5-small en AnythingLLM) | 192.168.1.50:1234 | ✅ |
-| `qwen3.6-27b` | DESACTIVADO (disponible para tests manuales) | 192.168.1.50:1234 | ✅ Desactivado |
-| `qwen2.5-coder-32b` | DOWN (nodo RX7900XT apagado) | 192.168.1.60:1234 | ❌ Nodo offline |
+| Modelo | Rol | Estado |
+|--------|-----|--------|
+| `llama-3.1-8b-instruct` | PRIMARY_OPERATIONAL_MODEL (minimal, greetings, observe, light prompts) | ✅ |
+| `qwen2.5-coder-14b-instruct` | PRIMARY_CODING_MODEL (coding, report, architecture, reasoning, creative) | ✅ |
+| `nomic-embed-text-v1.5` | Embedding (temporal — migrado a e5-small en AnythingLLM) | ✅ |
+| `qwen3.6-27b` | DESACTIVADO (disponible para tests manuales) | ✅ Desactivado |
+| `qwen2.5-coder-32b` | DOWN (nodo RX7900XT apagado) | ❌ Nodo offline |
 
 ---
 
@@ -139,7 +151,7 @@ order: 8
 
 | Requisito | Estado |
 |-----------|--------|
-| Reactivación de nodo RX7900XT (192.168.1.60) | ❌ Nodo apagado |
+| Reactivación de nodo RX7900XT | ❌ Nodo apagado |
 | Scheduler contracts definidos | 📋 Pendiente |
 | Prerrequisitos cerrados (30H→31B) | ✅ Cerrados desde CP-31B |
 | Readiness assessment | 37/100 — `CP-MULTIGPU-READINESS-01` |
@@ -150,8 +162,8 @@ order: 8
 
 ## Resumen de checkpoints
 
-| Checkpoint | Componente | Fecha |
-|------------|------------|-------|
+| Checkpoint | Componente | Estado |
+|------------|------------|--------|
 | `CP-30I-G-RUNTIME-GROUNDING-STABLE` | Deterministic Runtime Grounding | ✅ |
 | `CP-OBS-31A.5-EXECUTOR-STABLE` | Observability Quick Wins | ✅ |
 | `CP-31B-RUNTIME-SEMANTIC-MATURITY-STABLE` | Runtime Semantic Maturity | ✅ |
@@ -163,6 +175,8 @@ order: 8
 | `CP-36D-AUTONOMOUS-OBSERVABILITY-TRIAGE-STABLE` | Autonomous Observability Triage | ✅ |
 | `CP-HERMES-ENTERPRISE-CORE-01` | Hermes Enterprise Core (6 componentes) | ✅ |
 | `CP-ANYTHINGLLM-ENTERPRISE-04-COMPLETE` | AnythingLLM Knowledge Base (1304 vectores) | ✅ |
+| `CP-AI-LAB-ASTRO-DOCS-REFRESH-01` | Astro Docs Refresh (277 págs, 0 errores) | ✅ |
+| `CP-ASTRO-PUBLIC-PRIVATE-SEPARATION-01` | Public/Private Docs Separation (build filter) | ✅ |
 | `CP-MULTIGPU-READINESS-01` | Multi-GPU Readiness Assessment (37/100) | 📋 |
 
 ---
@@ -171,15 +185,17 @@ order: 8
 
 1. **Hermes E08/E09** — Activar lifecycle hooks reales y governance enforcement conectado al runtime
 2. **Marketplace hardening** — Acceso a `.150`, Stripe real, Inventory API, documentación
-3. **Refactor gateway** — Reducir monolito `openai_gateway.py` (~5700 líneas)
-4. **Multi-GPU** — Reactivar RX7900XT y completar readiness assessment
-5. **LM Studio diagnosis** — Estabilizar carga de modelos post-reinicio
-6. **AnythingLLM-05** — Nueva fase Knowledge Base cuando haya necesidad funcional
+3. **Astro Docs Refresh continuo** — Alinear documentación con estado real del runtime
+4. **Refactor gateway** — Reducir monolito `openai_gateway.py` (~5700 líneas)
+5. **Multi-GPU** — Reactivar RX7900XT y completar readiness assessment
+6. **LM Studio diagnosis** — Estabilizar carga de modelos post-reinicio
+7. **AnythingLLM-05** — Nueva fase Knowledge Base cuando haya necesidad funcional
 
 ## Roadmap futuro oficial
 
 - `HERMES-E08` — Hook execution runtime (lifecycle hooks reales)
 - `HERMES-E09` — Governance enforcement activo
+- `ASTRO-DOCS-REFRESH-01B` — Refresh continuo de documentación con separación público/privado
 - `MARKETPLACE-DOCS-01` — Documentación Astro del ecosistema Marketplace
 - `GATEWAY-REFACTOR-01` — Descomposición del monolito openai_gateway.py
 - `MULTIGPU-SCHEDULER-01` — Scheduler Multi-GPU (post reactivación RX7900XT)

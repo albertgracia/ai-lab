@@ -79,9 +79,9 @@ AnythingLLM opera como **Knowledge Base Enterprise** multi-workspace desde julio
 
 ### Despliegue Enterprise
 
-AnythingLLM se ejecuta en `192.168.1.50:3001`. Su API key está configurada en el runtime de AI-LAB y en OpenCode para consultas RAG automatizadas.
+AnythingLLM se ejecuta en un host de la red privada (puerto 3001). Su API key está configurada en el runtime de AI-LAB y en OpenCode para consultas RAG automatizadas.
 
-**ATENCIÓN:** `192.168.1.30:3001` NO es AnythingLLM. Ese puerto en `.30` corresponde a **Grafana v12.0.2**. No confundir las URLs.
+> **ATENCIÓN:** AnythingLLM no está en el mismo host que Grafana. No confundir las URLs.
 
 ### Arquitectura de workspaces
 
@@ -106,13 +106,13 @@ AnythingLLM aloja **12 workspaces**, de los cuales **9 contienen documentos** y 
 
 ### Embedder definitivo
 
-El modelo de embedding utilizado por AnythingLLM es **multilingual-e5-small** (Q8_0, 384 dimensiones), servido por LM Studio en `192.168.1.50:1234`.
+El modelo de embedding utilizado por AnythingLLM es **multilingual-e5-small** (Q8_0, 384 dimensiones), servido por LM Studio en la red privada.
 
 Este embedder fue seleccionado tras una migración desde el embedder por defecto de AnythingLLM. Soporta multilingüismo (español e inglés), permitiendo consultas RAG en ambos idiomas con alta precisión semántica.
 
 ### Chat LLM
 
-El modelo usado por AnythingLLM para responder consultas RAG es `qwen2.5-14b-instruct`, servido por LM Studio en `192.168.1.50:1234`.
+El modelo usado por AnythingLLM para responder consultas RAG es `qwen2.5-14b-instruct`, servido por LM Studio en la red privada.
 
 ### Configuración de workspaces
 

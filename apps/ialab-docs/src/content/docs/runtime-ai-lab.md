@@ -27,14 +27,14 @@ Arquitectura clave (separación explícita):
 
 # Componentes principales
 
-| Componente | Puerto | Función |
-|---|---:|---|
-| `openai_gateway.py` (ailab-gateway) | 8008 | Entry point OpenAI-compatible: inyección de contexto, routing, perfiles, streaming relay, sanitización |
-| `router_api.py` (ailab-router) | 8083 | API interna (status/perfiles/replay). No es entrypoint de chat en producción |
-| `live_api.py` (ailab-live-api) | 8084 | Estado vivo, embeddings y endpoints internos |
-| LM Studio (RX9070) | 1234 | Inferencia de modelos activos |
-| Prometheus / Grafana | 9090 / 3000 | Autoridad de métricas + visualización |
-| GitNexus | 4747 | Cognición estructural (codebase truth), solo lectura |
+| Componente | Función |
+|---:|---|
+| `openai_gateway.py` (ailab-gateway) | Entry point OpenAI-compatible: inyección de contexto, routing, perfiles, streaming relay, sanitización |
+| `router_api.py` (ailab-router) | API interna (status/perfiles/replay). No es entrypoint de chat en producción |
+| `live_api.py` (ailab-live-api) | Estado vivo, embeddings y endpoints internos |
+| LM Studio | Inferencia de modelos activos |
+| Prometheus / Grafana | Autoridad de métricas + visualización |
+| GitNexus | Cognición estructural (codebase truth), solo lectura |
 
 ---
 
@@ -42,10 +42,10 @@ Arquitectura clave (separación explícita):
 
 ```mermaid
 flowchart TD
-  U[Usuario / Cliente] --> G[Gateway :8008\nOpenAI-compatible]
+  U[Usuario / Cliente] --> G[Gateway\nOpenAI-compatible]
   G --> R[Route family + reasons\n(det.)]
   R --> P[Apply profile\n(model/tokens/temp/tools/memory)]
-  P --> LM[LM Studio :1234\nRX9070]
+  P --> LM[LM Studio\nInferencia]
   LM --> G
   G --> U
 
