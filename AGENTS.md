@@ -1201,13 +1201,17 @@ Deliver y documentar Hermes Enterprise Core completo: SOUL, Capability, Operator
 - **HERMES-E06-DYNAMIC-GOVERNANCE**: Sistema completo ADR-006. 4 modos (NORMAL/ELEVATED/DEGRADED/LOCKDOWN), `GovernanceResolver` con 6 señales trigger (slo_state, degradation, emergency, VRAM, GPU, timeout), anti-flapping 30s, transition rules con stabilization periods, capability-governance matrix (6 caps × 4 modos), validación cruzada, integración en status JSON. Commit `beca850`, tag `CP-E06-DYNAMIC-GOVERNANCE-STABLE`.
 - **CP-HERMES-ENTERPRISE-CORE-01**: Checkpoint formal de cierre del Core. 113 tests PASS, 6 componentes completados. Commit `c80781f`, tag `CP-HERMES-ENTERPRISE-CORE-01`.
 - **HERMES-E07-ENTERPRISE-RUNTIME-STATUS-ENDPOINT**: `GET /hermes/status` en puerto `:8095`. Response JSON con 14 bloques: service, version, build, git, enterprise, soul, capabilities, operators, hooks, mcp, governance, architecture (CORE/E08/READY/compatibility), tests, status. HTTP server standalone `runtime/hermes/endpoint.py`. 72 tests nuevos. Commit `df84882`, tag `CP-E07-ENTERPRISE-RUNTIME-STATUS-ENDPOINT-STABLE`.
-- **HERMES-DOCS-ASTRO-ENTERPRISE-UPDATE-01**: 10 páginas de documentación Astro en `apps/ialab-docs/src/content/docs/hermes/` (Overview, Architecture, SOUL, Capability Registry, Operator Registry, Hook Registry, MCP Registry, Dynamic Governance, Status Endpoint, Roadmap). Sidebar actualizado en `astro.config.mjs`. Build Astro exitoso (275 págs, 0 errores). Commit `(pending)`, tag `CP-HERMES-DOCS-ASTRO-ENTERPRISE-01`.
+- **HERMES-DOCS-ASTRO-ENTERPRISE-UPDATE-01**: 10 páginas de documentación Astro en `apps/ialab-docs/src/content/docs/hermes/` (Overview, Architecture, SOUL, Capability Registry, Operator Registry, Hook Registry, MCP Registry, Dynamic Governance, Status Endpoint, Roadmap). Sidebar actualizado en `astro.config.mjs`. Build Astro exitoso (275 págs, 0 errores). Commit `d92cc92`, tag `CP-HERMES-DOCS-ASTRO-ENTERPRISE-01`.
+- **ANYTHINGLLM-ENTERPRISE-01-WORKSPACE-DESIGN**: Diseño completo de 10 workspaces, política global de respuesta, configuración recomendada y orden de carga (3 fases A/B/C). Reporte `reports/ANYTHINGLLM-ENTERPRISE-01-WORKSPACE-DESIGN.md`.
+- **ANYTHINGLLM-ENTERPRISE-02-PROVIDER-CHECK**: Validación de providers. LM Studio `.50:1234` OK (`qwen2.5-14b-instruct`+`nomic-embed-text-v1.5`). AnythingLLM en `127.0.0.1:3001` (NAS-N5 .200), API key funcional. Reporte `reports/ANYTHINGLLM-ENTERPRISE-02-PROVIDER-CHECK.md`. **ACTUALIZADO:** Mapa de hosts corregido — AnythingLLM en .50, Grafana en .40.
+- **ANYTHINGLLM-LAN-ENABLE-01**: Análisis de bind address AnythingLLM. `bootHTTP()` usa `app.listen(port)` → 0.0.0.0 por defecto. Firewall de Windows causa "Connection refused". Reporte `reports/ANYTHINGLLM-LAN-ENABLE-01.md`.
+- **ANYTHINGLLM-ENTERPRISE-03-WORKSPACE-CREATE**: 10 workspaces Enterprise creados vía API REST (`POST /api/v1/workspace/new`) desde NAS-N5 a `.50:3001` (LAN). System prompts, similarityThreshold, topN, temperature configurados. Cero documentos, cero indexación. ✅ PASS. Reporte `reports/ANYTHINGLLM-ENTERPRISE-03-WORKSPACE-CREATE.md`.
 
 ### In Progress
-- (none)
+- **ANYTHINGLLM-ENTERPRISE-04-DOCUMENT-IMPORT-FOUNDATION**: Cargar documentación canónica (Nivel 1: Hermes Enterprise + ADRs) en los workspaces.
 
 ### Blocked
-- (none)
+- (ninguno)
 
 ## Key Decisions
 - Status endpoint (`:8095`) es capa HTTP pura que reutiliza `runtime.hermes.status` como única fuente de verdad — sin lógica propia
@@ -1217,16 +1221,17 @@ Deliver y documentar Hermes Enterprise Core completo: SOUL, Capability, Operator
 - MCP servers `prometheus` y `marketplace-mcp` declarados como `planned` sin tools activas
 
 ## Next Steps
-1. **HERMES-E08-HOOK-INTEGRATION**: Activar primer lifecycle hook real
-2. **HERMES-E09-GOVERNANCE-ENFORCEMENT**: Conectar resolver a runtime para bloqueo activo
-3. AnythingLLM reindex con documentación Astro Hermes Enterprise
+1. **ANYTHINGLLM-ENTERPRISE-04-DOCUMENT-IMPORT-FOUNDATION**: Cargar documentación canónica (Nivel 1: Hermes Enterprise + ADRs)
+2. **HERMES-E08-HOOK-INTEGRATION**: Activar primer lifecycle hook real
+3. **HERMES-E09-GOVERNANCE-ENFORCEMENT**: Conectar resolver a runtime para bloqueo activo
 
 ## Critical Context
-- HEAD: `df84882` (origin/main). Tags: 12 tags CP-Hermes sincronizados (E01A→E07 + Foundation-01 + Core-01 + Docs-01).
+- HEAD: `d92cc92` (origin/main). Tags: 13 tags CP-Hermes sincronizados (E01A→E07 + Foundation-01 + Core-01 + Docs-01).
 - Tests: **185 PASS** (27 loader + 24 capability + 17 operator + 45 governance + 72 enterprise status).
 - Status endpoint vivo: `GET /hermes/status → :8095`. Enforcement_active=false, governance=NORMAL.
 - Architecture actual: `enterprise_phase: "CORE", next_phase: "E08", readiness: "READY"`.
 - Build Astro: 275 páginas, 0 errores, sidebar Hermes Enterprise visible.
 - Documentación oficial: `apps/ialab-docs/src/content/docs/hermes/` (10 páginas).
 - ADRs originales: `docs/hermes/` (ADR-001 a ADR-006).
+- AnythingLLM: `127.0.0.1:3001` (NAS-N5 .200), API key `YHNYABM-TVVM8Y3-HKHFD2S-SZVZVH2`, LLM provider no configurado. LM Studio `.50:1234` UP con `qwen2.5-14b-instruct` + `nomic-embed-text-v1.5`. **Nota:** `192.168.1.30:3001` es Grafana v12.0.2, NO AnythingLLM (error de documentación previo).
 
