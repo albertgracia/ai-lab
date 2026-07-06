@@ -1,0 +1,410 @@
+---
+import Layout from "../../layouts/Layout.astro";
+
+const milestones = [
+  {
+    date: "2026-07-06", year: 2026, month: "Julio",
+    entries: [
+      { tag: "CP-AI-LAB-ECOSYSTEM-STATUS-01", title: "Estado del Ecosistema", type: "Documentation", status: "PASS", summary: "Mapa visual del AI-LAB con 11 componentes detallados y relaciones entre ellos.", reports: ["reports/AI-LAB-ECOSYSTEM-STATUS-01.md"] },
+      { tag: "CP-ASTRO-DOCUMENT-COMMAND-CENTER-01", title: "Centro de Mando Documental", type: "Documentation", status: "PASS", summary: "Portal documental ejecutivo: 10 secciones de estado, checkpoints, proyectos, roadmap y modelos.", reports: ["reports/ASTRO-DOCUMENT-COMMAND-CENTER-01.md"] },
+      { tag: "CP-ASTRO-VALIDATION-RULE-01", title: "Regla de Validación Funcional Astro", type: "Documentation", status: "PASS", summary: "Gobernanza documental: build PASS + deploy PASS ya no es suficiente. Validación funcional obligatoria de superficies visibles.", reports: ["docs/governance/ASTRO-VALIDATION-RULE.md"] },
+      { tag: "CP-AI-LAB-ASTRO-PUBLIC-PRIVATE-ACTUALIZATION-02", title: "Actualización Superficies Público/Privado", type: "Astro", status: "PASS", summary: "Home, arquitectura y blog reescritos. 4 nuevos posts (018-021). IPs limpiadas de 7 posts legacy. Build público: 144 págs, privado: 281.", reports: ["reports/AI-LAB-ASTRO-PUBLIC-PRIVATE-ACTUALIZATION-02.md"] },
+      { tag: "CP-AI-LAB-ASTRO-CURRENT-STATE-REBUILD-01", title: "Reconstrucción Estado Documental", type: "Astro", status: "PASS", summary: "Reconstrucción completa del portal Astro con datos actualizados del ecosistema." },
+    ]
+  },
+  {
+    date: "2026-07-05", year: 2026, month: "Julio",
+    entries: [
+      { tag: "CP-ANYTHINGLLM-ENTERPRISE-04-COMPLETE", title: "Knowledge Base Enterprise", type: "AnythingLLM", status: "PASS", summary: "1304 vectores, 7 workspaces, embedder multilingual e5-small. RAG validado al 100%.", reports: ["reports/ANYTHINGLLM-ENTERPRISE-04-COMPLETE.md"] },
+      { tag: "CP-AI-LAB-ASTRO-DOCS-REFRESH-01", title: "Refresh Documental Masivo", type: "Astro", status: "PASS", summary: "Actualización masiva de documentación Astro: 277 páginas, 0 errores de build." },
+      { tag: "CP-ASTRO-PUBLIC-PRIVATE-SEPARATION-01", title: "Separación Público/Privado", type: "Astro", status: "PASS", summary: "Implementación de build filter público/privado. 64 paths privados en private-content-filter.json." },
+      { tag: "CP-AI-LAB-ASTRO-DOCS-REFRESH-01B", title: "Refresh Documental B", type: "Astro", status: "PASS", summary: "Segunda ronda de actualización documental Astro." },
+    ]
+  },
+  {
+    date: "2026-07-04", year: 2026, month: "Julio",
+    entries: [
+      { tag: "CP-HERMES-ENTERPRISE-CORE-01", title: "Hermes Enterprise Core Completado", type: "Hermes", status: "PASS", summary: "Core de governance declarativo finalizado. 6 componentes: SOUL, Capability, Operator, Hook, MCP, Dynamic Governance. 113 tests.", reports: ["reports/HERMES-ENTERPRISE-CORE-01.md"] },
+      { tag: "CP-E07-ENTERPRISE-RUNTIME-STATUS-ENDPOINT-STABLE", title: "Hermes Runtime Status Endpoint", type: "Hermes", status: "PASS", summary: "GET /hermes/status en :8095. 72 tests. Endpoint always-on con estado enterprise.", reports: ["reports/HERMES-E07-STATUS-ENDPOINT.md"] },
+      { tag: "CP-HERMES-DOCS-ASTRO-ENTERPRISE-01", title: "Documentación Hermes en Astro", type: "Documentation", status: "PASS", summary: "10 páginas Astro de documentación Hermes Enterprise. 275 págs totales, 0 errores." },
+      { tag: "CP-E06-DYNAMIC-GOVERNANCE-STABLE", title: "Governance Dinámico Hermes", type: "Hermes", status: "PASS", summary: "ADR-006 implementado. 4 modos de governance con GovernanceResolver, anti-flapping y capability-governance matrix.", reports: ["docs/adr/hermes-e06/"] },
+      { tag: "CP-E05-MCP-REGISTRY-SKELETON-STABLE", title: "MCP Registry Skeleton", type: "Hermes", status: "PASS", summary: "Registro de herramientas MCP para Hermes Enterprise." },
+      { tag: "CP-E04A-HOOK-REGISTRY-SKELETON-STABLE", title: "Hook Registry Skeleton", type: "Hermes", status: "PASS", summary: "Sistema de lifecycle hooks para Hermes Enterprise." },
+      { tag: "CP-E03A-OPERATOR-REGISTRY-SKELETON-STABLE", title: "Operator Registry Skeleton", type: "Hermes", status: "PASS", summary: "Registro de operadores para Hermes Enterprise." },
+      { tag: "CP-E02C-OPERATOR-REGISTRY-VALIDATOR-STABLE", title: "Operator Registry Validator", type: "Hermes", status: "PASS", summary: "12 validaciones profundas de operadores. 17 tests nuevos." },
+      { tag: "CP-E02B-CAPABILITY-REGISTRY-VALIDATOR-STABLE", title: "Capability Registry Validator", type: "Hermes", status: "PASS", summary: "Validador de capacidades para Hermes Enterprise." },
+      { tag: "CP-E02A-CAPABILITY-REGISTRY-SKELETON-STABLE", title: "Capability Registry Skeleton", type: "Hermes", status: "PASS", summary: "Registro de capacidades para Hermes Enterprise." },
+      { tag: "CP-E01C-SOUL-ENFORCEMENT-READONLY-LOADER-STABLE", title: "SOUL Enforcement Readonly Loader", type: "Hermes", status: "PASS", summary: "Cargador readonly del enforcement SOUL para Hermes." },
+      { tag: "CP-E01A-SOUL-ENTERPRISE-SKELETON-STABLE", title: "SOUL Enterprise Skeleton", type: "Hermes", status: "PASS", summary: "Esqueleto del sistema SOUL para Hermes Enterprise." },
+      { tag: "CP-HERMES-ENTERPRISE-FOUNDATION-01", title: "Hermes Enterprise Foundation", type: "Hermes", status: "PASS", summary: "Fundación del sistema Hermes Enterprise." },
+    ]
+  },
+  {
+    date: "2026-07-03", year: 2026, month: "Julio",
+    entries: [
+      { tag: "CP-GITNEXUS-FIRST-ACTIVATION-01", title: "GITNEXUS-FIRST Policy Activation", type: "GitNexus", status: "PASS", summary: "Política obligatoria de consulta GitNexus pre-cambio. Blast radius obligatorio antes de modificar runtime, gateway, router, scheduler y marketplace.", reports: ["reports/GITNEXUS-FIRST-ACTIVATION.md"] },
+      { tag: "CP-49A-POOL-ADMIN-API-READONLY-01", title: "Pool Admin API Readonly", type: "Runtime", status: "PASS", summary: "API de administración del pool de modelos en modo readonly." },
+    ]
+  },
+  {
+    date: "2026-07-02", year: 2026, month: "Julio",
+    entries: [
+      { tag: "CP-HERMES-OPERABILITY-TUNING-01", title: "Hermes Operability Tuning", type: "Hermes", status: "PASS", summary: "Ajuste de operabilidad para Hermes Enterprise." },
+      { tag: "CP-CAPABILITY-SCHEDULER-01", title: "Capability Scheduler", type: "Runtime", status: "PASS", summary: "Planificador basado en capacidades del runtime." },
+      { tag: "CP-INTELLIGENT-FALLBACK-ENGINE-01", title: "Intelligent Fallback Engine", type: "Runtime", status: "PASS", summary: "Motor de fallback inteligente para rutas de inferencia." },
+      { tag: "CP-AI-LAB-MULTI-NODE-ROUTING-01", title: "Multi-Node Routing", type: "Runtime", status: "PASS", summary: "Enrutamiento multi-nodo para inferencia distribuida." },
+    ]
+  },
+  {
+    date: "2026-07-01", year: 2026, month: "Julio",
+    entries: [
+      { tag: "CP-MULTIGPU-READINESS-01", title: "Multi-GPU Readiness Assessment", type: "Runtime", status: "PASS", summary: "Evaluación de madurez para scheduling Multi-GPU. 37/100 tests. Pre-requisitos identificados.", reports: ["reports/MULTIGPU-READINESS-01.md"] },
+      { tag: "CP-DYNAMIC-NODE-REGISTRY-01", title: "Dynamic Node Registry", type: "Infrastructure", status: "PASS", summary: "Registro dinámico de nodos para la infraestructura distribuida." },
+    ]
+  },
+  {
+    date: "2026-06-12", year: 2026, month: "Junio",
+    entries: [
+      { tag: "AI-LAB_BLOCK37_STABLE_01", title: "Block 37 Consolidation", type: "Runtime", status: "PASS", summary: "Consolidación del Bloque 37: Cognitive Health, Graph Analysis, Critical Path, Hotspots, Governance Drift." },
+    ]
+  },
+  {
+    date: "2026-06-11", year: 2026, month: "Junio",
+    entries: [
+      { tag: "CP-DOC-AUTOMATION-STABLE", title: "Documentation Automation", type: "Documentation", status: "PASS", summary: "Automatización del flujo de documentación en Astro." },
+    ]
+  },
+  {
+    date: "2026-05-28", year: 2026, month: "Mayo",
+    entries: [
+      { tag: "CP-MCP-SEMANTIC-GATEWAY-01-STABLE", title: "MCP Semantic Gateway", type: "MCP", status: "PASS", summary: "Gateway semántico para el protocolo MCP.", reports: ["reports/MCP-SEMANTIC-GATEWAY.md"] },
+      { tag: "CP-MCP-OPENCODE-WINDOWS-CONNECTION-01-STABLE", title: "MCP OpenCode Windows Connection", type: "MCP", status: "PASS", summary: "Conexión MCP entre OpenCode (Windows) y AI-LAB (LAN).", reports: ["reports/MCP-OPENCODE-WINDOWS-CONNECTION.md"] },
+      { tag: "CP-DOCS-AILAB-MCP-INFRASTRUCTURE-UPDATE-01-STABLE", title: "Documentación MCP Infrastructure", type: "Documentation", status: "PASS", summary: "Actualización de documentación de infraestructura MCP en Astro." },
+      { tag: "CP-DOCS-ASTRO-ARCHITECTURE-UPDATE-01-STABLE", title: "Actualización Arquitectura Astro", type: "Documentation", status: "PASS", summary: "Actualización de la documentación de arquitectura en Astro." },
+    ]
+  },
+  {
+    date: "2026-05-25", year: 2026, month: "Mayo",
+    entries: [
+      { tag: "CP-40A-POST-RELEASE-SLO-DRIFT-WATCH-01-STABLE", title: "Post-Release SLO Drift Watch", type: "Observabilidad", status: "PASS", summary: "Vigilancia de deriva SLO post-release. Monitoreo continuo de calidad de servicio." },
+      { tag: "CP-39E-RUNTIME-STABILIZATION-RELEASE-CLOSE-01-STABLE", title: "Release Close", type: "Runtime", status: "PASS", summary: "Cierre formal de la release de estabilización del runtime." },
+      { tag: "CP-39C-COGNITIVE-HEALTH-FOLLOWUP-01-STABLE", title: "Cognitive Health Followup", type: "Runtime", status: "PASS", summary: "Seguimiento de salud cognitiva post-implementación." },
+      { tag: "CP-39B-RUNTIME-OBSERVABILITY-ALERTS-01-STABLE", title: "Observability Alerts", type: "Observabilidad", status: "PASS", summary: "Alertas de observabilidad del runtime integradas en Prometheus." },
+      { tag: "CP-39A-OPENCODE-GATEWAY-CONTRACT-HARDENING-01-STABLE", title: "Gateway Contract Hardening", type: "Runtime", status: "PASS", summary: "Refuerzo de contratos del gateway OpenCode." },
+      { tag: "CP-38D-RUNTIME-STABILITY-SNAPSHOT-01-STABLE", title: "Runtime Stability Snapshot", type: "Runtime", status: "PASS", summary: "Snapshot de estabilidad del runtime." },
+      { tag: "CP-38C-GITNEXUS-NAPI-ERROR-TRIAGE-01-STABLE", title: "GitNexus NAPI Error Triage", type: "GitNexus", status: "PASS", summary: "Triage de errores NAPI en GitNexus." },
+      { tag: "CP-38B-GATEWAY-SHUTDOWN-GRACEFUL-01-STABLE", title: "Gateway Shutdown Graceful", type: "Runtime", status: "PASS", summary: "Apagado graceful del gateway." },
+      { tag: "CP-38A-RUNTIME-DEEP-AUDIT-01-STABLE", title: "Runtime Deep Audit", type: "Runtime", status: "PASS", summary: "Auditoría profunda del runtime." },
+    ]
+  },
+  {
+    date: "2026-05-19", year: 2026, month: "Mayo",
+    entries: [
+      { tag: "CP-27-RUNTIME-STABILIZATION", title: "Runtime Stabilization", type: "Runtime", status: "PASS", summary: "Estabilización completa del runtime. CP que cierra el bloque de estabilización 27.", reports: ["reports/runtime-stabilization.md"] },
+      { tag: "CP-26.2-UX-COGNITIVE-QUALITY", title: "UX & Cognitive Quality", type: "Runtime", status: "PASS", summary: "Mejora de calidad UX y cognitiva del runtime." },
+      { tag: "CP-26.1.2-REPORT-ROUTING-FIX", title: "Report Routing Fix", type: "Runtime", status: "PASS", summary: "Corrección de enrutamiento de reports (heavy/light)." },
+      { tag: "CP-26.1.1-COMPLETION-FINALIZATION-FIX", title: "Completion Finalization", type: "Runtime", status: "PASS", summary: "Finalización correcta de completions." },
+      { tag: "CP-26.1-OBSERVABILITY-v2", title: "Observability v2", type: "Observabilidad", status: "PASS", summary: "Segunda generación de observabilidad del runtime." },
+      { tag: "CP-26-OPENWEBUI-PRODUCTION", title: "OpenWebUI Production Profile", type: "Runtime", status: "PASS", summary: "Perfil de producción para OpenWebUI." },
+      { tag: "CP-25-OPENCODE-PRODUCTION", title: "OpenCode Production Profile", type: "Runtime", status: "PASS", summary: "Perfil de producción para OpenCode." },
+      { tag: "CP-24-ANALYTICS", title: "Cognitive Traceability & Audit", type: "Observabilidad", status: "PASS", summary: "Traza cognitiva y log de auditoría." },
+      { tag: "CP-23B-RECALL-STABILITY", title: "Recall Stability", type: "Runtime", status: "PASS", summary: "Estabilidad del sistema de recall de memoria." },
+      { tag: "CP-23B-QUALITY-GATE", title: "Memory Quality Gate", type: "Runtime", status: "PASS", summary: "Quality gate + contamination guard para memoria." },
+      { tag: "CP-23A-MODEL-ALIAS-FIX", title: "Model Alias Fix", type: "Runtime", status: "PASS", summary: "Corrección de alias de modelos." },
+      { tag: "CP-23A-MEMORY-SAFE", title: "Memory Safe Policies", type: "Runtime", status: "PASS", summary: "Políticas seguras de memoria (3 policies: minimal/light/full)." },
+      { tag: "CP-23A-FOUNDATION", title: "Memory Architecture Foundation", type: "Runtime", status: "PASS", summary: "Arquitectura de memoria para AI-LAB." },
+      { tag: "CP-22B-STABLE", title: "Tool Runtime Policies", type: "Runtime", status: "PASS", summary: "Tool runtime policies (3 modos) + bash sanitizer + confirmation gate." },
+      { tag: "CP-21B-STABLE", title: "De-Hardcoding Progresivo", type: "Runtime", status: "PASS", summary: "26 hardcodes eliminados del runtime. Perfiles cognitivos declarativos en runtime/profiles/.", reports: ["reports/de-hardcoding-21B.md"] },
+    ]
+  },
+  {
+    date: "2026-05-16", year: 2026, month: "Mayo",
+    entries: [
+      { tag: "phase12-supervised-self-optimization", title: "Supervised Self-Optimization", type: "Runtime", status: "PASS", summary: "Auto-optimización supervisada del runtime." },
+    ]
+  },
+  {
+    date: "2026-05-15", year: 2026, month: "Mayo",
+    entries: [
+      { tag: "phase8-cognitive-observability-stable", title: "Cognitive Observability", type: "Observabilidad", status: "PASS", summary: "Observabilidad cognitiva del sistema." },
+    ]
+  },
+  {
+    date: "2026-05-13", year: 2026, month: "Mayo",
+    entries: [
+      { tag: "phase-6-distributed-cognition-v1", title: "Distributed Cognition v1", type: "Runtime", status: "PASS", summary: "Cognición distribuida entre nodos del runtime." },
+    ]
+  },
+  {
+    date: "2026-05-12", year: 2026, month: "Mayo",
+    entries: [
+      { tag: "phase-6-weighted-intent-routing", title: "Weighted Intent Routing", type: "Runtime", status: "PASS", summary: "Enrutamiento ponderado por intención." },
+      { tag: "phase-5-cognitive-agent-router", title: "Cognitive Agent Router", type: "Runtime", status: "PASS", summary: "Router cognitivo de agentes." },
+    ]
+  },
+  {
+    date: "2026-05-10", year: 2026, month: "Mayo",
+    entries: [
+      { tag: "phase-4-opencode-router-live", title: "OpenCode Router Live", type: "Runtime", status: "PASS", summary: "Router OpenCode en producción." },
+    ]
+  },
+  {
+    date: "2026-05-09", year: 2026, month: "Mayo",
+    entries: [
+      { tag: "phase-3-grounded-opencode-runtime", title: "Grounded OpenCode Runtime", type: "Runtime", status: "PASS", summary: "Runtime grounded de OpenCode." },
+      { tag: "phase-2-stable", title: "Fase 2 — GPU Telemetry & Estabilización", type: "Runtime", status: "PASS", summary: "Telemetría GPU y estabilización del runtime." },
+      { tag: "phase-2-gpu-telemetry", title: "GPU Telemetry", type: "Observabilidad", status: "PASS", summary: "Telemetría de GPU habilitada." },
+      { tag: "phase-1-stable", title: "Primer Checkpoint del AI-LAB", type: "Runtime", status: "PASS", summary: "Primer checkpoint del proyecto AI-LAB. Fundación del runtime." },
+    ]
+  },
+];
+
+const milestonesByYear = {};
+for (const m of milestones) {
+  if (!milestonesByYear[m.year]) milestonesByYear[m.year] = [];
+  milestonesByYear[m.year].push(m);
+}
+const years = Object.keys(milestonesByYear).sort((a, b) => b - a);
+
+const typeColors = {
+  Runtime: "text-green-400",
+  Observabilidad: "text-yellow-400",
+  Documentation: "text-blue-400",
+  Hermes: "text-purple-400",
+  AnythingLLM: "text-orange-400",
+  Astro: "text-cyan-400",
+  GitNexus: "text-rose-400",
+  Marketplace: "text-pink-400",
+  Infrastructure: "text-zinc-400",
+  MCP: "text-teal-400",
+};
+
+const phaseColors = {
+  Runtime: "bg-green-500/20 border-green-500/30",
+  Observabilidad: "bg-yellow-500/20 border-yellow-500/30",
+  Documentation: "bg-blue-500/20 border-blue-500/30",
+  Hermes: "bg-purple-500/20 border-purple-500/30",
+  AnythingLLM: "bg-orange-500/20 border-orange-500/30",
+  Astro: "bg-cyan-500/20 border-cyan-500/30",
+  GitNexus: "bg-rose-500/20 border-rose-500/30",
+  Marketplace: "bg-pink-500/20 border-pink-500/30",
+  Infrastructure: "bg-zinc-500/20 border-zinc-500/30",
+  MCP: "bg-teal-500/20 border-teal-500/30",
+};
+
+const grandesHitos = [
+  { name: "Hermes Enterprise Core", checkpoint: "CP-HERMES-ENTERPRISE-CORE-01", status: "PASS", summary: "Core de governance declarativo completado. 6 componentes, 185 tests, endpoint always-on." },
+  { name: "AnythingLLM Enterprise", checkpoint: "CP-ANYTHINGLLM-ENTERPRISE-04-COMPLETE", status: "PASS", summary: "Knowledge Base Enterprise: 1304 vectores, 7 workspaces, RAG validado 100%." },
+  { name: "Marketplace Digital Twin", checkpoint: "CP-AI-LAB-MULTI-NODE-ROUTING-01", status: "PASS", summary: "Rioja Marketplace replicado como Digital Twin observacional. Go + Fiber v2, Next.js 15." },
+  { name: "GitNexus Code Intelligence", checkpoint: "CP-GITNEXUS-FIRST-ACTIVATION-01", status: "PASS", summary: "Cognición estructural del codebase: 20K+ símbolos, 32K+ relaciones, 300 execution flows." },
+  { name: "Centro de Mando Documental", checkpoint: "CP-ASTRO-DOCUMENT-COMMAND-CENTER-01", status: "PASS", summary: "Portal documental ejecutivo con 10 secciones de estado del ecosistema." },
+  { name: "Estado del Ecosistema", checkpoint: "CP-AI-LAB-ECOSYSTEM-STATUS-01", status: "PASS", summary: "Mapa visual del ecosistema AI-LAB con 11 componentes y sus relaciones." },
+  { name: "Separación Público / Privado", checkpoint: "CP-ASTRO-PUBLIC-PRIVATE-SEPARATION-01", status: "PASS", summary: "Build filter público/privado con 64 paths privados y redirects edge." },
+  { name: "Runtime Stabilization", checkpoint: "CP-27-RUNTIME-STABILIZATION", status: "PASS", summary: "Estabilización completa del runtime AI-LAB con SLO enforcement y adaptive concurrency." },
+];
+
+const fases = [
+  { num: 1, name: "AI-LAB Runtime", description: "Gateway, router, LM Studio, SLO enforcement, adaptive concurrency, 3 modelos activos" },
+  { num: 2, name: "Observabilidad", description: "Prometheus, Grafana, Loki, 100+ métricas ailab_*, 19 alertas, 15 dashboards" },
+  { num: 3, name: "Marketplace", description: "Digital Twin observacional con Go + Fiber v2 y Next.js 15" },
+  { num: 4, name: "Hermes", description: "Capa de governance declarativo: SOUL, Capability, Operator, Hook, MCP, Dynamic Governance" },
+  { num: 5, name: "AnythingLLM", description: "Knowledge Base Enterprise: 1304 vectores, 7 workspaces, embedder multilingual" },
+  { num: 6, name: "Centro de Mando", description: "Portal documental ejecutivo con estado completo del ecosistema" },
+  { num: 7, name: "Estado del Ecosistema", description: "Mapa visual documental de los 11 componentes del AI-LAB" },
+  { num: 8, name: "Hermes E08 — Lifecycle Hooks", description: "Primera integración real de lifecycle hooks con el runtime" },
+  { num: 9, name: "Future Multi-GPU", description: "Scheduling multi-GPU post-node reactivation" },
+];
+---
+
+<Layout title="Historia del Laboratorio · AI-LAB">
+
+<section class="space-y-14">
+
+  <!-- Header -->
+  <header class="rounded-3xl border border-cyan-500/30 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black p-10 shadow-2xl shadow-cyan-950/20">
+    <p class="text-sm uppercase tracking-[0.35em] text-cyan-400">AI-LAB · Historia</p>
+    <h1 class="mt-5 text-5xl font-black text-white md:text-6xl">Historia del Laboratorio</h1>
+    <p class="mt-4 max-w-4xl text-lg leading-8 text-zinc-300">
+      Cronología de la evolución del AI-LAB. No es un changelog ni un log de Git.
+      Es la historia técnica documentada: cómo empezó, qué grandes fases se completaron,
+      qué arquitectura fue apareciendo y qué proyectos nacieron.
+    </p>
+  </header>
+
+  <!-- Evolución del AI-LAB -->
+  <section class="rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
+    <h2 class="text-3xl font-black text-white">Evolución del AI-LAB</h2>
+    <p class="mt-2 text-zinc-400">Línea cronológica simplificada de la evolución del ecosistema.</p>
+
+    <div class="mt-8 relative">
+      <div class="absolute left-8 top-0 bottom-0 w-0.5 bg-zinc-700"></div>
+
+      <div class="space-y-0 relative">
+        {
+          fases.map((f, i) => (
+            <div class="flex items-start gap-6 relative">
+              <div class="flex flex-col items-center z-10">
+                <div class="w-16 h-16 rounded-full flex items-center justify-center text-lg font-bold border-2"
+                  class:list={[f.num <= 7 ? "bg-green-500/20 border-green-500 text-green-400" : f.num === 8 ? "bg-yellow-500/20 border-yellow-500 text-yellow-400" : "bg-zinc-500/20 border-zinc-500 text-zinc-400"]}>
+                  {f.num}
+                </div>
+                {i < fases.length - 1 && <div class="w-0.5 h-8 bg-zinc-700"></div>}
+              </div>
+              <div class="flex-1 pb-8">
+                <p class="text-lg font-bold text-white">{f.name}</p>
+                <p class="text-sm text-zinc-400">{f.description}</p>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Grandes Hitos -->
+  <section class="rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
+    <h2 class="text-3xl font-black text-white">Grandes Hitos</h2>
+    <p class="mt-2 text-zinc-400">Los hitos más importantes que marcaron la evolución del AI-LAB.</p>
+
+    <div class="mt-6 grid gap-4 md:grid-cols-2">
+      {
+        grandesHitos.map((h) => (
+          <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5 hover:border-cyan-500/30 transition">
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-sm font-semibold text-cyan-400">{h.name}</p>
+              <span class="text-xs font-bold text-green-400">{h.status}</span>
+            </div>
+            <p class="font-mono text-xs text-zinc-500">{h.checkpoint}</p>
+            <p class="mt-2 text-sm text-zinc-400">{h.summary}</p>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- Timeline completa -->
+  <section class="rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
+    <h2 class="text-3xl font-black text-white">Línea Temporal</h2>
+    <p class="mt-2 text-zinc-400">Todos los checkpoints del AI-LAB organizados por año y mes.</p>
+
+    <div class="mt-8 space-y-12">
+      {
+        years.map((year) => (
+          <div>
+            <h3 class="text-4xl font-black text-cyan-400 mb-2">{year}</h3>
+            <div class="border-t border-zinc-700 mb-8"></div>
+
+            {
+              milestonesByYear[year].map((monthGroup) => (
+                <div class="mb-10">
+                  <h4 class="text-sm uppercase tracking-[0.25em] text-zinc-500 mb-4">{monthGroup.month}</h4>
+
+                  <div class="relative ml-4">
+                    <div class="absolute left-[7px] top-3 bottom-3 w-0.5 bg-zinc-800"></div>
+
+                    <div class="space-y-6">
+                      {
+                        monthGroup.entries.map((entry) => (
+                          <div class="relative pl-8">
+                            <div class="absolute left-0 top-[10px] w-3.5 h-3.5 rounded-full border-2"
+                              class:list={[entry.status === "PASS" ? "bg-green-900 border-green-400" : "bg-yellow-900 border-yellow-400"]}>
+                            </div>
+
+                            <div class="rounded-xl border p-5" class:list={[phaseColors[entry.type] || "border-zinc-800 bg-zinc-950"]}>
+                              <div class="flex flex-wrap items-start justify-between gap-2 mb-2">
+                                <div>
+                                  <span class="font-mono text-xs" class:list={[typeColors[entry.type] || "text-zinc-400"]}>
+                                    {entry.tag}
+                                  </span>
+                                  <h5 class="text-lg font-bold text-white mt-0.5">{entry.title}</h5>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                  <span class={`text-xs font-bold px-2 py-0.5 rounded ${entry.status === "PASS" ? "text-green-400 bg-green-500/10" : "text-yellow-400 bg-yellow-500/10"}`}>
+                                    {entry.status}
+                                  </span>
+                                  <span class="text-xs" class:list={[typeColors[entry.type] || "text-zinc-500"]}>
+                                    {entry.type}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <p class="text-sm text-zinc-400">{entry.summary}</p>
+
+                              {
+                                entry.reports && entry.reports.length > 0 && (
+                                  <div class="mt-3 flex gap-3">
+                                    {entry.reports.map((r) => (
+                                      <a href={`/${r}`} class="text-xs text-cyan-400 hover:text-cyan-300 underline underline-offset-2">
+                                        {r.replace(/^reports\//, "").replace(/\.md$/, "")}
+                                      </a>
+                                    ))}
+                                    <a href={`https://github.com/albertgracia/ai-lab/releases/tag/${entry.tag}`} class="text-xs text-zinc-500 hover:text-zinc-300 underline underline-offset-2">
+                                      tag
+                                    </a>
+                                  </div>
+                                )
+                              }
+
+                              {
+                                !entry.reports && (
+                                  <div class="mt-3">
+                                    <a href={`https://github.com/albertgracia/ai-lab/releases/tag/${entry.tag}`} class="text-xs text-zinc-500 hover:text-zinc-300 underline underline-offset-2">
+                                      ver tag →
+                                    </a>
+                                  </div>
+                                )
+                              }
+                            </div>
+                          </div>
+                        ))
+                      }
+                    </div>
+                  </div>
+                </div>
+              ))
+            }
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- Fases -->
+  <section class="rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
+    <h2 class="text-3xl font-black text-white">Arquitectura por Fases</h2>
+    <p class="mt-2 text-zinc-400">Cómo evolucionó la arquitectura del AI-LAB fase por fase.</p>
+
+    <div class="mt-8 space-y-0">
+      {
+        fases.map((f, i) => (
+          <div class="flex items-start gap-6">
+            <div class="flex flex-col items-center">
+              <div class="w-12 h-12 rounded-full flex items-center justify-center font-bold border-2 shrink-0"
+                class:list={[f.num <= 7 ? "bg-green-500/20 border-green-500 text-green-400" : f.num === 8 ? "bg-yellow-500/20 border-yellow-500 text-yellow-400" : "bg-zinc-500/20 border-zinc-500 text-zinc-400"]}>
+                {f.num}
+              </div>
+              {i < fases.length - 1 && <div class="w-0.5 h-10 bg-zinc-700"></div>}
+            </div>
+            <div class="flex-1 pb-6">
+              <p class="font-bold text-white">{f.name}</p>
+              <p class="text-sm text-zinc-400">{f.description}</p>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- Navigation -->
+  <div class="flex justify-center gap-4">
+    <a href="/status" class="rounded-xl border border-zinc-700 px-6 py-3 font-bold text-zinc-200 hover:border-cyan-400 hover:text-cyan-400">
+      ← Centro de Mando
+    </a>
+    <a href="/architecture" class="rounded-xl border border-zinc-700 px-6 py-3 font-bold text-zinc-200 hover:border-cyan-400 hover:text-cyan-400">
+      Arquitectura →
+    </a>
+  </div>
+
+</section>
+
+</Layout>
