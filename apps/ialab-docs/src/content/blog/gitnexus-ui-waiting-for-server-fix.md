@@ -15,10 +15,10 @@ Este es un fallo típico de UIs locales: el backend está vivo, pero el frontend
 
 ## Síntoma
 
-- Abres `http://192.168.1.30:4747` y ves **“Waiting for server to start”**.
+- Abres `http://control-plane host:4747` y ves **“Waiting for server to start”**.
 - Pero:
-  - `http://192.168.1.30:4747/api/health` → `{"status":"ok"}`
-- `http://192.168.1.30:4747/api` puede responder `Cannot GET /api` (normal).
+  - `http://control-plane host:4747/api/health` → `{"status":"ok"}`
+- `http://control-plane host:4747/api` puede responder `Cannot GET /api` (normal).
 - `/socket.io/` no es el endpoint relevante para el bootstrap.
 
 ## Root Cause
@@ -28,14 +28,14 @@ El frontend de GitNexus resuelve el backend URL con esta regla:
 - `localStorage['gitnexus-backend-url']`
 - si no existe, default: `http://localhost:4747`
 
-Desde un PC remoto, `localhost` apunta al PC del navegador. Por tanto, la UI intenta llegar a `http://localhost:4747/api/health` y se queda esperando, aunque el backend real esté en `192.168.1.30`.
+Desde un PC remoto, `localhost` apunta al PC del navegador. Por tanto, la UI intenta llegar a `http://localhost:4747/api/health` y se queda esperando, aunque el backend real esté en `control-plane host`.
 
 ## Fix Recomendado
 
 En el navegador remoto:
 
 ```js
-localStorage.setItem('gitnexus-backend-url', 'http://192.168.1.30:4747')
+localStorage.setItem('gitnexus-backend-url', 'http://control-plane host:4747')
 location.reload()
 ```
 
@@ -44,14 +44,14 @@ location.reload()
 DevTools → Network (filtrar `health`):
 
 - Antes: `http://localhost:4747/api/health` (fail)
-- Después: `http://192.168.1.30:4747/api/health` (200 OK)
+- Después: `http://control-plane host:4747/api/health` (200 OK)
 
 ## Workaround Alternativo (SSH Tunnel)
 
 Si quieres mantener el default `localhost:4747`:
 
 ```bash
-ssh -L 4747:127.0.0.1:4747 albert@192.168.1.30
+ssh -L 4747:127.0.0.1:4747 albert@control-plane host
 ```
 
 Y abrir `http://127.0.0.1:4747`.
@@ -60,7 +60,7 @@ Y abrir `http://127.0.0.1:4747`.
 
 - `npx gitnexus@latest serve --host 0.0.0.0 --port 4747`
 - `:4747` escuchando en `0.0.0.0`
-- `/api/health` OK por `127.0.0.1` y por `192.168.1.30`
+- `/api/health` OK por `127.0.0.1` y por `control-plane host`
 
 ## Seguridad / límites
 

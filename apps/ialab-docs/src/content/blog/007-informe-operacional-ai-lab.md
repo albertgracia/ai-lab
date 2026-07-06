@@ -1,7 +1,7 @@
 ---
 title: "Informe Operacional Exhaustivo — AI-LAB"
 date: "2026-05-20"
-summary: "Reporte NOC completo del estado actual de AI-LAB en 192.168.1.30: routing cognitivo, modelos, GPU, SLO, planner agentic, servicios, observabilidad, riesgos y roadmap."
+summary: "Reporte NOC completo del estado actual de AI-LAB en control-plane host: routing cognitivo, modelos, GPU, SLO, planner agentic, servicios, observabilidad, riesgos y roadmap."
 description: "Informe operacional detallado del runtime AI-LAB en checkpoint CP-29.4.2-REPORT-PRESENTATION-STABLE. Incluye analisis de 17 areas: desde identidad del runtime hasta recomendaciones estrategicas, con datos observados de 306 requests benchmark, 0% errores y proteccion SLO activa."
 tags:
   - ai-lab
@@ -22,7 +22,7 @@ tags:
 
 ## 1. Executive Summary
 
-El entorno AI-LAB desplegado en 192.168.1.30 se encuentra actualmente operativo como plataforma de inferencia IA, routing cognitivo y observabilidad avanzada para workloads LLM locales.
+El entorno AI-LAB desplegado en control-plane host se encuentra actualmente operativo como plataforma de inferencia IA, routing cognitivo y observabilidad avanzada para workloads LLM locales.
 
 La infraestructura ha evolucionado desde un gateway OpenAI-compatible basico hacia un runtime cognitivo multi-route con routing adaptativo por perfil, proteccion SLO dinamica, observabilidad Prometheus/Grafana, clasificacion cognitiva, planner agentic skeleton, enforcement runtime y report grounding contextual.
 
@@ -39,7 +39,7 @@ Durante las ultimas fases (29.3.x, 29.4.x, 28.1) se estabilizo el runtime con me
 
 | Campo | Valor |
 |-------|-------|
-| Host principal | 192.168.1.30 |
+| Host principal | control-plane host |
 | Hostname logico | ubuntu-ialab |
 | Runtime | AI-LAB Cognitive Runtime |
 | Estado | ONLINE |
@@ -103,8 +103,8 @@ Model Routing Layer
 
 | Servicio | URL | Estado |
 |----------|-----|--------|
-| Prometheus | 192.168.1.40:9090 | ✅ |
-| Grafana | 192.168.1.40:3000 | ✅ |
+| Prometheus | observability host:9090 | ✅ |
+| Grafana | observability host:3000 | ✅ |
 
 ## 6. Routing Cognitivo
 
@@ -134,8 +134,8 @@ Metricas de routing validadas en burn-in:
 
 ## 8. Infraestructura GPU
 
-**Nodo activo:** RX9070 (192.168.1.50) — 16GB VRAM — ONLINE
-**Nodo inventario:** RX7900XT (192.168.1.60) — 20GB VRAM — OFFLINE (futuro backend)
+**Nodo activo:** RX9070 (inference GPU node) — 16GB VRAM — ONLINE
+**Nodo inventario:** RX7900XT (inventory node) — 20GB VRAM — OFFLINE (futuro backend)
 
 RX7900XT no es un fallo critico. No afecta la estabilidad del runtime.
 

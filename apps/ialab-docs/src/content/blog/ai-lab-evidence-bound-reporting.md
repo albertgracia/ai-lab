@@ -91,7 +91,7 @@ No usamos NLP ni regex complejos. Usamos 6 listas explícitas de términos:
 | SECURITY_TOOLS | selinux, apparmor, falco | Herramientas no instaladas |
 | EXTERNAL_PLATFORMS | aws, gcp, azure | Plataformas cloud no utilizadas |
 | UNKNOWN_MODELS | patrones "v1", "2.0" | Modelos no observados en runtime |
-| UNKNOWN_HOSTS | IPs fuera de 192.168.1.x | Hosts que no están en topología |
+| UNKNOWN_HOSTS | IPs fuera de internal network | Hosts que no están en topología |
 
 ## Por qué esto importa para operaciones reales
 

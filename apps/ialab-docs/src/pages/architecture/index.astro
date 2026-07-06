@@ -1,82 +1,164 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 
-let layers = [];
-let generatedAt = null;
-
-try {
-  const response = await fetch(new URL("/api/architecture.json", Astro.url));
-  const data = await response.json();
-  layers = Array.isArray(data.layers) ? data.layers : [];
-  generatedAt = data.generated_at;
-} catch (error) {
-  console.error("Architecture API unavailable", error);
-}
+const layers = [
+  {
+    name: "Public Edge",
+    description: "Cloudflare Pages (SSG build público) + Cloudflare Tunnel + Access / Zero Trust. Separación público/privado con build filter y _redirects edge.",
+    components: ["Cloudflare Pages", "Cloudflare Tunnel", "Cloudflare Access", "Zero Trust", "Traefik Proxy"],
+  },
+  {
+    name: "Documentation & Portal",
+    description: "Astro con Starlight, Tailwind, Mermaid y React. Dos builds: público (ai-lab.labrazahome.com) y privado (blog-ai-lab.labrazahome.com).",
+    components: ["Astro", "Starlight", "Tailwind CSS", "Mermaid", "React/Recharts"],
+  },
+  {
+    name: "AI Runtime Gateway",
+    description: "Entrypoint único de chat. Clasificación de ruta, aplicación de perfil cognitivo, inyección de memoria, SLO enforcement y adaptive concurrency.",
+    components: ["OpenAI Gateway (Python)", "Route Classifier", "Profile Manager", "Memory Injector", "SLO Manager"],
+  },
+  {
+    name: "Inference Backend",
+    description: "LM Studio con 3 modelos activos: llama-3.1-8b (operacional), qwen2.5-coder-14b (coding/report), nomic-embed-text-v1.5 (embedding). GPU RX9070.",
+    components: ["LM Studio", "llama.cpp", "RX9070 GPU", "OpenAI-compatible API"],
+  },
+  {
+    name: "Runtime APIs",
+    description: "Router API (status, perfiles, replay), Live API (estado, embeddings), Hermes Status Endpoint (:8095), precision endpoints.",
+    components: ["Router API", "Live API", "Hermes Status", "Runtime Precision"],
+  },
+  {
+    name: "Hermes Enterprise Core",
+    description: "Capa de governance declarativo: SOUL, Capability Registry, Operator Registry, Hook Registry, MCP Registry, Dynamic Governance. 185 tests.",
+    components: ["SOUL", "Capability Registry", "Operator Registry", "Hook Registry", "MCP Registry", "Dynamic Governance"],
+  },
+  {
+    name: "AnythingLLM Knowledge Base",
+    description: "RAG enterprise con 1304 vectores en 7 workspaces. Embedder multilingual e5-small. Chunk size 800, overlap 100. Validación 100%.",
+    components: ["AnythingLLM", "Qdrant", "e5-small Embedder", "Workspace Manager"],
+  },
+  {
+    name: "Observability Stack",
+    description: "Prometheus (source of truth), Grafana (15 dashboards), Loki (logs). 100+ métricas ailab_*, 19 alertas activas, SLO enforcement.",
+    components: ["Prometheus", "Grafana", "Loki", "node_exporter", "cadvisor"],
+  },
+  {
+    name: "GitNexus Code Intelligence",
+    description: "Cognición estructural del codebase. 20K+ símbolos, 32K+ relaciones, 300 execution flows. Impact analysis, context, rename, detect_changes.",
+    components: ["GitNexus Index", "Knowledge Graph", "Impact Analysis", "Process Flows"],
+  },
+];
 ---
 
-<Layout title="Architecture · AI-LAB">
-  <section class="space-y-10">
+<Layout title="Arquitectura · AI-LAB Platform">
 
-    <header class="rounded-3xl border border-cyan-500/30 bg-zinc-950 p-8">
-      <p class="text-sm uppercase tracking-[0.35em] text-cyan-400">AI-LAB BLUEPRINT</p>
-      <h1 class="mt-5 text-5xl font-black text-white">Operational Architecture</h1>
-      <p class="mt-4 max-w-4xl text-lg leading-8 text-zinc-300">
-        Mapa de arquitectura del portal AI-LAB: entrada segura, routing, aplicación,
-        APIs operacionales, observabilidad y base de conocimiento.
-      </p>
+<section class="space-y-10">
 
-      {generatedAt && (
-        <p class="mt-6 text-xs text-zinc-500">Generated: {generatedAt}</p>
-      )}
-    </header>
+  <header class="rounded-3xl border border-cyan-500/30 bg-zinc-950 p-8">
+    <p class="text-sm uppercase tracking-[0.35em] text-cyan-400">AI-LAB BLUEPRINT</p>
+    <h1 class="mt-5 text-5xl font-black text-white">Arquitectura del Ecosistema</h1>
+    <p class="mt-4 max-w-4xl text-lg leading-8 text-zinc-300">
+      Plataforma de ingeniería con runtime evidence-bound, gobernanza enterprise, knowledge base RAG,
+      marketplace digital twin y observabilidad integral. Arquitectura en capas desde el edge público
+      hasta el backend de inferencia.
+    </p>
+  </header>
 
-    <section class="rounded-3xl border border-cyan-500/20 bg-black/40 p-8">
-      <h2 class="text-3xl font-black text-white">Flow Map</h2>
+  <section class="rounded-3xl border border-cyan-500/20 bg-black/40 p-8">
+    <h2 class="text-3xl font-black text-white">Capas de la plataforma</h2>
 
-      <div class="mt-8 grid gap-4">
-        {layers.map((layer, index) => (
-          <div>
-            <article class="rounded-2xl border border-cyan-500/20 bg-zinc-950 p-6">
-              <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                  <p class="text-xs uppercase tracking-[0.25em] text-cyan-400">
-                    Layer {index + 1}
-                  </p>
-                  <h3 class="mt-2 text-2xl font-bold text-white">{layer.name}</h3>
-                  <p class="mt-3 text-sm leading-6 text-zinc-400">{layer.description}</p>
-                </div>
-
-                <div class="flex flex-wrap gap-2 lg:max-w-xl lg:justify-end">
-                  {layer.components.map((component) => (
-                    <span class="rounded-full border border-zinc-700 bg-black/40 px-3 py-1 text-xs text-zinc-300">
-                      {component}
-                    </span>
-                  ))}
-                </div>
+    <div class="mt-8 grid gap-4">
+      {layers.map((layer, index) => (
+        <div>
+          <article class="rounded-2xl border border-cyan-500/20 bg-zinc-950 p-6">
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <p class="text-xs uppercase tracking-[0.25em] text-cyan-400">
+                  Layer {index + 1}
+                </p>
+                <h3 class="mt-2 text-2xl font-bold text-white">{layer.name}</h3>
+                <p class="mt-3 text-sm leading-6 text-zinc-400">{layer.description}</p>
               </div>
-            </article>
 
-            {index < layers.length - 1 && (
-              <div class="flex justify-center py-2 text-2xl text-cyan-400">↓</div>
-            )}
-          </div>
-        ))}
-      </div>
-    </section>
+              <div class="flex flex-wrap gap-2 lg:max-w-xl lg:justify-end">
+                {layer.components.map((component) => (
+                  <span class="rounded-full border border-zinc-700 bg-black/40 px-3 py-1 text-xs text-zinc-300">
+                    {component}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </article>
 
-    <section class="grid gap-5 lg:grid-cols-3">
-      <a href="https://metricas.labrazahome.com/ops" class="rounded-2xl border border-cyan-500/20 bg-zinc-950 p-6 text-cyan-300 hover:border-cyan-400">
-        Operations Center →
-      </a>
-
-      <a href="/infra" class="rounded-2xl border border-cyan-500/20 bg-zinc-950 p-6 text-cyan-300 hover:border-cyan-400">
-        Infrastructure Inventory →
-      </a>
-
-      <a href="/runbooks" class="rounded-2xl border border-cyan-500/20 bg-zinc-950 p-6 text-cyan-300 hover:border-cyan-400">
-        Runbooks →
-      </a>
-    </section>
-
+          {index < layers.length - 1 && (
+            <div class="flex justify-center py-2 text-2xl text-cyan-400">↓</div>
+          )}
+        </div>
+      ))}
+    </div>
   </section>
+
+  <section class="rounded-3xl border border-cyan-500/20 bg-black/40 p-8">
+    <h2 class="text-3xl font-black text-white">Modelos activos</h2>
+
+    <div class="mt-6 grid gap-4 md:grid-cols-3">
+      <div class="rounded-xl bg-zinc-950 p-5">
+        <p class="text-sm text-zinc-500">Operacional</p>
+        <p class="mt-2 font-semibold text-white">llama-3.1-8b-instruct</p>
+        <p class="text-zinc-400">Minimal, greetings, observe, light prompts</p>
+      </div>
+
+      <div class="rounded-xl bg-zinc-950 p-5">
+        <p class="text-sm text-zinc-500">Coding + Report</p>
+        <p class="mt-2 font-semibold text-white">qwen2.5-coder-14b-instruct</p>
+        <p class="text-zinc-400">Coding, report, architecture, reasoning, creative</p>
+      </div>
+
+      <div class="rounded-xl bg-zinc-950 p-5">
+        <p class="text-sm text-zinc-500">Embedding</p>
+        <p class="mt-2 font-semibold text-white">nomic-embed-text-v1.5</p>
+        <p class="text-zinc-400">Semantic recall, vectores Qdrant</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="rounded-3xl border border-cyan-500/20 bg-black/40 p-8">
+    <h2 class="text-3xl font-black text-white">Checkpoints clave</h2>
+
+    <div class="mt-6 grid gap-3 md:grid-cols-2">
+      <div class="rounded-xl bg-zinc-950 p-4">
+        <p class="text-xs text-cyan-400">CP-HERMES-ENTERPRISE-CORE-01</p>
+        <p class="text-sm text-zinc-400">6 componentes enterprise, 185 tests</p>
+      </div>
+      <div class="rounded-xl bg-zinc-950 p-4">
+        <p class="text-xs text-cyan-400">CP-ANYTHINGLLM-ENTERPRISE-04</p>
+        <p class="text-sm text-zinc-400">Knowledge Base, 1304 vectores</p>
+      </div>
+      <div class="rounded-xl bg-zinc-950 p-4">
+        <p class="text-xs text-cyan-400">CP-36B-RUNTIME-PRECISION-MODE</p>
+        <p class="text-sm text-zinc-400">Runtime precision mode</p>
+      </div>
+      <div class="rounded-xl bg-zinc-950 p-4">
+        <p class="text-xs text-cyan-400">CP-SLO-ENFORCEMENT-01</p>
+        <p class="text-sm text-zinc-400">SLO enforcement framework</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid gap-5 lg:grid-cols-3">
+    <a href="/docs/" class="rounded-2xl border border-cyan-500/20 bg-zinc-950 p-6 text-cyan-300 hover:border-cyan-400">
+      Documentación completa →
+    </a>
+
+    <a href="/docs/roadmap/" class="rounded-2xl border border-cyan-500/20 bg-zinc-950 p-6 text-cyan-300 hover:border-cyan-400">
+      Roadmap →
+    </a>
+
+    <a href="https://metricas.labrazahome.com/ops" class="rounded-2xl border border-cyan-500/20 bg-zinc-950 p-6 text-cyan-300 hover:border-cyan-400">
+      Operations Center →
+    </a>
+  </section>
+
+</section>
+
 </Layout>

@@ -28,7 +28,7 @@ Usamos GitNexus para:
 
 Si abres la UI desde un PC remoto y ves “Waiting for server to start”, muchas veces la UI está usando `localhost:4747` como backend URL.
 
-Fix: setear `localStorage['gitnexus-backend-url']` a `http://192.168.1.30:4747`.
+Fix: setear `localStorage['gitnexus-backend-url']` a `http://control-plane host:4747`.
 
 ## Governance
 

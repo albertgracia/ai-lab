@@ -45,8 +45,8 @@ Esto desacopló el comportamiento del runtime del código. Un perfil podía evol
 
 Con el runtime estabilizado, llegó la torre de control:
 
-- **Prometheus** en 192.168.1.40:9090 — 80+ métricas `ailab_*`
-- **Grafana** en 192.168.1.40:3000 — 15 dashboards auto-provisionados
+- **Prometheus** en observability host:9090 — 80+ métricas `ailab_*`
+- **Grafana** en observability host:3000 — 15 dashboards auto-provisionados
 - **Alertas** — 19 reglas con health checks
 - **Audit trail** — shards diarios en JSONL con `request_id`
 - **Replay API** — trazabilidad completa de cada request
@@ -154,14 +154,14 @@ La consistencia es el verdadero avance: de 30 segundos de varianza a menos de 1 
 └──────────────┬──────────────────────────┘
                │
 ┌──────────────▼──────────────────────────┐
-│    llama.cpp (192.168.1.50:1234)        │
+│    llama.cpp (inference GPU node:1234)        │
 │    RX9070 16GB  ·  Vulkan/ROCm          │
 │    qwen2.5-14b  ·  llama-3.1-8b        │
 │    qwen3.6-27b  ·  nomic-embed          │
 └──────────────┬──────────────────────────┘
                │
 ┌──────────────▼──────────────────────────┐
-│    Observabilidad (192.168.1.40)         │
+│    Observabilidad (observability host)         │
 │  Prometheus :9090  ·  Grafana :3000     │
 │  100+ métricas  ·  15 dashboards        │
 │  19 alertas  ·  Audit trail diario     │

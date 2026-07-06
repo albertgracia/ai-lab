@@ -14,7 +14,7 @@ tags:
 
 ## El espejismo del segundo nodo
 
-Teníamos una RX7900XT apagada en 192.168.1.60. Teníamos un modelo de 32b esperando. La tentación era conectar el segundo nodo y lanzar el scheduler.
+Teníamos una RX7900XT apagada en inventory node. Teníamos un modelo de 32b esperando. La tentación era conectar el segundo nodo y lanzar el scheduler.
 
 Pero el runtime no sabía responder preguntas básicas:
 

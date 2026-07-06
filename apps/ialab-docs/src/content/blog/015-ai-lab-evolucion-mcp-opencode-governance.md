@@ -93,9 +93,9 @@ Endpoint `/runtime/health` con score, nodos, routing-confidence, watchdog, laten
 
 | Nodo | IP | GPU | Estado |
 |------|-----|-----|--------|
-| .50 | 192.168.1.50 | RX9070 | Online (4 modelos) |
-| .250 | 192.168.1.250 | — | Online (6 modelos) |
-| .60 | 192.168.1.60 | RX7900XT | Offline (esperado) |
+| .50 | inference GPU node | RX9070 | Online (4 modelos) |
+| .250 | storage node | — | Online (6 modelos) |
+| .60 | inventory node | RX7900XT | Offline (esperado) |
 
 ## Incidencia documentada pendiente
 
