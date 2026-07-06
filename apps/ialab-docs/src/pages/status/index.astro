@@ -1,54 +1,140 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 
-const lastCheckpoint = "CP-AI-LAB-ASTRO-PUBLIC-PRIVATE-ACTUALIZATION-02";
-const lastCommit = "4483722";
 const lastUpdate = "2026-07-06";
-const buildPages = { public: 144, private: 281 };
 
 const status = [
-  { name: "Runtime", status: "operational", detail: "3 modelos activos, SLO + Adaptive Concurrency" },
-  { name: "Gateway", status: "operational", detail: ":8008 — OpenAI-compatible" },
-  { name: "Router", status: "operational", detail: ":8083 — API interna" },
-  { name: "GitNexus", status: "operational", detail: "20K+ símbolos, 32K+ relaciones" },
-  { name: "Hermes Enterprise", status: "operational", detail: "Core completado — 185 tests, 6 componentes" },
-  { name: "AnythingLLM Enterprise", status: "operational", detail: "1304 vectores, 7 workspaces RAG" },
-  { name: "Marketplace Digital Twin", status: "operational", detail: "Go + Fiber v2, Next.js 15" },
-  { name: "Observabilidad", status: "operational", detail: "100+ métricas, 19 alertas activas" },
-  { name: "Astro Público", status: "operational", detail: "ai-lab.labrazahome.com — 144 páginas" },
-  { name: "Astro Privado", status: "operational", detail: "blog-ai-lab.labrazahome.com — 281 páginas" },
+  { name: "Runtime", state: "operational", detail: "3 modelos activos, SLO + Adaptive Concurrency" },
+  { name: "Gateway", state: "operational", detail: ":8008 — OpenAI-compatible" },
+  { name: "Router", state: "operational", detail: ":8083 — API interna" },
+  { name: "GitNexus", state: "operational", detail: "20K+ símbolos, 32K+ relaciones" },
+  { name: "Hermes Enterprise", state: "operational", detail: "Core completado — 185 tests, 6 componentes" },
+  { name: "AnythingLLM Enterprise", state: "operational", detail: "1304 vectores, 7 workspaces RAG" },
+  { name: "Marketplace Digital Twin", state: "operational", detail: "Go + Fiber v2, Next.js 15" },
+  { name: "Observabilidad", state: "operational", detail: "100+ métricas, 19 alertas" },
+  { name: "Astro Público", state: "operational", detail: "ai-lab.labrazahome.com — 144 páginas" },
+  { name: "Astro Privado", state: "operational", detail: "blog-ai-lab.labrazahome.com — 281 páginas" },
 ];
 
-const nextPhase = "Hermes E08 — Lifecycle Hooks";
+const architectureLayers = [
+  { name: "Público / Privado", phase: "implemented" },
+  { name: "Gateway", phase: "implemented" },
+  { name: "Router", phase: "implemented" },
+  { name: "GitNexus", phase: "implemented" },
+  { name: "Hermes Enterprise Core", phase: "implemented" },
+  { name: "Hermes E08 — Lifecycle Hooks", phase: "experimental" },
+  { name: "Hermes E09 — Governance Enforcement", phase: "planned" },
+  { name: "AnythingLLM Enterprise", phase: "implemented" },
+  { name: "Marketplace Digital Twin", phase: "implemented" },
+  { name: "Observabilidad", phase: "implemented" },
+  { name: "Multi-GPU Scheduling", phase: "planned" },
+];
+
+const checkpoints = [
+  { tag: "CP-ASTRO-VALIDATION-RULE-01", name: "Regla validación Astro", date: "2026-07-06", pass: true },
+  { tag: "CP-AI-LAB-ASTRO-PUBLIC-PRIVATE-ACTUALIZATION-02", name: "Actualización superficies", date: "2026-07-06", pass: true },
+  { tag: "CP-AI-LAB-ASTRO-CURRENT-STATE-REBUILD-01", name: "Estado documental Astro", date: "2026-07-04", pass: true },
+  { tag: "CP-AI-LAB-ASTRO-DOCS-REFRESH-01B", name: "Refresh documental", date: "2026-07-01", pass: true },
+  { tag: "CP-ASTRO-PUBLIC-PRIVATE-SEPARATION-01", name: "Separación público/privado", date: "2026-06-30", pass: true },
+  { tag: "CP-AI-LAB-ASTRO-DOCS-REFRESH-01", name: "Refresh docs Astro", date: "2026-06-29", pass: true },
+  { tag: "CP-ANYTHINGLLM-ENTERPRISE-04-COMPLETE", name: "Knowledge Base Enterprise", date: "2026-06-27", pass: true },
+  { tag: "CP-HERMES-DOCS-ASTRO-ENTERPRISE-01", name: "Documentación Hermes", date: "2026-06-25", pass: true },
+];
+
+const projects = [
+  { name: "Hermes Enterprise", pct: 100, phase: "Core completado (6 componentes)", color: "bg-cyan-400" },
+  { name: "AnythingLLM Enterprise", pct: 100, phase: "Baseline operativo (1304 vectores)", color: "bg-cyan-400" },
+  { name: "Marketplace Digital Twin", pct: 80, phase: "Operativo — pending MCP tools", color: "bg-yellow-400" },
+  { name: "AI-LAB Runtime", pct: 100, phase: "Gateway, Router, SLO, 3 modelos", color: "bg-cyan-400" },
+  { name: "Observabilidad", pct: 100, phase: "Prometheus, Grafana, 19 alerts", color: "bg-cyan-400" },
+  { name: "MCP / A2A", pct: 70, phase: "Hermes MCP Registry, pending tools", color: "bg-yellow-400" },
+];
+
+const roadmap = [
+  { phase: "implemented", items: ["Hermes SOUL, Capability, Operator, Hook, MCP, Governance registries", "AnythingLLM 10 workspaces, 1304 vectores, RAG 100%", "Marketplace Digital Twin (Go + Next.js)", "AI-LAB Runtime (gateway, router, 3 modelos, SLO)", "Observabilidad (Prometheus, Grafana, Loki)", "GitNexus structural cognition", "Astro público/privado separation"] },
+  { phase: "in_progress", items: ["Hermes E08 — Lifecycle Hooks (primera integración real)"] },
+  { phase: "next", items: ["Hermes E09 — Governance Enforcement (bloqueo activo)", "AnythingLLM E05 — workflows avanzados"] },
+  { phase: "later", items: ["Multi-GPU scheduling (post-node reactivation)", "Pilot técnico", "Pilot operador"] },
+];
+
+const recentCommits = [
+  { hash: "d91c078", message: "docs(agents): update anchored summary with ASTRO-VALIDATION-RULE-01", date: "2026-07-06" },
+  { hash: "79bf22e", message: "docs(astro): add permanent validation rule and laboratory status page", date: "2026-07-06" },
+  { hash: "4483722", message: "docs(report): AI-LAB-ASTRO-PUBLIC-PRIVATE-ACTUALIZATION-02 closure report", date: "2026-07-06" },
+  { hash: "132be93", message: "docs(astro): actualize public and private surfaces", date: "2026-07-06" },
+  { hash: "cb5dfb2", message: "chore: update public metrics", date: "2026-07-05" },
+];
+
+const knowledge = {
+  hermes: { docs: 10, tests: 185, components: 6 },
+  anythingllm: { workspaces: 7, vectors: 1304, embedder: "e5-small (multilingual)" },
+  gitnexus: { symbols: 20327, relations: 32455, flows: 300 },
+  adrs: 6,
+  reports: { total: 30 },
+  docs: { total: 281, public: 144 },
+  runbooks: { total: 40 },
+};
+
+const models = [
+  { route: "operacional", model: "llama-3.1-8b-instruct", node: "GPU principal", vram: "16 GB", use: "Minimal, greetings, observe" },
+  { route: "coding", model: "qwen2.5-coder-14b-instruct", node: "GPU principal", vram: "16 GB", use: "Coding, report, reasoning" },
+  { route: "embedding", model: "nomic-embed-text-v1.5", node: "GPU principal", vram: "—", use: "Semantic recall, embeddings" },
+  { route: "disabled", model: "qwen3.6-27b", node: "GPU principal", vram: "—", use: "Desactivado, disponible para tests" },
+  { route: "offline", model: "qwen2.5-coder-32b", node: "GPU secundario", vram: "20 GB", use: "DOWN — nodo apagado" },
+];
+
+const phaseStyles = {
+  operational: "text-green-400",
+  implemented: "text-green-400",
+  experimental: "text-yellow-400",
+  planned: "text-zinc-500",
+  in_progress: "text-yellow-400",
+  next: "text-cyan-400",
+  later: "text-zinc-500",
+};
+
+const phaseLabels = {
+  implemented: "Implementado",
+  experimental: "Experimental",
+  planned: "Planificado",
+  in_progress: "En desarrollo",
+  next: "Siguiente",
+  later: "Más adelante",
+};
 ---
 
-<Layout title="Estado del Laboratorio · AI-LAB">
+<Layout title="Centro de Mando · AI-LAB">
 
-<section class="space-y-10">
+<section class="space-y-14">
 
-  <header class="rounded-3xl border border-cyan-500/30 bg-zinc-950 p-8">
-    <p class="text-sm uppercase tracking-[0.35em] text-cyan-400">AI-LAB</p>
-    <h1 class="mt-5 text-5xl font-black text-white">Estado del Laboratorio</h1>
+  <!-- Header -->
+  <header class="rounded-3xl border border-cyan-500/30 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black p-10 shadow-2xl shadow-cyan-950/20">
+    <p class="text-sm uppercase tracking-[0.35em] text-cyan-400">AI-LAB · Centro de Mando</p>
+    <h1 class="mt-5 text-5xl font-black text-white md:text-6xl">Estado del Laboratorio</h1>
     <p class="mt-4 max-w-4xl text-lg leading-8 text-zinc-300">
-      Fotografía documental del estado actual del ecosistema AI-LAB.
-      No es un dashboard en tiempo real. Es una instantánea verificada.
+      Fotografía documental del ecosistema AI-LAB. Fuente de verdad documental.
+      No es un dashboard en tiempo real. Es una instantánea verificada del estado del proyecto.
     </p>
   </header>
 
+  <!-- Section 1: Resumen Ejecutivo -->
   <section class="rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
-    <h2 class="text-3xl font-black text-white">Estado General</h2>
+    <div class="flex items-baseline gap-4">
+      <h2 class="text-3xl font-black text-white">Resumen Ejecutivo</h2>
+      <span class="text-sm text-zinc-500">Actualizado: {lastUpdate}</span>
+    </div>
 
-    <div class="mt-8 grid gap-4">
+    <div class="mt-6 grid gap-3">
       {
         status.map((item) => (
-          <div class="flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+          <div class="flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-950 p-4">
             <div>
               <p class="font-semibold text-white">{item.name}</p>
               <p class="text-sm text-zinc-400">{item.detail}</p>
             </div>
             <span class="flex items-center gap-2 text-sm font-medium text-green-400">
               <span class="h-2.5 w-2.5 rounded-full bg-green-400"></span>
-              {item.status === "operational" ? "Operativo" : item.status}
+              {item.state === "operational" ? "Operativo" : item.state}
             </span>
           </div>
         ))
@@ -56,48 +142,261 @@ const nextPhase = "Hermes E08 — Lifecycle Hooks";
     </div>
   </section>
 
-  <section class="grid gap-6 md:grid-cols-2">
-    <div class="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-      <p class="text-sm uppercase tracking-[0.3em] text-zinc-500">Próxima fase</p>
-      <p class="mt-3 text-xl font-bold text-cyan-400">{nextPhase}</p>
+  <!-- Section 2: Arquitectura Actual -->
+  <section class="rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
+    <h2 class="text-3xl font-black text-white">Arquitectura Actual</h2>
+
+    <div class="mt-8 flex flex-wrap gap-3">
+      <span class="rounded-full bg-green-400/10 px-4 py-1.5 text-sm font-medium text-green-400">● Implementado</span>
+      <span class="rounded-full bg-yellow-400/10 px-4 py-1.5 text-sm font-medium text-yellow-400">● Experimental</span>
+      <span class="rounded-full bg-zinc-500/10 px-4 py-1.5 text-sm font-medium text-zinc-500">○ Planificado</span>
     </div>
 
-    <div class="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-      <p class="text-sm uppercase tracking-[0.3em] text-zinc-500">Último Checkpoint</p>
-      <p class="mt-3 text-xl font-bold text-white">{lastCheckpoint}</p>
-    </div>
-
-    <div class="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-      <p class="text-sm uppercase tracking-[0.3em] text-zinc-500">Último Commit público</p>
-      <p class="mt-3 text-xl font-bold text-white font-mono">{lastCommit}</p>
-    </div>
-
-    <div class="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-      <p class="text-sm uppercase tracking-[0.3em] text-zinc-500">Última actualización</p>
-      <p class="mt-3 text-xl font-bold text-white">{lastUpdate}</p>
+    <div class="mt-6 space-y-1">
+      {
+        architectureLayers.map((layer, i) => (
+          <div class="flex items-center gap-4">
+            {i < architectureLayers.length - 1
+              ? <div class="flex w-8 flex-col items-center"><div class="h-3 w-3 rounded-full" class:list={[layer.phase === "implemented" ? "bg-green-400" : layer.phase === "experimental" ? "bg-yellow-400" : "bg-zinc-600"]}></div><div class="h-6 w-0.5 bg-zinc-700"></div></div>
+              : <div class="flex w-8 flex-col items-center"><div class="h-3 w-3 rounded-full bg-zinc-600"></div></div>
+            }
+            <p class="flex-1 text-sm font-medium" class:list={[phaseStyles[layer.phase]]}>{layer.name}</p>
+            <span class="text-xs" class:list={[phaseStyles[layer.phase]]}>{phaseLabels[layer.phase]}</span>
+          </div>
+        ))
+      }
     </div>
   </section>
 
+  <!-- Section 3: Checkpoints -->
   <section class="rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
-    <h2 class="text-3xl font-black text-white">Builds</h2>
+    <h2 class="text-3xl font-black text-white">Checkpoints</h2>
+
+    <div class="mt-6 grid gap-3">
+      {
+        checkpoints.map((cp) => (
+          <div class="flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-950 p-4">
+            <div>
+              <p class="font-mono text-sm text-cyan-400">{cp.tag}</p>
+              <p class="text-sm text-zinc-400">{cp.name}</p>
+            </div>
+            <div class="flex items-center gap-4">
+              <span class="text-xs text-zinc-500">{cp.date}</span>
+              <span class="flex items-center gap-1.5 text-sm font-medium text-green-400">
+                <span class="inline-block h-2 w-2 rounded-full bg-green-400"></span>
+                {cp.pass ? "PASS" : "FAIL"}
+              </span>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- Section 4: Proyectos -->
+  <section class="rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
+    <h2 class="text-3xl font-black text-white">Proyectos</h2>
+
+    <div class="mt-6 grid gap-5">
+      {
+        projects.map((p) => (
+          <div>
+            <div class="mb-2 flex items-center justify-between">
+              <p class="font-semibold text-white">{p.name}</p>
+              <span class="text-sm text-zinc-400">{p.pct}%</span>
+            </div>
+            <div class="h-4 w-full overflow-hidden rounded-full bg-zinc-800">
+              <div
+                class="h-full rounded-full transition-all"
+                style={`width: ${p.pct}%`}
+                class:list={[p.color]}
+              ></div>
+            </div>
+            <p class="mt-1 text-xs text-zinc-500">{p.phase}</p>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- Section 5: Roadmap -->
+  <section class="rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
+    <h2 class="text-3xl font-black text-white">Roadmap</h2>
+
+    <div class="mt-6 grid gap-6">
+      {
+        roadmap.map((r) => (
+          <div>
+            <p class="mb-3 text-sm font-bold uppercase tracking-[0.15em]" class:list={[phaseStyles[r.phase]]}>{phaseLabels[r.phase]}</p>
+            <ul class="space-y-2">
+              {r.items.map((item) => (
+                <li class="flex items-start gap-3 rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3">
+                  <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full" class:list={[r.phase === "implemented" ? "bg-green-400" : r.phase === "in_progress" ? "bg-yellow-400" : r.phase === "next" ? "bg-cyan-400" : "bg-zinc-600"]}></span>
+                  <span class="text-sm text-zinc-300">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- Section 6: Últimos Cambios -->
+  <section class="rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
+    <h2 class="text-3xl font-black text-white">Últimos Cambios</h2>
+
+    <div class="mt-6 grid gap-3">
+      {
+        recentCommits.map((c) => (
+          <div class="flex items-center gap-4 rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3">
+            <span class="font-mono text-xs text-zinc-500">{c.hash.substring(0, 7)}</span>
+            <span class="flex-1 text-sm text-zinc-300">{c.message}</span>
+            <span class="text-xs text-zinc-500">{c.date}</span>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- Section 7: Conocimiento -->
+  <section class="rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
+    <h2 class="text-3xl font-black text-white">Conocimiento</h2>
 
     <div class="mt-6 grid gap-4 md:grid-cols-2">
-      <div class="rounded-xl bg-zinc-950 p-5">
-        <p class="text-sm text-zinc-500">Público</p>
-        <p class="mt-2 text-3xl font-bold text-white">{buildPages.public} páginas</p>
-        <p class="text-sm text-green-400">0 errores · 0 IPs internas</p>
+      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+        <p class="text-sm font-semibold text-cyan-400">Hermes Enterprise</p>
+        <p class="mt-2 text-2xl font-bold text-white">{knowledge.hermes.docs} docs</p>
+        <p class="text-sm text-zinc-400">{knowledge.hermes.tests} tests · {knowledge.hermes.components} componentes</p>
       </div>
-      <div class="rounded-xl bg-zinc-950 p-5">
-        <p class="text-sm text-zinc-500">Privado</p>
-        <p class="mt-2 text-3xl font-bold text-white">{buildPages.private} páginas</p>
-        <p class="text-sm text-green-400">0 errores</p>
+
+      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+        <p class="text-sm font-semibold text-cyan-400">AnythingLLM Knowledge Base</p>
+        <p class="mt-2 text-2xl font-bold text-white">{knowledge.anythingllm.vectors} vectores</p>
+        <p class="text-sm text-zinc-400">{knowledge.anythingllm.workspaces} workspaces · {knowledge.anythingllm.embedder}</p>
+      </div>
+
+      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+        <p class="text-sm font-semibold text-cyan-400">GitNexus Code Intelligence</p>
+        <p class="mt-2 text-2xl font-bold text-white">{knowledge.gitnexus.symbols.toLocaleString()} símbolos</p>
+        <p class="text-sm text-zinc-400">{knowledge.gitnexus.relations.toLocaleString()} relaciones · {knowledge.gitnexus.flows} execution flows</p>
+      </div>
+
+      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+        <p class="text-sm font-semibold text-cyan-400">Documentación</p>
+        <p class="mt-2 text-2xl font-bold text-white">{knowledge.docs.total} páginas</p>
+        <p class="text-sm text-zinc-400">{knowledge.adrs} ADRs · {knowledge.reports.total} reports · {knowledge.runbooks.total} runbooks</p>
       </div>
     </div>
   </section>
 
-  <div class="flex justify-center">
+  <!-- Section 8: Modelos IA -->
+  <section class="rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
+    <h2 class="text-3xl font-black text-white">Modelos IA</h2>
+
+    <div class="mt-6 overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-zinc-800 text-left text-zinc-500">
+            <th class="pb-3 pr-4">Ruta</th>
+            <th class="pb-3 pr-4">Modelo</th>
+            <th class="pb-3 pr-4">Nodo</th>
+            <th class="pb-3 pr-4">VRAM</th>
+            <th class="pb-3 pr-4">Uso</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            models.map((m) => (
+              <tr class="border-b border-zinc-800">
+                <td class="py-3 pr-4 font-medium" class:list={[m.route === "offline" ? "text-red-400" : m.route === "disabled" ? "text-zinc-500" : "text-cyan-400"]}>{m.route}</td>
+                <td class="py-3 pr-4 text-zinc-300">{m.model}</td>
+                <td class="py-3 pr-4 text-zinc-400">{m.node}</td>
+                <td class="py-3 pr-4 text-zinc-400">{m.vram}</td>
+                <td class="py-3 pr-4 text-zinc-400">{m.use}</td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <p class="mt-4 text-xs text-zinc-500">
+      Backend: LM Studio + llama.cpp · GPU principal RX9070 · GPU secundario RX7900XT (offline)
+    </p>
+  </section>
+
+  <!-- Section 9: Estado Documental -->
+  <section class="rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
+    <h2 class="text-3xl font-black text-white">Estado Documental</h2>
+
+    <div class="mt-6 grid gap-4 md:grid-cols-2">
+      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+        <p class="text-sm text-zinc-500">Público</p>
+        <p class="mt-2 text-3xl font-bold text-white">{knowledge.docs.public} páginas</p>
+        <p class="text-sm text-green-400">0 errores · 0 IPs internas</p>
+        <p class="mt-1 text-xs text-zinc-500">ai-lab.labrazahome.com — Cloudflare Pages</p>
+      </div>
+
+      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+        <p class="text-sm text-zinc-500">Privado</p>
+        <p class="mt-2 text-3xl font-bold text-white">{knowledge.docs.total} páginas</p>
+        <p class="text-sm text-green-400">0 errores</p>
+        <p class="mt-1 text-xs text-zinc-500">blog-ai-lab.labrazahome.com — Astro Preview</p>
+      </div>
+    </div>
+
+    <div class="mt-4 grid gap-4 md:grid-cols-4">
+      <div class="rounded-xl bg-zinc-950 p-4">
+        <p class="text-xs text-zinc-500">Último build público</p>
+        <p class="mt-1 font-semibold text-white">2026-07-06</p>
+      </div>
+      <div class="rounded-xl bg-zinc-950 p-4">
+        <p class="text-xs text-zinc-500">Último build privado</p>
+        <p class="mt-1 font-semibold text-white">2026-07-06</p>
+      </div>
+      <div class="rounded-xl bg-zinc-950 p-4">
+        <p class="text-xs text-zinc-500">Último deploy</p>
+        <p class="mt-1 font-semibold text-white">2026-07-06</p>
+      </div>
+      <div class="rounded-xl bg-zinc-950 p-4">
+        <p class="text-xs text-zinc-500">Último commit</p>
+        <p class="mt-1 font-mono text-xs text-white">d91c078</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 10: Próxima Fase -->
+  <section class="rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-zinc-900 to-zinc-950 p-8">
+    <h2 class="text-3xl font-black text-white">Próximos Pasos</h2>
+
+    <div class="mt-6 grid gap-4 md:grid-cols-3">
+      <div class="rounded-xl border border-yellow-400/20 bg-zinc-950 p-5">
+        <p class="mb-1 text-xs font-bold uppercase tracking-[0.15em] text-yellow-400">Ahora</p>
+        <p class="text-lg font-bold text-white">Hermes E08</p>
+        <p class="text-sm text-zinc-400">Lifecycle Hooks — integración real con runtime</p>
+      </div>
+
+      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+        <p class="mb-1 text-xs font-bold uppercase tracking-[0.15em] text-cyan-400">Después</p>
+        <p class="text-lg font-bold text-white">Hermes E09</p>
+        <p class="text-sm text-zinc-400">Governance Enforcement — bloqueo activo</p>
+      </div>
+
+      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+        <p class="mb-1 text-xs font-bold uppercase tracking-[0.15em] text-zinc-400">Más adelante</p>
+        <p class="text-lg font-bold text-white">Multi-GPU</p>
+        <p class="text-sm text-zinc-400">Scheduling multi-GPU (post-node reactivation)</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="flex justify-center gap-4">
     <a href="/" class="rounded-xl border border-zinc-700 px-6 py-3 font-bold text-zinc-200 hover:border-cyan-400 hover:text-cyan-400">
-      ← Volver al inicio
+      ← Inicio
+    </a>
+    <a href="/architecture" class="rounded-xl border border-zinc-700 px-6 py-3 font-bold text-zinc-200 hover:border-cyan-400 hover:text-cyan-400">
+      Arquitectura →
     </a>
   </div>
 
