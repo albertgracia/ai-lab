@@ -1209,6 +1209,7 @@ Actualizar superficies visibles Astro público y privado (home, architecture, bl
 - **ANYTHINGLLM-ENTERPRISE-04-COMPLETE**: KB Enterprise. 1304 vectores, 7 workspaces. RAG 100%. Tag `CP-ANYTHINGLLM-ENTERPRISE-04-COMPLETE`.
 - **AI-LAB-ASTRO-DOCS-REFRESH-01**: Actualización masiva Astro. 277 págs, 0 errores. Tag `CP-AI-LAB-ASTRO-DOCS-REFRESH-01`.
 - **AI-LAB-ASTRO-PUBLIC-PRIVATE-ACTUALIZATION-02**: Actualización pública+privada de superficies visibles. **Causa raíz identificada**: `src/pages/` (custom pages) no se actualizó en refresh anterior — solo Starlight docs. Home, arquitectura reescritos. 4 nuevos blog posts (018-021). IPs limpiadas de 7 posts legacy. Build público: 144 págs, 0 IPs, 0 errores. Build privado: 281 págs, 0 errores. Commit `4483722`, tag `CP-AI-LAB-ASTRO-PUBLIC-PRIVATE-ACTUALIZATION-02`.
+- **ASTRO-VALIDATION-RULE-01**: Regla permanente de validación funcional Astro. Build PASS + Deploy PASS ya no es suficiente — validación obligatoria de Home, Architecture, Documentation Landing, Roadmap, Blog y producción. Página "Estado del Laboratorio" (`/status/`) con fotografía documental del ecosistema. Regla documentada en `docs/governance/ASTRO-VALIDATION-RULE.md` y referenciada en `ASTRO-DEPLOYMENT-GOVERNANCE.md` y AGENTS.md. Build público: 144 págs, 0 IPs. Build privado: 281 págs. Commit `79bf22e`, tag `CP-ASTRO-VALIDATION-RULE-01`.
 
 ### Blocked
 - (none)
