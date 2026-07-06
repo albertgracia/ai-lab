@@ -60,6 +60,10 @@ try {
     env: { ...process.env, AILAB_PUBLIC_BUILD: 'true' },
     cwd: ROOT,
   });
+  execSync('node scripts/generate-site-manifest.mjs', {
+    stdio: 'inherit',
+    cwd: ROOT,
+  });
 } finally {
   restore();
 }
