@@ -1,7 +1,5 @@
 # AI-LAB Public Site — Private Route Blocking
-# Added 2026-07-05 — ASTRO-PUBLIC-PRIVATE-URGENT-MITIGATION-01
-# These rules block private content on the public Cloudflare Pages site.
-# The private site (blog-ai-lab) uses Cloudflare Access + Traefik instead.
+# Updated 2026-07-06 — AI-LAB-ASTRO-CURRENT-STATE-REBUILD-01
 # ============================================================
 
 # Block runbooks (32 pages — operational commands, IPs, systemd)
@@ -10,12 +8,14 @@
 # Block incidents (2 pages — Docker paths, recovery procedures)
 /incidents/* / 404
 
-# Block private Astro page sections (per astro-architecture.md §4)
+# Block private Astro page sections
 /ops/* / 404
 /portal/* / 404
 /services/* / 404
 /knowledge/* / 404
 /models/* / 404
+/status/gpus* / 404
+/status/models* / 404
 
 # Block sensitive individual docs pages with IPs and operational data
 /docs/operacion-privada-ai-lab/ / 404
@@ -23,3 +23,20 @@
 /docs/informe-completo-ai-lab/ / 404
 /docs/informe-operacional-exhaustivo/ / 404
 /docs/servicios-persistentes-systemd/ / 404
+/docs/arquitectura-ai-lab/ / 404
+/docs/mapa-observabilidad-ai-lab/ / 404
+/docs/inferencia-distribuida/ / 404
+/docs/architecture_phase8/ / 404
+/docs/fix-model-unloaded-lmstudio/ / 404
+/docs/observabilidad-ai-lab-definitiva/ / 404
+/docs/observabilidad-plataforma-ai-lab/ / 404
+/docs/event_bus/ / 404
+/docs/automatizacion-ci-cd/ / 404
+/docs/implementacion-astro-cloudflare-github/ / 404
+/docs/openwebui-conexion-router/ / 404
+/docs/plan-pruebas-runtime-v1-rc/ / 404
+/docs/router-lmstudio-failover/ / 404
+/docs/runtime_flow/ / 404
+/docs/sse_runtime/ / 404
+/docs/topology_layer/ / 404
+/docs/telemetria-gpu-restauracion/ / 404

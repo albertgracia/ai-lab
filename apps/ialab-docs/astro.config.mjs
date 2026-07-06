@@ -37,7 +37,9 @@ export default defineConfig({
               { label: "Marketplace Digital Twin", link: "/architecture/marketplace-digital-twin" },
             ]),
             { label: "Health Layer (37A)", link: "/architecture/cognitive-health-layer" },
-            { label: "Event Bus", link: "/event_bus" },
+            ...(isPublicBuild ? [] : [
+              { label: "Event Bus", link: "/event_bus" },
+            ]),
             { label: "Schemas", items: [{ autogenerate: { directory: "schemas" } }] },
           ],
         },
@@ -46,16 +48,18 @@ export default defineConfig({
           collapsed: false,
           items: [
             { label: "Runtime Reference", collapsed: false, items: [{ autogenerate: { directory: "runtime" } }] },
-            { label: "Runtime Flow", link: "/runtime_flow" },
             { label: "Truth Layers", link: "/runtime-truth-layers" },
             { label: "Analytics Engine", link: "/runtime-analytics-engine" },
             { label: "Cloudflare Redirects", link: "/cloudflare-pages-redirects" },
             { label: "Cloudflare Zero Trust", link: "/cloudflare-zero-trust" },
-            { label: "v1 RC Tests", link: "/plan-pruebas-runtime-v1-rc" },
             { label: "Experiments", items: [{ autogenerate: { directory: "experiments" } }] },
             { label: "Roadmap", items: [{ autogenerate: { directory: "roadmap" } }] },
             { label: "Memory System", items: [{ autogenerate: { directory: "memory" } }] },
             { label: "Agentic", items: [{ autogenerate: { directory: "agentic" } }] },
+            ...(isPublicBuild ? [] : [
+              { label: "Runtime Flow", link: "/runtime_flow" },
+              { label: "v1 RC Tests", link: "/plan-pruebas-runtime-v1-rc" },
+            ]),
             ...(isPublicBuild ? [] : [
               { label: "Runbooks", link: "/runbooks" },
             ]),
