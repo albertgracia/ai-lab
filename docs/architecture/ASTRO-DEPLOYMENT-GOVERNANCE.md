@@ -362,6 +362,8 @@ el build de Cloudflare Pages. El entorno de build no tiene acceso a la red priva
 
 Antes de cualquier Pull Request o Commit que modifique Astro:
 
+### Validación técnica
+
 1. `npm run build` en `/opt/ai-lab/apps/ialab-docs`
 2. Revisar rutas Astro (ningun enlace roto)
 3. Verificar generacion de archivos estaticos:
@@ -373,6 +375,22 @@ Antes de cualquier Pull Request o Commit que modifique Astro:
    - `192.168.x.x`
    durante build estatico
 5. Verificar que Cloudflare Pages pueda construir sin dependencias externas
+
+### Validación funcional (ASTRO-VALIDATION-RULE)
+
+Build PASS + Deploy PASS no es suficiente. Debe verificarse el contenido visible:
+
+1. **Home** — refleja los cambios solicitados
+2. **Architecture** — representa el estado actual
+3. **Documentation landing** — nuevas secciones visibles
+4. **Roadmap** — solo Implementado / En progreso / Planificado
+5. **Blog** — entrada nueva si el estado del laboratorio cambió
+6. **Producción real** — verificar `ai-lab.labrazahome.com` y `blog-ai-lab.labrazahome.com`
+7. **Public/Private** — confirmar separación correcta
+
+Si cualquiera falla → **FAIL**. No aceptar PASS.
+
+Documento completo: `docs/governance/ASTRO-VALIDATION-RULE.md`
 
 ---
 

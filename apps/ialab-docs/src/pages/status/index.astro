@@ -1,193 +1,106 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 
-const sections = [
-  {
-    title: "Live Infrastructure",
-    description: "Estado operacional del stack AI-LAB, servicios, Docker, red UniFi y runtime.",
-    href: "https://metricas.labrazahome.com",
-    tag: "LIVE STATUS",
-  },
-  {
-    title: "Historical Telemetry",
-    description: "Análisis temporal, métricas históricas, tendencias y evolución del laboratorio.",
-    href: "https://metricas.labrazahome.com/runtime",
-    tag: "TIME SERIES",
-  },
-  {
-    title: "Observability",
-    description: "Dashboards Grafana, Prometheus, Loki, Alloy, Node Exporter, cAdvisor y Unpoller.",
-    href: "/observability/",
-    tag: "GRAFANA STACK",
-  },
-  {
-    title: "Operations Center",
-    description: "Runbooks, incidentes, operación interna, recuperación y procedimientos técnicos.",
-    href: "/ops/",
-    tag: "OPERATIONS",
-  },
+const lastCheckpoint = "CP-AI-LAB-ASTRO-PUBLIC-PRIVATE-ACTUALIZATION-02";
+const lastCommit = "4483722";
+const lastUpdate = "2026-07-06";
+const buildPages = { public: 144, private: 281 };
+
+const status = [
+  { name: "Runtime", status: "operational", detail: "3 modelos activos, SLO + Adaptive Concurrency" },
+  { name: "Gateway", status: "operational", detail: ":8008 — OpenAI-compatible" },
+  { name: "Router", status: "operational", detail: ":8083 — API interna" },
+  { name: "GitNexus", status: "operational", detail: "20K+ símbolos, 32K+ relaciones" },
+  { name: "Hermes Enterprise", status: "operational", detail: "Core completado — 185 tests, 6 componentes" },
+  { name: "AnythingLLM Enterprise", status: "operational", detail: "1304 vectores, 7 workspaces RAG" },
+  { name: "Marketplace Digital Twin", status: "operational", detail: "Go + Fiber v2, Next.js 15" },
+  { name: "Observabilidad", status: "operational", detail: "100+ métricas, 19 alertas activas" },
+  { name: "Astro Público", status: "operational", detail: "ai-lab.labrazahome.com — 144 páginas" },
+  { name: "Astro Privado", status: "operational", detail: "blog-ai-lab.labrazahome.com — 281 páginas" },
 ];
 
-const kpis = [
-  { id: "kpi-cluster", label: "Cluster Status", value: "--", color: "text-emerald-400" },
-  { id: "kpi-gpus", label: "GPU Nodes", value: "--", color: "text-cyan-400" },
-  { id: "kpi-sessions", label: "Active Sessions", value: "--", color: "text-orange-400" },
-  { id: "kpi-containers", label: "Containers", value: "--", color: "text-white" },
-];
+const nextPhase = "Hermes E08 — Lifecycle Hooks";
 ---
 
-<Layout title="Status · AI-LAB">
-  <section class="mx-auto max-w-7xl px-6 py-16">
-    <div class="mb-10">
-      <div class="mb-4 inline-flex rounded-full border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-400">
-        RUNTIME OBSERVABILITY
-      </div>
+<Layout title="Estado del Laboratorio · AI-LAB">
 
-      <h1 class="mb-4 text-5xl font-black tracking-tight text-white">
-        Status Hub del AI-LAB
-      </h1>
+<section class="space-y-10">
 
-      <p class="max-w-4xl text-lg text-zinc-400">
-        Centro de estado, telemetría e indicadores operacionales del laboratorio AI-LAB.
-        Desde aquí se accede al estado vivo, histórico de telemetría,
-        observabilidad avanzada y operaciones internas.
-      </p>
+  <header class="rounded-3xl border border-cyan-500/30 bg-zinc-950 p-8">
+    <p class="text-sm uppercase tracking-[0.35em] text-cyan-400">AI-LAB</p>
+    <h1 class="mt-5 text-5xl font-black text-white">Estado del Laboratorio</h1>
+    <p class="mt-4 max-w-4xl text-lg leading-8 text-zinc-300">
+      Fotografía documental del estado actual del ecosistema AI-LAB.
+      No es un dashboard en tiempo real. Es una instantánea verificada.
+    </p>
+  </header>
 
-      <div class="mt-6 rounded-xl border border-zinc-800 bg-zinc-900/80 px-5 py-4 text-sm text-zinc-400" id="status-summary">
-        <span class="font-bold text-emerald-400" id="status-health">LIVE</span>
-        · <span id="status-updated">última actualización: --</span>
-        · <span id="status-gpu-summary">GPUs: --</span>
-        · <span id="status-session-summary">sesiones: --</span>
-        · <span id="status-container-summary">containers: --</span>
-      </div>
+  <section class="rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
+    <h2 class="text-3xl font-black text-white">Estado General</h2>
 
-      <a href="https://metricas.labrazahome.com" class="mt-6 inline-flex rounded-xl bg-cyan-400 px-5 py-3 text-sm font-black text-zinc-950 hover:bg-cyan-300">
-        Abrir telemetría live en metricas.labrazahome.com
-      </a>
-    </div>
-
-    <div class="mb-12 grid gap-6 md:grid-cols-4">
+    <div class="mt-8 grid gap-4">
       {
-        kpis.map((kpi) => (
-          <div class="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6 shadow-xl shadow-black/20">
-            <div class="text-sm text-zinc-500">{kpi.label}</div>
-            <div id={kpi.id} class={`mt-2 text-4xl font-black ${kpi.color}`}>
-              {kpi.value}
+        status.map((item) => (
+          <div class="flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+            <div>
+              <p class="font-semibold text-white">{item.name}</p>
+              <p class="text-sm text-zinc-400">{item.detail}</p>
             </div>
+            <span class="flex items-center gap-2 text-sm font-medium text-green-400">
+              <span class="h-2.5 w-2.5 rounded-full bg-green-400"></span>
+              {item.status === "operational" ? "Operativo" : item.status}
+            </span>
           </div>
         ))
       }
     </div>
+  </section>
 
-    <div class="grid gap-6 md:grid-cols-2">
-      {
-        sections.map((section) => (
-          <a
-            href={section.href}
-            class="group rounded-2xl border border-zinc-800 bg-zinc-900/70 p-8 shadow-xl shadow-black/20 transition hover:border-cyan-500/40 hover:bg-zinc-900"
-          >
-            <div class="mb-4 inline-flex rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-xs font-bold tracking-widest text-cyan-400">
-              {section.tag}
-            </div>
+  <section class="grid gap-6 md:grid-cols-2">
+    <div class="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+      <p class="text-sm uppercase tracking-[0.3em] text-zinc-500">Próxima fase</p>
+      <p class="mt-3 text-xl font-bold text-cyan-400">{nextPhase}</p>
+    </div>
 
-            <h2 class="mb-4 text-3xl font-black text-white group-hover:text-cyan-400">
-              {section.title}
-            </h2>
+    <div class="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+      <p class="text-sm uppercase tracking-[0.3em] text-zinc-500">Último Checkpoint</p>
+      <p class="mt-3 text-xl font-bold text-white">{lastCheckpoint}</p>
+    </div>
 
-            <p class="min-h-16 text-zinc-400">
-              {section.description}
-            </p>
+    <div class="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+      <p class="text-sm uppercase tracking-[0.3em] text-zinc-500">Último Commit público</p>
+      <p class="mt-3 text-xl font-bold text-white font-mono">{lastCommit}</p>
+    </div>
 
-            <div class="mt-6 text-sm font-bold tracking-wide text-cyan-400">
-              OPEN →
-            </div>
-          </a>
-        ))
-      }
+    <div class="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+      <p class="text-sm uppercase tracking-[0.3em] text-zinc-500">Última actualización</p>
+      <p class="mt-3 text-xl font-bold text-white">{lastUpdate}</p>
     </div>
   </section>
+
+  <section class="rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
+    <h2 class="text-3xl font-black text-white">Builds</h2>
+
+    <div class="mt-6 grid gap-4 md:grid-cols-2">
+      <div class="rounded-xl bg-zinc-950 p-5">
+        <p class="text-sm text-zinc-500">Público</p>
+        <p class="mt-2 text-3xl font-bold text-white">{buildPages.public} páginas</p>
+        <p class="text-sm text-green-400">0 errores · 0 IPs internas</p>
+      </div>
+      <div class="rounded-xl bg-zinc-950 p-5">
+        <p class="text-sm text-zinc-500">Privado</p>
+        <p class="mt-2 text-3xl font-bold text-white">{buildPages.private} páginas</p>
+        <p class="text-sm text-green-400">0 errores</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="flex justify-center">
+    <a href="/" class="rounded-xl border border-zinc-700 px-6 py-3 font-bold text-zinc-200 hover:border-cyan-400 hover:text-cyan-400">
+      ← Volver al inicio
+    </a>
+  </div>
+
+</section>
+
 </Layout>
-
-<script>
-  function setText(id, value) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = value;
-  }
-
-  async function load() {
-    try {
-      const isPublic = window.location.hostname === "ai-lab.labrazahome.com" || window.location.hostname.includes("pages.dev");
-      const analyticsUrl = isPublic ? "/api/analytics.json" : "/api/analytics";
-
-      const [statusRes, analyticsRes] = await Promise.all([
-        fetch("/api/status.json", { cache: "no-store" }),
-        fetch(analyticsUrl, { cache: "no-store" }),
-      ]);
-
-      if (!statusRes.ok || !analyticsRes.ok) {
-        throw new Error(`status_${statusRes.status}_analytics_${analyticsRes.status}`);
-      }
-
-      const status = await statusRes.json();
-      const d = await analyticsRes.json();
-      const m = d.metrics || {};
-      const s = d.sessions || {};
-      const h = d.health || {};
-      const eb = d.event_bus || {};
-      const gpu = Array.isArray(status.gpu) ? status.gpu : [];
-      const containers = Array.isArray(status.docker?.containers) ? status.docker.containers : [];
-      const onlineGpus = gpu.filter((n) => Number(n.vram_total_gib || 0) > 0).length;
-      const totalGpus = gpu.length || Number(m.total_nodes || 0);
-      const activeSessions = Number(s.active_sessions || m.active_sessions || 0);
-      const containersRunning = containers.filter((c) => c.State === "running").length;
-      const score = Number(h.score || 0);
-      const level = h.level || (score >= 80 ? "good" : score >= 50 ? "warn" : "critical");
-      const label = level === "good" ? "Healthy" : level === "warn" ? "Degraded" : "Critical";
-
-      setText("status-health", label.toUpperCase());
-      setText("status-updated", `última actualización: ${new Date().toISOString().slice(11, 19)} UTC`);
-      setText("status-gpu-summary", `GPUs: ${onlineGpus}/${totalGpus}`);
-      setText("status-session-summary", `sesiones: ${activeSessions}`);
-      setText("status-container-summary", `containers: ${containersRunning}`);
-
-      setText("kpi-cluster", label);
-      setText("kpi-gpus", `${onlineGpus}/${totalGpus}`);
-      setText("kpi-sessions", String(activeSessions));
-      setText("kpi-containers", String(containersRunning));
-
-      document.getElementById("h-req").textContent = m.requests_total || 0;
-      document.getElementById("h-ses").textContent = s.total_sessions || 0;
-      document.getElementById("h-err").textContent = m.errors_total || 0;
-      document.getElementById("h-rout").textContent = m.routing_decisions_total || 0;
-      document.getElementById("h-str").textContent = m.streams_total || 0;
-      document.getElementById("h-lat").textContent = `${(m.last_latency_ms || 0).toFixed(0)}ms`;
-      document.getElementById("h-nod").textContent = `${m.online_nodes || 0}/${m.total_nodes || 0}`;
-      document.getElementById("h-ev").textContent = eb.total_events || 0;
-
-      document.getElementById("health-number").textContent = score;
-      document.getElementById("health-number").className = `text-5xl font-black ${score >= 80 ? "text-emerald-400" : score >= 60 ? "text-yellow-400" : score >= 40 ? "text-orange-400" : "text-red-400"}`;
-      document.getElementById("health-gauge").className = `w-36 h-36 rounded-full border-4 flex items-center justify-center ${score >= 80 ? "border-emerald-500" : score >= 60 ? "border-yellow-500" : score >= 40 ? "border-orange-500" : "border-red-500"}`;
-      document.getElementById("health-level").textContent = h.level || "--";
-
-      const reasons = document.getElementById("health-reasons");
-      if (h.reasons && h.reasons.length) {
-        reasons.innerHTML = h.reasons.map((r) => `<div>• ${r}</div>`).join("");
-      } else {
-        reasons.innerHTML = "<div class='text-emerald-400'>Sistema saludable</div>";
-      }
-    } catch {
-      setText("status-health", "OFFLINE");
-      setText("status-updated", "última actualización: error de lectura");
-      setText("status-gpu-summary", "GPUs: --");
-      setText("status-session-summary", "sesiones: --");
-      setText("status-container-summary", "containers: --");
-      setText("kpi-cluster", "Offline");
-      setText("kpi-gpus", "--");
-      setText("kpi-sessions", "--");
-      setText("kpi-containers", "--");
-    }
-  }
-
-  load();
-  setInterval(load, 15000);
-</script>
