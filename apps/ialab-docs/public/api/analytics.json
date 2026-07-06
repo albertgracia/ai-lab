@@ -9,7 +9,7 @@
   "metrics": {
     "requests_total": 0,
     "streams_total": 0,
-    "errors_total": 0,
+    "errors_total": 6,
     "routing_decisions_total": 0,
     "sessions_total": 0,
     "active_sessions": 0,
@@ -45,5 +45,5 @@
       "gpu_overheat": 0
     }
   },
-  "timestamp": 1783327913.4861157
+  "timestamp": 1783341091.891623
 }
