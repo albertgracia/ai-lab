@@ -1,0 +1,383 @@
+---
+import Layout from "../../layouts/Layout.astro";
+
+const components = [
+  {
+    id: "runtime",
+    name: "AI-LAB Runtime",
+    description: "Núcleo del motor de inferencia con enrutamiento determinista",
+    responsibility: "Procesamiento de requests, SLO enforcement, adaptive concurrency, circuit breakers",
+    state: "implemented",
+    stateLabel: "Operativo",
+    checkpoint: "CP-31B-RUNTIME-SEMANTIC-MATURITY-STABLE",
+    nextPhase: "",
+  },
+  {
+    id: "gateway",
+    name: "Gateway",
+    description: "Entrypoint único OpenAI-compatible para chat",
+    responsibility: "Clasificación de ruta, perfiles cognitivos, inyección de memoria, gateway hardening",
+    state: "implemented",
+    stateLabel: "Operativo",
+    checkpoint: "CP-29.4.4-C-SLO-HEALTH-ENDPOINT-STABLE",
+    nextPhase: "",
+  },
+  {
+    id: "router",
+    name: "Router",
+    description: "API interna de estado y configuración del runtime",
+    responsibility: "Status, profiles, replay, endpoints internos de administración",
+    state: "implemented",
+    stateLabel: "Operativo",
+    checkpoint: "CP-30I-F0-RUNTIME-MODEL-ROUTING-CLEANUP-STABLE",
+    nextPhase: "",
+  },
+  {
+    id: "lmstudio",
+    name: "LM Studio",
+    description: "Backend de inferencia local con llama.cpp",
+    responsibility: "Ejecución de modelos, streaming real, GPU compute",
+    state: "implemented",
+    stateLabel: "Operativo",
+    checkpoint: "CP-29.3-THREE-MODEL-RUNTIME-STABLE",
+    nextPhase: "",
+  },
+  {
+    id: "gitnexus",
+    name: "GitNexus",
+    description: "Cognición estructural del código fuente",
+    responsibility: "Impact analysis, context, rename, detect_changes, 20K+ símbolos indexados",
+    state: "implemented",
+    stateLabel: "Operativo",
+    checkpoint: "CP-DEV-36X-CODEBASE-MEMORY-INTEGRATION-STABLE",
+    nextPhase: "",
+  },
+  {
+    id: "hermes",
+    name: "Hermes Enterprise",
+    description: "Capa de governance declarativo del runtime",
+    responsibility: "SOUL, Capability Registry, Operator Registry, Hook Registry, MCP Registry, Dynamic Governance",
+    state: "implemented",
+    stateLabel: "Core completado",
+    checkpoint: "CP-HERMES-ENTERPRISE-CORE-01",
+    nextPhase: "Hermes E08 — Lifecycle Hooks",
+  },
+  {
+    id: "anythingllm",
+    name: "AnythingLLM Enterprise",
+    description: "Knowledge Base multi-workspace con RAG",
+    responsibility: "Memoria documental del laboratorio, 1304 vectores, 7 workspaces",
+    state: "implemented",
+    stateLabel: "Baseline operativo",
+    checkpoint: "CP-ANYTHINGLLM-ENTERPRISE-04-COMPLETE",
+    nextPhase: "AnythingLLM E05 — workflows avanzados",
+  },
+  {
+    id: "marketplace",
+    name: "Marketplace Digital Twin",
+    description: "Gemelo digital observacional del Marketplace Rioja",
+    responsibility: "Observabilidad estructural de un ecosistema real, MCP read-only",
+    state: "implemented",
+    stateLabel: "Operativo",
+    checkpoint: "CP-MARKETPLACE-GITNEXUS-ENABLE-02",
+    nextPhase: "MCP tools pendientes",
+  },
+  {
+    id: "observabilidad",
+    name: "Observabilidad",
+    description: "Stack Prometheus / Grafana / Loki",
+    responsibility: "100+ métricas ailab_*, 15 dashboards, 19 alertas activas, SLO enforcement",
+    state: "implemented",
+    stateLabel: "Operativa",
+    checkpoint: "CP-OBS-31A.5-EXECUTOR-STABLE",
+    nextPhase: "",
+  },
+  {
+    id: "astro-public",
+    name: "Astro Público",
+    description: "Portal documental público del ecosistema",
+    responsibility: "Documentación pública, 144 páginas, Cloudflare Pages, cero IPs internas",
+    state: "implemented",
+    stateLabel: "144 páginas · 0 errores",
+    checkpoint: "CP-ASTRO-DOCUMENT-COMMAND-CENTER-01",
+    nextPhase: "",
+  },
+  {
+    id: "astro-private",
+    name: "Astro Privado",
+    description: "Portal documental interno del laboratorio",
+    responsibility: "Documentación completa, 281 páginas, Astro Preview local",
+    state: "implemented",
+    stateLabel: "281 páginas · 0 errores",
+    checkpoint: "CP-ASTRO-DOCUMENT-COMMAND-CENTER-01",
+    nextPhase: "",
+  },
+];
+
+const flowLevels = [
+  {
+    label: "AI-LAB",
+    type: "root",
+  },
+  {
+    label: "Runtime · Gateway · Router",
+    type: "core",
+    detail: "Entrypoint, enrutamiento, SLO, perfiles cognitivos",
+  },
+  {
+    label: "GitNexus · Hermes · AnythingLLM",
+    type: "branch",
+    items: [
+      { name: "GitNexus", desc: "Cognición estructural", state: "implemented" },
+      { name: "Hermes Enterprise", desc: "Governance declarativo", state: "implemented" },
+      { name: "AnythingLLM", desc: "Knowledge Base RAG", state: "implemented" },
+    ],
+  },
+  {
+    label: "Marketplace Digital Twin",
+    type: "single",
+    detail: "Observabilidad estructural de ecosistema real",
+  },
+  {
+    label: "Observabilidad",
+    type: "single",
+    detail: "Prometheus · Grafana · Loki · 100+ métricas",
+  },
+  {
+    label: "Astro Público / Privado",
+    type: "end",
+    detail: "Documentación pública (144) e interna (281 páginas)",
+  },
+];
+
+const stateColor = {
+  implemented: "bg-green-400",
+  experimental: "bg-yellow-400",
+  planned: "bg-zinc-600",
+};
+
+const stateTextColor = {
+  implemented: "text-green-400",
+  experimental: "text-yellow-400",
+  planned: "text-zinc-500",
+};
+---
+
+<Layout title="Estado del Ecosistema · AI-LAB">
+
+<section class="space-y-14">
+
+  <!-- Header -->
+  <header class="rounded-3xl border border-cyan-500/30 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black p-10 shadow-2xl shadow-cyan-950/20">
+    <p class="text-sm uppercase tracking-[0.35em] text-cyan-400">AI-LAB · Ecosistema</p>
+    <h1 class="mt-5 text-5xl font-black text-white md:text-6xl">Estado del Ecosistema</h1>
+    <p class="mt-4 max-w-4xl text-lg leading-8 text-zinc-300">
+      Cómo se relacionan los componentes del AI-LAB. Vista completa de la arquitectura actual:
+      qué existe, qué hace cada componente, y cómo colaboran entre sí.
+      Documentación viva, no un dashboard.
+    </p>
+  </header>
+
+  <!-- Visual Flow Diagram -->
+  <section class="rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
+    <h2 class="text-3xl font-black text-white">Mapa del Ecosistema</h2>
+    <p class="mt-2 text-sm text-zinc-500">Flujo de dependencia y colaboración entre componentes</p>
+
+    <div class="mt-10 flex flex-col items-center">
+
+      <!-- Level: AI-LAB root -->
+      <div class="rounded-2xl border border-cyan-500/30 bg-zinc-950 px-10 py-5 shadow-lg shadow-cyan-950/10">
+        <p class="text-center text-3xl font-black text-white tracking-wider">AI-LAB</p>
+      </div>
+
+      <!-- Vertical connector -->
+      <div class="h-8 w-0.5 bg-zinc-700"></div>
+
+      <!-- Level: Runtime Core -->
+      <div class="rounded-2xl border border-zinc-700 bg-zinc-950 px-8 py-4">
+        <p class="text-center text-lg font-bold text-cyan-400">Runtime · Gateway · Router</p>
+        <p class="mt-1 text-center text-sm text-zinc-500">Entrypoint, enrutamiento, SLO, perfiles cognitivos</p>
+      </div>
+
+      <!-- Vertical connector -->
+      <div class="h-8 w-0.5 bg-zinc-700"></div>
+
+      <!-- Branch connector (horizontal line) -->
+      <div class="flex items-center">
+        <div class="h-0.5 w-24 bg-zinc-700"></div>
+        <div class="h-3 w-3 rounded-full bg-zinc-700"></div>
+        <div class="h-0.5 w-24 bg-zinc-700"></div>
+      </div>
+
+      <div class="flex items-start justify-center gap-6">
+        <div class="flex flex-col items-center">
+          <div class="h-6 w-0.5 bg-zinc-700"></div>
+          <div class="rounded-xl border border-zinc-700 bg-zinc-950 px-5 py-3">
+            <p class="text-center font-semibold text-white">GitNexus</p>
+            <p class="text-center text-xs text-zinc-500">Cognición estructural</p>
+          </div>
+        </div>
+        <div class="flex flex-col items-center">
+          <div class="h-6 w-0.5 bg-zinc-700"></div>
+          <div class="rounded-xl border border-zinc-700 bg-zinc-950 px-5 py-3">
+            <p class="text-center font-semibold text-white">Hermes Enterprise</p>
+            <p class="text-center text-xs text-zinc-500">Governance declarativo</p>
+          </div>
+        </div>
+        <div class="flex flex-col items-center">
+          <div class="h-6 w-0.5 bg-zinc-700"></div>
+          <div class="rounded-xl border border-zinc-700 bg-zinc-950 px-5 py-3">
+            <p class="text-center font-semibold text-white">AnythingLLM</p>
+            <p class="text-center text-xs text-zinc-500">Knowledge Base RAG</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Merge connectors -->
+      <div class="flex items-center">
+        <div class="h-0.5 w-28 bg-zinc-700"></div>
+        <div class="h-3 w-3 rounded-full bg-zinc-700"></div>
+        <div class="h-0.5 w-28 bg-zinc-700"></div>
+      </div>
+
+      <div class="h-8 w-0.5 bg-zinc-700"></div>
+
+      <!-- Level: Marketplace -->
+      <div class="rounded-2xl border border-zinc-700 bg-zinc-950 px-8 py-4">
+        <p class="text-center text-lg font-bold text-white">Marketplace Digital Twin</p>
+        <p class="mt-1 text-center text-sm text-zinc-500">Observabilidad estructural de ecosistema real</p>
+      </div>
+
+      <div class="h-8 w-0.5 bg-zinc-700"></div>
+
+      <!-- Level: Observability -->
+      <div class="rounded-2xl border border-zinc-700 bg-zinc-950 px-8 py-4">
+        <p class="text-center text-lg font-bold text-cyan-400">Observabilidad</p>
+        <p class="mt-1 text-center text-sm text-zinc-500">Prometheus · Grafana · Loki · 100+ métricas</p>
+      </div>
+
+      <div class="h-8 w-0.5 bg-zinc-700"></div>
+
+      <!-- Level: Astro -->
+      <div class="rounded-2xl border border-cyan-500/20 bg-zinc-950 px-8 py-5 shadow-lg shadow-cyan-950/10">
+        <p class="text-center text-lg font-bold text-white">Astro Público / Privado</p>
+        <p class="mt-1 text-center text-sm text-zinc-500">Documentación pública (144) e interna (281 páginas)</p>
+      </div>
+
+    </div>
+
+    <div class="mt-8 flex flex-wrap justify-center gap-6 text-sm text-zinc-500">
+      <span class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-green-400"></span> Implementado</span>
+      <span class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-yellow-400"></span> Experimental</span>
+      <span class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-zinc-600"></span> Planificado</span>
+    </div>
+  </section>
+
+  <!-- Component Details -->
+  <section class="rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
+    <h2 class="text-3xl font-black text-white">Componentes</h2>
+    <p class="mt-2 text-sm text-zinc-500">Detalle de cada componente: responsabilidad, estado y checkpoint</p>
+
+    <div class="mt-8 grid gap-6">
+      {
+        components.map((c) => (
+          <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-6">
+            <div class="flex flex-wrap items-start justify-between gap-4">
+              <div class="flex-1">
+                <div class="flex items-center gap-3">
+                  <span class={`inline-block h-3 w-3 rounded-full ${stateColor[c.state]}`}></span>
+                  <h3 class="text-xl font-bold text-white">{c.name}</h3>
+                </div>
+                <p class="mt-2 text-zinc-400">{c.description}</p>
+              </div>
+              <span class={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1 text-sm font-medium ${stateTextColor[c.state]} bg-zinc-900`}>
+                <span class={`inline-block h-2 w-2 rounded-full ${stateColor[c.state]}`}></span>
+                {c.stateLabel}
+              </span>
+            </div>
+
+            <div class="mt-5 grid gap-4 border-t border-zinc-800 pt-5 md:grid-cols-3">
+              <div>
+                <p class="text-xs uppercase tracking-[0.15em] text-zinc-500">Responsabilidad</p>
+                <p class="mt-1 text-sm text-zinc-300">{c.responsibility}</p>
+              </div>
+
+              <div>
+                <p class="text-xs uppercase tracking-[0.15em] text-zinc-500">Último Checkpoint</p>
+                <p class="mt-1 font-mono text-xs text-cyan-400">{c.checkpoint}</p>
+              </div>
+
+              <div>
+                <p class="text-xs uppercase tracking-[0.15em] text-zinc-500">Próxima fase</p>
+                <p class="mt-1 text-sm" class:list={[c.nextPhase ? "text-yellow-400" : "text-zinc-600"]}>
+                  {c.nextPhase || "—"}
+                </p>
+              </div>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- Relaciones -->
+  <section class="rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
+    <h2 class="text-3xl font-black text-white">Relaciones entre Componentes</h2>
+
+    <div class="mt-6 grid gap-4 md:grid-cols-2">
+      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+        <p class="text-sm font-semibold text-cyan-400">GitNexus → Hermes</p>
+        <p class="mt-2 text-sm text-zinc-400">
+          GitNexus proporciona cognición estructural del código. Hermes consume
+          esa información para governance, registries y toma de decisiones declarativa.
+        </p>
+      </div>
+
+      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+        <p class="text-sm font-semibold text-cyan-400">Hermes → AnythingLLM</p>
+        <p class="mt-2 text-sm text-zinc-400">
+          Hermes define las políticas de governance. AnythingLLM actúa como memoria
+          documental, almacenando y recuperando conocimiento del ecosistema.
+        </p>
+      </div>
+
+      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+        <p class="text-sm font-semibold text-cyan-400">AnythingLLM → Marketplace</p>
+        <p class="mt-2 text-sm text-zinc-400">
+          El conocimiento documental de AnythingLLM alimenta la comprensión del
+          Marketplace Digital Twin como ecosistema observado.
+        </p>
+      </div>
+
+      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+        <p class="text-sm font-semibold text-cyan-400">Marketplace → Observabilidad</p>
+        <p class="mt-2 text-sm text-zinc-400">
+          El Marketplace expone su estado a la capa de observabilidad, que
+          consolida métricas, alertas y dashboards de todo el ecosistema.
+        </p>
+      </div>
+
+      <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-5 md:col-span-2">
+        <p class="text-sm font-semibold text-cyan-400">Observabilidad → Astro (Público / Privado)</p>
+        <p class="mt-2 text-sm text-zinc-400">
+          La observabilidad alimenta la documentación pública y privada, que
+          reflejan el estado verificado del ecosistema. El build filter separa
+          contenido público de interno.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Navigation -->
+  <div class="flex justify-center gap-4">
+    <a href="/" class="rounded-xl border border-zinc-700 px-6 py-3 font-bold text-zinc-200 hover:border-cyan-400 hover:text-cyan-400">
+      ← Inicio
+    </a>
+    <a href="/status" class="rounded-xl border border-zinc-700 px-6 py-3 font-bold text-zinc-200 hover:border-cyan-400 hover:text-cyan-400">
+      Centro de Mando →
+    </a>
+  </div>
+
+</section>
+
+</Layout>

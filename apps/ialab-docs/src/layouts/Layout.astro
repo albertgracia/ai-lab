@@ -15,6 +15,7 @@ import {
   Activity,
   MonitorSmartphone,
   BarChart3,
+  GitBranch,
 } from "@lucide/astro";
 
 const { title = "AI-LAB" } = Astro.props;
@@ -93,6 +94,12 @@ const { title = "AI-LAB" } = Astro.props;
             href="/status"
             label="Centro de Mando"
             icon={Activity}
+          />
+
+          <SidebarLink
+            href="/ecosystem"
+            label="Estado del Ecosistema"
+            icon={GitBranch}
           />
 
           <SidebarLink
