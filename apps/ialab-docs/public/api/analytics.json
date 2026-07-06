@@ -1,9 +1,8 @@
 {
   "health": {
-    "score": 0,
+    "score": 10,
     "reasons": [
-      "2 GPU(s) offline",
-      "Gateway down"
+      "2 GPU(s) offline"
     ],
     "level": "critical"
   },
@@ -46,5 +45,5 @@
       "gpu_overheat": 0
     }
   },
-  "timestamp": 1783353765.5656564
+  "timestamp": 1783361900.5318582
 }
